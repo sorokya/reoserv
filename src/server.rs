@@ -29,6 +29,7 @@ impl Server {
         match self.listener.accept() {
             Ok((stream, _addr)) => {
                 info!("new connection from {}", stream.peer_addr()?);
+                stream.set_nonblocking(true)?;
                 self.clients.push(Client::new(stream));
             }
             _ => {}

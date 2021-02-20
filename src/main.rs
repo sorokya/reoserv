@@ -5,6 +5,7 @@ extern crate pretty_env_logger;
 extern crate log;
 
 mod client;
+mod handlers;
 mod server;
 use std::time::Duration;
 

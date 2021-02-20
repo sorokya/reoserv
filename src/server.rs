@@ -19,16 +19,20 @@ impl Server {
 
     pub fn tick(&mut self) -> std::io::Result<()> {
         self.poll()?;
+
         for client in self.clients.iter_mut() {
             client.tick()?;
         }
+
+        self.drop_dead_clients();
+
         Ok(())
     }
 
     fn poll(&mut self) -> std::io::Result<()> {
         match self.listener.accept() {
             Ok((stream, _addr)) => {
-                info!("new connection from {}", stream.peer_addr()?);
+                info!("new connection from {}", stream.peer_addr()?,);
                 stream.set_nonblocking(true)?;
                 self.clients.push(Client::new(stream));
             }
@@ -36,5 +40,13 @@ impl Server {
         }
 
         Ok(())
+    }
+
+    fn drop_dead_clients(&mut self) {
+        for i in self.clients.len()..0 {
+            if self.clients[i].closed {
+                self.clients.remove(i);
+            }
+        }
     }
 }

@@ -1,5 +1,9 @@
 const VERSION: &str = "0.0.1";
 
+extern crate dotenv;
+
+use dotenv::dotenv;
+
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
@@ -12,6 +16,7 @@ use std::time::Duration;
 use server::Server;
 
 fn main() {
+    dotenv().ok();
     pretty_env_logger::init_timed();
     print_splash();
     let mut server = Server::new().unwrap();

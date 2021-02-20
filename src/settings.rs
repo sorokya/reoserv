@@ -4,6 +4,7 @@ use config::{Config, ConfigError, File};
 pub struct Server {
     pub host: String,
     pub port: String,
+    pub max_connections: u32,
 }
 
 #[derive(Debug, Deserialize)]

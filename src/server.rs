@@ -1,19 +1,28 @@
-use crate::client::Client;
+use crate::settings::Settings;
+use crate::{client::Client, settings};
 use std::net::TcpListener;
 
 pub struct Server {
     listener: TcpListener,
     clients: Vec<Client>,
+    settings: Settings,
 }
 
 impl Server {
     pub fn new() -> std::io::Result<Self> {
-        let listener = TcpListener::bind("127.0.0.1:8078")?;
+        let settings = match Settings::new() {
+            Ok(settings) => settings,
+            _ => panic!("Failed to load settings!"),
+        };
+
+        let address = format!("{}:{}", settings.server.host, settings.server.port);
+        let listener = TcpListener::bind(&address)?;
         listener.set_nonblocking(true)?;
-        info!("listening at 127.0.0.1:8078");
+        info!("listening at {}", address);
         Ok(Self {
             listener,
             clients: Vec::new(),
+            settings,
         })
     }
 

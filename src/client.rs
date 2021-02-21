@@ -17,19 +17,19 @@ pub struct Client {
     pub processor: PacketProcessor,
     pub closed: bool,
     pub player_id: EOShort,
-    pub sequence_start: EOInt,
-    pub upcoming_sequence_start: EOInt,
+    pub sequence_start: i32,
+    pub upcoming_sequence_start: i32,
     pub sequence: EOInt,
 }
 
 impl Client {
-    pub fn new(stream: TcpStream) -> Self {
+    pub fn new(stream: TcpStream, player_id: EOShort) -> Self {
         Self {
             stream,
             state: ClientState::Uninitialized,
             processor: PacketProcessor::new(),
             closed: false,
-            player_id: 0,
+            player_id,
             sequence_start: 0,
             upcoming_sequence_start: 0,
             sequence: 0,
@@ -99,13 +99,13 @@ impl Client {
     }
 
     pub fn gen_sequence(&mut self) -> EOInt {
-        let result = self.sequence_start + self.sequence;
+        let result = self.sequence_start as EOInt + self.sequence;
         self.sequence = (self.sequence + 1) % 10;
         result
     }
 
     pub fn gen_upcoming_sequence(&mut self) -> EOInt {
-        let result = self.upcoming_sequence_start + self.sequence;
+        let result = self.upcoming_sequence_start as EOInt + self.sequence;
         self.sequence = (self.sequence + 1) % 10;
         result
     }

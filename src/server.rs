@@ -2,6 +2,7 @@ use std::net::TcpListener;
 
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
+use eo::data::EOShort;
 
 use crate::client::Client;
 use crate::settings::Settings;
@@ -68,13 +69,24 @@ impl Server {
                         self.settings.server.max_connections
                     );
                     stream.set_nonblocking(true)?;
-                    self.clients.push(Client::new(stream));
+                    self.clients
+                        .push(Client::new(stream, self.get_next_player_id(1)));
                 }
             }
             _ => {}
         }
 
         Ok(())
+    }
+
+    fn get_next_player_id(&self, seed: EOShort) -> EOShort {
+        let id = seed;
+        for player_id in self.clients.iter().map(|c| c.player_id) {
+            if player_id == id {
+                return self.get_next_player_id(id + 1);
+            }
+        }
+        id
     }
 
     fn drop_dead_clients(&mut self) {

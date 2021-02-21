@@ -2,7 +2,6 @@ use std::net::TcpListener;
 
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
-use eo::data::pubs::ItemFile;
 
 use crate::client::Client;
 use crate::settings::Settings;

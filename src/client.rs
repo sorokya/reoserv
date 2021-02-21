@@ -1,8 +1,9 @@
 use eo::{
-    data::{encode_number, EOByte, StreamBuilder, StreamReader},
+    data::{encode_number, EOByte, EOChar, EOInt, EOShort, StreamBuilder, StreamReader, MAX1},
     net::{Action, ClientState, Family, PacketProcessor, PACKET_HEADER_SIZE, PACKET_LENGTH_SIZE},
 };
 use num_traits::FromPrimitive;
+use rand::prelude::*;
 use std::{
     io::{Read, Write},
     net::{Shutdown, TcpStream},
@@ -15,6 +16,10 @@ pub struct Client {
     pub state: ClientState,
     pub processor: PacketProcessor,
     pub closed: bool,
+    pub player_id: EOShort,
+    pub sequence_start: EOInt,
+    pub upcoming_sequence_start: EOInt,
+    pub sequence: EOInt,
 }
 
 impl Client {
@@ -24,6 +29,10 @@ impl Client {
             state: ClientState::Uninitialized,
             processor: PacketProcessor::new(),
             closed: false,
+            player_id: 0,
+            sequence_start: 0,
+            upcoming_sequence_start: 0,
+            sequence: 0,
         }
     }
 
@@ -57,9 +66,63 @@ impl Client {
         Ok(())
     }
 
+    pub fn init_new_sequence(&mut self) {
+        let mut rng = rand::thread_rng();
+        self.sequence_start = rng.gen_range(0, 1757);
+    }
+
+    pub fn ping_new_sequence(&mut self) {
+        let mut rng = rand::thread_rng();
+        self.upcoming_sequence_start = rng.gen_range(0, 1757);
+    }
+
+    pub fn pong_new_sequence(&mut self) {
+        self.sequence_start = self.upcoming_sequence_start;
+    }
+
+    pub fn get_init_sequence_bytes(&self) -> (EOShort, EOChar) {
+        let mut rng = rand::thread_rng();
+        let s1_max = (self.sequence_start + 13) / 7;
+        let s1_min = std::cmp::max(0, (self.sequence_start - 252 + 13 + 6) / 7);
+        let s1 = rng.gen_range(s1_min, s1_max);
+        let s2 = self.sequence_start - s1 * 7 + 13;
+        (s1 as EOShort, s2 as EOChar)
+    }
+
+    pub fn get_update_sequence_bytes(&self) -> (EOShort, EOChar) {
+        let mut rng = rand::thread_rng();
+        let s1_max = self.upcoming_sequence_start + 252;
+        let s1_min = self.upcoming_sequence_start;
+        let s1 = rng.gen_range(s1_min, s1_max);
+        let s2 = s1 - self.upcoming_sequence_start;
+        (s1 as EOShort, s2 as EOChar)
+    }
+
+    pub fn gen_sequence(&mut self) -> EOInt {
+        let result = self.sequence_start + self.sequence;
+        self.sequence = (self.sequence + 1) % 10;
+        result
+    }
+
+    pub fn gen_upcoming_sequence(&mut self) -> EOInt {
+        let result = self.upcoming_sequence_start + self.sequence;
+        self.sequence = (self.sequence + 1) % 10;
+        result
+    }
+
     pub fn close(&mut self) -> std::io::Result<()> {
         self.stream.shutdown(Shutdown::Both)?;
         self.closed = true;
+        Ok(())
+    }
+
+    pub fn close_with_reason(&mut self, reason: String) -> std::io::Result<()> {
+        warn!(
+            "closing client ({}). Reason: {}",
+            self.stream.peer_addr()?,
+            reason
+        );
+        self.close()?;
         Ok(())
     }
 
@@ -73,9 +136,38 @@ impl Client {
             let action = Action::from_u8(data_buf[0]).unwrap();
             let family = Family::from_u8(data_buf[1]).unwrap();
             let mut reader = StreamReader::new(&data_buf[2..]);
+
+            if family != Family::Init {
+                if family == Family::Connection && action == Action::Ping {
+                    self.pong_new_sequence();
+                }
+
+                let server_sequence = self.gen_sequence();
+                let client_sequence = if server_sequence > MAX1 {
+                    reader.get_short() as EOInt
+                } else {
+                    reader.get_char() as EOInt
+                };
+
+                if server_sequence != client_sequence {
+                    return self.close_with_reason(format!(
+                        "sending invalid sequence: Got {}, expected {}.",
+                        client_sequence, server_sequence
+                    ));
+                }
+            } else {
+                self.gen_sequence();
+            }
+
             match family {
                 Family::Init => match action {
                     Action::Init => handlers::init::Init::new(self, &mut reader).handle_packet()?,
+                    _ => error!("No handler for packet: {:?}_{:?}", family, action),
+                },
+                Family::Connection => match action {
+                    Action::Accept => {
+                        handlers::connection::Accept::new(self, &mut reader).handle_packet()?
+                    }
                     _ => error!("No handler for packet: {:?}_{:?}", family, action),
                 },
                 _ => error!("Unknown family: {:?}", family),

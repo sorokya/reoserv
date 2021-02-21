@@ -9,6 +9,7 @@ extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 extern crate config;
+extern crate rand;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

@@ -1,0 +1,17 @@
+CREATE TABLE stats (
+  character_id INT NOT NULL PRIMARY KEY,
+  `level` INT NOT NULL DEFAULT 0,
+  experience INT NOT NULL DEFAULT 0,
+  hp INT NOT NULL DEFAULT 10,
+  tp INT NOT NULL DEFAULT 10,
+  strength INT NOT NULL DEFAULT 0,
+  intelligence INT NOT NULL DEFAULT 0,
+  wisdom INT NOT NULL DEFAULT 0,
+  agility INT NOT NULL DEFAULT 0,
+  constitution INT NOT NULL DEFAULT 0,
+  charisma INT NOT NULL DEFAULT 0,
+  stat_points INT NOT NULL DEFAULT 0,
+  skill_points INT NOT NULL DEFAULT 0,
+  karma INT NOT NULL DEFAULT 1000,
+  `usage` INT NOT NULL DEFAULT 0
+);

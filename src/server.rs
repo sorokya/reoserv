@@ -1,11 +1,17 @@
-use crate::settings::Settings;
-use crate::{client::Client, settings};
 use std::net::TcpListener;
+
+use diesel::mysql::MysqlConnection;
+use diesel::prelude::*;
+use eo::data::pubs::ItemFile;
+
+use crate::client::Client;
+use crate::settings::Settings;
 
 pub struct Server {
     listener: TcpListener,
     clients: Vec<Client>,
     settings: Settings,
+    db: MysqlConnection,
 }
 
 impl Server {
@@ -15,6 +21,17 @@ impl Server {
             _ => panic!("Failed to load settings!"),
         };
 
+        let db_url = format!(
+            "mysql://{}:{}@{}/{}",
+            settings.database.username,
+            settings.database.password,
+            settings.database.host,
+            settings.database.name
+        );
+
+        let db =
+            MysqlConnection::establish(&db_url).expect(&format!("Error connecting to {}", db_url));
+
         let address = format!("{}:{}", settings.server.host, settings.server.port);
         let listener = TcpListener::bind(&address)?;
         listener.set_nonblocking(true)?;
@@ -23,6 +40,7 @@ impl Server {
             listener,
             clients: Vec::new(),
             settings,
+            db,
         })
     }
 
@@ -41,9 +59,18 @@ impl Server {
     fn poll(&mut self) -> std::io::Result<()> {
         match self.listener.accept() {
             Ok((stream, _addr)) => {
-                info!("new connection from {}", stream.peer_addr()?,);
-                stream.set_nonblocking(true)?;
-                self.clients.push(Client::new(stream));
+                if self.clients.len() as u32 >= self.settings.server.max_connections {
+                    info!("connection refused: server full");
+                } else {
+                    info!(
+                        "new connection from {} ({}/{})",
+                        stream.peer_addr()?,
+                        self.clients.len() + 1,
+                        self.settings.server.max_connections
+                    );
+                    stream.set_nonblocking(true)?;
+                    self.clients.push(Client::new(stream));
+                }
             }
             _ => {}
         }

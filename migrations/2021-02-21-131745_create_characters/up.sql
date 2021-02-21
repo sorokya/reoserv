@@ -1,0 +1,20 @@
+CREATE TABLE characters (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  account_id INT NOT NULL,
+  `name` VARCHAR(16) NOT NULL,
+  title VARCHAR(32),
+  home VARCHAR(32),
+  fiance VARCHAR(16),
+  `partner` VARCHAR(16),
+  `admin` INT NOT NULL DEFAULT 0,
+  class INT NOT NULL DEFAULT 0,
+  gender INT NOT NULL DEFAULT 0,
+  race INT NOT NULL DEFAULT 0,
+  hair_style INT NOT NULL DEFAULT 0,
+  hair_color INT NOT NULL DEFAULT 0,
+  bank_max INT NOT NULL DEFAULT 0,
+  gold_bank INT NOT NULL DEFAULT 0,
+  guild_id INT,
+  guild_rank_id INT,
+  guild_rank_string VARCHAR(16)
+);

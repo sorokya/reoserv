@@ -1,0 +1,10 @@
+CREATE TABLE accounts (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(16) NOT NULL,
+  password_hash CHAR(64) NOT NULL,
+  real_name VARCHAR(64) NOT NULL,
+  location VARCHAR(64) NOT NULL,
+  email VARCHAR(64) NOT NULL,
+  register_ip VARCHAR(15) NOT NULL,
+  created_on DATETIME NOT NULL
+);

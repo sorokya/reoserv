@@ -8,8 +8,17 @@ pub struct Server {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Database {
+    pub host: String,
+    pub name: String,
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
+    pub database: Database,
 }
 
 impl Settings {

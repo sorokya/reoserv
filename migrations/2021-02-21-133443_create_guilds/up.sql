@@ -1,0 +1,8 @@
+CREATE TABLE guilds (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  tag VARCHAR(3) NOT NULL,
+  `name` VARCHAR(32) NOT NULL,
+  `description` TEXT,
+  created_on DATETIME NOT NULL,
+  bank INT NOT NUll DEFAULT 0
+);

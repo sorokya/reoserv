@@ -8,6 +8,8 @@ edition = "2018"
 
 [dependencies]
 config = { version = "0.10", features = ["toml"] }
+chrono = "0.4"
+diesel = { version = "1.4.4", features = ["mysql", "chrono"] }
 dotenv = "0.15.0"
 eo = { git = "https://github.com/sorokya/eo" }
 log = "0.4"

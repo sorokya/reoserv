@@ -1,0 +1,5 @@
+CREATE TABLE guild_ranks (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  guild_id INT NOT NULL,
+  rank VARCHAR(64) NOT NULL
+);

@@ -2,6 +2,9 @@ const VERSION: &str = "0.0.1";
 
 extern crate dotenv;
 use dotenv::dotenv;
+extern crate chrono;
+#[macro_use]
+extern crate diesel;
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
@@ -12,6 +15,8 @@ extern crate serde_derive;
 
 mod client;
 mod handlers;
+mod models;
+mod schema;
 mod server;
 mod settings;
 use std::time::Duration;

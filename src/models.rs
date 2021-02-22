@@ -8,8 +8,10 @@ pub struct Account {
     pub real_name: String,
     pub location: String,
     pub email: String,
+    pub computer: String,
+    pub hdid: i32,
     pub register_ip: String,
-    pub created_on: DateTime<Utc>,
+    pub created_on: NaiveDateTime,
 }
 
 #[derive(Queryable)]

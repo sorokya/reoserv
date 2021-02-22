@@ -1,3 +1,4 @@
+use diesel::MysqlConnection;
 use eo::{
     data::{encode_number, EOByte, EOChar, EOInt, EOShort, StreamBuilder, StreamReader, MAX1},
     net::{Action, ClientState, Family, PacketProcessor, PACKET_HEADER_SIZE, PACKET_LENGTH_SIZE},
@@ -36,8 +37,8 @@ impl Client {
         }
     }
 
-    pub fn tick(&mut self) -> std::io::Result<()> {
-        self.receive_and_process()?;
+    pub fn tick(&mut self, db: &MysqlConnection) -> std::io::Result<()> {
+        self.receive_and_process(db)?;
         Ok(())
     }
 
@@ -69,6 +70,11 @@ impl Client {
     pub fn init_new_sequence(&mut self) {
         let mut rng = rand::thread_rng();
         self.sequence_start = rng.gen_range(0, 1757);
+    }
+
+    pub fn account_reply_new_sequence(&mut self) {
+        let mut rng = rand::thread_rng();
+        self.sequence_start = rng.gen_range(0, 240);
     }
 
     pub fn ping_new_sequence(&mut self) {
@@ -126,7 +132,7 @@ impl Client {
         Ok(())
     }
 
-    fn receive_and_process(&mut self) -> std::io::Result<()> {
+    fn receive_and_process(&mut self, db: &MysqlConnection) -> std::io::Result<()> {
         let data_length = self.get_packet_length()?;
         if data_length > 0 {
             let mut data_buf = self.receive(data_length)?;
@@ -167,6 +173,12 @@ impl Client {
                 Family::Connection => match action {
                     Action::Accept => {
                         handlers::connection::Accept::new(self, &mut reader).handle_packet()?
+                    }
+                    _ => error!("No handler for packet: {:?}_{:?}", family, action),
+                },
+                Family::Account => match action {
+                    Action::Request => {
+                        handlers::account::Request::new(self, &mut reader, db).handle_packet()?
                     }
                     _ => error!("No handler for packet: {:?}_{:?}", family, action),
                 },

@@ -10,6 +10,7 @@ extern crate pretty_env_logger;
 extern crate log;
 extern crate config;
 extern crate rand;
+extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

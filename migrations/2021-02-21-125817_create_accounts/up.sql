@@ -5,6 +5,8 @@ CREATE TABLE accounts (
   real_name VARCHAR(64) NOT NULL,
   location VARCHAR(64) NOT NULL,
   email VARCHAR(64) NOT NULL,
+  computer VARCHAR(64) NOT NULL,
+  hdid INT NOT NULL,
   register_ip VARCHAR(15) NOT NULL,
   created_on DATETIME NOT NULL
 );

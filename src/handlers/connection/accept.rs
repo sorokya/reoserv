@@ -1,4 +1,5 @@
 use crate::client::Client;
+use client::connection;
 use eo::{
     data::{Serializeable, StreamReader},
     net::packets::client,
@@ -6,12 +7,12 @@ use eo::{
 
 pub struct Accept<'a> {
     client: &'a mut Client,
-    packet: client::ConnectionAccept,
+    packet: client::connection::Accept,
 }
 
 impl<'a> Accept<'a> {
     pub fn new(client: &'a mut Client, reader: &'a mut StreamReader<'a>) -> Self {
-        let mut packet = client::ConnectionAccept::new();
+        let mut packet = client::connection::Accept::new();
         packet.deserialize(reader);
         Self { client, packet }
     }

@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use std::{borrow::Borrow, net::TcpListener};
 
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
@@ -48,7 +48,7 @@ impl Server {
         self.poll()?;
 
         for client in self.clients.iter_mut() {
-            client.tick()?;
+            client.tick(&self.db)?;
         }
 
         self.drop_dead_clients();

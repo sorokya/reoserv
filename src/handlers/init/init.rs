@@ -9,17 +9,17 @@ use eo::{
 
 pub struct Init<'a> {
     client: &'a mut Client,
-    packet: client::InitInit,
+    packet: client::init::Init,
 }
 
 impl<'a> Init<'a> {
     pub fn new(client: &'a mut Client, reader: &'a mut StreamReader<'a>) -> Self {
-        let mut packet = client::InitInit::default();
+        let mut packet = client::init::Init::default();
         packet.deserialize(reader);
         Self { client, packet }
     }
     pub fn handle_packet(&mut self) -> std::io::Result<()> {
-        let mut reply = server::InitInit::new();
+        let mut reply = server::init::Init::new();
         reply.reply_code = InitReply::OK;
 
         // TODO: check for version.. bans.. etc.
@@ -33,8 +33,8 @@ impl<'a> Init<'a> {
         Ok(())
     }
 
-    fn create_response_ok(&self) -> server::InitOk {
-        let mut init_ok = server::InitOk::new();
+    fn create_response_ok(&self) -> server::init::InitOk {
+        let mut init_ok = server::init::InitOk::new();
         init_ok.challenge_response = stupid_hash(self.packet.challenge);
         init_ok.player_id = self.client.player_id;
 

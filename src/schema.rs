@@ -6,6 +6,8 @@ table! {
         real_name -> Varchar,
         location -> Varchar,
         email -> Varchar,
+        computer -> Varchar,
+        hdid -> Integer,
         register_ip -> Varchar,
         created_on -> Datetime,
     }

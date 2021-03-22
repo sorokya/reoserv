@@ -21,10 +21,16 @@ pub struct Client {
     pub sequence_start: i32,
     pub upcoming_sequence_start: i32,
     pub sequence: EOInt,
+    pub ip_address: String,
 }
 
 impl Client {
     pub fn new(stream: TcpStream, player_id: EOShort) -> Self {
+        let ip_address = stream
+            .peer_addr()
+            .expect("Failed to get client IP address")
+            .ip()
+            .to_string();
         Self {
             stream,
             state: ClientState::Uninitialized,
@@ -34,6 +40,7 @@ impl Client {
             sequence_start: 0,
             upcoming_sequence_start: 0,
             sequence: 0,
+            ip_address,
         }
     }
 
@@ -179,6 +186,9 @@ impl Client {
                 Family::Account => match action {
                     Action::Request => {
                         handlers::account::Request::new(self, &mut reader, db).handle_packet()?
+                    }
+                    Action::Create => {
+                        handlers::account::Create::new(self, &mut reader, db).handle_packet()?
                     }
                     _ => error!("No handler for packet: {:?}_{:?}", family, action),
                 },

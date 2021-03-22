@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, net::TcpListener};
+use std::net::TcpListener;
 
 use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;

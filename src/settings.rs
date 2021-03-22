@@ -5,6 +5,7 @@ pub struct Server {
     pub host: String,
     pub port: String,
     pub max_connections: u32,
+    pub password_salt: String,
 }
 
 #[derive(Debug, Deserialize)]

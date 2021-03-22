@@ -10,6 +10,8 @@ max_connections = 300
 # ping before the next one is sent.
 ping_rate = 60
 
+password_salt = "ChangeMe"
+
 [database]
 host = "127.0.0.1"
 name = "reoserv"

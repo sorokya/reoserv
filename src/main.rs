@@ -14,6 +14,7 @@ extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate sha2;
 
 mod client;
 mod handlers;
@@ -21,6 +22,7 @@ mod models;
 mod schema;
 mod server;
 mod settings;
+mod services;
 use std::time::Duration;
 
 use server::Server;

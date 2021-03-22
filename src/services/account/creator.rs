@@ -21,6 +21,7 @@ impl<'a> Creator<'a> {
         }
     }
     pub fn create_account(&self) -> Result<bool, ParseIntError> {
+        // TODO: get salt from settings
         let hash_input = format!(
             "{}{}{}",
             "SuperCoolSalt", self.packet.name, self.packet.password

@@ -10,7 +10,7 @@ use std::{
     net::{Shutdown, TcpStream},
 };
 
-use crate::handlers;
+use crate::{handlers, settings::Settings};
 
 pub struct Client {
     stream: TcpStream,
@@ -44,8 +44,8 @@ impl Client {
         }
     }
 
-    pub fn tick(&mut self, db: &MysqlConnection) -> std::io::Result<()> {
-        self.receive_and_process(db)?;
+    pub fn tick(&mut self, db: &MysqlConnection, settings: &Settings) -> std::io::Result<()> {
+        self.receive_and_process(db, settings)?;
         Ok(())
     }
 
@@ -139,7 +139,7 @@ impl Client {
         Ok(())
     }
 
-    fn receive_and_process(&mut self, db: &MysqlConnection) -> std::io::Result<()> {
+    fn receive_and_process(&mut self, db: &MysqlConnection, settings: &Settings) -> std::io::Result<()> {
         let data_length = self.get_packet_length()?;
         if data_length > 0 {
             let mut data_buf = self.receive(data_length)?;
@@ -188,7 +188,7 @@ impl Client {
                         handlers::account::Request::new(self, &mut reader, db).handle_packet()?
                     }
                     Action::Create => {
-                        handlers::account::Create::new(self, &mut reader, db).handle_packet()?
+                        handlers::account::Create::new(self, &mut reader, db, settings).handle_packet()?
                     }
                     _ => error!("No handler for packet: {:?}_{:?}", family, action),
                 },

@@ -10,21 +10,22 @@ pub struct Creator<'a> {
     packet: &'a Create,
     db: &'a MysqlConnection,
     client_ip: &'a str,
+    salt: &'a str,
 }
 
 impl<'a> Creator<'a> {
-    pub fn new(packet: &'a Create, db: &'a MysqlConnection, client_ip: &'a str) -> Self {
+    pub fn new(packet: &'a Create, db: &'a MysqlConnection, client_ip: &'a str, salt: &'a str) -> Self {
         Self {
             packet,
             db,
             client_ip,
+            salt,
         }
     }
     pub fn create_account(&self) -> Result<bool, ParseIntError> {
-        // TODO: get salt from settings
         let hash_input = format!(
             "{}{}{}",
-            "SuperCoolSalt", self.packet.name, self.packet.password
+            self.salt.to_string(), self.packet.name, self.packet.password
         );
         let hash = Sha256::digest(hash_input.as_bytes());
         let record = (

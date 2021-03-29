@@ -48,7 +48,7 @@ impl Server {
         self.poll()?;
 
         for client in self.clients.iter_mut() {
-            client.tick(&self.db)?;
+            client.tick(&self.db, &self.settings)?;
         }
 
         self.drop_dead_clients();

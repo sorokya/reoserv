@@ -192,6 +192,12 @@ impl Client {
                     }
                     _ => error!("No handler for packet: {:?}_{:?}", family, action),
                 },
+                Family::Login => match action {
+                    Action::Request => {
+                        handler::login::Request::new(self, &mut reader, db, settings).handle_packet()?
+                    }
+                    _ => error!("No handler for packet: {:?}_{:?}", family, action),
+                }
                 _ => error!("Unknown family: {:?}", family),
             }
         }

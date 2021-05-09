@@ -5,7 +5,7 @@ mod character;
 mod map;
 mod world;
 mod player;
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use std::{collections::{HashMap, VecDeque}, sync::{Arc, Mutex}};
 
 use player::Player;
 use eo::data::{EOByte, EOShort};
@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("connection accepted ({})", addr);
 
         tokio::spawn(async move {
-            if let Err(e) = accept_player(players, socket).await {
+            if let Err(e) = handle_player(players, socket).await {
                 error!("there was an error processing player: {:?}", e);
             }
         });
@@ -50,17 +50,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // });
 }
 
-async fn accept_player(players: Players, socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
+async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
     let player_id = {
         let players = players.lock().expect("Failed to lock players");
         get_next_player_id(&players, 1)
     };
 
     let mut player = Player::new(players.clone(), socket, player_id);
+    let queue: Arc<Mutex<VecDeque<PacketBuf>>> = Arc::new(Mutex::new(VecDeque::new()));
     loop {
-        player.tick().await?;
-        // TODO: break loop on disconnect
+        tokio::select! {
+            Some(packet) = player.rx.recv() => {
+                player.bus.send(packet).await?;
+            }
+            result = player.bus.recv() => match result {
+                Some(Ok(packet)) => {
+                    debug!("Recv: {:?}", packet);
+                    queue.clone().lock().unwrap().push_back(packet);
+                },
+                Some(Err(e)) => {
+                    error!("error receiving packet: {:?}", e);
+                },
+                None => {}
+            }
+        }
     }
+
+    // handle disconnect behaviors
+
     Ok(())
 }
 
@@ -73,5 +90,3 @@ fn get_next_player_id(players: &std::sync::MutexGuard<HashMap<EOShort, Tx>>, see
     }
     id
 }
-
-

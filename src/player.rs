@@ -10,9 +10,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(players: Players, socket: TcpStream, player_id: EOShort) -> Self {
+    pub async fn new(players: Players, socket: TcpStream, player_id: EOShort) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        players.lock().expect("Failed to lock players").insert(player_id, tx);
+        players.lock().await.insert(player_id, tx);
 
         Self {
             player_id,
@@ -44,11 +44,14 @@ impl PacketBus {
     pub async fn recv(&self) -> Option<std::io::Result<PacketBuf>> {
         match self.get_packet_length().await {
             Some(packet_length) => {
-                let data_buf = self.read(packet_length).await.unwrap();
-                Some(Ok(data_buf))
+                if  packet_length > 0 {
+                    Some(Ok(self.read(packet_length).await.unwrap()))
+                } else {
+                    None
+                }
             },
             None => {
-                return None;
+                None
             }
         }
     }

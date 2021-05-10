@@ -5,11 +5,12 @@ mod character;
 mod map;
 mod world;
 mod player;
-use std::{collections::{HashMap, VecDeque}, sync::{Arc, Mutex}};
+mod handlers;
+use std::{cell::RefCell, collections::{HashMap, VecDeque}, sync::Arc};
 
 use player::Player;
 use eo::data::{EOByte, EOShort};
-use tokio::{net::{TcpListener, TcpStream}, sync::mpsc};
+use tokio::{net::{TcpListener, TcpStream}, sync::{mpsc, Mutex}};
 use world::World;
 
 pub type PacketBuf = Vec<EOByte>;
@@ -52,26 +53,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
     let player_id = {
-        let players = players.lock().expect("Failed to lock players");
+        let players = players.lock().await;
         get_next_player_id(&players, 1)
     };
 
-    let mut player = Player::new(players.clone(), socket, player_id);
-    let queue: Arc<Mutex<VecDeque<PacketBuf>>> = Arc::new(Mutex::new(VecDeque::new()));
+    let mut player = Player::new(players.clone(), socket, player_id).await;
+    let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
     loop {
         tokio::select! {
             Some(packet) = player.rx.recv() => {
                 player.bus.send(packet).await?;
-            }
+            },
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
                     debug!("Recv: {:?}", packet);
-                    queue.clone().lock().unwrap().push_back(packet);
+                    queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {
                     error!("error receiving packet: {:?}", e);
                 },
                 None => {}
+            }
+        }
+
+        if let Some(packet) = queue.get_mut().pop_front() {
+            match handle_packet(player_id, packet, players.clone()).await {
+                Ok(()) => {},
+                Err(e) => {
+                    error!("error handling packet: {:?}", e);
+                }
             }
         }
     }
@@ -81,7 +91,13 @@ async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dy
     Ok(())
 }
 
-fn get_next_player_id(players: &std::sync::MutexGuard<HashMap<EOShort, Tx>>, seed: EOShort) -> EOShort {
+async fn handle_packet(player_id: EOShort, packet: PacketBuf, players: Players) -> std::io::Result<()> {
+    debug!("Handler called for player: {}, packet: {:?}", player_id, packet);
+    handlers::init::init(packet, players.lock().await.get(&player_id).unwrap()).unwrap();
+    Ok(())
+}
+
+fn get_next_player_id(players: &tokio::sync::MutexGuard<HashMap<EOShort, Tx>>, seed: EOShort) -> EOShort {
     let id = seed;
     for player_id in players.iter().map(|c| *c.0) {
         if player_id == id {

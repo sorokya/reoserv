@@ -1,32 +1,44 @@
 extern crate pretty_env_logger;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
+
+use num_traits::FromPrimitive;
 
 mod character;
-mod map;
-mod world;
-mod player;
 mod handlers;
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, sync::Arc};
+mod map;
+mod player;
+mod world;
+use std::{
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+};
 
-use player::Player;
-use eo::data::{EOByte, EOShort};
-use tokio::{net::{TcpListener, TcpStream}, sync::{mpsc, Mutex}};
+use eo::{data::{EOByte, EOShort}, net::{Action, Family}};
+use player::{Command, PacketBus, Player};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    sync::{mpsc, Mutex},
+};
 use world::World;
 
 pub type PacketBuf = Vec<EOByte>;
-pub type Tx = mpsc::UnboundedSender<PacketBuf>;
-pub type Rx = mpsc::UnboundedReceiver<PacketBuf>;
+pub type Tx = mpsc::UnboundedSender<Command>;
+pub type Rx = mpsc::UnboundedReceiver<Command>;
 pub type Players = Arc<Mutex<HashMap<EOShort, Tx>>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
-    println!("__________
+    println!(
+        "__________
 \\______   \\ ____  ____  ______ ______________  __
  |       _// __ \\/  _ \\/  ___// __ \\_  __ \\  \\/ /
  |    |   \\  ___(  <_> )___ \\\\  ___/|  | \\/\\   /
  |____|_  /\\___  >____/____  >\\___  >__|    \\_/
-        \\/     \\/          \\/     \\/\nThe rusty endless online server: v0.0.0\n");
+        \\/     \\/          \\/     \\/\nThe rusty endless online server: v0.0.0\n"
+    );
     let mut world = World::new();
     world.load_maps(282).await?;
     world.load_pub_files().await?;
@@ -51,7 +63,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // });
 }
 
-async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
+async fn handle_player(
+    players: Players,
+    socket: TcpStream,
+) -> Result<(), Box<dyn std::error::Error>> {
     let player_id = {
         let players = players.lock().await;
         get_next_player_id(&players, 1)
@@ -60,28 +75,36 @@ async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dy
     let mut player = Player::new(players.clone(), socket, player_id).await;
     let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
     loop {
-        tokio::select! {
-            Some(packet) = player.rx.recv() => {
-                player.bus.send(packet).await?;
-            },
-            result = player.bus.recv() => match result {
-                Some(Ok(packet)) => {
-                    debug!("Recv: {:?}", packet);
-                    queue.get_mut().push_back(packet);
-                },
-                Some(Err(e)) => {
-                    error!("error receiving packet: {:?}", e);
-                },
-                None => {}
-            }
-        }
-
         if let Some(packet) = queue.get_mut().pop_front() {
-            match handle_packet(player_id, packet, players.clone()).await {
-                Ok(()) => {},
+            match handle_packet(player_id, packet, &player.bus, players.clone()).await {
+                Ok(()) => {}
                 Err(e) => {
                     error!("error handling packet: {:?}", e);
                 }
+            }
+        } else {
+            tokio::select! {
+                result = player.bus.recv() => match result {
+                    Some(Ok(packet)) => {
+                        debug!("Recv: {:?}", packet);
+                        queue.get_mut().push_back(packet);
+                    },
+                    Some(Err(e)) => {
+                        error!("error receiving packet: {:?}", e);
+                    },
+                    None => {
+                    }
+                },
+                Some(command) = player.rx.recv() => {
+                    match command {
+                        Command::Send(action, family, data) => {
+                            player.bus.send(action, family, data).await?;
+                        },
+                        _ => {
+                            error!("unhandled command: {:?}", command);
+                        }
+                    }
+                },
             }
         }
     }
@@ -91,13 +114,45 @@ async fn handle_player(players: Players, socket: TcpStream) -> Result<(), Box<dy
     Ok(())
 }
 
-async fn handle_packet(player_id: EOShort, packet: PacketBuf, players: Players) -> std::io::Result<()> {
-    debug!("Handler called for player: {}, packet: {:?}", player_id, packet);
-    handlers::init::init(packet, players.lock().await.get(&player_id).unwrap()).unwrap();
+async fn handle_packet(
+    player_id: EOShort,
+    packet: PacketBuf,
+    bus: &PacketBus,
+    players: Players,
+) -> std::io::Result<()> {
+    let action = Action::from_u8(packet[0]).unwrap();
+    let family = Family::from_u8(packet[1]).unwrap();
+
+    match family {
+        Family::Init => match action {
+            Action::Init => {
+                handlers::init::init(
+                    packet,
+                    player_id,
+                    bus.sequencer.get_init_sequence_bytes(),
+                    bus.packet_processor.decode_multiple,
+                    bus.packet_processor.encode_multiple,
+                    players.lock().await.get(&player_id).unwrap(),
+                )
+                .await
+                .unwrap();
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
+        _ => {
+            error!("Unhandled packet {:?}_{:?}", action, family);
+        }
+    }
+
     Ok(())
 }
 
-fn get_next_player_id(players: &tokio::sync::MutexGuard<HashMap<EOShort, Tx>>, seed: EOShort) -> EOShort {
+fn get_next_player_id(
+    players: &tokio::sync::MutexGuard<HashMap<EOShort, Tx>>,
+    seed: EOShort,
+) -> EOShort {
     let id = seed;
     for player_id in players.iter().map(|c| *c.0) {
         if player_id == id {

@@ -20,6 +20,8 @@ pub async fn init(
     reader.seek(2);
     packet.deserialize(&reader);
 
+    debug!("Recv: {:?}" , packet);
+
     let mut reply = server::init::Init::new();
     reply.reply_code = InitReply::OK;
 
@@ -32,6 +34,8 @@ pub async fn init(
      decode_multiple,
         encode_multiple,
     ];
+
+    debug!("Reply code: {:?}, data: {:?}" , reply.reply_code, init_ok);
 
     reply.reply = Box::new(init_ok);
 

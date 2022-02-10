@@ -72,7 +72,16 @@ impl PacketBus {
         buf.insert(0, length_bytes[0]);
 
         self.socket.writable().await.unwrap();
-        self.socket.write_all(&buf).await.unwrap();
+        match self.socket.try_write(&buf) {
+            Ok(num_of_bytes_written) => {
+                if num_of_bytes_written != packet_size + PACKET_LENGTH_SIZE {
+                    error!("Written bytes ({}) doesn't match packet size ({})", num_of_bytes_written, packet_size);
+                }
+            }
+            _ => {
+                error!("Error writing to socket");
+            }
+        }
 
         Ok(())
     }

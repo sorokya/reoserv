@@ -75,36 +75,36 @@ async fn handle_player(
     let mut player = Player::new(players.clone(), socket, player_id).await;
     let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
     loop {
+        tokio::select! {
+            result = player.bus.recv() => match result {
+                Some(Ok(packet)) => {
+                    debug!("Recv: {:?}", packet);
+                    queue.get_mut().push_back(packet);
+                },
+                Some(Err(e)) => {
+                    error!("error receiving packet: {:?}", e);
+                },
+                None => {
+                }
+            },
+            Some(command) = player.rx.recv() => {
+                match command {
+                    Command::Send(action, family, data) => {
+                        player.bus.send(action, family, data).await?;
+                    },
+                    _ => {
+                        error!("unhandled command: {:?}", command);
+                    }
+                }
+            },
+        }
+
         if let Some(packet) = queue.get_mut().pop_front() {
             match handle_packet(player_id, packet, &player.bus, players.clone()).await {
                 Ok(()) => {}
                 Err(e) => {
                     error!("error handling packet: {:?}", e);
                 }
-            }
-        } else {
-            tokio::select! {
-                result = player.bus.recv() => match result {
-                    Some(Ok(packet)) => {
-                        debug!("Recv: {:?}", packet);
-                        queue.get_mut().push_back(packet);
-                    },
-                    Some(Err(e)) => {
-                        error!("error receiving packet: {:?}", e);
-                    },
-                    None => {
-                    }
-                },
-                Some(command) = player.rx.recv() => {
-                    match command {
-                        Command::Send(action, family, data) => {
-                            player.bus.send(action, family, data).await?;
-                        },
-                        _ => {
-                            error!("unhandled command: {:?}", command);
-                        }
-                    }
-                },
             }
         }
     }

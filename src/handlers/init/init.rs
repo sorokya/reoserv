@@ -3,7 +3,8 @@ use eo::{
     data::{EOByte, EOChar, EOShort, Serializeable, StreamReader},
     net::{
         packets::{client::init::Init, server},
-        replies::InitReply, stupid_hash, Action, Family,
+        replies::InitReply,
+        stupid_hash, Action, Family,
     },
 };
 
@@ -17,10 +18,9 @@ pub async fn init(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut packet = Init::default();
     let reader = StreamReader::new(&buf);
-    reader.seek(2);
     packet.deserialize(&reader);
 
-    debug!("Recv: {:?}" , packet);
+    debug!("Recv: {:?}", packet);
 
     let mut reply = server::init::Init::new();
     reply.reply_code = InitReply::OK;
@@ -30,20 +30,13 @@ pub async fn init(
     init_ok.player_id = player_id;
 
     init_ok.sequence_bytes = [sequence_bytes.0 as EOByte, sequence_bytes.1];
-    init_ok.encoding_multiples = [
-     decode_multiple,
-        encode_multiple,
-    ];
+    init_ok.encoding_multiples = [decode_multiple, encode_multiple];
 
-    debug!("Reply code: {:?}, data: {:?}" , reply.reply_code, init_ok);
+    debug!("Reply code: {:?}, data: {:?}", reply.reply_code, init_ok);
 
     reply.reply = Box::new(init_ok);
 
-    tx.send(Command::Send(
-        Action::Init,
-        Family::Init,
-        reply.serialize(),
-    ))?;
+    tx.send(Command::Send(Action::Init, Family::Init, reply.serialize()))?;
 
     Ok(())
 }

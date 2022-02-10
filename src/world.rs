@@ -1,7 +1,16 @@
 use crate::map::Map;
-use std::{collections::HashMap, path::Path, sync::{Arc, Mutex}};
-use eo::data::{map::MapFile, pubs::{ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile, TalkFile}};
+use eo::data::{
+    map::MapFile,
+    pubs::{
+        ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile, TalkFile,
+    },
+};
 use futures::stream::{self, StreamExt};
+use std::{
+    collections::HashMap,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug)]
 pub struct World {
@@ -43,12 +52,14 @@ impl World {
         let maps = self.maps.clone();
         while let Some(load_result) = stream.next().await {
             let load_result = load_result.unwrap();
-            maps
-                .lock()
+            maps.lock()
                 .expect("Failed to get lock on maps")
                 .insert(load_result.0, Map::new(load_result.1));
         }
-        info!("{} maps loaded", maps.lock().expect("Failed to get lock on maps").len());
+        info!(
+            "{} maps loaded",
+            maps.lock().expect("Failed to get lock on maps").len()
+        );
 
         Ok(())
     }

@@ -1,12 +1,11 @@
 use eo::{
-    data::{encode_number, EOByte, EOInt, EOShort, StreamBuilder, StreamReader, MAX1},
+    data::{encode_number, EOByte, EOShort, StreamBuilder},
     net::{
         packets::server::Sequencer, Action, Family, PacketProcessor, PACKET_HEADER_SIZE,
         PACKET_LENGTH_SIZE,
     },
 };
-use num_traits::FromPrimitive;
-use tokio::{io::AsyncWriteExt, net::TcpStream, sync::mpsc};
+use tokio::{net::TcpStream, sync::mpsc};
 
 use crate::{PacketBuf, Players, Rx};
 
@@ -14,6 +13,7 @@ use crate::{PacketBuf, Players, Rx};
 pub enum Command {
     InitNewSequence,
     Send(Action, Family, PacketBuf),
+    Close(String),
 }
 
 pub struct Player {
@@ -75,7 +75,10 @@ impl PacketBus {
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
                 if num_of_bytes_written != packet_size + PACKET_LENGTH_SIZE {
-                    error!("Written bytes ({}) doesn't match packet size ({})", num_of_bytes_written, packet_size);
+                    error!(
+                        "Written bytes ({}) doesn't match packet size ({})",
+                        num_of_bytes_written, packet_size
+                    );
                 }
             }
             _ => {
@@ -92,34 +95,6 @@ impl PacketBus {
                 if packet_length > 0 {
                     let mut data_buf = self.read(packet_length).await.unwrap();
                     self.packet_processor.decode(&mut data_buf);
-
-                    let action = Action::from_u8(data_buf[0]).unwrap();
-                    let family = Family::from_u8(data_buf[1]).unwrap();
-                    let reader = StreamReader::new(&data_buf[2..]);
-
-                    if family != Family::Init {
-                        if family == Family::Connection && action == Action::Ping {
-                            self.sequencer.pong_new_sequence();
-                        }
-
-                        let server_sequence = self.sequencer.gen_sequence();
-                        let client_sequence = if server_sequence > MAX1 {
-                            reader.get_short() as EOInt
-                        } else {
-                            reader.get_char() as EOInt
-                        };
-
-                        if server_sequence != client_sequence {
-                            // TODO
-                            // return self.close_with_reason(format!(
-                            //     "sending invalid sequence: Got {}, expected {}.",
-                            //     client_sequence, server_sequence
-                            // ));
-                        }
-                    } else {
-                        self.sequencer.gen_sequence();
-                    }
-
                     Some(Ok(data_buf))
                 } else {
                     None

@@ -15,7 +15,10 @@ use std::{
     sync::Arc,
 };
 
-use eo::{data::{EOByte, EOShort}, net::{Action, Family}};
+use eo::{
+    data::{EOByte, EOInt, EOShort, StreamReader, MAX1},
+    net::{Action, Family},
+};
 use player::{Command, PacketBus, Player};
 use tokio::{
     net::{TcpListener, TcpStream},
@@ -48,7 +51,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("0.0.0.0:8078").await?;
     info!("listening at 0.0.0.0:8078");
 
-    // tokio::spawn(async move {
     loop {
         let (socket, addr) = listener.accept().await?;
         let players = players.clone();
@@ -60,7 +62,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     }
-    // });
 }
 
 async fn handle_player(
@@ -92,6 +93,10 @@ async fn handle_player(
                     Command::Send(action, family, data) => {
                         player.bus.send(action, family, data).await?;
                     },
+                    Command::Close(reason) => {
+                        info!("player {} connection closed: {}", player_id, reason);
+                        break;
+                    }
                     _ => {
                         error!("unhandled command: {:?}", command);
                     }
@@ -100,7 +105,7 @@ async fn handle_player(
         }
 
         if let Some(packet) = queue.get_mut().pop_front() {
-            match handle_packet(player_id, packet, &player.bus, players.clone()).await {
+            match handle_packet(player_id, packet, &mut player.bus, players.clone()).await {
                 Ok(()) => {}
                 Err(e) => {
                     error!("error handling packet: {:?}", e);
@@ -109,27 +114,72 @@ async fn handle_player(
         }
     }
 
-    // handle disconnect behaviors
-
     Ok(())
 }
 
 async fn handle_packet(
     player_id: EOShort,
     packet: PacketBuf,
-    bus: &PacketBus,
+    bus: &mut PacketBus,
     players: Players,
 ) -> std::io::Result<()> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
+    let reader = StreamReader::new(&packet[2..]);
+
+    if family != Family::Init {
+        if family == Family::Connection && action == Action::Ping {
+            bus.sequencer.pong_new_sequence();
+        }
+
+        let server_sequence = bus.sequencer.gen_sequence();
+        let client_sequence = if server_sequence > MAX1 {
+            reader.get_short() as EOInt
+        } else {
+            reader.get_char() as EOInt
+        };
+
+        if server_sequence != client_sequence {
+            players
+                .lock()
+                .await
+                .get(&player_id)
+                .unwrap()
+                .send(Command::Close(format!(
+                    "sending invalid sequence: Got {}, expected {}.",
+                    client_sequence, server_sequence
+                )))
+                .unwrap();
+        }
+    } else {
+        bus.sequencer.gen_sequence();
+    }
+
+    let buf = reader.get_vec(reader.remaining());
 
     match family {
         Family::Init => match action {
             Action::Init => {
                 handlers::init::init(
-                    packet,
+                    buf,
                     player_id,
                     bus.sequencer.get_init_sequence_bytes(),
+                    bus.packet_processor.decode_multiple,
+                    bus.packet_processor.encode_multiple,
+                    players.lock().await.get(&player_id).unwrap(),
+                )
+                .await
+                .unwrap();
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
+        Family::Connection => match action {
+            Action::Accept => {
+                handlers::connection::accept(
+                    buf,
+                    player_id,
                     bus.packet_processor.decode_multiple,
                     bus.packet_processor.encode_multiple,
                     players.lock().await.get(&player_id).unwrap(),

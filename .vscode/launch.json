@@ -1,0 +1,50 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'reoserv2'",
+            "env": {
+                "RUST_LOG": "debug"
+            },
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=reoserv2",
+                    "--package=reoserv2"
+                ],
+                "filter": {
+                    "name": "reoserv2",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "RUST_LOG=debug"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'reoserv2'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=reoserv2",
+                    "--package=reoserv2"
+                ],
+                "filter": {
+                    "name": "reoserv2",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

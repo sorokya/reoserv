@@ -6,6 +6,7 @@ pub struct Server {
     pub port: String,
     pub max_connections: u32,
     pub password_salt: String,
+    pub ping_rate: u32,
 }
 
 #[derive(Debug, Deserialize)]

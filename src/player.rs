@@ -14,6 +14,8 @@ pub enum Command {
     InitNewSequence,
     Send(Action, Family, PacketBuf),
     Close(String),
+    Ping,
+    Pong,
 }
 
 pub struct Player {
@@ -35,6 +37,7 @@ impl Player {
 
 pub struct PacketBus {
     socket: TcpStream,
+    pub need_pong: bool,
     pub sequencer: Sequencer,
     pub packet_processor: PacketProcessor,
 }
@@ -45,6 +48,7 @@ impl PacketBus {
         sequencer.init_new_sequence();
         Self {
             socket,
+            need_pong: false,
             sequencer,
             packet_processor: PacketProcessor::new(),
         }

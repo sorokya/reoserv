@@ -9,6 +9,7 @@ extern crate serde;
 extern crate serde_derive;
 
 use num_traits::FromPrimitive;
+use lazy_static::lazy_static;
 
 mod character;
 mod handlers;
@@ -22,16 +23,18 @@ use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
     sync::Arc,
+    time::Duration,
 };
 
 use eo::{
-    data::{EOByte, EOInt, EOShort, StreamReader, MAX1},
+    data::{EOByte, EOInt, EOShort, StreamReader, MAX1, StreamBuilder},
     net::{Action, Family},
 };
 use player::{Command, PacketBus, Player};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{mpsc, Mutex},
+    time,
 };
 use world::World;
 
@@ -56,10 +59,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         VERSION
     );
 
-    let settings = match Settings::new() {
-        Ok(settings) => settings,
-        _ => panic!("Failed to load settings!"),
-    };
+    lazy_static!(
+        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+    );
 
     let mut world = World::new();
     world.load_maps(282).await?;
@@ -68,17 +70,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
 
     let listener =
-        TcpListener::bind(format!("{}:{}", settings.server.host, settings.server.port)).await?;
+        TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port)).await?;
     info!(
         "listening at {}:{}",
-        settings.server.host, settings.server.port
+        SETTINGS.server.host, SETTINGS.server.port
     );
 
+    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
+    let ping_players = players.clone();
+    // Skip the first tick because it's instant
+    ping_interval.tick().await;
+    tokio::spawn(async move {
+        loop {
+            ping_interval.tick().await;
+            let mut players = ping_players.lock().await;
+            for (_, tx) in players.iter_mut() {
+                if let Err(e) = tx.send(Command::Ping) {
+                    error!("there was an error sending ping: {:?}", e);
+                }
+            }
+        }
+    });
+
     loop {
-        let (socket, addr) = listener.accept().await?;
+        let (socket, addr) = listener.accept().await.unwrap();
         let players = players.clone();
 
-        if players.lock().await.len() >= settings.server.max_connections as usize {
+        if players.lock().await.len() >= SETTINGS.server.max_connections as usize {
             warn!("{} has been disconnected because the server is full", addr);
             continue;
         }
@@ -91,6 +109,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     }
+
+    Ok(())
 }
 
 async fn handle_player(
@@ -124,8 +144,27 @@ async fn handle_player(
                     },
                     Command::Close(reason) => {
                         info!("player {} connection closed: {}", player_id, reason);
+                        players.lock().await.remove(&player_id);
                         break;
                     }
+                    Command::Ping => {
+                        if player.bus.need_pong {
+                            info!("player {} connection closed: ping timeout", player_id);
+                            players.lock().await.remove(&player_id);
+                            break;
+                        } else {
+                            player.bus.sequencer.ping_new_sequence();
+                            let sequence = player.bus.sequencer.get_update_sequence_bytes();
+                            let mut builder = StreamBuilder::with_capacity(3);
+                            builder.add_short(sequence.0);
+                            builder.add_char(sequence.1);
+                            player.bus.need_pong = true;
+                            player.bus.send(Action::Player, Family::Connection, builder.get()).await?;
+                        }
+                    },
+                    Command::Pong => {
+                        player.bus.need_pong = false;
+                    },
                     _ => {
                         error!("unhandled command: {:?}", command);
                     }
@@ -215,6 +254,9 @@ async fn handle_packet(
                 )
                 .await
                 .unwrap();
+            }
+            Action::Ping => {
+                players.lock().await.get(&player_id).unwrap().send(Command::Pong).unwrap();
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

@@ -1,5 +1,5 @@
 [package]
-name = "reoserv2"
+name = "reoserv"
 version = "0.1.0"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2018"
@@ -12,4 +12,4 @@ num-traits = "0.2"
 pretty_env_logger = "0.3"
 futures = "0.3"
 tokio = { version = "1", features = ["full"] }
-eo = { path = "../eo" }
+eo = { git = "https://github.com/sorokya/eo }

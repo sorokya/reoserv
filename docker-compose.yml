@@ -7,6 +7,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: reoserv
+      MYSQL_DATABASE: reoserv
       MYSQL_PASSWORD: ${MYSQL_REOSERV_PASSWORD}
     ports:
       - "3306:3306"

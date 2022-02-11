@@ -14,8 +14,8 @@ mod character;
 mod handlers;
 mod map;
 mod player;
-mod world;
 mod settings;
+mod world;
 use settings::Settings;
 
 use std::{
@@ -67,8 +67,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
 
-    let listener = TcpListener::bind(format!("{}:{}", settings.server.host, settings.server.port)).await?;
-    info!("listening at {}:{}", settings.server.host, settings.server.port);
+    let listener =
+        TcpListener::bind(format!("{}:{}", settings.server.host, settings.server.port)).await?;
+    info!(
+        "listening at {}:{}",
+        settings.server.host, settings.server.port
+    );
 
     loop {
         let (socket, addr) = listener.accept().await?;

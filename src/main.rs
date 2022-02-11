@@ -33,6 +33,9 @@ pub type Players = Arc<Mutex<HashMap<EOShort, Tx>>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
     pretty_env_logger::init();
     println!(
         "__________

@@ -20,3 +20,6 @@ Cargo.lock
 
 # Stupid mac thing
 .DS_Store
+
+# Secrets
+.env

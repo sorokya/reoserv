@@ -1,0 +1,19 @@
+[server]
+host = "0.0.0.0"
+port = "8078"
+
+# Maximum amount of connections to allow to the server
+max_connections = 300
+
+# How often to send a ping to connected clients
+# clients are disconnected if they fail to respond to the first
+# ping before the next one is sent.
+ping_rate = 60
+
+password_salt = "ChangeMe"
+
+[database]
+host = "127.0.0.1"
+name = "reoserv"
+username = "reoserv"
+password = "reoserv"

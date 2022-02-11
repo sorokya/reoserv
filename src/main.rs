@@ -1,6 +1,12 @@
+const VERSION: &str = "0.0.0";
+
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
+extern crate config;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
 use num_traits::FromPrimitive;
 
@@ -9,6 +15,9 @@ mod handlers;
 mod map;
 mod player;
 mod world;
+mod settings;
+use settings::Settings;
+
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
@@ -43,20 +52,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  |       _// __ \\/  _ \\/  ___// __ \\_  __ \\  \\/ /
  |    |   \\  ___(  <_> )___ \\\\  ___/|  | \\/\\   /
  |____|_  /\\___  >____/____  >\\___  >__|    \\_/
-        \\/     \\/          \\/     \\/\nThe rusty endless online server: v0.0.0\n"
+        \\/     \\/          \\/     \\/\nThe rusty endless online server: v{}\n",
+        VERSION
     );
+
+    let settings = match Settings::new() {
+        Ok(settings) => settings,
+        _ => panic!("Failed to load settings!"),
+    };
+
     let mut world = World::new();
     world.load_maps(282).await?;
     world.load_pub_files().await?;
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
 
-    let listener = TcpListener::bind("0.0.0.0:8078").await?;
-    info!("listening at 0.0.0.0:8078");
+    let listener = TcpListener::bind(format!("{}:{}", settings.server.host, settings.server.port)).await?;
+    info!("listening at {}:{}", settings.server.host, settings.server.port);
 
     loop {
         let (socket, addr) = listener.accept().await?;
         let players = players.clone();
+
+        if players.lock().await.len() >= settings.server.max_connections as usize {
+            warn!("{} has been disconnected because the server is full", addr);
+            continue;
+        }
+
         info!("connection accepted ({})", addr);
 
         tokio::spawn(async move {

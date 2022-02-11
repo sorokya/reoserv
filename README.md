@@ -4,6 +4,17 @@
 
 The rust powered [Endless Online](https://game.eoserv.net/) server emulator!
 
+# Building
+
+The only depency is rust and cargo. I recommend using [rustup](https://rustup.rs/) to install both.
+
+To build the server simply run
+
+`cargo build`
+
+or for release build
+
+`cargo build --release`
 
 # Database setup
 

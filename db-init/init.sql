@@ -71,7 +71,7 @@ CREATE TABLE `Character` (
   `home` varchar(32) DEFAULT NULL,
   `fiance` varchar(16) DEFAULT NULL,
   `partner` varchar(16) DEFAULT NULL,
-  `admin` int NOT NULL DEFAULT '0',
+  `admin_level` int NOT NULL DEFAULT '0',
   `class` int NOT NULL DEFAULT '0',
   `gender` int NOT NULL DEFAULT '0',
   `race` int NOT NULL DEFAULT '0',

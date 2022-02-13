@@ -7,11 +7,13 @@ pub struct Server {
     pub max_connections: u32,
     pub password_salt: String,
     pub ping_rate: u32,
+    pub enforce_sequence: bool,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Database {
     pub host: String,
+    pub port: String,
     pub name: String,
     pub username: String,
     pub password: String,

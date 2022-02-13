@@ -8,7 +8,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-use num_traits::FromPrimitive;
 use lazy_static::lazy_static;
 
 mod character;
@@ -19,23 +18,21 @@ mod settings;
 mod world;
 use settings::Settings;
 
-use std::{
-    cell::RefCell,
-    collections::{HashMap, VecDeque},
-    sync::Arc,
-    time::Duration,
-};
+mod handle_packet;
+mod handle_player;
+use handle_player::handle_player;
 
-use eo::{
-    data::{EOByte, EOInt, EOShort, StreamReader, MAX1, StreamBuilder},
-    net::{Action, Family},
-};
-use player::{Command, PacketBus, Player};
+use std::{collections::HashMap, sync::Arc, time::Duration};
+
+use eo::data::{EOByte, EOShort};
+use player::Command;
 use tokio::{
-    net::{TcpListener, TcpStream},
+    net::TcpListener,
     sync::{mpsc, Mutex},
     time,
 };
+use mysql_async::prelude::*;
+
 use world::World;
 
 pub type PacketBuf = Vec<EOByte>;
@@ -59,9 +56,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         VERSION
     );
 
-    lazy_static!(
+    lazy_static! {
         static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+    };
+
+    let database_url = format!("mysql://{}:{}@{}:{}/{}",
+        SETTINGS.database.username,
+        SETTINGS.database.password,
+        SETTINGS.database.host,
+        SETTINGS.database.port,
+        SETTINGS.database.name
     );
+
+    let pool = mysql_async::Pool::new(mysql_async::Opts::from_url(&database_url).unwrap());
+    {
+        let conn = pool.get_conn().await?;
+        let mut results = r"SELECT
+        (SELECT COUNT(*) FROM `Account`) 'accounts',
+        (SELECT COUNT(*) FROM `Character`) 'characters',
+        (SELECT COUNT(*) FROM `Guild`) 'guilds',
+        (SELECT COUNT(*) FROM `Character` WHERE `admin_level` > 0) 'admins'"
+        .with(())
+        .run(conn)
+        .await?;
+
+        results.for_each(
+            |row| {
+                info!("Accounts: {}", row.get::<i64, usize>(0).unwrap());
+                info!("Characters: {} (Admins: {})", row.get::<i64, usize>(1).unwrap(), row.get::<i64, usize>(3).unwrap());
+                info!("Guilds: {}", row.get::<i64, usize>(2).unwrap());
+            }
+        ).await.unwrap();
+    }
 
     let mut world = World::new();
     world.load_maps(282).await?;
@@ -103,182 +129,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         info!("connection accepted ({})", addr);
 
+        let pool = pool.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_player(players, socket).await {
+            if let Err(e) = handle_player(players, socket, pool).await {
                 error!("there was an error processing player: {:?}", e);
             }
         });
     }
 
     Ok(())
-}
-
-async fn handle_player(
-    players: Players,
-    socket: TcpStream,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let player_id = {
-        let players = players.lock().await;
-        get_next_player_id(&players, 1)
-    };
-
-    let mut player = Player::new(players.clone(), socket, player_id).await;
-    let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
-    loop {
-        tokio::select! {
-            result = player.bus.recv() => match result {
-                Some(Ok(packet)) => {
-                    debug!("Recv: {:?}", packet);
-                    queue.get_mut().push_back(packet);
-                },
-                Some(Err(e)) => {
-                    error!("error receiving packet: {:?}", e);
-                },
-                None => {
-                }
-            },
-            Some(command) = player.rx.recv() => {
-                match command {
-                    Command::Send(action, family, data) => {
-                        player.bus.send(action, family, data).await?;
-                    },
-                    Command::Close(reason) => {
-                        info!("player {} connection closed: {}", player_id, reason);
-                        players.lock().await.remove(&player_id);
-                        break;
-                    }
-                    Command::Ping => {
-                        if player.bus.need_pong {
-                            info!("player {} connection closed: ping timeout", player_id);
-                            players.lock().await.remove(&player_id);
-                            break;
-                        } else {
-                            player.bus.sequencer.ping_new_sequence();
-                            let sequence = player.bus.sequencer.get_update_sequence_bytes();
-                            let mut builder = StreamBuilder::with_capacity(3);
-                            builder.add_short(sequence.0);
-                            builder.add_char(sequence.1);
-                            player.bus.need_pong = true;
-                            player.bus.send(Action::Player, Family::Connection, builder.get()).await?;
-                        }
-                    },
-                    Command::Pong => {
-                        player.bus.need_pong = false;
-                    },
-                    _ => {
-                        error!("unhandled command: {:?}", command);
-                    }
-                }
-            },
-        }
-
-        if let Some(packet) = queue.get_mut().pop_front() {
-            match handle_packet(player_id, packet, &mut player.bus, players.clone()).await {
-                Ok(()) => {}
-                Err(e) => {
-                    error!("error handling packet: {:?}", e);
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-async fn handle_packet(
-    player_id: EOShort,
-    packet: PacketBuf,
-    bus: &mut PacketBus,
-    players: Players,
-) -> std::io::Result<()> {
-    let action = Action::from_u8(packet[0]).unwrap();
-    let family = Family::from_u8(packet[1]).unwrap();
-    let reader = StreamReader::new(&packet[2..]);
-
-    if family != Family::Init {
-        if family == Family::Connection && action == Action::Ping {
-            bus.sequencer.pong_new_sequence();
-        }
-
-        let server_sequence = bus.sequencer.gen_sequence();
-        let client_sequence = if server_sequence > MAX1 {
-            reader.get_short() as EOInt
-        } else {
-            reader.get_char() as EOInt
-        };
-
-        if server_sequence != client_sequence {
-            players
-                .lock()
-                .await
-                .get(&player_id)
-                .unwrap()
-                .send(Command::Close(format!(
-                    "sending invalid sequence: Got {}, expected {}.",
-                    client_sequence, server_sequence
-                )))
-                .unwrap();
-        }
-    } else {
-        bus.sequencer.gen_sequence();
-    }
-
-    let buf = reader.get_vec(reader.remaining());
-
-    match family {
-        Family::Init => match action {
-            Action::Init => {
-                handlers::init::init(
-                    buf,
-                    player_id,
-                    bus.sequencer.get_init_sequence_bytes(),
-                    bus.packet_processor.decode_multiple,
-                    bus.packet_processor.encode_multiple,
-                    players.lock().await.get(&player_id).unwrap(),
-                )
-                .await
-                .unwrap();
-            }
-            _ => {
-                error!("Unhandled packet {:?}_{:?}", action, family);
-            }
-        },
-        Family::Connection => match action {
-            Action::Accept => {
-                handlers::connection::accept(
-                    buf,
-                    player_id,
-                    bus.packet_processor.decode_multiple,
-                    bus.packet_processor.encode_multiple,
-                    players.lock().await.get(&player_id).unwrap(),
-                )
-                .await
-                .unwrap();
-            }
-            Action::Ping => {
-                players.lock().await.get(&player_id).unwrap().send(Command::Pong).unwrap();
-            }
-            _ => {
-                error!("Unhandled packet {:?}_{:?}", action, family);
-            }
-        },
-        _ => {
-            error!("Unhandled packet {:?}_{:?}", action, family);
-        }
-    }
-
-    Ok(())
-}
-
-fn get_next_player_id(
-    players: &tokio::sync::MutexGuard<HashMap<EOShort, Tx>>,
-    seed: EOShort,
-) -> EOShort {
-    let id = seed;
-    for player_id in players.iter().map(|c| *c.0) {
-        if player_id == id {
-            return get_next_player_id(players, id + 1);
-        }
-    }
-    id
 }

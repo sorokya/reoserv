@@ -16,4 +16,5 @@ futures = "0.3"
 tokio = { version = "1", features = ["full"] }
 serde_derive = "^1.0.8"
 serde = "^1.0.8"
-eo = { git = "https://github.com/sorokya/eo" }
+mysql_async = "0.29"
+sha2 = "0.10"

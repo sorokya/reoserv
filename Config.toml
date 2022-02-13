@@ -12,8 +12,15 @@ ping_rate = 60
 
 password_salt = "ChangeMe"
 
+# Validate the sequence number sent by the client
+# matches the one on the server
+# Doesn't always work. Best to leave disabled until
+# it's fixed.
+enforce_sequence = false
+
 [database]
 host = "127.0.0.1"
+port = "3306"
 name = "reoserv"
 username = "reoserv"
 password = "reoserv"

@@ -78,7 +78,8 @@ pub async fn handle_player(
 
         if let Some(packet) = queue.get_mut().pop_front() {
             let db_pool = db_pool.clone();
-            match handle_packet(player_id, packet, &mut player.bus, players.clone(), db_pool).await {
+            match handle_packet(player_id, packet, &mut player.bus, players.clone(), db_pool).await
+            {
                 Ok(()) => {}
                 Err(e) => {
                     error!("error handling packet: {:?}", e);

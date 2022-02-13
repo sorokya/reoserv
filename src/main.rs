@@ -25,13 +25,13 @@ use handle_player::handle_player;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use eo::data::{EOByte, EOShort};
+use mysql_async::prelude::*;
 use player::Command;
 use tokio::{
     net::TcpListener,
     sync::{mpsc, Mutex},
     time,
 };
-use mysql_async::prelude::*;
 
 use world::World;
 
@@ -60,7 +60,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
     };
 
-    let database_url = format!("mysql://{}:{}@{}:{}/{}",
+    let database_url = format!(
+        "mysql://{}:{}@{}:{}/{}",
         SETTINGS.database.username,
         SETTINGS.database.password,
         SETTINGS.database.host,
@@ -76,17 +77,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         (SELECT COUNT(*) FROM `Character`) 'characters',
         (SELECT COUNT(*) FROM `Guild`) 'guilds',
         (SELECT COUNT(*) FROM `Character` WHERE `admin_level` > 0) 'admins'"
-        .with(())
-        .run(conn)
-        .await?;
+            .with(())
+            .run(conn)
+            .await?;
 
-        results.for_each(
-            |row| {
+        results
+            .for_each(|row| {
                 info!("Accounts: {}", row.get::<i64, usize>(0).unwrap());
-                info!("Characters: {} (Admins: {})", row.get::<i64, usize>(1).unwrap(), row.get::<i64, usize>(3).unwrap());
+                info!(
+                    "Characters: {} (Admins: {})",
+                    row.get::<i64, usize>(1).unwrap(),
+                    row.get::<i64, usize>(3).unwrap()
+                );
                 info!("Guilds: {}", row.get::<i64, usize>(2).unwrap());
-            }
-        ).await.unwrap();
+            })
+            .await
+            .unwrap();
     }
 
     let mut world = World::new();

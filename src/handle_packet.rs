@@ -2,14 +2,15 @@ use eo::{
     data::{EOInt, EOShort, StreamReader, MAX1},
     net::{Action, Family},
 };
+use lazy_static::lazy_static;
 use mysql_async::Pool;
 use num_traits::FromPrimitive;
-use lazy_static::lazy_static;
 
 use crate::{
     handlers,
     player::{Command, PacketBus},
-    PacketBuf, Players, settings::Settings,
+    settings::Settings,
+    PacketBuf, Players,
 };
 
 pub async fn handle_packet(

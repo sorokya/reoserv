@@ -109,11 +109,9 @@ impl PacketBus {
     }
 
     async fn get_packet_length(&self) -> Option<usize> {
-        if let Some(length_buf) = self.read(2).await {
-            Some(eo::data::decode_number(&length_buf) as usize)
-        } else {
-            None
-        }
+        self.read(2)
+            .await
+            .map(|length_buf| eo::data::decode_number(&length_buf) as usize)
     }
 
     async fn read(&self, length: usize) -> Option<Vec<EOByte>> {

@@ -1,6 +1,6 @@
 use eo::{
     character::{AdminLevel, Gender, Race},
-    data::{EOByte, EOChar, EOShort, Serializeable, StreamReader},
+    data::{EOChar, Serializeable, StreamReader},
     net::packets::server::login::Reply,
     net::{
         packets::client::login::Request, replies::LoginReply, Action, CharacterInfo, CharacterList,

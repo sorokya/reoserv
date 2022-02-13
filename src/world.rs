@@ -83,7 +83,7 @@ impl World {
         let raw_path = format!("maps/{:0>5}.emf", id);
         let path = Path::new(&raw_path);
         let mut file = MapFile::new();
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             file.read(&mut raw_file)?;
         }
@@ -93,7 +93,7 @@ impl World {
 
     async fn load_class_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut class_file = self.class_file.lock()?;
             class_file.read(&mut raw_file)?;
@@ -104,7 +104,7 @@ impl World {
 
     async fn load_drop_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut drop_file = self.drop_file.lock()?;
             drop_file.read(&mut raw_file)?;
@@ -115,7 +115,7 @@ impl World {
 
     async fn load_inn_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut inn_file = self.inn_file.lock()?;
             inn_file.read(&mut raw_file)?;
@@ -126,7 +126,7 @@ impl World {
 
     async fn load_item_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut item_file = self.item_file.lock()?;
             item_file.read(&mut raw_file)?;
@@ -137,7 +137,7 @@ impl World {
 
     async fn load_master_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut master_file = self.master_file.lock()?;
             master_file.read(&mut raw_file)?;
@@ -148,7 +148,7 @@ impl World {
 
     async fn load_npc_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut npc_file = self.npc_file.lock()?;
             npc_file.read(&mut raw_file)?;
@@ -159,7 +159,7 @@ impl World {
 
     async fn load_shop_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut shop_file = self.shop_file.lock()?;
             shop_file.read(&mut raw_file)?;
@@ -170,7 +170,7 @@ impl World {
 
     async fn load_spell_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut spell_file = self.spell_file.lock()?;
             spell_file.read(&mut raw_file)?;
@@ -181,7 +181,7 @@ impl World {
 
     async fn load_talk_file(&self, path: String) -> Result<(), Box<dyn std::error::Error + '_>> {
         let path = Path::new(&path);
-        if Path::exists(&path) {
+        if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             let mut talk_file = self.talk_file.lock()?;
             talk_file.read(&mut raw_file)?;

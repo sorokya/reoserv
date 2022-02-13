@@ -96,6 +96,24 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
+        Family::Account => match action {
+            Action::Request => {
+                let mut conn = db_pool.get_conn().await?;
+                if bus.sequencer.too_big_for_account_reply() {
+                    bus.sequencer.account_reply_new_sequence();
+                }
+                handlers::account::request(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    &mut conn,
+                    bus.sequencer.get_sequence_start(),
+                )
+                .await?;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
         Family::Login => match action {
             Action::Request => {
                 let mut conn = db_pool.get_conn().await?;

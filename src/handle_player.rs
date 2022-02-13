@@ -26,6 +26,7 @@ pub async fn handle_player(
         get_next_player_id(&players, 1)
     };
 
+    let player_ip = socket.peer_addr()?.ip().to_string();
     let mut player = Player::new(players.clone(), socket, player_id).await;
     let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
     loop {
@@ -78,7 +79,7 @@ pub async fn handle_player(
 
         if let Some(packet) = queue.get_mut().pop_front() {
             let db_pool = db_pool.clone();
-            match handle_packet(player_id, packet, &mut player.bus, players.clone(), db_pool).await
+            match handle_packet(player_id, packet, &mut player.bus, players.clone(), db_pool, &player_ip).await
             {
                 Ok(()) => {}
                 Err(e) => {

@@ -19,6 +19,7 @@ pub async fn handle_packet(
     bus: &mut PacketBus,
     players: Players,
     db_pool: Pool,
+    player_ip: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
@@ -107,6 +108,17 @@ pub async fn handle_packet(
                     players.lock().await.get(&player_id).unwrap(),
                     &mut conn,
                     bus.sequencer.get_sequence_start(),
+                )
+                .await?;
+            },
+            Action::Create => {
+                let mut conn = db_pool.get_conn().await?;
+                handlers::account::create(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    &mut conn,
+                    SETTINGS.server.password_salt.to_string(),
+                    player_ip,
                 )
                 .await?;
             }

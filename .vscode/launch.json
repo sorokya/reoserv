@@ -14,11 +14,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=reoserv2",
-                    "--package=reoserv2"
+                    "--bin=reoserv",
+                    "--package=reoserv"
                 ],
                 "filter": {
-                    "name": "reoserv2",
+                    "name": "reoserv",
                     "kind": "bin"
                 }
             },
@@ -30,16 +30,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'reoserv2'",
+            "name": "Debug unit tests in executable 'reoserv'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=reoserv2",
-                    "--package=reoserv2"
+                    "--bin=reoserv",
+                    "--package=reoserv"
                 ],
                 "filter": {
-                    "name": "reoserv2",
+                    "name": "reoserv",
                     "kind": "bin"
                 }
             },

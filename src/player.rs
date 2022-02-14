@@ -17,6 +17,7 @@ pub enum Command {
     Ping,
     Pong,
     SetState(State),
+    NewCharacter,
 }
 
 #[derive(Debug)]

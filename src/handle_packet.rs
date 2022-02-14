@@ -25,6 +25,7 @@ pub async fn handle_packet(
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     db_pool: Pool,
     player_ip: &str,
+    account_id: u32,
     num_of_characters: EOChar,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let action = Action::from_u8(packet[0]).unwrap();
@@ -155,6 +156,16 @@ pub async fn handle_packet(
                     buf,
                     players.lock().await.get(&player_id).unwrap(),
                     num_of_characters,
+                )
+                .await?;
+            }
+            Action::Create => {
+                let mut conn = db_pool.get_conn().await?;
+                handlers::character::create(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    &mut conn,
+                    account_id,
                 )
                 .await?;
             }

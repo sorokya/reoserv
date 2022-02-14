@@ -1,5 +1,5 @@
 INSERT INTO
-    `reoserv`.`Account` (
+    `Account` (
         `name`,
         `password_hash`,
         `real_name`,

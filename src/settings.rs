@@ -20,9 +20,19 @@ pub struct Database {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct NewCharacter {
+    pub spawn_map: u32,
+    pub spawn_x: u32,
+    pub spawn_y: u32,
+    pub spawn_direction: u32,
+    pub home: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
+    pub new_character: NewCharacter,
 }
 
 impl Settings {

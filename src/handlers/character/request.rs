@@ -35,6 +35,8 @@ pub async fn request(
         reply.message = "OK".to_string();
     }
 
+    debug!("Reply: {:?}", reply);
+
     tx.send(Command::Send(
         Action::Reply,
         Family::Character,

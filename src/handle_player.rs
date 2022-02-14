@@ -76,6 +76,9 @@ pub async fn handle_player(
                             _ => {}
                         }
                     }
+                    Command::NewCharacter => {
+                        player.num_of_characters += 1;
+                    }
                     Command::Ping => {
                         if player.bus.need_pong {
                             info!("player {} connection closed: ping timeout", player_id);
@@ -110,6 +113,7 @@ pub async fn handle_player(
                 active_account_ids.clone(),
                 db_pool,
                 &player_ip,
+                player.account_id,
                 player.num_of_characters,
             )
             .await

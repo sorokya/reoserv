@@ -3,10 +3,14 @@ use eo::{
     net::packets::server::account::Reply,
     net::{packets::client::account::Create, replies::AccountReply, Action, Family},
 };
-use mysql_async::{prelude::*, Conn, Params, Row};
+use mysql_async::Conn;
 use sha2::{Digest, Sha256};
 
-use crate::{player::Command, PacketBuf, Tx};
+use crate::{
+    handlers::utils::{create_account, get_account, CreateAccountParams},
+    player::Command,
+    PacketBuf, Tx,
+};
 
 pub async fn create(
     buf: PacketBuf,
@@ -22,16 +26,7 @@ pub async fn create(
     debug!("Recv: {:?}", create);
 
     let mut reply = Reply::new();
-    if conn
-        .exec_first::<Row, &str, Params>(
-            include_str!("../login/get_account.sql"),
-            params! {
-                "name" => &create.name,
-            },
-        )
-        .await?
-        .is_some()
-    {
+    if get_account(conn, &create.name).await?.is_some() {
         reply.reply = AccountReply::Exists;
         reply.message = "NO".to_string();
     } else {
@@ -40,21 +35,20 @@ pub async fn create(
 
         // TODO: validate name
 
-        match conn
-            .exec_drop(
-                include_str!("create_account.sql"),
-                params! {
-                    "name" => &create.name,
-                    "password_hash" => format!("{:x}", hash),
-                    "real_name" => &create.fullname,
-                    "location" => &create.location,
-                    "email" => &create.email,
-                    "computer" => &create.computer,
-                    "hdid" => &create.hdid,
-                    "register_ip" => &player_ip,
-                },
-            )
-            .await
+        match create_account(
+            conn,
+            CreateAccountParams {
+                name: create.name.to_string(),
+                password_hash: format!("{:x}", hash),
+                real_name: create.fullname,
+                location: create.location,
+                email: create.email,
+                computer: create.computer,
+                hdid: create.hdid,
+                register_ip: player_ip.to_string(),
+            },
+        )
+        .await
         {
             Ok(_) => {
                 reply.reply = AccountReply::Created;

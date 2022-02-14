@@ -11,12 +11,9 @@ SELECT
     p.armor,
     p.hat,
     p.shield,
-    p.weapon,
-    a.password_hash
-FROM
-    `Account` a
-    INNER JOIN `Character` c ON c.account_id = a.id
+    p.weapon
+FROM `Character` c
     INNER JOIN Stats s ON s.character_id = c.id
     INNER JOIN Paperdoll p ON p.character_id = c.id
 WHERE
-    a.name = :name
+    c.account_id = :account_id;

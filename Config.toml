@@ -18,6 +18,13 @@ password_salt = "ChangeMe"
 # it's fixed.
 enforce_sequence = false
 
+[new_character]
+spawn_map = 192
+spawn_x = 7
+spawn_y = 6
+spawn_direction = 2
+home = "Wanderer"
+
 [database]
 host = "127.0.0.1"
 port = "3306"

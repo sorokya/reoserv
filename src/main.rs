@@ -1,10 +1,7 @@
 const VERSION: &str = "0.0.0";
 
-extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
-extern crate config;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
@@ -42,6 +39,9 @@ pub type Players = Arc<Mutex<HashMap<EOShort, Tx>>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(feature = "console")]
+    console_subscriber::init();
+
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }
@@ -128,12 +128,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (socket, addr) = listener.accept().await.unwrap();
         let players = players.clone();
 
-        if players.lock().await.len() >= SETTINGS.server.max_connections as usize {
+        let num_of_players = players.lock().await.len();
+        if num_of_players >= SETTINGS.server.max_connections as usize {
             warn!("{} has been disconnected because the server is full", addr);
             continue;
         }
 
-        info!("connection accepted ({})", addr);
+        info!("connection accepted ({}) {}/{}", addr, num_of_players + 1, SETTINGS.server.max_connections);
 
         let pool = pool.clone();
         tokio::spawn(async move {

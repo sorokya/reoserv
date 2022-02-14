@@ -94,33 +94,49 @@ impl PacketBus {
 
     pub async fn recv(&mut self) -> Option<std::io::Result<PacketBuf>> {
         match self.get_packet_length().await {
-            Some(packet_length) => {
+            Some(Ok(packet_length)) => {
                 if packet_length > 0 {
-                    let mut data_buf = self.read(packet_length).await.unwrap();
-                    self.packet_processor.decode(&mut data_buf);
-                    Some(Ok(data_buf))
+                    match self.read(packet_length).await {
+                        Some(Ok(buf)) => {
+                            let mut data_buf = buf;
+                            self.packet_processor.decode(&mut data_buf);
+                            Some(Ok(data_buf))
+                        },
+                        Some(Err(e)) => Some(Err(e)),
+                        None => None,
+                    }
                 } else {
                     None
                 }
             }
+            Some(Err(e)) => Some(Err(e)),
             None => None,
         }
     }
 
-    async fn get_packet_length(&self) -> Option<usize> {
-        self.read(2)
-            .await
-            .map(|length_buf| eo::data::decode_number(&length_buf) as usize)
+    async fn get_packet_length(&self) -> Option<std::io::Result<usize>> {
+        match self.read(2).await {
+            Some(Ok(buf)) => Some(Ok(eo::data::decode_number(&buf) as usize)),
+            Some(Err(e)) => Some(Err(e)),
+            None => None,
+        }
     }
 
-    async fn read(&self, length: usize) -> Option<Vec<EOByte>> {
+    async fn read(&self, length: usize) -> Option<std::io::Result<Vec<EOByte>>> {
         let mut buf: Vec<EOByte> = vec![0; length];
+        self.socket.readable().await.unwrap();
         match self.socket.try_read(&mut buf) {
+            Ok(0) => {
+                return Some(Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "Connection closed",
+                )));
+            }
             Ok(_) => {}
             Err(_) => {
                 return None;
             }
         }
-        Some(buf)
+        Some(Ok(buf))
     }
 }

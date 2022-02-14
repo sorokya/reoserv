@@ -37,7 +37,16 @@ pub async fn handle_player(
                     queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {
-                    error!("error receiving packet: {:?}", e);
+                    match e.kind() {
+                        std::io::ErrorKind::BrokenPipe => {
+                            info!("player {} connection closed by peer", player_id);
+                            break;
+                        },
+                        _ => {
+                            info!("player {} connection closed due to unknown error: {:?}", player_id, e);
+                            break;
+                        }
+                    }
                 },
                 None => {
                 }

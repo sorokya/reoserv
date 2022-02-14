@@ -75,7 +75,6 @@ impl PacketBus {
         buf.insert(0, length_bytes[1]);
         buf.insert(0, length_bytes[0]);
 
-        self.socket.writable().await.unwrap();
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
                 if num_of_bytes_written != packet_size + PACKET_LENGTH_SIZE {
@@ -115,7 +114,6 @@ impl PacketBus {
     }
 
     async fn read(&self, length: usize) -> Option<Vec<EOByte>> {
-        self.socket.readable().await.unwrap();
         let mut buf: Vec<EOByte> = vec![0; length];
         match self.socket.try_read(&mut buf) {
             Ok(_) => {}

@@ -1,5 +1,5 @@
 use eo::{
-    data::{encode_number, EOByte, EOShort, StreamBuilder},
+    data::{encode_number, EOByte, EOChar, EOShort, StreamBuilder},
     net::{
         packets::server::Sequencer, Action, Family, PacketProcessor, PACKET_HEADER_SIZE,
         PACKET_LENGTH_SIZE,
@@ -23,7 +23,7 @@ pub enum Command {
 pub enum State {
     Uninitialized,
     Initialized,
-    LoggedIn(u32),
+    LoggedIn(u32, EOChar),
     Playing(u32),
 }
 
@@ -32,6 +32,7 @@ pub struct Player {
     pub bus: PacketBus,
     pub state: State,
     pub account_id: u32,
+    pub num_of_characters: EOChar,
     pub character_id: u32,
 }
 
@@ -46,6 +47,7 @@ impl Player {
             state: State::Uninitialized,
             account_id: 0,
             character_id: 0,
+            num_of_characters: 0,
         }
     }
 }

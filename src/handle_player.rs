@@ -65,8 +65,9 @@ pub async fn handle_player(
                     Command::SetState(state) => {
                         player.state = state;
                         match player.state {
-                            State::LoggedIn(account_id) => {
+                            State::LoggedIn(account_id, num_of_characters) => {
                                 player.account_id = account_id;
+                                player.num_of_characters = num_of_characters;
                                 active_account_ids.lock().await.push(account_id);
                             },
                             State::Playing(character_id) => {
@@ -109,6 +110,7 @@ pub async fn handle_player(
                 active_account_ids.clone(),
                 db_pool,
                 &player_ip,
+                player.num_of_characters,
             )
             .await
             {

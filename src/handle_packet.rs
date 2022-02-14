@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use eo::{
-    data::{EOInt, EOShort, StreamReader, MAX1},
+    data::{EOChar, EOInt, EOShort, StreamReader, MAX1},
     net::{Action, Family},
 };
 use lazy_static::lazy_static;
@@ -16,6 +16,7 @@ use crate::{
     PacketBuf, Players,
 };
 
+// TODO: group some of these params into a struct?
 pub async fn handle_packet(
     player_id: EOShort,
     packet: PacketBuf,
@@ -24,6 +25,7 @@ pub async fn handle_packet(
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     db_pool: Pool,
     player_ip: &str,
+    num_of_characters: EOChar,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
@@ -140,6 +142,19 @@ pub async fn handle_packet(
                     active_account_ids.lock().await.to_vec(),
                     &mut conn,
                     SETTINGS.server.password_salt.to_string(),
+                )
+                .await?;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
+        Family::Character => match action {
+            Action::Request => {
+                handlers::character::request(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    num_of_characters,
                 )
                 .await?;
             }

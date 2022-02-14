@@ -118,7 +118,11 @@ pub async fn request(
 
     debug!("Reply: {:?}", reply);
 
-    tx.send(Command::SetState(State::LoggedIn(account_id)))?;
+    let num_of_characters = reply.character_list.length;
+    tx.send(Command::SetState(State::LoggedIn(
+        account_id,
+        num_of_characters,
+    )))?;
     tx.send(Command::Send(
         Action::Reply,
         Family::Login,

@@ -49,13 +49,11 @@ pub async fn handle_player(
                     },
                     Command::Close(reason) => {
                         info!("player {} connection closed: {}", player_id, reason);
-                        players.lock().await.remove(&player_id);
                         break;
                     }
                     Command::Ping => {
                         if player.bus.need_pong {
                             info!("player {} connection closed: ping timeout", player_id);
-                            players.lock().await.remove(&player_id);
                             break;
                         } else {
                             player.bus.sequencer.ping_new_sequence();
@@ -88,6 +86,8 @@ pub async fn handle_player(
             }
         }
     }
+
+    players.lock().await.remove(&player_id);
 
     Ok(())
 }

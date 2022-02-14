@@ -1,4 +1,7 @@
-use crate::{player::Command, PacketBuf, Tx};
+use crate::{
+    player::{Command, State},
+    PacketBuf, Tx,
+};
 use eo::{
     data::{EOByte, EOChar, EOShort, Serializeable, StreamReader},
     net::{
@@ -36,6 +39,7 @@ pub async fn init(
 
     reply.reply = Box::new(init_ok);
 
+    tx.send(Command::SetState(State::Initialized))?;
     tx.send(Command::Send(Action::Init, Family::Init, reply.serialize()))?;
 
     Ok(())

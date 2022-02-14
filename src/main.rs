@@ -100,6 +100,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     world.load_pub_files().await?;
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
+    let active_account_ids: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(Vec::new()));
 
     let listener =
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port)).await?;
@@ -127,6 +128,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let (socket, addr) = listener.accept().await.unwrap();
         let players = players.clone();
+        let active_account_ids = active_account_ids.clone();
 
         let num_of_players = players.lock().await.len();
         if num_of_players >= SETTINGS.server.max_connections as usize {
@@ -134,11 +136,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-        info!("connection accepted ({}) {}/{}", addr, num_of_players + 1, SETTINGS.server.max_connections);
+        info!(
+            "connection accepted ({}) {}/{}",
+            addr,
+            num_of_players + 1,
+            SETTINGS.server.max_connections
+        );
 
         let pool = pool.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_player(players, socket, pool).await {
+            if let Err(e) = handle_player(players, active_account_ids, socket, pool).await {
                 error!("there was an error processing player: {:?}", e);
             }
         });

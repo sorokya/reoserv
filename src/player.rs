@@ -16,11 +16,23 @@ pub enum Command {
     Close(String),
     Ping,
     Pong,
+    SetState(State),
+}
+
+#[derive(Debug)]
+pub enum State {
+    Uninitialized,
+    Initialized,
+    LoggedIn(u32),
+    Playing(u32),
 }
 
 pub struct Player {
     pub rx: Rx,
     pub bus: PacketBus,
+    pub state: State,
+    pub account_id: u32,
+    pub character_id: u32,
 }
 
 impl Player {
@@ -31,6 +43,9 @@ impl Player {
         Self {
             rx,
             bus: PacketBus::new(socket),
+            state: State::Uninitialized,
+            account_id: 0,
+            character_id: 0,
         }
     }
 }
@@ -101,7 +116,7 @@ impl PacketBus {
                             let mut data_buf = buf;
                             self.packet_processor.decode(&mut data_buf);
                             Some(Ok(data_buf))
-                        },
+                        }
                         Some(Err(e)) => Some(Err(e)),
                         None => None,
                     }

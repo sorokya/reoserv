@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, Serializeable, StreamReader},
+    data::{Serializeable, StreamReader},
     net::packets::server::account::Reply,
     net::{packets::client::account::Create, replies::AccountReply, Action, Family},
 };
@@ -40,17 +40,22 @@ pub async fn create(
 
         // TODO: validate name
 
-        match conn.exec_drop(include_str!("create_account.sql"), params! {
-            "name" => &create.name,
-            "password_hash" => format!("{:x}", hash),
-            "real_name" => &create.fullname,
-            "location" => &create.location,
-            "email" => &create.email,
-            "computer" => &create.computer,
-            "hdid" => &create.hdid,
-            "register_ip" => &player_ip,
-        })
-        .await {
+        match conn
+            .exec_drop(
+                include_str!("create_account.sql"),
+                params! {
+                    "name" => &create.name,
+                    "password_hash" => format!("{:x}", hash),
+                    "real_name" => &create.fullname,
+                    "location" => &create.location,
+                    "email" => &create.email,
+                    "computer" => &create.computer,
+                    "hdid" => &create.hdid,
+                    "register_ip" => &player_ip,
+                },
+            )
+            .await
+        {
             Ok(_) => {
                 reply.reply = AccountReply::Created;
                 reply.message = "YES".to_string();

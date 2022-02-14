@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
+    sync::Arc,
 };
 
 use eo::{
@@ -8,16 +9,17 @@ use eo::{
     net::{Action, Family},
 };
 use mysql_async::Pool;
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::Mutex};
 
 use crate::{
     handle_packet::handle_packet,
-    player::{Command, Player},
+    player::{Command, Player, State},
     PacketBuf, Players, Tx,
 };
 
 pub async fn handle_player(
     players: Players,
+    active_account_ids: Arc<Mutex<Vec<u32>>>,
     socket: TcpStream,
     db_pool: Pool,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -60,6 +62,19 @@ pub async fn handle_player(
                         info!("player {} connection closed: {}", player_id, reason);
                         break;
                     }
+                    Command::SetState(state) => {
+                        player.state = state;
+                        match player.state {
+                            State::LoggedIn(account_id) => {
+                                player.account_id = account_id;
+                                active_account_ids.lock().await.push(account_id);
+                            },
+                            State::Playing(character_id) => {
+                                player.character_id = character_id;
+                            },
+                            _ => {}
+                        }
+                    }
                     Command::Ping => {
                         if player.bus.need_pong {
                             info!("player {} connection closed: ping timeout", player_id);
@@ -86,7 +101,16 @@ pub async fn handle_player(
 
         if let Some(packet) = queue.get_mut().pop_front() {
             let db_pool = db_pool.clone();
-            match handle_packet(player_id, packet, &mut player.bus, players.clone(), db_pool, &player_ip).await
+            match handle_packet(
+                player_id,
+                packet,
+                &mut player.bus,
+                players.clone(),
+                active_account_ids.clone(),
+                db_pool,
+                &player_ip,
+            )
+            .await
             {
                 Ok(()) => {}
                 Err(e) => {
@@ -97,6 +121,11 @@ pub async fn handle_player(
     }
 
     players.lock().await.remove(&player_id);
+
+    if player.account_id != 0 {
+        let mut accounts = active_account_ids.lock().await;
+        accounts.retain(|&x| x != player.account_id);
+    }
 
     Ok(())
 }

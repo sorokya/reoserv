@@ -11,11 +11,15 @@ use mysql_async::{prelude::*, Conn, Params, Row};
 use num_traits::FromPrimitive;
 use sha2::{Digest, Sha256};
 
-use crate::{player::Command, PacketBuf, Tx};
+use crate::{
+    player::{Command, State},
+    PacketBuf, Tx,
+};
 
 pub async fn request(
     buf: PacketBuf,
     tx: &Tx,
+    active_account_ids: Vec<u32>,
     conn: &mut Conn,
     salt: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -53,9 +57,21 @@ pub async fn request(
         }
     };
 
-    let actual_hash: String = account_row.get(0).unwrap();
+    let account_id: u32 = account_row.get(0).unwrap();
+    let actual_hash: String = account_row.get(1).unwrap();
     if actual_hash != format!("{:x}", hash) {
         reply.reply = LoginReply::WrongPassword;
+        debug!("Reply: {:?}", reply);
+        tx.send(Command::Send(
+            Action::Reply,
+            Family::Login,
+            reply.serialize(),
+        ))?;
+        return Ok(());
+    }
+
+    if active_account_ids.contains(&account_id) {
+        reply.reply = LoginReply::LoggedIn;
         debug!("Reply: {:?}", reply);
         tx.send(Command::Send(
             Action::Reply,
@@ -102,6 +118,7 @@ pub async fn request(
 
     debug!("Reply: {:?}", reply);
 
+    tx.send(Command::SetState(State::LoggedIn(account_id)))?;
     tx.send(Command::Send(
         Action::Reply,
         Family::Login,

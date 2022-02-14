@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use eo::{
     data::{EOInt, EOShort, StreamReader, MAX1},
     net::{Action, Family},
@@ -5,6 +7,7 @@ use eo::{
 use lazy_static::lazy_static;
 use mysql_async::Pool;
 use num_traits::FromPrimitive;
+use tokio::sync::Mutex;
 
 use crate::{
     handlers,
@@ -18,6 +21,7 @@ pub async fn handle_packet(
     packet: PacketBuf,
     bus: &mut PacketBus,
     players: Players,
+    active_account_ids: Arc<Mutex<Vec<u32>>>,
     db_pool: Pool,
     player_ip: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -110,7 +114,7 @@ pub async fn handle_packet(
                     bus.sequencer.get_sequence_start(),
                 )
                 .await?;
-            },
+            }
             Action::Create => {
                 let mut conn = db_pool.get_conn().await?;
                 handlers::account::create(
@@ -132,6 +136,8 @@ pub async fn handle_packet(
                 handlers::login::request(
                     buf,
                     players.lock().await.get(&player_id).unwrap(),
+                    // TODO: is this a performance hit?
+                    active_account_ids.lock().await.to_vec(),
                     &mut conn,
                     SETTINGS.server.password_salt.to_string(),
                 )

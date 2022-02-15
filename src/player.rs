@@ -18,6 +18,7 @@ pub enum Command {
     Pong,
     SetState(State),
     NewCharacter,
+    DeleteCharacter,
 }
 
 #[derive(Debug)]

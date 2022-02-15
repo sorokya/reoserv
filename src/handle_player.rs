@@ -79,6 +79,9 @@ pub async fn handle_player(
                     Command::NewCharacter => {
                         player.num_of_characters += 1;
                     }
+                    Command::DeleteCharacter => {
+                        player.num_of_characters -= 1;
+                    }
                     Command::Ping => {
                         if player.bus.need_pong {
                             info!("player {} connection closed: ping timeout", player_id);

@@ -2,6 +2,8 @@ mod create_account;
 pub use create_account::{create_account, CreateAccountParams};
 mod create_character;
 pub use create_character::{create_character, CreateCharacterParams};
+mod delete_character;
+pub use delete_character::delete_character;
 mod get_account;
 pub use get_account::get_account;
 mod get_character_list;

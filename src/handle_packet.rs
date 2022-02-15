@@ -169,6 +169,16 @@ pub async fn handle_packet(
                 )
                 .await?;
             }
+            Action::Take => {
+                let mut conn = db_pool.get_conn().await?;
+                handlers::character::take(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    &mut conn,
+                    account_id,
+                )
+                .await?;
+            }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }

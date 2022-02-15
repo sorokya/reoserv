@@ -1,3 +1,5 @@
+mod character_exists;
+pub use character_exists::character_exists;
 mod create_account;
 pub use create_account::{create_account, CreateAccountParams};
 mod create_character;

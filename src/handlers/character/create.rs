@@ -9,7 +9,7 @@ use eo::{
 use mysql_async::Conn;
 
 use crate::{
-    handlers::utils::{create_character, get_character_list, CreateCharacterParams},
+    handlers::utils::{create_character, get_character_list, CreateCharacterParams, character_exists},
     player::Command,
     PacketBuf, Tx,
 };
@@ -29,6 +29,17 @@ pub async fn create(
     let mut reply = Reply::new();
 
     // TODO: validate name
+
+    if character_exists(conn, &create.name).await? {
+        reply.reply = CharacterReply::Exists;
+        reply.message = "NO".to_string();
+        tx.send(Command::Send(
+            Action::Reply,
+            Family::Character,
+            reply.serialize(),
+        ))?;
+        return Ok(());
+    }
 
     match create_character(
         conn,

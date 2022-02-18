@@ -1,9 +1,9 @@
-use crate::map::Map;
 use eo::data::{
     map::MapFile,
     pubs::{
         ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile, TalkFile,
     },
+    EOShort,
 };
 use futures::stream::{self, StreamExt};
 use std::{
@@ -14,7 +14,7 @@ use std::{
 
 #[derive(Debug)]
 pub struct World {
-    pub maps: Arc<Mutex<HashMap<u32, Map>>>,
+    pub maps: Arc<Mutex<HashMap<EOShort, MapFile>>>,
     pub class_file: Arc<Mutex<ClassFile>>,
     pub drop_file: Arc<Mutex<DropFile>>,
     pub inn_file: Arc<Mutex<InnFile>>,
@@ -42,7 +42,7 @@ impl World {
         }
     }
 
-    pub async fn load_maps(&mut self, max_id: u32) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn load_maps(&mut self, max_id: EOShort) -> Result<(), Box<dyn std::error::Error>> {
         let mut load_handles = vec![];
         for i in 1..max_id {
             load_handles.push(self.load_map(i));
@@ -54,7 +54,7 @@ impl World {
             let load_result = load_result.unwrap();
             maps.lock()
                 .expect("Failed to get lock on maps")
-                .insert(load_result.0, Map::new(load_result.1));
+                .insert(load_result.0, load_result.1);
         }
         info!(
             "{} maps loaded",
@@ -79,7 +79,10 @@ impl World {
         Ok(())
     }
 
-    async fn load_map(&self, id: u32) -> Result<(u32, MapFile), Box<dyn std::error::Error>> {
+    async fn load_map(
+        &self,
+        id: EOShort,
+    ) -> Result<(EOShort, MapFile), Box<dyn std::error::Error>> {
         let raw_path = format!("maps/{:0>5}.emf", id);
         let path = Path::new(&raw_path);
         let mut file = MapFile::new();
@@ -190,7 +193,3 @@ impl World {
         Ok(())
     }
 }
-
-// async fn load_items() -> Result<ItemFile, Box<dyn std::error::Error>> {
-
-// }

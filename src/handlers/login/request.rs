@@ -7,8 +7,8 @@ use mysql_async::Conn;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    handlers::utils::{get_account, get_character_list},
     player::{Command, State},
+    utils::{get_account, get_character_list},
     PacketBuf, Tx,
 };
 

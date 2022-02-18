@@ -9,9 +9,9 @@ use lazy_static::lazy_static;
 
 mod character;
 mod handlers;
-mod map;
 mod player;
 mod settings;
+mod utils;
 mod world;
 use settings::Settings;
 
@@ -71,7 +71,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = mysql_async::Pool::new(mysql_async::Opts::from_url(&database_url).unwrap());
     {
-        let conn = pool.get_conn().await?;
+        let conn = pool
+            .get_conn()
+            .await
+            .expect("Failed to get connection from pool! Is MySQL running?");
         let mut results = r"SELECT
         (SELECT COUNT(*) FROM `Account`) 'accounts',
         (SELECT COUNT(*) FROM `Character`) 'characters',
@@ -95,9 +98,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
-    let mut world = World::new();
-    world.load_maps(282).await?;
-    world.load_pub_files().await?;
+    let world = Arc::new(Mutex::new(World::new()));
+    world.lock().await.load_maps(282).await?;
+    world.lock().await.load_pub_files().await?;
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
     let active_account_ids: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(Vec::new()));
@@ -129,6 +132,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (socket, addr) = listener.accept().await.unwrap();
         let players = players.clone();
         let active_account_ids = active_account_ids.clone();
+        let world = world.clone();
 
         let num_of_players = players.lock().await.len();
         if num_of_players >= SETTINGS.server.max_connections as usize {
@@ -145,7 +149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let pool = pool.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_player(players, active_account_ids, socket, pool).await {
+            if let Err(e) = handle_player(world, players, active_account_ids, socket, pool).await {
                 error!("there was an error processing player: {:?}", e);
             }
         });

@@ -9,8 +9,8 @@ use eo::{
 use mysql_async::Conn;
 
 use crate::{
-    handlers::utils::{create_character, get_character_list, CreateCharacterParams, character_exists},
     player::Command,
+    utils::{character_exists, create_character, get_character_list, CreateCharacterParams},
     PacketBuf, Tx,
 };
 
@@ -56,7 +56,7 @@ pub async fn create(
     {
         Ok(_) => {
             reply.reply = CharacterReply::Created;
-            reply.message = "YES".to_string();
+            reply.message = "OK".to_string();
             info!("New character: {}", create.name);
             tx.send(Command::NewCharacter)?;
         }

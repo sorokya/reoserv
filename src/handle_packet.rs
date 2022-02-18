@@ -10,9 +10,11 @@ use num_traits::FromPrimitive;
 use tokio::sync::Mutex;
 
 use crate::{
+    character::Character,
     handlers,
     player::{Command, PacketBus},
     settings::Settings,
+    world::World,
     PacketBuf, Players,
 };
 
@@ -21,12 +23,14 @@ pub async fn handle_packet(
     player_id: EOShort,
     packet: PacketBuf,
     bus: &mut PacketBus,
+    world: Arc<Mutex<World>>,
     players: Players,
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     db_pool: Pool,
     player_ip: &str,
     account_id: u32,
     num_of_characters: EOChar,
+    character: &Option<Character>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
@@ -42,7 +46,7 @@ pub async fn handle_packet(
         }
 
         let server_sequence = bus.sequencer.gen_sequence();
-        let client_sequence = if server_sequence > MAX1 {
+        let client_sequence = if server_sequence >= MAX1 {
             reader.get_short() as EOInt
         } else {
             reader.get_char() as EOInt
@@ -176,6 +180,42 @@ pub async fn handle_packet(
                     players.lock().await.get(&player_id).unwrap(),
                     &mut conn,
                     account_id,
+                )
+                .await?;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
+        Family::Welcome => match action {
+            Action::Request => {
+                let mut conn = db_pool.get_conn().await?;
+                handlers::welcome::request(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    &mut conn,
+                    world,
+                    player_id,
+                )
+                .await?;
+            }
+            Action::Agree => {
+                let character = character.as_ref().expect("Character is not set!");
+                handlers::welcome::agree(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    world,
+                    character.map_id,
+                )
+                .await?;
+            }
+            Action::Message => {
+                let character = character.as_ref().expect("Character is not set!");
+                handlers::welcome::message(
+                    buf,
+                    players.lock().await.get(&player_id).unwrap(),
+                    character,
+                    player_id,
                 )
                 .await?;
             }

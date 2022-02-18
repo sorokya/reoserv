@@ -1,0 +1,62 @@
+SELECT c.name,
+	c.title,
+       c.home,
+       c.fiance,
+       c.partner,
+       c.admin_level,
+       c.class,
+       c.gender,
+       c.race,
+       c.hair_style,
+       c.hair_color,
+       c.bank_max,
+       c.gold_bank,
+       c.guild_rank_id,
+       c.guild_rank_string,
+       p.boots,
+       p.accessory,
+       p.gloves,
+       p.belt,
+       p.armor,
+       p.necklace,
+       p.hat,
+       p.shield,
+       p.weapon,
+       p.ring,
+       p.ring2,
+       p.armlet,
+       p.armlet2,
+       p.bracer,
+       p.bracer2,
+       s.level,
+       s.experience,
+       s.hp,
+       s.tp,
+       s.strength,
+       s.intelligence,
+       s.wisdom,
+       s.agility,
+       s.constitution,
+       s.charisma,
+       s.stat_points,
+       s.skill_points,
+       s.karma,
+       s.usage,
+       pos.map,
+       pos.x,
+       pos.y,
+       pos.direction,
+       pos.sitting,
+       pos.hidden,
+       g.name 'guild_name',
+       g.tag
+FROM `Character` c
+INNER JOIN Paperdoll p
+	ON p.character_id = c.id
+INNER JOIN Stats s
+	ON s.character_id = c.id
+INNER JOIN `Position` pos
+	ON pos.character_id = c.id
+LEFT JOIN Guild g
+	ON g.id = c.guild_id
+WHERE c.id = :character_id;

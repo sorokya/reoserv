@@ -47,10 +47,12 @@ pub async fn create_character(
         ) VALUES (:character_id);",
         params! {
             "character_id" => &character_id,
-        }
-    ).await?;
+        },
+    )
+    .await?;
 
-    tx.exec_drop(r"INSERT INTO `Position` (
+    tx.exec_drop(
+        r"INSERT INTO `Position` (
             `character_id`,
             `map`,
             `x`,
@@ -62,22 +64,25 @@ pub async fn create_character(
             :x,
             :y,
             :direction
-        );", params! {
+        );",
+        params! {
             "character_id" => &character_id,
             "map" => &SETTINGS.new_character.spawn_map,
             "x" => &SETTINGS.new_character.spawn_x,
             "y" => &SETTINGS.new_character.spawn_y,
             "direction" => &SETTINGS.new_character.spawn_direction,
-        }
-    ).await?;
+        },
+    )
+    .await?;
 
     tx.exec_drop(
         r" INSERT INTO `Stats` (`character_id`)
         VALUES (:character_id);",
         params! {
             "character_id" => &character_id,
-        }
-    ).await?;
+        },
+    )
+    .await?;
 
     tx.commit().await?;
     Ok(())

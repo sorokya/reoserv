@@ -5,7 +5,7 @@ use eo::{
 };
 use mysql_async::Conn;
 
-use crate::{handlers::utils::get_account, player::Command, PacketBuf, Tx};
+use crate::{player::Command, utils::get_account, PacketBuf, Tx};
 
 pub async fn request(
     buf: PacketBuf,

@@ -7,7 +7,7 @@ use eo::{
 };
 use tokio::{net::TcpStream, sync::mpsc};
 
-use crate::{PacketBuf, Players, Rx};
+use crate::{character::Character, PacketBuf, Players, Rx};
 
 #[derive(Debug)]
 pub enum Command {
@@ -19,6 +19,7 @@ pub enum Command {
     SetState(State),
     NewCharacter,
     DeleteCharacter,
+    SetCharacter(Character),
 }
 
 #[derive(Debug)]
@@ -87,7 +88,7 @@ impl PacketBus {
         builder.append(&mut data);
 
         let mut buf = builder.get();
-        debug!("Send: {:?}", buf);
+        trace!("Send: {:?}", buf);
         self.packet_processor.encode(&mut buf);
 
         let length_bytes = encode_number(packet_size as u32);

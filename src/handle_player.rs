@@ -12,12 +12,15 @@ use mysql_async::Pool;
 use tokio::{net::TcpStream, sync::Mutex};
 
 use crate::{
+    character::Character,
     handle_packet::handle_packet,
     player::{Command, Player, State},
+    world::World,
     PacketBuf, Players, Tx,
 };
 
 pub async fn handle_player(
+    world: Arc<Mutex<World>>,
     players: Players,
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     socket: TcpStream,
@@ -30,12 +33,14 @@ pub async fn handle_player(
 
     let player_ip = socket.peer_addr()?.ip().to_string();
     let mut player = Player::new(players.clone(), socket, player_id).await;
+    let mut character: Option<Character> = None;
     let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
+
     loop {
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    debug!("Recv: {:?}", packet);
+                    trace!("Recv: {:?}", packet);
                     queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {
@@ -82,6 +87,9 @@ pub async fn handle_player(
                     Command::DeleteCharacter => {
                         player.num_of_characters -= 1;
                     }
+                    Command::SetCharacter(selected_chracter) => {
+                        character = Some(selected_chracter);
+                    }
                     Command::Ping => {
                         if player.bus.need_pong {
                             info!("player {} connection closed: ping timeout", player_id);
@@ -112,12 +120,14 @@ pub async fn handle_player(
                 player_id,
                 packet,
                 &mut player.bus,
+                world.clone(),
                 players.clone(),
                 active_account_ids.clone(),
                 db_pool,
                 &player_ip,
                 player.account_id,
                 player.num_of_characters,
+                &character,
             )
             .await
             {

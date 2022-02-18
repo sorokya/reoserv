@@ -9,8 +9,8 @@ use eo::{
 use mysql_async::Conn;
 
 use crate::{
-    handlers::utils::{delete_character, get_character_list},
     player::Command,
+    utils::{delete_character, get_character_list},
     PacketBuf, Tx,
 };
 
@@ -28,12 +28,7 @@ pub async fn take(
 
     let mut reply = Reply::new();
 
-    match delete_character(
-        conn,
-        take.character_id,
-    )
-    .await
-    {
+    match delete_character(conn, take.character_id).await {
         Ok(_) => {
             reply.reply = CharacterReply::Deleted;
             reply.message = "YES".to_string();

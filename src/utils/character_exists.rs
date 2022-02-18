@@ -14,6 +14,6 @@ pub async fn character_exists(
         .await?
     {
         Some(_) => Ok(true),
-        _ => Ok(false)
+        _ => Ok(false),
     }
 }

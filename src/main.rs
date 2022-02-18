@@ -32,6 +32,8 @@ use tokio::{
 
 use world::World;
 
+use crate::character::Character;
+
 pub type PacketBuf = Vec<EOByte>;
 pub type Tx = mpsc::UnboundedSender<Command>;
 pub type Rx = mpsc::UnboundedReceiver<Command>;
@@ -104,6 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));
     let active_account_ids: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(Vec::new()));
+    let characters: Arc<Mutex<Vec<Character>>> = Arc::new(Mutex::new(Vec::new()));
 
     let listener =
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port)).await?;
@@ -132,6 +135,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (socket, addr) = listener.accept().await.unwrap();
         let players = players.clone();
         let active_account_ids = active_account_ids.clone();
+        let characters = characters.clone();
         let world = world.clone();
 
         let num_of_players = players.lock().await.len();
@@ -149,7 +153,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let pool = pool.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_player(world, players, active_account_ids, socket, pool).await {
+            if let Err(e) =
+                handle_player(world, players, characters, active_account_ids, socket, pool).await
+            {
                 error!("there was an error processing player: {:?}", e);
             }
         });

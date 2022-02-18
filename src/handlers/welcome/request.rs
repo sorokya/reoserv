@@ -23,6 +23,7 @@ pub async fn request(
     conn: &mut Conn,
     world: Arc<Mutex<World>>,
     player_id: EOShort,
+    characters: Arc<Mutex<Vec<Character>>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut request = Request::default();
     let reader = StreamReader::new(&buf);
@@ -35,12 +36,11 @@ pub async fn request(
     let mut reply = Reply::new();
     reply.reply = WelcomeReply::SelectCharacter;
 
-    let character = Character::load(conn, request.character_id).await?;
-
-    tx.send(Command::SetCharacter(character.clone()))?;
+    let mut character = Character::load(conn, request.character_id).await?;
+    character.player_id = player_id;
 
     let mut select_character = SelectCharacter::new();
-    select_character.player_id = player_id;
+    select_character.player_id = character.player_id;
     select_character.character_id = character.id;
     select_character.map_id = character.map_id;
 
@@ -115,6 +115,8 @@ pub async fn request(
     };
 
     reply.select_character = Some(select_character);
+
+    characters.lock().await.push(character);
 
     debug!("Reply: {:?}", reply);
 

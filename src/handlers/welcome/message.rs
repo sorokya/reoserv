@@ -1,4 +1,4 @@
-
+use std::sync::Arc;
 
 use eo::{
     data::{EOChar, EOShort, Serializeable, StreamReader},
@@ -11,13 +11,19 @@ use eo::{
         Action, CharacterMapInfo, Family, NearbyInfo, PaperdollB000A0HSW, Weight,
     },
 };
+use tokio::sync::Mutex;
 
-use crate::{character::Character, player::Command, PacketBuf, Tx};
+use crate::{
+    character::Character,
+    player::{Command, State},
+    utils::in_range,
+    PacketBuf, Tx,
+};
 
 pub async fn message(
     buf: PacketBuf,
     tx: &Tx,
-    character: &Character,
+    characters: Arc<Mutex<Vec<Character>>>,
     player_id: EOShort,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut request = Message::default();
@@ -29,9 +35,29 @@ pub async fn message(
     let mut reply = Reply::new();
     reply.reply = WelcomeReply::EnterGame;
 
+    let characters = characters.lock().await;
+    let player_character = characters
+        .iter()
+        .find(|c| c.player_id == player_id)
+        .unwrap();
+    let nearby_characters: Vec<&Character> = characters
+        .iter()
+        .filter(|c| {
+            c.id == player_character.id
+                || c.map_id == player_character.map_id
+                    && in_range(
+                        player_character.coords.x as f64,
+                        player_character.coords.y as f64,
+                        c.coords.x as f64,
+                        c.coords.y as f64,
+                    )
+        })
+        .collect();
+
     let mut enter_game = EnterGame::new();
-    enter_game.news[0] = "Welcome to my server!".to_string();
-    enter_game.news[1] = "Powered by rust!".to_string();
+    enter_game.news[0] = "Welcome to my server! Powered by reoserv.".to_string();
+    enter_game.news[1] =
+        "[Feb 18] Players can enter the game world but are still alone!".to_string();
     enter_game.weight = Weight {
         current: 0,
         max: 70,
@@ -39,9 +65,9 @@ pub async fn message(
     enter_game.items = vec![];
     enter_game.spells = vec![];
     enter_game.nearby_info = NearbyInfo::default();
-    enter_game.nearby_info.characters.push(CharacterMapInfo {
+    enter_game.nearby_info.characters = nearby_characters.iter().map(|character| CharacterMapInfo {
         name: character.name.to_string(),
-        id: player_id,
+        id: character.player_id,
         map_id: character.map_id,
         coords: character.coords,
         direction: character.direction,
@@ -65,11 +91,12 @@ pub async fn message(
         },
         sit_state: character.sit_state,
         invisible: character.hidden,
-    });
+    }).collect();
     reply.enter_game = Some(enter_game);
 
     debug!("Reply: {:?}", reply);
 
+    tx.send(Command::SetState(State::Playing(request.character_id)))?;
     tx.send(Command::Send(
         Action::Reply,
         Family::Welcome,

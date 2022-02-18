@@ -22,6 +22,7 @@ use crate::{
 pub async fn handle_player(
     world: Arc<Mutex<World>>,
     players: Players,
+    characters: Arc<Mutex<Vec<Character>>>,
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     socket: TcpStream,
     db_pool: Pool,
@@ -31,9 +32,8 @@ pub async fn handle_player(
         get_next_player_id(&players, 1)
     };
 
-    let player_ip = socket.peer_addr()?.ip().to_string();
-    let mut player = Player::new(players.clone(), socket, player_id).await;
-    let mut character: Option<Character> = None;
+    let ip = socket.peer_addr()?.ip().to_string();
+    let mut player = Player::new(players.clone(), socket, player_id, ip).await;
     let mut queue: RefCell<VecDeque<PacketBuf>> = RefCell::new(VecDeque::new());
 
     loop {
@@ -46,11 +46,11 @@ pub async fn handle_player(
                 Some(Err(e)) => {
                     match e.kind() {
                         std::io::ErrorKind::BrokenPipe => {
-                            info!("player {} connection closed by peer", player_id);
+                            info!("player {} connection closed by peer", player.id);
                             break;
                         },
                         _ => {
-                            info!("player {} connection closed due to unknown error: {:?}", player_id, e);
+                            info!("player {} connection closed due to unknown error: {:?}", player.id, e);
                             break;
                         }
                     }
@@ -64,7 +64,7 @@ pub async fn handle_player(
                         player.bus.send(action, family, data).await?;
                     },
                     Command::Close(reason) => {
-                        info!("player {} connection closed: {}", player_id, reason);
+                        info!("player {} connection closed: {}", player.id, reason);
                         break;
                     }
                     Command::SetState(state) => {
@@ -87,12 +87,9 @@ pub async fn handle_player(
                     Command::DeleteCharacter => {
                         player.num_of_characters -= 1;
                     }
-                    Command::SetCharacter(selected_chracter) => {
-                        character = Some(selected_chracter);
-                    }
                     Command::Ping => {
                         if player.bus.need_pong {
-                            info!("player {} connection closed: ping timeout", player_id);
+                            info!("player {} connection closed: ping timeout", player.id);
                             break;
                         } else {
                             player.bus.sequencer.ping_new_sequence();
@@ -117,17 +114,13 @@ pub async fn handle_player(
         if let Some(packet) = queue.get_mut().pop_front() {
             let db_pool = db_pool.clone();
             match handle_packet(
-                player_id,
                 packet,
-                &mut player.bus,
+                &mut player,
                 world.clone(),
                 players.clone(),
                 active_account_ids.clone(),
                 db_pool,
-                &player_ip,
-                player.account_id,
-                player.num_of_characters,
-                &character,
+                characters.clone(),
             )
             .await
             {
@@ -139,7 +132,12 @@ pub async fn handle_player(
         }
     }
 
-    players.lock().await.remove(&player_id);
+    players.lock().await.remove(&player.id);
+
+    if player.character_id != 0 {
+        let mut characters = characters.lock().await;
+        characters.retain(|character| character.player_id != player.id);
+    }
 
     if player.account_id != 0 {
         let mut accounts = active_account_ids.lock().await;

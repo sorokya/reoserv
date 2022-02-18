@@ -13,6 +13,7 @@ use num_traits::FromPrimitive;
 #[derive(Debug, Clone, Default)]
 pub struct Character {
     pub id: EOInt,
+    pub player_id: EOShort,
     pub name: String,
     pub title: Option<String>,
     pub home: String,

@@ -7,7 +7,7 @@ use eo::{
 };
 use tokio::{net::TcpStream, sync::mpsc};
 
-use crate::{character::Character, PacketBuf, Players, Rx};
+use crate::{PacketBuf, Players, Rx};
 
 #[derive(Debug)]
 pub enum Command {
@@ -19,7 +19,6 @@ pub enum Command {
     SetState(State),
     NewCharacter,
     DeleteCharacter,
-    SetCharacter(Character),
 }
 
 #[derive(Debug)]
@@ -31,26 +30,30 @@ pub enum State {
 }
 
 pub struct Player {
+    pub id: EOShort,
     pub rx: Rx,
     pub bus: PacketBus,
     pub state: State,
     pub account_id: u32,
     pub num_of_characters: EOChar,
     pub character_id: u32,
+    pub ip: String,
 }
 
 impl Player {
-    pub async fn new(players: Players, socket: TcpStream, player_id: EOShort) -> Self {
+    pub async fn new(players: Players, socket: TcpStream, player_id: EOShort, ip: String) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         players.lock().await.insert(player_id, tx);
 
         Self {
+            id: player_id,
             rx,
             bus: PacketBus::new(socket),
             state: State::Uninitialized,
             account_id: 0,
             character_id: 0,
             num_of_characters: 0,
+            ip,
         }
     }
 }

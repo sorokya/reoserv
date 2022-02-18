@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamReader, MAX1},
+    data::{EOInt, StreamReader, MAX1},
     net::{Action, Family},
 };
 use lazy_static::lazy_static;
@@ -12,25 +12,20 @@ use tokio::sync::Mutex;
 use crate::{
     character::Character,
     handlers,
-    player::{Command, PacketBus},
+    player::{Command, Player},
     settings::Settings,
     world::World,
     PacketBuf, Players,
 };
 
-// TODO: group some of these params into a struct?
 pub async fn handle_packet(
-    player_id: EOShort,
     packet: PacketBuf,
-    bus: &mut PacketBus,
+    player: &mut Player,
     world: Arc<Mutex<World>>,
     players: Players,
     active_account_ids: Arc<Mutex<Vec<u32>>>,
     db_pool: Pool,
-    player_ip: &str,
-    account_id: u32,
-    num_of_characters: EOChar,
-    character: &Option<Character>,
+    characters: Arc<Mutex<Vec<Character>>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
@@ -42,10 +37,10 @@ pub async fn handle_packet(
 
     if family != Family::Init {
         if family == Family::Connection && action == Action::Ping {
-            bus.sequencer.pong_new_sequence();
+            player.bus.sequencer.pong_new_sequence();
         }
 
-        let server_sequence = bus.sequencer.gen_sequence();
+        let server_sequence = player.bus.sequencer.gen_sequence();
         let client_sequence = if server_sequence >= MAX1 {
             reader.get_short() as EOInt
         } else {
@@ -56,7 +51,7 @@ pub async fn handle_packet(
             players
                 .lock()
                 .await
-                .get(&player_id)
+                .get(&player.id)
                 .unwrap()
                 .send(Command::Close(format!(
                     "sending invalid sequence: Got {}, expected {}.",
@@ -64,7 +59,7 @@ pub async fn handle_packet(
                 )))?;
         }
     } else {
-        bus.sequencer.gen_sequence();
+        player.bus.sequencer.gen_sequence();
     }
 
     let buf = reader.get_vec(reader.remaining());
@@ -73,11 +68,11 @@ pub async fn handle_packet(
             Action::Init => {
                 handlers::init::init(
                     buf,
-                    player_id,
-                    bus.sequencer.get_init_sequence_bytes(),
-                    bus.packet_processor.decode_multiple,
-                    bus.packet_processor.encode_multiple,
-                    players.lock().await.get(&player_id).unwrap(),
+                    player.id,
+                    player.bus.sequencer.get_init_sequence_bytes(),
+                    player.bus.packet_processor.decode_multiple,
+                    player.bus.packet_processor.encode_multiple,
+                    players.lock().await.get(&player.id).unwrap(),
                 )
                 .await?;
             }
@@ -89,10 +84,10 @@ pub async fn handle_packet(
             Action::Accept => {
                 handlers::connection::accept(
                     buf,
-                    player_id,
-                    bus.packet_processor.decode_multiple,
-                    bus.packet_processor.encode_multiple,
-                    players.lock().await.get(&player_id).unwrap(),
+                    player.id,
+                    player.bus.packet_processor.decode_multiple,
+                    player.bus.packet_processor.encode_multiple,
+                    players.lock().await.get(&player.id).unwrap(),
                 )
                 .await?;
             }
@@ -100,7 +95,7 @@ pub async fn handle_packet(
                 players
                     .lock()
                     .await
-                    .get(&player_id)
+                    .get(&player.id)
                     .unwrap()
                     .send(Command::Pong)?;
             }
@@ -111,14 +106,14 @@ pub async fn handle_packet(
         Family::Account => match action {
             Action::Request => {
                 let mut conn = db_pool.get_conn().await?;
-                if bus.sequencer.too_big_for_account_reply() {
-                    bus.sequencer.account_reply_new_sequence();
+                if player.bus.sequencer.too_big_for_account_reply() {
+                    player.bus.sequencer.account_reply_new_sequence();
                 }
                 handlers::account::request(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     &mut conn,
-                    bus.sequencer.get_sequence_start(),
+                    player.bus.sequencer.get_sequence_start(),
                 )
                 .await?;
             }
@@ -126,10 +121,10 @@ pub async fn handle_packet(
                 let mut conn = db_pool.get_conn().await?;
                 handlers::account::create(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     &mut conn,
                     SETTINGS.server.password_salt.to_string(),
-                    player_ip,
+                    &player.ip,
                 )
                 .await?;
             }
@@ -142,8 +137,7 @@ pub async fn handle_packet(
                 let mut conn = db_pool.get_conn().await?;
                 handlers::login::request(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
-                    // TODO: is this a performance hit?
+                    players.lock().await.get(&player.id).unwrap(),
                     active_account_ids.lock().await.to_vec(),
                     &mut conn,
                     SETTINGS.server.password_salt.to_string(),
@@ -158,8 +152,8 @@ pub async fn handle_packet(
             Action::Request => {
                 handlers::character::request(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
-                    num_of_characters,
+                    players.lock().await.get(&player.id).unwrap(),
+                    player.num_of_characters,
                 )
                 .await?;
             }
@@ -167,9 +161,9 @@ pub async fn handle_packet(
                 let mut conn = db_pool.get_conn().await?;
                 handlers::character::create(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     &mut conn,
-                    account_id,
+                    player.account_id,
                 )
                 .await?;
             }
@@ -177,9 +171,9 @@ pub async fn handle_packet(
                 let mut conn = db_pool.get_conn().await?;
                 handlers::character::take(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     &mut conn,
-                    account_id,
+                    player.account_id,
                 )
                 .await?;
             }
@@ -192,30 +186,34 @@ pub async fn handle_packet(
                 let mut conn = db_pool.get_conn().await?;
                 handlers::welcome::request(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     &mut conn,
                     world,
-                    player_id,
+                    player.id,
+                    characters.clone(),
                 )
                 .await?;
             }
             Action::Agree => {
-                let character = character.as_ref().expect("Character is not set!");
+                let characters = characters.lock().await;
+                let character = characters
+                    .iter()
+                    .find(|c| c.player_id == player.id)
+                    .unwrap();
                 handlers::welcome::agree(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
+                    players.lock().await.get(&player.id).unwrap(),
                     world,
                     character.map_id,
                 )
                 .await?;
             }
             Action::Message => {
-                let character = character.as_ref().expect("Character is not set!");
                 handlers::welcome::message(
                     buf,
-                    players.lock().await.get(&player_id).unwrap(),
-                    character,
-                    player_id,
+                    players.lock().await.get(&player.id).unwrap(),
+                    characters.clone(),
+                    player.id,
                 )
                 .await?;
             }

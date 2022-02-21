@@ -30,10 +30,23 @@ MYSQL_REOSERV_PASSWORD=<REOSERV_PASSWORD>
 
 `docker-compose up`
 
+# Configure the server
+
+_You can either edit Config.toml directly or edit a copy Config.local.toml_
+
+The only required change right now is the settings for the database connection.
+
+If you're using the provided docker-compose file then all you need to do is set
+password to the same password you set to for `MYSQL_REOSERV_PASSWORD` in the .env file.
+
 # Start server
 
 You can run the server with
 
 `cargo run`
 
-(if you want more logging then set the `RUST_LOG` environment variable to either `trace`, or `debug`)
+(if you want more logging then set the `RUST_LOG` environment variable to one
+of the following:
+
+- debug: The human readable data structures for every packet will be printed
+- trace: The raw byte arrays for every packet will be printed

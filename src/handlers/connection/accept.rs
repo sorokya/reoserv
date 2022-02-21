@@ -25,7 +25,7 @@ pub async fn accept(
         )))?;
     }
 
-    let expected_multiples = [encode_multiple, decode_multiple];
+    let expected_multiples = [decode_multiple, encode_multiple];
 
     if expected_multiples != packet.encoding_multiples {
         tx.send(Command::Close(format!(

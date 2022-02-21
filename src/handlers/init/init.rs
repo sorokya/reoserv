@@ -33,7 +33,7 @@ pub async fn init(
     init_ok.player_id = player_id;
 
     init_ok.sequence_bytes = [sequence_bytes.0 as EOByte, sequence_bytes.1];
-    init_ok.encoding_multiples = [decode_multiple, encode_multiple];
+    init_ok.encoding_multiples = [encode_multiple, decode_multiple];
 
     debug!("Reply code: {:?}, data: {:?}", reply.reply_code, init_ok);
 

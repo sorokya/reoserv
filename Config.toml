@@ -14,9 +14,7 @@ password_salt = "ChangeMe"
 
 # Validate the sequence number sent by the client
 # matches the one on the server
-# Doesn't always work. Best to leave disabled until
-# it's fixed.
-enforce_sequence = false
+enforce_sequence = true
 
 [new_character]
 spawn_map = 192

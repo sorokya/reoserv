@@ -8,6 +8,7 @@ pub struct Server {
     pub password_salt: String,
     pub ping_rate: u32,
     pub enforce_sequence: bool,
+    pub num_of_maps: u32,
 }
 
 #[derive(Debug, Deserialize)]

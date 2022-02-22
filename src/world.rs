@@ -44,17 +44,23 @@ impl World {
 
     pub async fn load_maps(&mut self, max_id: EOShort) -> Result<(), Box<dyn std::error::Error>> {
         let mut load_handles = vec![];
-        for i in 1..max_id {
+        for i in 1..max_id + 1 {
             load_handles.push(self.load_map(i));
         }
 
         let mut stream = stream::iter(load_handles).buffer_unordered(100);
         let maps = self.maps.clone();
         while let Some(load_result) = stream.next().await {
-            let load_result = load_result.unwrap();
-            maps.lock()
-                .expect("Failed to get lock on maps")
-                .insert(load_result.0, load_result.1);
+            match load_result {
+                Ok(load_result) => {
+                    maps.lock()
+                        .expect("Failed to get lock on maps")
+                        .insert(load_result.0, load_result.1);
+                },
+                Err(err) => {
+                    warn!("Failed to load map: {}", err);
+                }
+            }
         }
         info!(
             "{} maps loaded",
@@ -89,6 +95,11 @@ impl World {
         if Path::exists(path) {
             let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
             file.read(&mut raw_file)?;
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Map file not found: {}", raw_path),
+            )));
         }
 
         Ok((id, file))
@@ -101,6 +112,8 @@ impl World {
             let mut class_file = self.class_file.lock()?;
             class_file.read(&mut raw_file)?;
             info!("{} classes loaded", class_file.records.len());
+        } else {
+            warn!("Class file not found: {}", path.display());
         }
         Ok(())
     }
@@ -112,6 +125,8 @@ impl World {
             let mut drop_file = self.drop_file.lock()?;
             drop_file.read(&mut raw_file)?;
             info!("{} drops loaded", drop_file.records.len());
+        } else {
+            warn!("Drop file not found: {}", path.display());
         }
         Ok(())
     }
@@ -123,6 +138,8 @@ impl World {
             let mut inn_file = self.inn_file.lock()?;
             inn_file.read(&mut raw_file)?;
             info!("{} inns loaded", inn_file.records.len());
+        } else {
+            warn!("Inn file not found: {}", path.display());
         }
         Ok(())
     }
@@ -134,6 +151,8 @@ impl World {
             let mut item_file = self.item_file.lock()?;
             item_file.read(&mut raw_file)?;
             info!("{} items loaded", item_file.records.len());
+        } else {
+            warn!("Item file not found: {}", path.display());
         }
         Ok(())
     }
@@ -145,6 +164,8 @@ impl World {
             let mut master_file = self.master_file.lock()?;
             master_file.read(&mut raw_file)?;
             info!("{} skill masters loaded", master_file.records.len());
+        } else {
+            warn!("Skill Master file not found: {}", path.display());
         }
         Ok(())
     }
@@ -156,6 +177,8 @@ impl World {
             let mut npc_file = self.npc_file.lock()?;
             npc_file.read(&mut raw_file)?;
             info!("{} npcs loaded", npc_file.records.len());
+        } else {
+            warn!("NPC file not found: {}", path.display());
         }
         Ok(())
     }
@@ -167,6 +190,8 @@ impl World {
             let mut shop_file = self.shop_file.lock()?;
             shop_file.read(&mut raw_file)?;
             info!("{} shops loaded", shop_file.records.len());
+        } else {
+            warn!("Shop file not found: {}", path.display());
         }
         Ok(())
     }
@@ -178,6 +203,8 @@ impl World {
             let mut spell_file = self.spell_file.lock()?;
             spell_file.read(&mut raw_file)?;
             info!("{} spells loaded", spell_file.records.len());
+        } else {
+            warn!("Spell file not found: {}", path.display());
         }
         Ok(())
     }
@@ -189,6 +216,8 @@ impl World {
             let mut talk_file = self.talk_file.lock()?;
             talk_file.read(&mut raw_file)?;
             info!("{} speech records loaded", talk_file.records.len());
+        } else {
+            warn!("Talk file not found: {}", path.display());
         }
         Ok(())
     }

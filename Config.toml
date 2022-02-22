@@ -1,5 +1,8 @@
 [server]
+# Host IP the server will listen for incoming connections on
 host = "0.0.0.0"
+
+# Host Port the server will listen for incoming connections on
 port = "8078"
 
 # Maximum amount of connections to allow to the server
@@ -10,12 +13,19 @@ max_connections = 300
 # ping before the next one is sent.
 ping_rate = 60
 
+# The salt value used when hashing account passwords
+# This should be changed to a random value to prevent
+# rainbow table attacks
 password_salt = "ChangeMe"
 
 # Validate the sequence number sent by the client
 # matches the one on the server
 enforce_sequence = true
 
+# Number of maps to attempt to load
+num_of_maps = 282
+
+# Initial location and home for new characters
 [new_character]
 spawn_map = 192
 spawn_x = 7

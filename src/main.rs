@@ -101,7 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let world = Arc::new(Mutex::new(World::new()));
-    world.lock().await.load_maps(282).await?;
+    world.lock().await.load_maps(SETTINGS.server.num_of_maps as EOShort).await?;
     world.lock().await.load_pub_files().await?;
 
     let players: Players = Arc::new(Mutex::new(HashMap::new()));

@@ -28,9 +28,10 @@ num_of_maps = 282
 # Initial location and home for new characters
 [new_character]
 spawn_map = 192
-spawn_x = 7
+spawn_x = 6
 spawn_y = 6
-spawn_direction = 2
+# 0 = Down, 1 = Left, 2 = Up, 3 = Right
+spawn_direction = 0
 home = "Wanderer"
 
 [database]

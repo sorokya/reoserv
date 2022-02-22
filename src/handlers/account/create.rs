@@ -52,7 +52,7 @@ pub async fn create(
         {
             Ok(_) => {
                 reply.reply = AccountReply::Created;
-                reply.message = "YES".to_string();
+                reply.message = "OK".to_string();
                 info!("New account: {}", create.name);
             }
             Err(e) => {

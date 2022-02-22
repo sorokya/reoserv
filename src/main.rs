@@ -125,7 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut players = ping_players.lock().await;
             for (_, tx) in players.iter_mut() {
                 if let Err(e) = tx.send(Command::Ping) {
-                    error!("there was an error sending ping: {:?}", e);
+                    let _ = tx.send(Command::Close(e.to_string()));
                 }
             }
         }

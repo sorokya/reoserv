@@ -31,7 +31,7 @@ pub async fn take(
     match delete_character(conn, take.character_id).await {
         Ok(_) => {
             reply.reply = CharacterReply::Deleted;
-            reply.message = "YES".to_string();
+            reply.message = "OK".to_string();
             tx.send(Command::DeleteCharacter)?;
         }
         Err(e) => {

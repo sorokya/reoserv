@@ -5,39 +5,24 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
+use std::sync::Arc;
+
 use lazy_static::lazy_static;
 
 mod character;
-mod handlers;
 mod player;
 mod settings;
 mod utils;
 mod world;
 use settings::Settings;
 
-mod handle_packet;
-mod handle_player;
-use handle_player::handle_player;
-
-use std::{collections::HashMap, sync::Arc, time::Duration};
-
-use eo::data::{EOByte, EOShort};
+use eo::data::EOByte;
 use mysql_async::prelude::*;
-use player::Command;
-use tokio::{
-    net::TcpListener,
-    sync::{mpsc, Mutex},
-    time,
-};
 
-use world::World;
-
-use crate::character::Character;
+use tokio::sync::Mutex;
+use world::WorldHandle;
 
 pub type PacketBuf = Vec<EOByte>;
-pub type Tx = mpsc::UnboundedSender<Command>;
-pub type Rx = mpsc::UnboundedReceiver<Command>;
-pub type Players = Arc<Mutex<HashMap<EOShort, Tx>>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,65 +85,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
-    let world = Arc::new(Mutex::new(World::new()));
-    world.lock().await.load_maps(SETTINGS.server.num_of_maps as EOShort).await?;
-    world.lock().await.load_pub_files().await?;
-
-    let players: Players = Arc::new(Mutex::new(HashMap::new()));
-    let active_account_ids: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new(Vec::new()));
-    let characters: Arc<Mutex<Vec<Character>>> = Arc::new(Mutex::new(Vec::new()));
-
-    let listener =
-        TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port)).await?;
-    info!(
-        "listening at {}:{}",
-        SETTINGS.server.host, SETTINGS.server.port
+    let world = Arc::new(Mutex::new(WorldHandle::new()));
+    let local_world = world.clone();
+    let local_world = local_world.lock().await;
+    let _ = tokio::join!(
+        local_world.load_pubs(),
+        local_world.load_maps(),
+        local_world.start_listener(),
     );
 
-    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
-    let ping_players = players.clone();
-    // Skip the first tick because it's instant
-    ping_interval.tick().await;
-    tokio::spawn(async move {
-        loop {
-            ping_interval.tick().await;
-            let mut players = ping_players.lock().await;
-            for (_, tx) in players.iter_mut() {
-                if let Err(e) = tx.send(Command::Ping) {
-                    let _ = tx.send(Command::Close(e.to_string()));
-                }
-            }
-        }
-    });
-
-    loop {
-        let (socket, addr) = listener.accept().await.unwrap();
-        let players = players.clone();
-        let active_account_ids = active_account_ids.clone();
-        let characters = characters.clone();
-        let world = world.clone();
-
-        let num_of_players = players.lock().await.len();
-        if num_of_players >= SETTINGS.server.max_connections as usize {
-            warn!("{} has been disconnected because the server is full", addr);
-            continue;
-        }
-
-        info!(
-            "connection accepted ({}) {}/{}",
-            addr,
-            num_of_players + 1,
-            SETTINGS.server.max_connections
-        );
-
-        let pool = pool.clone();
-        tokio::spawn(async move {
-            if let Err(e) =
-                handle_player(world, players, characters, active_account_ids, socket, pool).await
-            {
-                error!("there was an error processing player: {:?}", e);
-            }
-        });
+    while local_world.is_alive {
+        let player_world = world.clone();
+        local_world.accept_connection(player_world).await;
     }
 
     Ok(())

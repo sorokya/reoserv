@@ -1,10 +1,5 @@
-use std::sync::Arc;
-
 use eo::data::EOShort;
-use tokio::{
-    net::TcpStream,
-    sync::{mpsc, Mutex},
-};
+use tokio::{net::TcpStream, sync::mpsc};
 
 use crate::world::WorldHandle;
 
@@ -16,7 +11,7 @@ pub struct PlayerHandle {
 }
 
 impl PlayerHandle {
-    pub fn new(player_id: EOShort, socket: TcpStream, world: Arc<Mutex<WorldHandle>>) -> Self {
+    pub fn new(player_id: EOShort, socket: TcpStream, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let player = Player::new(player_id, socket, rx, tx.clone(), world);
         tokio::task::Builder::new()
@@ -24,6 +19,19 @@ impl PlayerHandle {
             .spawn(run_player(player));
 
         Self { tx }
+    }
+
+    pub fn ping(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.tx.send(Command::Ping)?;
+        Ok(())
+    }
+
+    pub fn close(
+        &mut self,
+        reason: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.tx.send(Command::Close(reason))?;
+        Ok(())
     }
 }
 
@@ -73,4 +81,6 @@ async fn run_player(mut player: Player) {
                 ));
         }
     }
+
+    player.world.drop_player(player.id).await.unwrap();
 }

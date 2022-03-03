@@ -1,12 +1,9 @@
-use std::{cell::RefCell, collections::VecDeque, sync::Arc};
+use std::{cell::RefCell, collections::VecDeque};
 
-use eo::data::{EOChar, EOShort};
+use eo::data::{EOChar, EOShort, StreamBuilder};
 use tokio::{
     net::TcpStream,
-    sync::{
-        mpsc::{UnboundedReceiver, UnboundedSender},
-        Mutex,
-    },
+    sync::mpsc::{UnboundedReceiver, UnboundedSender},
 };
 
 use crate::{world::WorldHandle, PacketBuf};
@@ -19,7 +16,7 @@ pub struct Player {
     pub queue: RefCell<VecDeque<PacketBuf>>,
     pub bus: PacketBus,
     pub tx: UnboundedSender<Command>,
-    pub world: Arc<Mutex<WorldHandle>>,
+    pub world: WorldHandle,
     pub busy: bool,
     state: State,
     account_id: u32,
@@ -33,7 +30,7 @@ impl Player {
         socket: TcpStream,
         rx: UnboundedReceiver<Command>,
         tx: UnboundedSender<Command>,
-        world: Arc<Mutex<WorldHandle>>,
+        world: WorldHandle,
     ) -> Self {
         Self {
             id,
@@ -85,6 +82,30 @@ impl Player {
             }
             Command::SetBusy(busy) => {
                 self.busy = busy;
+            }
+            Command::Ping => {
+                if self.bus.need_pong {
+                    info!("player {} connection closed: ping timeout", self.id);
+                    return false;
+                } else {
+                    self.bus.sequencer.ping_new_sequence();
+                    let sequence = self.bus.sequencer.get_update_sequence_bytes();
+                    let mut builder = StreamBuilder::with_capacity(3);
+                    builder.add_short(sequence.0);
+                    builder.add_char(sequence.1);
+                    self.bus.need_pong = true;
+                    self.bus
+                        .send(
+                            eo::net::Action::Player,
+                            eo::net::Family::Connection,
+                            builder.get(),
+                        )
+                        .await
+                        .unwrap();
+                }
+            }
+            Command::Pong => {
+                self.bus.need_pong = false;
             }
         }
 

@@ -5,8 +5,6 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::sync::Arc;
-
 use lazy_static::lazy_static;
 
 mod character;
@@ -19,8 +17,10 @@ use settings::Settings;
 use eo::data::EOByte;
 use mysql_async::prelude::*;
 
-use tokio::sync::Mutex;
+use tokio::{net::TcpListener};
 use world::WorldHandle;
+
+use crate::player::PlayerHandle;
 
 pub type PacketBuf = Vec<EOByte>;
 
@@ -85,18 +85,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
-    let world = Arc::new(Mutex::new(WorldHandle::new()));
-    let local_world = world.clone();
-    let local_world = local_world.lock().await;
-    let _ = tokio::join!(
-        local_world.load_pubs(),
-        local_world.load_maps(),
-        local_world.start_listener(),
+    let mut world = WorldHandle::new();
+    {
+        let world = world.clone();
+        let _ = tokio::join!(
+            world.load_pubs(),
+            world.load_maps(),
+            world.start_ping_timer(),
+        );
+    }
+
+    let tcp_listener =
+        TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))
+            .await
+            .unwrap();
+    info!(
+        "listening at {}:{}",
+        SETTINGS.server.host, SETTINGS.server.port
     );
 
-    while local_world.is_alive {
-        let player_world = world.clone();
-        local_world.accept_connection(player_world).await;
+    while world.is_alive {
+        let (socket, addr) = tcp_listener.accept().await.unwrap();
+
+        let player_count = world.get_player_count().await.unwrap();
+        if player_count >= SETTINGS.server.max_connections as usize {
+            warn!("{} has been disconnected because the server is full", addr);
+            continue;
+        }
+
+        let player_id = world.get_next_player_id().await.unwrap();
+
+        let player = PlayerHandle::new(player_id, socket, world.clone());
+        world.add_player(player_id, player).await.unwrap();
+
+        info!(
+            "connection accepted ({}) {}/{}",
+            addr,
+            player_count + 1,
+            SETTINGS.server.max_connections
+        );
     }
 
     Ok(())

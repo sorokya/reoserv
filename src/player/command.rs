@@ -26,4 +26,6 @@ pub enum Command {
     },
     SetState(State),
     SetBusy(bool),
+    Ping,
+    Pong,
 }

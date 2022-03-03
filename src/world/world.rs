@@ -9,17 +9,16 @@ use eo::data::{
     EOShort,
 };
 use lazy_static::lazy_static;
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{
-    net::TcpListener,
     sync::{mpsc::UnboundedReceiver, Mutex},
+    time,
 };
 
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
-    tcp_listener: Option<TcpListener>,
     maps: Option<Arc<Mutex<HashMap<EOShort, MapFile>>>>,
     class_file: Option<Arc<Mutex<ClassFile>>>,
     drop_file: Option<Arc<Mutex<DropFile>>>,
@@ -37,7 +36,6 @@ impl World {
         Self {
             rx,
             players: Arc::new(Mutex::new(HashMap::new())),
-            tcp_listener: None,
             maps: None,
             class_file: None,
             drop_file: None,
@@ -62,11 +60,11 @@ impl World {
             Command::LoadPubFiles { respond_to } => match data::load_maps().await {
                 Ok(maps) => {
                     self.maps = Some(Arc::new(Mutex::new(maps)));
-                    let _ = respond_to.send(true);
+                    let _ = respond_to.send(());
                 }
                 Err(err) => {
                     warn!("Failed to load maps: {}", err);
-                    let _ = respond_to.send(true);
+                    let _ = respond_to.send(());
                 }
             },
             Command::LoadMapFiles { respond_to } => {
@@ -100,47 +98,52 @@ impl World {
                 self.shop_file = Some(Arc::new(Mutex::new(shop_file.unwrap())));
                 self.spell_file = Some(Arc::new(Mutex::new(spell_file.unwrap())));
                 self.talk_file = Some(Arc::new(Mutex::new(talk_file.unwrap())));
-                let _ = respond_to.send(true);
+                let _ = respond_to.send(());
             }
-            Command::StartListener { respond_to } => {
-                self.tcp_listener = Some(
-                    TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))
-                        .await
-                        .unwrap(),
-                );
-                let _ = respond_to.send(true);
-                info!(
-                    "listening at {}:{}",
-                    SETTINGS.server.host, SETTINGS.server.port
-                );
+            Command::StartPingTimer { respond_to } => {
+                let mut ping_interval =
+                    time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
+                let ping_players = players.clone();
+                // Skip the first tick because it's instant
+                ping_interval.tick().await;
+                tokio::spawn(async move {
+                    loop {
+                        ping_interval.tick().await;
+                        let mut players = ping_players.lock().await;
+                        for (_, player) in players.iter_mut() {
+                            if let Err(e) = player.ping() {
+                                let _ = player.close(format!("Unknown error: {}", e));
+                            }
+                        }
+                    }
+                });
+                let _ = respond_to.send(());
             }
-            Command::AcceptConnection {
+            Command::GetPlayerCount { respond_to } => {
+                let players = players.lock().await;
+                let _ = respond_to.send(players.len());
+            }
+            Command::GetNextPlayerId { respond_to } => {
+                let players = players.lock().await;
+                let _ = respond_to.send(get_next_player_id(&players, 1));
+            }
+            Command::AddPlayer {
                 respond_to,
-                world_handle,
+                player_id,
+                player,
             } => {
-                let tcp_listener = self.tcp_listener.as_ref().expect("No tcp listener");
-                let (socket, addr) = tcp_listener.accept().await.unwrap();
-
                 let mut players = players.lock().await;
-                let num_of_players = players.len();
-                if num_of_players >= SETTINGS.server.max_connections as usize {
-                    warn!("{} has been disconnected because the server is full", addr);
-                    return;
-                }
-
-                let player_id = get_next_player_id(&players, 1);
-
-                let player = PlayerHandle::new(player_id, socket, world_handle);
                 players.insert(player_id, player);
-
-                info!(
-                    "connection accepted ({}) {}/{}",
-                    addr,
-                    players.len(),
-                    SETTINGS.server.max_connections
-                );
-
-                let _ = respond_to.send(true);
+                let _ = respond_to.send(());
+            }
+            Command::DropPlayer {
+                player_id,
+                respond_to,
+            } => {
+                let mut players = players.lock().await;
+                players.remove(&player_id).unwrap();
+                // TODO: unload account/character too
+                let _ = respond_to.send(());
             }
         }
     }
@@ -158,21 +161,3 @@ fn get_next_player_id(
     }
     id
 }
-
-// let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
-// let ping_players = players.clone();
-// // Skip the first tick because it's instant
-// ping_interval.tick().await;
-// tokio::spawn(async move {
-//     loop {
-//         ping_interval.tick().await;
-//         let mut players = ping_players.lock().await;
-//         for (_, player) in players.iter_mut() {
-//             // if let Err(e) = player.ping() {
-//             //     let _ = player.close();
-//             // }
-//         }
-//     }
-// });
-
-

@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
-    let mut world = WorldHandle::new();
+    let mut world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
         let _ = tokio::join!(

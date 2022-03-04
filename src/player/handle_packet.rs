@@ -14,7 +14,7 @@ pub async fn handle_packet(
     packet: PacketBuf,
     player_id: EOShort,
     player: UnboundedSender<Command>,
-    _world: WorldHandle,
+    world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
@@ -76,35 +76,27 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
-        //     Family::Account => match action {
-        //         Action::Request => {
-        //             let mut conn = db_pool.get_conn().await?;
-        //             if player.bus.sequencer.too_big_for_account_reply() {
-        //                 player.bus.sequencer.account_reply_new_sequence();
-        //             }
-        //             handlers::account::request(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 &mut conn,
-        //                 player.bus.sequencer.get_sequence_start(),
-        //             )
-        //             .await?;
-        //         }
-        //         Action::Create => {
-        //             let mut conn = db_pool.get_conn().await?;
-        //             handlers::account::create(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 &mut conn,
-        //                 SETTINGS.server.password_salt.to_string(),
-        //                 &player.ip,
-        //             )
-        //             .await?;
-        //         }
-        //         _ => {
-        //             error!("Unhandled packet {:?}_{:?}", action, family);
-        //         }
-        //     },
+        Family::Account => match action {
+            Action::Request => {
+                handlers::account::request(
+                    buf,
+                    player.clone(),
+                    world.clone(),
+                )
+                .await?;
+            }
+            Action::Create => {
+                handlers::account::create(
+                    buf,
+                    player.clone(),
+                    world.clone(),
+                )
+                .await?;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
         //     Family::Login => match action {
         //         Action::Request => {
         //             let mut conn = db_pool.get_conn().await?;

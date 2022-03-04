@@ -19,6 +19,7 @@ pub struct Player {
     pub world: WorldHandle,
     pub busy: bool,
     state: State,
+    ip: String,
     account_id: u32,
     num_of_characters: EOChar,
     character_id: u32,
@@ -32,6 +33,7 @@ impl Player {
         tx: UnboundedSender<Command>,
         world: WorldHandle,
     ) -> Self {
+        let ip = socket.peer_addr().unwrap().ip().to_string();
         Self {
             id,
             rx,
@@ -40,6 +42,7 @@ impl Player {
             queue: RefCell::new(VecDeque::new()),
             bus: PacketBus::new(socket),
             state: State::Uninitialized,
+            ip,
             account_id: 0,
             character_id: 0,
             num_of_characters: 0,
@@ -72,6 +75,15 @@ impl Player {
                     ])
                     .unwrap();
             }
+            Command::EnsureValidSequenceForAccountCreation { respond_to } => {
+                if self.bus.sequencer.too_big_for_account_reply() {
+                    self.bus.sequencer.account_reply_new_sequence();
+                }
+                let _ = respond_to.send(());
+            },
+            Command::GetSequenceStart { respond_to } => {
+                let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
+            },
             Command::GetSequenceBytes { respond_to } => {
                 respond_to
                     .send(self.bus.sequencer.get_init_sequence_bytes())
@@ -107,6 +119,9 @@ impl Player {
             Command::Pong => {
                 self.bus.need_pong = false;
             }
+            Command::GetIpAddr { respond_to } => {
+                let _ = respond_to.send(self.ip.clone());
+            },
         }
 
         true

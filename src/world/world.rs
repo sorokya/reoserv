@@ -1,6 +1,6 @@
-use crate::{player::PlayerHandle, settings::Settings};
+use crate::{player::PlayerHandle, settings::Settings, world::get_account::get_account};
 
-use super::{data, Command};
+use super::{data, Command, create_account::create_account};
 use eo::data::{
     map::MapFile,
     pubs::{
@@ -9,6 +9,7 @@ use eo::data::{
     EOShort,
 };
 use lazy_static::lazy_static;
+use mysql_async::Pool;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{
     sync::{mpsc::UnboundedReceiver, Mutex},
@@ -19,6 +20,7 @@ use tokio::{
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
+    pool: Pool,
     maps: Option<Arc<Mutex<HashMap<EOShort, MapFile>>>>,
     class_file: Option<Arc<Mutex<ClassFile>>>,
     drop_file: Option<Arc<Mutex<DropFile>>>,
@@ -32,9 +34,10 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(rx: UnboundedReceiver<Command>) -> Self {
+    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
         Self {
             rx,
+            pool,
             players: Arc::new(Mutex::new(HashMap::new())),
             maps: None,
             class_file: None,
@@ -57,7 +60,7 @@ impl World {
         let players = self.players.clone();
 
         match command {
-            Command::LoadPubFiles { respond_to } => match data::load_maps().await {
+            Command::LoadMapFiles { respond_to } => match data::load_maps().await {
                 Ok(maps) => {
                     self.maps = Some(Arc::new(Mutex::new(maps)));
                     let _ = respond_to.send(());
@@ -67,7 +70,7 @@ impl World {
                     let _ = respond_to.send(());
                 }
             },
-            Command::LoadMapFiles { respond_to } => {
+            Command::LoadPubFiles { respond_to } => {
                 let (
                     class_file,
                     drop_file,
@@ -144,6 +147,45 @@ impl World {
                 players.remove(&player_id).unwrap();
                 // TODO: unload account/character too
                 let _ = respond_to.send(());
+            }
+            Command::AccountNameInUse {
+                name,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let account = match get_account(&mut conn, &name).await {
+                    Ok(account) => account,
+                    Err(e) => {
+                        error!("Failed to get account: {}", e);
+                        let _ = respond_to.send(Err(e));
+                        return;
+                    }
+                };
+                let _ = respond_to.send(Ok(account.is_some()));
+            }
+            Command::ValidateName {
+                name: _,
+                respond_to,
+            } => {
+                // TODO validate name
+                let _ = respond_to.send(true);
+            }
+            Command::CreateAccount {
+                name,
+                password_hash,
+                real_name,
+                location,
+                email,
+                computer,
+                hdid,
+                register_ip,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                match create_account(&mut conn, name, password_hash, real_name, location, email, computer, hdid, register_ip).await {
+                    Ok(_) => respond_to.send(Ok(())).unwrap(),
+                    Err(e) => respond_to.send(Err(e)).unwrap(),
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ use mysql_async::{prelude::*, Conn, Params, Row};
 pub async fn get_account(
     conn: &mut Conn,
     name: &str,
-) -> Result<Option<(u32, String)>, Box<dyn std::error::Error>> {
+) -> Result<Option<(u32, String)>, Box<dyn std::error::Error + Send + Sync>> {
     let account_row = match conn
         .exec_first::<Row, &str, Params>(
             include_str!("../sql/get_account.sql"),

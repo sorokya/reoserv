@@ -18,11 +18,20 @@ pub enum Command {
         respond_to: oneshot::Sender<EOInt>,
     },
     Close(String),
+    EnsureValidSequenceForAccountCreation {
+        respond_to: oneshot::Sender<()>,
+    },
+    GetSequenceStart {
+        respond_to: oneshot::Sender<EOInt>,
+    },
     GetSequenceBytes {
         respond_to: oneshot::Sender<(EOShort, EOChar)>,
     },
     GetEncodeMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
+    },
+    GetIpAddr {
+        respond_to: oneshot::Sender<String>,
     },
     SetState(State),
     SetBusy(bool),

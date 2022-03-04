@@ -5,18 +5,14 @@ use lazy_static::lazy_static;
 
 use crate::settings::Settings;
 
-pub struct CreateCharacterParams {
-    pub account_id: u32,
-    pub name: String,
-    pub gender: Gender,
-    pub race: Race,
-    pub hair_style: u32,
-    pub hair_color: u32,
-}
-
 pub async fn create_character(
     conn: &mut Conn,
-    params: CreateCharacterParams,
+    account_id: u32,
+    name: String,
+    gender: Gender,
+    race: Race,
+    hair_style: u32,
+    hair_color: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     lazy_static! {
         static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
@@ -27,13 +23,13 @@ pub async fn create_character(
     tx.exec_drop(
         include_str!("../sql/create_character.sql"),
         params! {
-            "account_id" => &params.account_id,
-            "name" => &params.name,
+            "account_id" => &account_id,
+            "name" => &name,
             "home" => &SETTINGS.new_character.home,
-            "gender" => &(params.gender as u32),
-            "race" => &(params.race as u32),
-            "hair_style" => &params.hair_style,
-            "hair_color" => &params.hair_color,
+            "gender" => &(gender as u32),
+            "race" => &(race as u32),
+            "hair_style" => &hair_style,
+            "hair_color" => &hair_color,
             "bank_max" => 0, // TODO: figure out bank max
         },
     )

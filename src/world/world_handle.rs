@@ -1,6 +1,5 @@
-
-
 use eo::data::EOShort;
+use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::player::PlayerHandle;
@@ -14,9 +13,9 @@ pub struct WorldHandle {
 }
 
 impl WorldHandle {
-    pub fn new() -> Self {
+    pub fn new(pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let world = World::new(rx);
+        let world = World::new(rx, pool);
         tokio::task::Builder::new()
             .name("run_world")
             .spawn(run_world(world));
@@ -44,6 +43,53 @@ impl WorldHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNextPlayerId { respond_to: tx });
         Ok(rx.await.unwrap())
+    }
+
+    pub async fn account_name_in_use(
+        &self,
+        name: String,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::AccountNameInUse {
+            name,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn validate_name(&self, name: String) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::ValidateName {
+            name,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn create_account(
+        &self,
+        name: String,
+        password_hash: String,
+        real_name: String,
+        location: String,
+        email: String,
+        computer: String,
+        hdid: String,
+        register_ip: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::CreateAccount {
+            name,
+            password_hash,
+            real_name,
+            location,
+            email,
+            computer,
+            hdid,
+            register_ip,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
     }
 
     pub async fn add_player(

@@ -29,4 +29,23 @@ pub enum Command {
         player_id: EOShort,
         respond_to: oneshot::Sender<()>,
     },
+    AccountNameInUse {
+        name: String,
+        respond_to: oneshot::Sender<Result<bool, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    ValidateName {
+        name: String,
+        respond_to: oneshot::Sender<bool>,
+    },
+    CreateAccount {
+        name: String,
+        password_hash: String,
+        real_name: String,
+        location: String,
+        email: String,
+        computer: String,
+        hdid: String,
+        register_ip: String,
+        respond_to: oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+    }
 }

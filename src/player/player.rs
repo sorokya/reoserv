@@ -80,10 +80,10 @@ impl Player {
                     self.bus.sequencer.account_reply_new_sequence();
                 }
                 let _ = respond_to.send(());
-            },
+            }
             Command::GetSequenceStart { respond_to } => {
                 let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
-            },
+            }
             Command::GetSequenceBytes { respond_to } => {
                 respond_to
                     .send(self.bus.sequencer.get_init_sequence_bytes())
@@ -121,7 +121,7 @@ impl Player {
             }
             Command::GetIpAddr { respond_to } => {
                 let _ = respond_to.send(self.ip.clone());
-            },
+            }
         }
 
         true

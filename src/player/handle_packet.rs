@@ -73,20 +73,10 @@ pub async fn handle_packet(
         },
         Family::Account => match action {
             Action::Request => {
-                handlers::account::request(
-                    buf,
-                    player.clone(),
-                    world.clone(),
-                )
-                .await?;
+                handlers::account::request(buf, player.clone(), world.clone()).await?;
             }
             Action::Create => {
-                handlers::account::create(
-                    buf,
-                    player.clone(),
-                    world.clone(),
-                )
-                .await?;
+                handlers::account::create(buf, player.clone(), world.clone()).await?;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
@@ -94,12 +84,7 @@ pub async fn handle_packet(
         },
         Family::Login => match action {
             Action::Request => {
-                handlers::login::request(
-                    buf,
-                    player.clone(),
-                    world.clone(),
-                )
-                .await?;
+                handlers::login::request(buf, player.clone(), world.clone()).await?;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

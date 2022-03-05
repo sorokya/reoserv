@@ -1,6 +1,6 @@
-use crate::{player::PlayerHandle, SETTINGS, world::account_exists::account_exists};
+use crate::{player::PlayerHandle, world::account_exists::account_exists, SETTINGS};
 
-use super::{data, Command, create_account::create_account, login::login};
+use super::{create_account::create_account, data, login::login, Command};
 use eo::data::{
     map::MapFile,
     pubs::{
@@ -145,10 +145,7 @@ impl World {
                 // TODO: unload account/character too
                 let _ = respond_to.send(());
             }
-            Command::AccountNameInUse {
-                name,
-                respond_to,
-            } => {
+            Command::AccountNameInUse { name, respond_to } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let result = account_exists(&mut conn, &name).await;
                 let _ = respond_to.send(result);
@@ -172,17 +169,33 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                match create_account(&mut conn, name, password_hash, real_name, location, email, computer, hdid, register_ip).await {
+                match create_account(
+                    &mut conn,
+                    name,
+                    password_hash,
+                    real_name,
+                    location,
+                    email,
+                    computer,
+                    hdid,
+                    register_ip,
+                )
+                .await
+                {
                     Ok(_) => respond_to.send(Ok(())).unwrap(),
                     Err(e) => respond_to.send(Err(e)).unwrap(),
                 }
             }
-            Command::Login { name, password_hash, respond_to } => {
+            Command::Login {
+                name,
+                password_hash,
+                respond_to,
+            } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let mut accounts = self.accounts.lock().await;
                 let result = login(&mut conn, &name, &password_hash, &mut accounts).await;
                 let _ = respond_to.send(result);
-            },
+            }
         }
     }
 }

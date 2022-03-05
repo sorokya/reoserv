@@ -5,7 +5,10 @@ use crate::{
 use eo::{
     data::{EOByte, EOShort, Serializeable, StreamReader},
     net::{
-        packets::{client::init::Request, server::init::{Reply, ReplyOk}},
+        packets::{
+            client::init::Request,
+            server::init::{Reply, ReplyOk},
+        },
         replies::InitReply,
         stupid_hash, Action, Family,
     },

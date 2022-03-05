@@ -1,6 +1,7 @@
 use eo::{
     character::{AdminLevel, Gender, Race},
-    net::{CharacterInfo, PaperdollBAHSW}, data::EOShort,
+    data::EOShort,
+    net::{CharacterInfo, PaperdollBAHSW},
 };
 use mysql_async::{prelude::*, Conn, Row};
 use num_traits::FromPrimitive;

@@ -17,7 +17,7 @@ use settings::Settings;
 use eo::data::EOByte;
 use mysql_async::prelude::*;
 
-use tokio::{net::TcpListener};
+use tokio::net::TcpListener;
 use world::WorldHandle;
 
 use crate::player::PlayerHandle;

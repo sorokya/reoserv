@@ -5,7 +5,7 @@ use eo::{
 };
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
-use crate::{PacketBuf, world::WorldHandle, player::Command};
+use crate::{player::Command, world::WorldHandle, PacketBuf};
 
 pub async fn request(
     buf: PacketBuf,

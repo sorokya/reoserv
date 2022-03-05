@@ -1,16 +1,19 @@
 mod command;
 pub use command::Command;
-mod create_account;
-mod character_exists;
-mod create_character;
-mod delete_character;
 mod account_exists;
-mod get_character_list;
+mod character_exists;
+mod create_account;
+mod create_character;
 mod data;
+mod delete_character;
+mod get_character_list;
 mod login;
 mod world;
 mod world_handle;
-use eo::{net::{CharacterInfo, CharacterList}, data::EOShort};
+use eo::{
+    data::EOShort,
+    net::{CharacterInfo, CharacterList},
+};
 pub use world_handle::WorldHandle;
 
 #[derive(Debug)]

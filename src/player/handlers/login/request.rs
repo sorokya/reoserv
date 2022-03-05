@@ -8,7 +8,8 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
     player::{Command, State},
-    PacketBuf, world::{WorldHandle, LoginResult}, SETTINGS,
+    world::{LoginResult, WorldHandle},
+    PacketBuf, SETTINGS,
 };
 
 pub async fn request(
@@ -31,9 +32,14 @@ pub async fn request(
     );
     let hash = Sha256::digest(hash_input.as_bytes());
 
-    let result = world.login(request.name.clone(), format!("{:x}", hash)).await;
+    let result = world
+        .login(request.name.clone(), format!("{:x}", hash))
+        .await;
     let reply = match result {
-        LoginResult::Success { account_id, character_list } => {
+        LoginResult::Success {
+            account_id,
+            character_list,
+        } => {
             player.send(Command::SetState(State::LoggedIn {
                 account_id,
                 num_of_characters: character_list.length,
@@ -42,11 +48,23 @@ pub async fn request(
                 reply: LoginReply::OK,
                 character_list: Some(character_list),
             }
+        }
+        LoginResult::LoggedIn => Reply {
+            reply: LoginReply::LoggedIn,
+            character_list: None,
         },
-        LoginResult::LoggedIn => Reply { reply: LoginReply::LoggedIn, character_list: None },
-        LoginResult::WrongUsername => Reply { reply: LoginReply::WrongUsername, character_list: None },
-        LoginResult::WrongPassword => Reply { reply: LoginReply::WrongPassword, character_list: None },
-        LoginResult::Err(_) => Reply { reply: LoginReply::Busy, character_list: None },
+        LoginResult::WrongUsername => Reply {
+            reply: LoginReply::WrongUsername,
+            character_list: None,
+        },
+        LoginResult::WrongPassword => Reply {
+            reply: LoginReply::WrongPassword,
+            character_list: None,
+        },
+        LoginResult::Err(_) => Reply {
+            reply: LoginReply::Busy,
+            character_list: None,
+        },
     };
 
     debug!("Reply: {:?}", reply);

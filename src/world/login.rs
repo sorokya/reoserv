@@ -1,8 +1,11 @@
-use eo::{data::{EOShort, EOChar}, net::CharacterList};
+use eo::{
+    data::{EOChar, EOShort},
+    net::CharacterList,
+};
 use mysql_async::{prelude::*, Conn, Params, Row};
 use tokio::sync::MutexGuard;
 
-use super::{LoginResult, account_exists::account_exists, get_character_list::get_character_list};
+use super::{account_exists::account_exists, get_character_list::get_character_list, LoginResult};
 
 pub async fn login(
     conn: &mut Conn,
@@ -15,20 +18,23 @@ pub async fn login(
         Err(e) => {
             error!("Error checking if account exists: {}", e);
             return LoginResult::Err(e);
-        },
+        }
     };
 
     if !exists {
         return LoginResult::WrongUsername;
     }
 
-    match conn.exec_first::<Row, &str, Params>(
-        include_str!("../sql/verify_password.sql"),
-        params! {
-            "name" => &name,
-            "password_hash" => &password_hash,
-        },
-    ).await {
+    match conn
+        .exec_first::<Row, &str, Params>(
+            include_str!("../sql/verify_password.sql"),
+            params! {
+                "name" => &name,
+                "password_hash" => &password_hash,
+            },
+        )
+        .await
+    {
         Ok(row) => match row {
             Some(row) => {
                 let account_id: EOShort = row.get("id").unwrap();
@@ -49,13 +55,16 @@ pub async fn login(
                     unknown: 1,
                     characters,
                 };
-                LoginResult::Success { account_id, character_list }
-            },
+                LoginResult::Success {
+                    account_id,
+                    character_list,
+                }
+            }
             None => LoginResult::WrongPassword,
         },
         Err(e) => {
             error!("Error verifying password: {}", e);
             LoginResult::Err(Box::new(e))
-        },
+        }
     }
 }

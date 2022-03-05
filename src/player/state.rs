@@ -1,4 +1,4 @@
-use eo::data::{EOShort, EOChar};
+use eo::data::{EOChar, EOShort};
 
 #[derive(Debug)]
 pub enum State {

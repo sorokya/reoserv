@@ -20,7 +20,7 @@ pub struct Player {
     pub busy: bool,
     state: State,
     ip: String,
-    account_id: u32,
+    account_id: EOShort,
     num_of_characters: EOChar,
     character_id: u32,
 }
@@ -125,12 +125,5 @@ impl Player {
         }
 
         true
-    }
-
-    pub async fn handle_packet(
-        &mut self,
-        packet: PacketBuf,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        handle_packet(packet, self.id, self.tx.clone(), self.world.clone()).await
     }
 }

@@ -3,6 +3,8 @@ use tokio::sync::oneshot;
 
 use crate::player::PlayerHandle;
 
+use super::LoginResult;
+
 #[derive(Debug)]
 pub enum Command {
     LoadPubFiles {
@@ -47,5 +49,10 @@ pub enum Command {
         hdid: String,
         register_ip: String,
         respond_to: oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
-    }
+    },
+    Login {
+        name: String,
+        password_hash: String,
+        respond_to: oneshot::Sender<LoginResult>,
+    },
 }

@@ -4,7 +4,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::player::PlayerHandle;
 
-use super::{world::World, Command};
+use super::{world::World, Command, LoginResult};
 
 #[derive(Debug, Clone)]
 pub struct WorldHandle {
@@ -87,6 +87,16 @@ impl WorldHandle {
             computer,
             hdid,
             register_ip,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn login(&mut self, name: String, password_hash: String) -> LoginResult {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Login {
+            name,
+            password_hash,
             respond_to: tx,
         });
         rx.await.unwrap()

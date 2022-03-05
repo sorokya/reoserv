@@ -2,13 +2,12 @@ use eo::{
     data::{EOInt, EOShort, StreamReader, MAX1},
     net::{Action, Family},
 };
-use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
 use super::{command::Command, handlers};
 
-use crate::{settings::Settings, world::WorldHandle, PacketBuf};
+use crate::{world::WorldHandle, PacketBuf, SETTINGS};
 
 pub async fn handle_packet(
     packet: PacketBuf,
@@ -19,10 +18,6 @@ pub async fn handle_packet(
     let action = Action::from_u8(packet[0]).unwrap();
     let family = Family::from_u8(packet[1]).unwrap();
     let reader = StreamReader::new(&packet[2..]);
-
-    lazy_static! {
-        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    };
 
     if family != Family::Init {
         if family == Family::Connection && action == Action::Ping {
@@ -97,22 +92,19 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
-        //     Family::Login => match action {
-        //         Action::Request => {
-        //             let mut conn = db_pool.get_conn().await?;
-        //             handlers::login::request(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 active_account_ids.lock().await.to_vec(),
-        //                 &mut conn,
-        //                 SETTINGS.server.password_salt.to_string(),
-        //             )
-        //             .await?;
-        //         }
-        //         _ => {
-        //             error!("Unhandled packet {:?}_{:?}", action, family);
-        //         }
-        //     },
+        Family::Login => match action {
+            Action::Request => {
+                handlers::login::request(
+                    buf,
+                    player.clone(),
+                    world.clone(),
+                )
+                .await?;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
         //     Family::Character => match action {
         //         Action::Request => {
         //             handlers::character::request(

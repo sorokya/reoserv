@@ -24,6 +24,10 @@ use crate::player::PlayerHandle;
 
 pub type PacketBuf = Vec<EOByte>;
 
+lazy_static! {
+    static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(feature = "console")]
@@ -42,10 +46,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         \\/     \\/          \\/     \\/\nThe rusty endless online server: v{}\n",
         VERSION
     );
-
-    lazy_static! {
-        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    };
 
     let database_url = format!(
         "mysql://{}:{}@{}:{}/{}",

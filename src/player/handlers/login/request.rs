@@ -3,22 +3,19 @@ use eo::{
     net::packets::server::login::Reply,
     net::{packets::client::login::Request, replies::LoginReply, Action, CharacterList, Family},
 };
-use mysql_async::Conn;
 use sha2::{Digest, Sha256};
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{
-    player::{PlayerCommand, State},
-    utils::{get_account, get_character_list},
-    PacketBuf, PlayerTx,
+    player::{Command, State},
+    PacketBuf, world::{WorldHandle, LoginResult}, SETTINGS,
 };
 
 pub async fn request(
     buf: PacketBuf,
-    tx: &PlayerTx,
-    active_account_ids: Vec<u32>,
-    conn: &mut Conn,
-    salt: String,
-) -> Result<(), Box<dyn std::error::Error>> {
+    player: UnboundedSender<Command>,
+    mut world: WorldHandle,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut request = Request::default();
     let reader = StreamReader::new(&buf);
     request.deserialize(&reader);
@@ -28,76 +25,33 @@ pub async fn request(
         request.name
     );
 
-    let hash_input = format!("{}{}{}", salt, request.name, request.password);
+    let hash_input = format!(
+        "{}{}{}",
+        SETTINGS.server.password_salt, request.name, request.password
+    );
     let hash = Sha256::digest(hash_input.as_bytes());
-    let mut reply = Reply::new();
 
-    let (account_id, actual_hash) = match get_account(conn, &request.name).await {
-        Ok(Some((account_id, actual_hash))) => (account_id, actual_hash),
-        Ok(None) => {
-            reply.reply = LoginReply::WrongUsername;
-            debug!("Reply: {:?}", reply);
-            tx.send(PlayerCommand::Send(
-                Action::Reply,
-                Family::Login,
-                reply.serialize(),
-            ))?;
-            return Ok(());
-        }
-        Err(e) => {
-            error!("Failed to get account info: {}", e);
-            reply.reply = LoginReply::Busy;
-            debug!("Reply: {:?}", reply);
-            tx.send(PlayerCommand::Send(
-                Action::Reply,
-                Family::Login,
-                reply.serialize(),
-            ))?;
-            return Ok(());
-        }
-    };
-
-    if actual_hash != format!("{:x}", hash) {
-        reply.reply = LoginReply::WrongPassword;
-        debug!("Reply: {:?}", reply);
-        tx.send(PlayerCommand::Send(
-            Action::Reply,
-            Family::Login,
-            reply.serialize(),
-        ))?;
-        return Ok(());
-    }
-
-    if active_account_ids.contains(&account_id) {
-        reply.reply = LoginReply::LoggedIn;
-        debug!("Reply: {:?}", reply);
-        tx.send(PlayerCommand::Send(
-            Action::Reply,
-            Family::Login,
-            reply.serialize(),
-        ))?;
-        return Ok(());
-    }
-
-    // TODO: Ban check
-
-    let characters = get_character_list(conn, account_id).await?;
-
-    reply.reply = LoginReply::OK;
-    reply.character_list = CharacterList {
-        length: characters.len() as EOChar,
-        unknown: 1,
-        characters,
+    let result = world.login(request.name.clone(), format!("{:x}", hash)).await;
+    let reply = match result {
+        LoginResult::Success { account_id, character_list } => {
+            player.send(Command::SetState(State::LoggedIn {
+                account_id,
+                num_of_characters: character_list.length,
+            }))?;
+            Reply {
+                reply: LoginReply::OK,
+                character_list: Some(character_list),
+            }
+        },
+        LoginResult::LoggedIn => Reply { reply: LoginReply::LoggedIn, character_list: None },
+        LoginResult::WrongUsername => Reply { reply: LoginReply::WrongUsername, character_list: None },
+        LoginResult::WrongPassword => Reply { reply: LoginReply::WrongPassword, character_list: None },
+        LoginResult::Err(_) => Reply { reply: LoginReply::Busy, character_list: None },
     };
 
     debug!("Reply: {:?}", reply);
 
-    let num_of_characters = reply.character_list.length;
-    tx.send(PlayerCommand::SetState(State::LoggedIn(
-        account_id,
-        num_of_characters,
-    )))?;
-    tx.send(PlayerCommand::Send(
+    player.send(Command::Send(
         Action::Reply,
         Family::Login,
         reply.serialize(),

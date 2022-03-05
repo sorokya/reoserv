@@ -1,9 +1,7 @@
 use eo::character::{Gender, Race};
 use mysql_async::{prelude::*, Conn, TxOpts};
 
-use lazy_static::lazy_static;
-
-use crate::settings::Settings;
+use crate::SETTINGS;
 
 pub async fn create_character(
     conn: &mut Conn,
@@ -14,10 +12,6 @@ pub async fn create_character(
     hair_style: u32,
     hair_color: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    lazy_static! {
-        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    };
-
     let mut tx = conn.start_transaction(TxOpts::default()).await?;
 
     tx.exec_drop(

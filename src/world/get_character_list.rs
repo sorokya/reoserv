@@ -1,14 +1,14 @@
 use eo::{
     character::{AdminLevel, Gender, Race},
-    net::{CharacterInfo, PaperdollBAHSW},
+    net::{CharacterInfo, PaperdollBAHSW}, data::EOShort,
 };
 use mysql_async::{prelude::*, Conn, Row};
 use num_traits::FromPrimitive;
 
 pub async fn get_character_list(
     conn: &mut Conn,
-    account_id: u32,
-) -> Result<Vec<CharacterInfo>, Box<dyn std::error::Error>> {
+    account_id: EOShort,
+) -> Result<Vec<CharacterInfo>, Box<dyn std::error::Error + Send + Sync>> {
     let characters = conn
         .exec_map(
             include_str!("../sql/get_character_list.sql"),

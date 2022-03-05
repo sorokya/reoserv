@@ -3,21 +3,16 @@ use eo::{
     net::packets::server::account::Reply,
     net::{packets::client::account::Create, replies::AccountReply, Action, Family},
 };
-use lazy_static::lazy_static;
 use sha2::{Digest, Sha256};
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
-use crate::{player::Command, settings::Settings, world::WorldHandle, PacketBuf};
+use crate::{player::Command, world::WorldHandle, PacketBuf, SETTINGS};
 
 pub async fn create(
     buf: PacketBuf,
     player: UnboundedSender<Command>,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    lazy_static! {
-        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    };
-
     let mut create = Create::default();
     let reader = StreamReader::new(&buf);
     create.deserialize(&reader);

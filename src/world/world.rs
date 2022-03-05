@@ -1,6 +1,6 @@
-use crate::{player::PlayerHandle, settings::Settings, world::get_account::get_account};
+use crate::{player::PlayerHandle, SETTINGS, world::account_exists::account_exists};
 
-use super::{data, Command, create_account::create_account};
+use super::{data, Command, create_account::create_account, login::login};
 use eo::data::{
     map::MapFile,
     pubs::{
@@ -8,7 +8,6 @@ use eo::data::{
     },
     EOShort,
 };
-use lazy_static::lazy_static;
 use mysql_async::Pool;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{
@@ -20,6 +19,7 @@ use tokio::{
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
+    accounts: Arc<Mutex<Vec<EOShort>>>,
     pool: Pool,
     maps: Option<Arc<Mutex<HashMap<EOShort, MapFile>>>>,
     class_file: Option<Arc<Mutex<ClassFile>>>,
@@ -39,6 +39,7 @@ impl World {
             rx,
             pool,
             players: Arc::new(Mutex::new(HashMap::new())),
+            accounts: Arc::new(Mutex::new(Vec::new())),
             maps: None,
             class_file: None,
             drop_file: None,
@@ -53,10 +54,6 @@ impl World {
     }
 
     pub async fn handle_command(&mut self, command: Command) {
-        lazy_static! {
-            static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-        };
-
         let players = self.players.clone();
 
         match command {
@@ -153,15 +150,8 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let account = match get_account(&mut conn, &name).await {
-                    Ok(account) => account,
-                    Err(e) => {
-                        error!("Failed to get account: {}", e);
-                        let _ = respond_to.send(Err(e));
-                        return;
-                    }
-                };
-                let _ = respond_to.send(Ok(account.is_some()));
+                let result = account_exists(&mut conn, &name).await;
+                let _ = respond_to.send(result);
             }
             Command::ValidateName {
                 name: _,
@@ -187,6 +177,12 @@ impl World {
                     Err(e) => respond_to.send(Err(e)).unwrap(),
                 }
             }
+            Command::Login { name, password_hash, respond_to } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let mut accounts = self.accounts.lock().await;
+                let result = login(&mut conn, &name, &password_hash, &mut accounts).await;
+                let _ = respond_to.send(result);
+            },
         }
     }
 }

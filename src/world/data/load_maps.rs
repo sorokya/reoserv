@@ -3,15 +3,10 @@ use std::{collections::HashMap, path::Path};
 use eo::data::{map::MapFile, EOShort};
 use futures::{stream, StreamExt};
 
-use lazy_static::lazy_static;
-
-use crate::settings::Settings;
+use crate::SETTINGS;
 
 pub async fn load_maps(
 ) -> Result<HashMap<EOShort, MapFile>, Box<dyn std::error::Error + Send + Sync>> {
-    lazy_static! {
-        static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    };
     let max_id = SETTINGS.server.num_of_maps as EOShort;
     let mut map_files: HashMap<EOShort, MapFile> = HashMap::with_capacity(max_id as usize);
     let mut load_handles = vec![];

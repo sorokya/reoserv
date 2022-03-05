@@ -27,7 +27,7 @@ pub enum Command {
     GetSequenceBytes {
         respond_to: oneshot::Sender<(EOShort, EOChar)>,
     },
-    GetEncodeMultiples {
+    GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
     },
     GetIpAddr {

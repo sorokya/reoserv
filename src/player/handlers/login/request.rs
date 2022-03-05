@@ -1,20 +1,19 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamReader},
+    data::{Serializeable, StreamReader},
     net::packets::server::login::Reply,
-    net::{packets::client::login::Request, replies::LoginReply, Action, CharacterList, Family},
+    net::{packets::client::login::Request, replies::LoginReply, Action, Family},
 };
-use sha2::{Digest, Sha256};
-use tokio::sync::mpsc::UnboundedSender;
+use sha2::{Digest};
 
 use crate::{
-    player::{Command, State},
-    world::{LoginResult, WorldHandle},
-    PacketBuf, SETTINGS,
+    player::{PlayerHandle, State},
+    world::WorldHandle,
+    PacketBuf,
 };
 
 pub async fn request(
     buf: PacketBuf,
-    player: UnboundedSender<Command>,
+    player: PlayerHandle,
     mut world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut request = Request::default();
@@ -26,54 +25,37 @@ pub async fn request(
         request.name
     );
 
-    let hash_input = format!(
-        "{}{}{}",
-        SETTINGS.server.password_salt, request.name, request.password
-    );
-    let hash = Sha256::digest(hash_input.as_bytes());
-
-    let result = world
-        .login(request.name.clone(), format!("{:x}", hash))
-        .await;
-    let reply = match result {
-        LoginResult::Success {
-            account_id,
-            character_list,
-        } => {
-            player.send(Command::SetState(State::LoggedIn {
-                account_id,
-                num_of_characters: character_list.length,
-            }))?;
-            Reply {
-                reply: LoginReply::OK,
-                character_list: Some(character_list),
-            }
+    let (reply, account_id) = match world
+        .login(request.name.clone(), request.password.clone())
+        .await
+    {
+        Ok((reply, account_id)) => (reply, account_id),
+        Err(e) => {
+            error!("Login error: {}", e);
+            (
+                Reply {
+                    reply: LoginReply::Busy,
+                    character_list: None,
+                },
+                0,
+            )
         }
-        LoginResult::LoggedIn => Reply {
-            reply: LoginReply::LoggedIn,
-            character_list: None,
-        },
-        LoginResult::WrongUsername => Reply {
-            reply: LoginReply::WrongUsername,
-            character_list: None,
-        },
-        LoginResult::WrongPassword => Reply {
-            reply: LoginReply::WrongPassword,
-            character_list: None,
-        },
-        LoginResult::Err(_) => Reply {
-            reply: LoginReply::Busy,
-            character_list: None,
-        },
     };
 
     debug!("Reply: {:?}", reply);
 
-    player.send(Command::Send(
-        Action::Reply,
-        Family::Login,
-        reply.serialize(),
-    ))?;
+    if reply.reply == LoginReply::OK {
+        player.set_state(State::LoggedIn {
+            account_id,
+            num_of_characters: reply
+                .character_list
+                .as_ref()
+                .expect("Reply is OK but character list is not set")
+                .length,
+        });
+    }
+
+    player.send(Action::Reply, Family::Login, reply.serialize());
 
     Ok(())
 }

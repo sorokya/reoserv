@@ -1,5 +1,5 @@
 use crate::{
-    player::{Command, State},
+    player::{PlayerHandle, State},
     PacketBuf,
 };
 use eo::{
@@ -13,13 +13,7 @@ use eo::{
         stupid_hash, Action, Family,
     },
 };
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
-
-pub async fn request(
-    buf: PacketBuf,
-    player_id: EOShort,
-    player: UnboundedSender<Command>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn request(buf: PacketBuf, player_id: EOShort, player: PlayerHandle) {
     let mut packet = Request::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
@@ -33,21 +27,14 @@ pub async fn request(
     init_ok.challenge_response = stupid_hash(packet.challenge);
     init_ok.player_id = player_id;
 
-    let (tx, rx) = oneshot::channel();
-    player.send(Command::GetSequenceBytes { respond_to: tx })?;
-    let sequence_bytes = rx.await.unwrap();
+    let sequence_bytes = player.get_sequence_bytes().await;
     init_ok.sequence_bytes = [sequence_bytes.0 as EOByte, sequence_bytes.1];
-
-    let (tx, rx) = oneshot::channel();
-    player.send(Command::GetEncodeMultiples { respond_to: tx })?;
-    init_ok.encoding_multiples = rx.await.unwrap();
+    init_ok.encoding_multiples = player.get_encoding_multiples().await;
 
     debug!("Reply code: {:?}, data: {:?}", reply.reply_code, init_ok);
 
     reply.reply = Box::new(init_ok);
 
-    player.send(Command::SetState(State::Initialized))?;
-    player.send(Command::Send(Action::Init, Family::Init, reply.serialize()))?;
-
-    Ok(())
+    player.set_state(State::Initialized);
+    player.send(Action::Init, Family::Init, reply.serialize());
 }

@@ -1,10 +1,13 @@
-use eo::data::EOShort;
+use eo::{
+    data::EOShort,
+    net::packets::server::{account, login},
+};
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::player::PlayerHandle;
 
-use super::{world::World, Command, LoginResult};
+use super::{world::World, Command};
 
 #[derive(Debug, Clone)]
 pub struct WorldHandle {
@@ -45,22 +48,36 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn account_name_in_use(
+    // pub async fn account_name_in_use(
+    //     &self,
+    //     name: String,
+    // ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    //     let (tx, rx) = oneshot::channel();
+    //     let _ = self.tx.send(Command::AccountNameInUse {
+    //         name,
+    //         respond_to: tx,
+    //     });
+    //     rx.await.unwrap()
+    // }
+
+    // pub async fn validate_name(&self, name: String) -> bool {
+    //     let (tx, rx) = oneshot::channel();
+    //     let _ = self.tx.send(Command::ValidateName {
+    //         name,
+    //         respond_to: tx,
+    //     });
+    //     rx.await.unwrap()
+    // }
+
+    pub async fn request_account_creation(
         &self,
         name: String,
-    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+        player: PlayerHandle,
+    ) -> Result<account::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::AccountNameInUse {
+        let _ = self.tx.send(Command::RequestAccountCreation {
             name,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
-    pub async fn validate_name(&self, name: String) -> bool {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::ValidateName {
-            name,
+            player,
             respond_to: tx,
         });
         rx.await.unwrap()
@@ -68,35 +85,27 @@ impl WorldHandle {
 
     pub async fn create_account(
         &self,
-        name: String,
-        password_hash: String,
-        real_name: String,
-        location: String,
-        email: String,
-        computer: String,
-        hdid: String,
+        details: eo::net::packets::client::account::Create,
         register_ip: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<account::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::CreateAccount {
-            name,
-            password_hash,
-            real_name,
-            location,
-            email,
-            computer,
-            hdid,
+            details,
             register_ip,
             respond_to: tx,
         });
         rx.await.unwrap()
     }
 
-    pub async fn login(&mut self, name: String, password_hash: String) -> LoginResult {
+    pub async fn login(
+        &mut self,
+        name: String,
+        password: String,
+    ) -> Result<(login::Reply, EOShort), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Login {
             name,
-            password_hash,
+            password,
             respond_to: tx,
         });
         rx.await.unwrap()

@@ -3,14 +3,12 @@ use eo::{
     net::packets::server::account::Reply,
     net::{packets::client::account::Create, replies::AccountReply, Action, Family},
 };
-use sha2::{Digest, Sha256};
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
-use crate::{player::Command, world::WorldHandle, PacketBuf, SETTINGS};
+use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
 pub async fn create(
     buf: PacketBuf,
-    player: UnboundedSender<Command>,
+    player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut create = Create::default();
@@ -22,77 +20,19 @@ pub async fn create(
         create.session_id, create.name, create.fullname, create.location, create.email, create.computer, create.hdid
     );
 
-    let mut reply = Reply::new();
-
-    let valid_name = world.validate_name(create.name.clone()).await;
-    if !valid_name {
-        reply.reply = AccountReply::NotApproved;
-        reply.message = "NO".to_string();
-        debug!("Reply: {:?}", reply);
-        player.send(Command::Send(
-            Action::Reply,
-            Family::Account,
-            reply.serialize(),
-        ))?;
-        return Ok(());
-    }
-
-    let name_in_use = world.account_name_in_use(create.name.clone()).await?;
-    if name_in_use {
-        reply.reply = AccountReply::Exists;
-        reply.message = "NO".to_string();
-        debug!("Reply: {:?}", reply);
-        player.send(Command::Send(
-            Action::Reply,
-            Family::Account,
-            reply.serialize(),
-        ))?;
-        return Ok(());
-    }
-
-    let hash_input = format!(
-        "{}{}{}",
-        SETTINGS.server.password_salt, create.name, create.password
-    );
-    let hash = Sha256::digest(hash_input.as_bytes());
-
-    let (tx, rx) = oneshot::channel();
-    let _ = player.send(Command::GetIpAddr { respond_to: tx });
-    let player_ip = rx.await.unwrap();
-
-    match world
-        .create_account(
-            create.name.to_string(),
-            format!("{:x}", hash),
-            create.fullname,
-            create.location,
-            create.email,
-            create.computer,
-            create.hdid,
-            player_ip.to_string(),
-        )
-        .await
-    {
-        Ok(_) => {
-            reply.reply = AccountReply::Created;
-            reply.message = "OK".to_string();
-            info!("New account: {}", create.name);
-        }
+    let player_ip = player.get_ip_addr().await;
+    let reply = match world.create_account(create.clone(), player_ip).await {
+        Ok(reply) => reply,
         Err(e) => {
-            // Not an ideal reply but I don't think the client has a "creation failed" handler
-            reply.reply = AccountReply::NotApproved;
-            reply.message = "NO".to_string();
             error!("Create account failed: {}", e);
+            // Not an ideal reply but I don't think the client has a "creation failed" handler
+            Reply::no(AccountReply::NotApproved)
         }
-    }
+    };
 
     debug!("Reply: {:?}", reply);
 
-    player.send(Command::Send(
-        Action::Reply,
-        Family::Account,
-        reply.serialize(),
-    ))?;
+    player.send(Action::Reply, Family::Account, reply.serialize());
 
     Ok(())
 }

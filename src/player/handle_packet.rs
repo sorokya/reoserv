@@ -3,16 +3,15 @@ use eo::{
     net::{Action, Family},
 };
 use num_traits::FromPrimitive;
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
-use super::{command::Command, handlers};
+use super::{handlers, PlayerHandle};
 
 use crate::{world::WorldHandle, PacketBuf, SETTINGS};
 
 pub async fn handle_packet(
     packet: PacketBuf,
     player_id: EOShort,
-    player: UnboundedSender<Command>,
+    player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let action = Action::from_u8(packet[0]).unwrap();
@@ -21,17 +20,10 @@ pub async fn handle_packet(
 
     if family != Family::Init {
         if family == Family::Connection && action == Action::Ping {
-            let (tx, rx) = oneshot::channel();
-            let _ = player.send(Command::PongNewSequence { respond_to: tx });
-            rx.await.unwrap();
+            player.pong_new_sequence().await;
         }
 
-        let server_sequence = {
-            let (tx, rx) = oneshot::channel();
-            let _ = player.send(Command::GenSequence { respond_to: tx });
-            rx.await.unwrap()
-        };
-
+        let server_sequence = player.gen_sequence().await;
         let client_sequence = if server_sequence >= MAX1 {
             reader.get_short() as EOInt
         } else {
@@ -39,22 +31,20 @@ pub async fn handle_packet(
         };
 
         if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
-            player.send(Command::Close(format!(
+            player.close(format!(
                 "sending invalid sequence: Got {}, expected {}.",
                 client_sequence, server_sequence
-            )))?;
+            ));
         }
     } else {
-        let (tx, rx) = oneshot::channel();
-        let _ = player.send(Command::GenSequence { respond_to: tx });
-        rx.await.unwrap();
+        let _ = player.gen_sequence().await;
     }
 
     let buf = reader.get_vec(reader.remaining());
     match family {
         Family::Init => match action {
             Action::Init => {
-                handlers::init::request(buf, player_id, player.clone()).await?;
+                handlers::init::request(buf, player_id, player.clone()).await;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
@@ -62,10 +52,10 @@ pub async fn handle_packet(
         },
         Family::Connection => match action {
             Action::Accept => {
-                handlers::connection::accept(buf, player_id, player.clone()).await?;
+                handlers::connection::accept(buf, player_id, player.clone()).await;
             }
             Action::Ping => {
-                player.send(Command::Pong)?;
+                player.pong();
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
@@ -168,7 +158,7 @@ pub async fn handle_packet(
         }
     }
 
-    player.send(Command::SetBusy(false))?;
+    player.set_busy(false);
 
     Ok(())
 }

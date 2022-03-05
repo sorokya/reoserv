@@ -1,6 +1,9 @@
-use crate::{player::PlayerHandle, world::account_exists::account_exists, SETTINGS};
+use crate::{player::PlayerHandle, SETTINGS};
 
-use super::{create_account::create_account, data, login::login, Command};
+use super::{
+    create_account::create_account, data, login::login,
+    request_account_creation::request_account_creation, Command,
+};
 use eo::data::{
     map::MapFile,
     pubs::{
@@ -109,11 +112,9 @@ impl World {
                 tokio::spawn(async move {
                     loop {
                         ping_interval.tick().await;
-                        let mut players = ping_players.lock().await;
-                        for (_, player) in players.iter_mut() {
-                            if let Err(e) = player.ping() {
-                                let _ = player.close(format!("Unknown error: {}", e));
-                            }
+                        let players = ping_players.lock().await;
+                        for (_, player) in players.iter() {
+                            player.ping();
                         }
                     }
                 });
@@ -145,55 +146,32 @@ impl World {
                 // TODO: unload account/character too
                 let _ = respond_to.send(());
             }
-            Command::AccountNameInUse { name, respond_to } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account_exists(&mut conn, &name).await;
-                let _ = respond_to.send(result);
-            }
-            Command::ValidateName {
-                name: _,
+            Command::RequestAccountCreation {
+                name,
+                player,
                 respond_to,
             } => {
-                // TODO validate name
-                let _ = respond_to.send(true);
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = request_account_creation(&mut conn, name, player).await;
+                let _ = respond_to.send(result);
             }
             Command::CreateAccount {
-                name,
-                password_hash,
-                real_name,
-                location,
-                email,
-                computer,
-                hdid,
+                details,
                 register_ip,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                match create_account(
-                    &mut conn,
-                    name,
-                    password_hash,
-                    real_name,
-                    location,
-                    email,
-                    computer,
-                    hdid,
-                    register_ip,
-                )
-                .await
-                {
-                    Ok(_) => respond_to.send(Ok(())).unwrap(),
-                    Err(e) => respond_to.send(Err(e)).unwrap(),
-                }
+                let result = create_account(&mut conn, details, register_ip).await;
+                let _ = respond_to.send(result);
             }
             Command::Login {
                 name,
-                password_hash,
+                password,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let mut accounts = self.accounts.lock().await;
-                let result = login(&mut conn, &name, &password_hash, &mut accounts).await;
+                let result = login(&mut conn, &name, &password, &mut accounts).await;
                 let _ = respond_to.send(result);
             }
         }

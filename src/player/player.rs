@@ -8,7 +8,7 @@ use tokio::{
 
 use crate::{world::WorldHandle, PacketBuf};
 
-use super::{handle_packet::handle_packet, packet_bus::PacketBus, Command, State};
+use super::{packet_bus::PacketBus, Command, State};
 
 pub struct Player {
     pub id: EOShort,
@@ -57,17 +57,17 @@ impl Player {
             }
             Command::PongNewSequence { respond_to } => {
                 self.bus.sequencer.pong_new_sequence();
-                respond_to.send(()).unwrap();
+                let _ = respond_to.send(());
             }
             Command::GenSequence { respond_to } => {
                 let sequence = self.bus.sequencer.gen_sequence();
-                respond_to.send(sequence).unwrap();
+                let _ = respond_to.send(sequence);
             }
             Command::Close(reason) => {
                 info!("player {} connection closed: {:?}", self.id, reason);
                 return false;
             }
-            Command::GetEncodeMultiples { respond_to } => {
+            Command::GetEncodingMultiples { respond_to } => {
                 respond_to
                     .send([
                         self.bus.packet_processor.encode_multiple,

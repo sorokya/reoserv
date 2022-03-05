@@ -1,9 +1,10 @@
-use eo::data::EOShort;
+use eo::{
+    data::EOShort,
+    net::packets::server::{account, login},
+};
 use tokio::sync::oneshot;
 
 use crate::player::PlayerHandle;
-
-use super::LoginResult;
 
 #[derive(Debug)]
 pub enum Command {
@@ -31,28 +32,23 @@ pub enum Command {
         player_id: EOShort,
         respond_to: oneshot::Sender<()>,
     },
-    AccountNameInUse {
+    RequestAccountCreation {
         name: String,
-        respond_to: oneshot::Sender<Result<bool, Box<dyn std::error::Error + Send + Sync>>>,
-    },
-    ValidateName {
-        name: String,
-        respond_to: oneshot::Sender<bool>,
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<account::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     CreateAccount {
-        name: String,
-        password_hash: String,
-        real_name: String,
-        location: String,
-        email: String,
-        computer: String,
-        hdid: String,
+        details: eo::net::packets::client::account::Create,
         register_ip: String,
-        respond_to: oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+        respond_to:
+            oneshot::Sender<Result<account::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     Login {
         name: String,
-        password_hash: String,
-        respond_to: oneshot::Sender<LoginResult>,
+        password: String,
+        respond_to: oneshot::Sender<
+            Result<(login::Reply, EOShort), Box<dyn std::error::Error + Send + Sync>>,
+        >,
     },
 }

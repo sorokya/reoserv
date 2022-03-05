@@ -1,11 +1,17 @@
-use eo::data::EOShort;
-use tokio::{net::TcpStream, sync::mpsc};
+use eo::{
+    data::{EOByte, EOChar, EOInt, EOShort},
+    net::{Action, Family},
+};
+use tokio::{
+    net::TcpStream,
+    sync::{mpsc, oneshot},
+};
 
-use crate::world::WorldHandle;
+use crate::{world::WorldHandle, PacketBuf};
 
-use super::{handle_packet::handle_packet, player::Player, Command};
+use super::{handle_packet::handle_packet, player::Player, Command, State};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PlayerHandle {
     tx: mpsc::UnboundedSender<Command>,
 }
@@ -16,26 +22,88 @@ impl PlayerHandle {
         let player = Player::new(player_id, socket, rx, tx.clone(), world);
         tokio::task::Builder::new()
             .name("run_player")
-            .spawn(run_player(player));
+            .spawn(run_player(player, PlayerHandle::duplicate(tx.clone())));
 
         Self { tx }
     }
 
-    pub fn ping(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.tx.send(Command::Ping)?;
-        Ok(())
+    pub fn duplicate(tx: mpsc::UnboundedSender<Command>) -> Self {
+        Self { tx }
     }
 
-    pub fn close(
-        &mut self,
-        reason: String,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn pong_new_sequence(&self) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
+        rx.await.unwrap();
+    }
+
+    pub async fn gen_sequence(&self) -> EOInt {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GenSequence { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub fn ping(&self) {
+        let _ = self.tx.send(Command::Ping);
+    }
+
+    pub fn pong(&self) {
+        let _ = self.tx.send(Command::Pong);
+    }
+
+    pub async fn ensure_valid_sequence_for_account_creation(&self) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .tx
+            .send(Command::EnsureValidSequenceForAccountCreation { respond_to: tx });
+        rx.await.unwrap();
+    }
+
+    pub async fn get_sequence_start(&self) -> EOInt {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetSequenceStart { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_ip_addr(&self) -> String {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetIpAddr { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub fn set_busy(&self, busy: bool) {
+        let _ = self.tx.send(Command::SetBusy(busy));
+    }
+
+    pub fn close(&self, reason: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.tx.send(Command::Close(reason))?;
         Ok(())
     }
+
+    pub async fn get_sequence_bytes(&self) -> (EOShort, EOChar) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetSequenceBytes { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_encoding_multiples(&self) -> [EOByte; 2] {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .tx
+            .send(Command::GetEncodingMultiples { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub fn send(&self, action: Action, family: Family, buf: PacketBuf) {
+        let _ = self.tx.send(Command::Send(action, family, buf));
+    }
+
+    pub fn set_state(&self, state: State) {
+        let _ = self.tx.send(Command::SetState(state));
+    }
 }
 
-async fn run_player(mut player: Player) {
+async fn run_player(mut player: Player, player_handle: PlayerHandle) {
     loop {
         tokio::select! {
             result = player.bus.recv() => match result {
@@ -76,7 +144,7 @@ async fn run_player(mut player: Player) {
                 .spawn(handle_packet(
                     packet,
                     player.id,
-                    player.tx.clone(),
+                    player_handle.clone(),
                     player.world.clone(),
                 ));
         }

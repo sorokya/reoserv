@@ -54,7 +54,7 @@ pub async fn handle_packet(
     match family {
         Family::Init => match action {
             Action::Init => {
-                handlers::init::init(buf, player_id, player.clone()).await?;
+                handlers::init::request(buf, player_id, player.clone()).await?;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

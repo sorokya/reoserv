@@ -5,28 +5,28 @@ use crate::{
 use eo::{
     data::{EOByte, EOShort, Serializeable, StreamReader},
     net::{
-        packets::{client::init::Init, server},
+        packets::{client::init::Request, server::init::{Reply, ReplyOk}},
         replies::InitReply,
         stupid_hash, Action, Family,
     },
 };
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 
-pub async fn init(
+pub async fn request(
     buf: PacketBuf,
     player_id: EOShort,
     player: UnboundedSender<Command>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let mut packet = Init::default();
+    let mut packet = Request::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
 
-    let mut reply = server::init::Init::new();
+    let mut reply = Reply::new();
     reply.reply_code = InitReply::OK;
 
-    let mut init_ok = server::init::InitOk::new();
+    let mut init_ok = ReplyOk::new();
     init_ok.challenge_response = stupid_hash(packet.challenge);
     init_ok.player_id = player_id;
 

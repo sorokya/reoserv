@@ -19,15 +19,15 @@ pub struct PlayerHandle {
 impl PlayerHandle {
     pub fn new(player_id: EOShort, socket: TcpStream, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(player_id, socket, rx, tx.clone(), world);
+        let player = Player::new(player_id, socket, rx, world);
         tokio::task::Builder::new()
             .name("run_player")
-            .spawn(run_player(player, PlayerHandle::duplicate(tx.clone())));
+            .spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));
 
         Self { tx }
     }
 
-    pub fn duplicate(tx: mpsc::UnboundedSender<Command>) -> Self {
+    fn for_tx(tx: mpsc::UnboundedSender<Command>) -> Self {
         Self { tx }
     }
 

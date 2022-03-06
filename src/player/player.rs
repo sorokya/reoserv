@@ -15,7 +15,6 @@ pub struct Player {
     pub rx: UnboundedReceiver<Command>,
     pub queue: RefCell<VecDeque<PacketBuf>>,
     pub bus: PacketBus,
-    pub tx: UnboundedSender<Command>,
     pub world: WorldHandle,
     pub busy: bool,
     state: State,
@@ -30,14 +29,12 @@ impl Player {
         id: EOShort,
         socket: TcpStream,
         rx: UnboundedReceiver<Command>,
-        tx: UnboundedSender<Command>,
         world: WorldHandle,
     ) -> Self {
         let ip = socket.peer_addr().unwrap().ip().to_string();
         Self {
             id,
             rx,
-            tx,
             world,
             queue: RefCell::new(VecDeque::new()),
             bus: PacketBus::new(socket),

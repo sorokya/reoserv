@@ -48,27 +48,6 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    // pub async fn account_name_in_use(
-    //     &self,
-    //     name: String,
-    // ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-    //     let (tx, rx) = oneshot::channel();
-    //     let _ = self.tx.send(Command::AccountNameInUse {
-    //         name,
-    //         respond_to: tx,
-    //     });
-    //     rx.await.unwrap()
-    // }
-
-    // pub async fn validate_name(&self, name: String) -> bool {
-    //     let (tx, rx) = oneshot::channel();
-    //     let _ = self.tx.send(Command::ValidateName {
-    //         name,
-    //         respond_to: tx,
-    //     });
-    //     rx.await.unwrap()
-    // }
-
     pub async fn request_account_creation(
         &self,
         name: String,

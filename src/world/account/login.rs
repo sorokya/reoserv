@@ -33,7 +33,7 @@ pub async fn login(
 
     let row = match conn
         .exec_first::<Row, &str, Params>(
-            include_str!("../sql/verify_password.sql"),
+            include_str!("../../sql/verify_password.sql"),
             params! {
                 "name" => &name,
                 "password_hash" => &hash_str,

@@ -4,7 +4,7 @@ use sha2::{Digest, Sha256};
 
 use crate::SETTINGS;
 
-use super::account_exists::account_exists;
+use super::account_exists;
 
 pub async fn create_account(
     conn: &mut Conn,
@@ -26,7 +26,7 @@ pub async fn create_account(
     let hash_str = format!("{:x}", hash);
 
     conn.exec_drop(
-        include_str!("../sql/create_account.sql"),
+        include_str!("../../sql/create_account.sql"),
         params! {
             "name" => &details.name,
             "password_hash" => &hash_str,

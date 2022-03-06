@@ -2,18 +2,21 @@ use eo::{
     character::{AdminLevel, Gender, Race, SitState},
     data::{EOChar, EOInt, EOShort},
     net::{
-        CharacterBaseStats, CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,
+        packets::client::character::Create, CharacterBaseStats, CharacterSecondaryStats,
+        CharacterStats2, Item, PaperdollFull, Spell,
     },
     world::{Coords, Direction},
 };
 
-use mysql_async::{prelude::*, Conn, Params, Row};
+use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use num_traits::FromPrimitive;
+
+use crate::SETTINGS;
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
     pub id: EOInt,
-    pub player_id: EOShort,
+    pub account_id: EOShort,
     pub name: String,
     pub title: Option<String>,
     pub home: String,
@@ -56,7 +59,20 @@ pub struct Character {
 }
 
 impl Character {
-    pub async fn load(conn: &mut Conn, id: EOInt) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_creation(account_id: EOShort, create: &Create) -> Self {
+        let mut character = Character::default();
+        character.account_id = account_id;
+        character.gender = create.gender;
+        character.hair_style = create.hair_style;
+        character.hair_color = create.hair_color;
+        character.race = create.race;
+        character.name = create.name.clone();
+        character
+    }
+    pub async fn load(
+        conn: &mut Conn,
+        id: EOInt,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let mut character = Character::default();
         let mut row = match conn
             .exec_first::<Row, &str, Params>(
@@ -77,6 +93,7 @@ impl Character {
         };
 
         character.id = id;
+        character.account_id = row.take("account_id").unwrap();
         character.name = row.take("name").unwrap();
         character.title = row.take("title").unwrap();
         character.home = row.take("home").unwrap();
@@ -173,6 +190,161 @@ impl Character {
         character.max_tp = character.tp;
 
         Ok(character)
+    }
+
+    pub async fn save(
+        &mut self,
+        conn: &mut Conn,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        if self.id > 0 {
+            self.update(conn).await
+        } else {
+            self.create(conn).await
+        }
+    }
+
+    async fn create(
+        &mut self,
+        conn: &mut Conn,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let mut tx = conn.start_transaction(TxOpts::default()).await?;
+
+        tx.exec_drop(
+            include_str!("./sql/create_character.sql"),
+            params! {
+                "account_id" => &(self.account_id as u32),
+                "name" => &self.name,
+                "home" => &SETTINGS.new_character.home,
+                "gender" => &(self.gender as u32),
+                "race" => &(self.race as u32),
+                "hair_style" => &(self.hair_style as u32),
+                "hair_color" => &(self.hair_color as u32),
+                "bank_max" => &(0 as u32), // TODO: figure out bank max
+            },
+        )
+        .await?;
+
+        self.id = tx.last_insert_id().unwrap() as EOInt;
+
+        tx.exec_drop(
+            r"INSERT INTO `Paperdoll` (
+                `character_id`
+            ) VALUES (:character_id);",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"INSERT INTO `Position` (
+                `character_id`,
+                `map`,
+                `x`,
+                `y`,
+                `direction`
+            ) VALUES (
+                :character_id,
+                :map,
+                :x,
+                :y,
+                :direction
+            );",
+            params! {
+                "character_id" => &self.id,
+                "map" => &SETTINGS.new_character.spawn_map,
+                "x" => &SETTINGS.new_character.spawn_x,
+                "y" => &SETTINGS.new_character.spawn_y,
+                "direction" => &SETTINGS.new_character.spawn_direction,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r" INSERT INTO `Stats` (`character_id`)
+            VALUES (:character_id);",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn update(
+        &self,
+        conn: &mut Conn,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        todo!()
+    }
+
+    pub async fn delete(
+        &self,
+        conn: &mut Conn,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let mut tx = conn.start_transaction(TxOpts::default()).await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Stats` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Spell` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Position` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Paperdoll` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Inventory` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Bank` WHERE `character_id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            r"DELETE FROM `Character` WHERE `id` = :character_id;",
+            params! {
+                "character_id" => &self.id,
+            },
+        )
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
     }
 
     pub fn get_character_stats_2(&self) -> CharacterStats2 {

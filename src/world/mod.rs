@@ -1,14 +1,7 @@
 mod command;
 pub use command::Command;
-mod account_exists;
-mod character_exists;
-mod create_account;
-mod create_character;
+mod account;
 mod data;
-mod delete_character;
-mod get_character_list;
-pub mod login;
-mod request_account_creation;
 mod world;
 mod world_handle;
 pub use world_handle::WorldHandle;

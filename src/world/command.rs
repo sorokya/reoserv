@@ -1,6 +1,6 @@
 use eo::{
-    data::EOShort,
-    net::packets::server::{account, login},
+    data::{EOShort, EOInt},
+    net::packets::server::{account, character, login},
 };
 use tokio::sync::oneshot;
 
@@ -30,6 +30,8 @@ pub enum Command {
     },
     DropPlayer {
         player_id: EOShort,
+        account_id: EOShort,
+        character_id: EOShort,
         respond_to: oneshot::Sender<()>,
     },
     RequestAccountCreation {
@@ -51,4 +53,28 @@ pub enum Command {
             Result<(login::Reply, EOShort), Box<dyn std::error::Error + Send + Sync>>,
         >,
     },
+    RequestCharacterCreation {
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    CreateCharacter {
+        details: eo::net::packets::client::character::Create,
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    RequestCharacterDeletion {
+        character_id: EOInt,
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<character::Player, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    DeleteCharacter {
+        session_id: EOShort,
+        character_id: EOInt,
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    }
 }

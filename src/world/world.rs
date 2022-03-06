@@ -1,9 +1,6 @@
 use crate::{player::PlayerHandle, SETTINGS};
 
-use super::{
-    create_account::create_account, data, login::login,
-    request_account_creation::request_account_creation, Command,
-};
+use super::{account, Command, data};
 use eo::data::{
     map::MapFile,
     pubs::{
@@ -139,11 +136,19 @@ impl World {
             }
             Command::DropPlayer {
                 player_id,
+                account_id,
+                character_id: _,
                 respond_to,
             } => {
                 let mut players = players.lock().await;
                 players.remove(&player_id).unwrap();
-                // TODO: unload account/character too
+
+                if account_id > 0 {
+                    let mut accounts = self.accounts.lock().await;
+                    accounts.retain(|id| *id != account_id);
+                }
+
+                // TODO: unload character too
                 let _ = respond_to.send(());
             }
             Command::RequestAccountCreation {
@@ -152,7 +157,7 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let result = request_account_creation(&mut conn, name, player).await;
+                let result = account::request_account_creation(&mut conn, name, player).await;
                 let _ = respond_to.send(result);
             }
             Command::CreateAccount {
@@ -161,7 +166,7 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let result = create_account(&mut conn, details, register_ip).await;
+                let result = account::create_account(&mut conn, details, register_ip).await;
                 let _ = respond_to.send(result);
             }
             Command::Login {
@@ -171,9 +176,36 @@ impl World {
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let mut accounts = self.accounts.lock().await;
-                let result = login(&mut conn, &name, &password, &mut accounts).await;
+                let result = account::login(&mut conn, &name, &password, &mut accounts).await;
                 let _ = respond_to.send(result);
             }
+            Command::RequestCharacterCreation {
+                player,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = account::request_character_creation(&mut conn, player).await;
+                let _ = respond_to.send(result);
+            }
+            Command::CreateCharacter { details, player, respond_to } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = account::create_character(&mut conn, details, player).await;
+                let _ = respond_to.send(result);
+            },
+            Command::RequestCharacterDeletion {
+                character_id,
+                player,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = account::request_character_deletion(&mut conn, character_id, player).await;
+                let _ = respond_to.send(result);
+            },
+            Command::DeleteCharacter { session_id, character_id, player, respond_to } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = account::delete_character(&mut conn, session_id, character_id, player).await;
+                let _ = respond_to.send(result);
+            },
         }
     }
 }

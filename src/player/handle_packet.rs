@@ -63,10 +63,10 @@ pub async fn handle_packet(
         },
         Family::Account => match action {
             Action::Request => {
-                handlers::account::request(buf, player.clone(), world.clone()).await?;
+                handlers::account::request(buf, player.clone(), world.clone()).await;
             }
             Action::Create => {
-                handlers::account::create(buf, player.clone(), world.clone()).await?;
+                handlers::account::create(buf, player.clone(), world.clone()).await;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
@@ -80,39 +80,43 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
-        //     Family::Character => match action {
-        //         Action::Request => {
-        //             handlers::character::request(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 player.num_of_characters,
-        //             )
-        //             .await?;
-        //         }
-        //         Action::Create => {
-        //             let mut conn = db_pool.get_conn().await?;
-        //             handlers::character::create(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 &mut conn,
-        //                 player.account_id,
-        //             )
-        //             .await?;
-        //         }
-        //         Action::Take => {
-        //             let mut conn = db_pool.get_conn().await?;
-        //             handlers::character::take(
-        //                 buf,
-        //                 players.lock().await.get(&player.id).unwrap(),
-        //                 &mut conn,
-        //                 player.account_id,
-        //             )
-        //             .await?;
-        //         }
-        //         _ => {
-        //             error!("Unhandled packet {:?}_{:?}", action, family);
-        //         }
-        //     },
+        Family::Character => match action {
+            Action::Request => {
+                handlers::character::request(
+                    buf,
+                    player.clone(),
+                    world.clone()
+                )
+                .await;
+            }
+            Action::Create => {
+                handlers::character::create(
+                    buf,
+                    player.clone(),
+                    world.clone()
+                )
+                .await;
+            }
+            Action::Take => {
+                handlers::character::take(
+                    buf,
+                    player.clone(),
+                    world.clone()
+                )
+                .await;
+            }
+            Action::Remove => {
+                handlers::character::remove(
+                    buf,
+                    player.clone(),
+                    world.clone()
+                )
+                .await;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
         //     Family::Welcome => match action {
         //         Action::Request => {
         //             let mut conn = db_pool.get_conn().await?;

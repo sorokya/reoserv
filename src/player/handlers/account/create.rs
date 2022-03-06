@@ -10,7 +10,7 @@ pub async fn create(
     buf: PacketBuf,
     player: PlayerHandle,
     world: WorldHandle,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) {
     let mut create = Create::default();
     let reader = StreamReader::new(&buf);
     create.deserialize(&reader);
@@ -33,6 +33,4 @@ pub async fn create(
     debug!("Reply: {:?}", reply);
 
     player.send(Action::Reply, Family::Account, reply.serialize());
-
-    Ok(())
 }

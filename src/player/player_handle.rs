@@ -9,7 +9,7 @@ use tokio::{
 
 use crate::{world::WorldHandle, PacketBuf};
 
-use super::{handle_packet::handle_packet, player::Player, Command, State};
+use super::{handle_packet::handle_packet, player::Player, Command, State, InvalidStateError};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -75,9 +75,8 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetBusy(busy));
     }
 
-    pub fn close(&self, reason: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.tx.send(Command::Close(reason))?;
-        Ok(())
+    pub fn close(&self, reason: String) {
+        let _ = self.tx.send(Command::Close(reason));
     }
 
     pub async fn get_sequence_bytes(&self) -> (EOShort, EOChar) {
@@ -91,6 +90,12 @@ impl PlayerHandle {
         let _ = self
             .tx
             .send(Command::GetEncodingMultiples { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_account_id(&self) -> Result<EOShort, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
         rx.await.unwrap()
     }
 
@@ -150,5 +155,12 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
         }
     }
 
-    player.world.drop_player(player.id).await.unwrap();
+    let (account_id, character_id) = match player.state {
+        State::LoggedIn { account_id } => (account_id, 0),
+        State::Playing { account_id, character_id } => (account_id, character_id),
+        _ => (0, 0),
+    };
+
+
+    player.world.drop_player(player.id, account_id, character_id).await.unwrap();
 }

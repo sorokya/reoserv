@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamReader},
+    data::{Serializeable, StreamReader},
     net::{
         packets::{client::character::Request, server::character::Reply},
         replies::CharacterReply,
@@ -7,41 +7,33 @@ use eo::{
     },
 };
 
-use crate::{player::Command PacketBuf, PlayerTx};
+use crate::{player::PlayerHandle, PacketBuf, world::WorldHandle};
 
 pub async fn request(
     buf: PacketBuf,
-    tx: &PlayerTx,
-    num_of_characters: EOChar,
-) -> Result<(), Box<dyn std::error::Error>> {
+    player: PlayerHandle,
+    world: WorldHandle
+) {
     let mut request = Request::default();
     let reader = StreamReader::new(&buf);
     request.deserialize(&reader);
 
     debug!("Recv: {:?}", request);
 
-    let mut reply = Reply::new();
-    if request.message != "NEW" {
-        reply.reply = CharacterReply::InvalidRequest;
-        reply.message = "NO".to_string();
-    }
-
-    // TODO: configurable max number of characters?
-    if num_of_characters >= 3 {
-        reply.reply = CharacterReply::Full;
-        reply.message = "NO".to_string();
+    let reply = if request.message != "NEW" {
+        Reply::no(CharacterReply::InvalidRequest)
     } else {
-        reply.session_id = 1000; // TODO: sessions?
-        reply.message = "OK".to_string();
-    }
+        match world.request_character_creation(player.clone()).await {
+            Ok(reply) => reply,
+            Err(_) => Reply::no(CharacterReply::InvalidRequest),
+        }
+    };
 
     debug!("Reply: {:?}", reply);
 
-    tx.send(PlayerCommand::Send(
+    player.send(
         Action::Reply,
         Family::Character,
         reply.serialize(),
-    ))?;
-
-    Ok(())
+    );
 }

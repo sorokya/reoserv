@@ -3,7 +3,6 @@ use eo::{
     net::packets::server::login::Reply,
     net::{packets::client::login::Request, replies::LoginReply, Action, Family},
 };
-use sha2::{Digest};
 
 use crate::{
     player::{PlayerHandle, State},
@@ -47,11 +46,6 @@ pub async fn request(
     if reply.reply == LoginReply::OK {
         player.set_state(State::LoggedIn {
             account_id,
-            num_of_characters: reply
-                .character_list
-                .as_ref()
-                .expect("Reply is OK but character list is not set")
-                .length,
         });
     }
 

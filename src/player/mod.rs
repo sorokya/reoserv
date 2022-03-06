@@ -1,5 +1,7 @@
 mod state;
 pub use state::State;
+mod invalid_state_error;
+pub use invalid_state_error::InvalidStateError;
 mod command;
 pub use command::Command;
 mod handlers;

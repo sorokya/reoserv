@@ -1,7 +1,7 @@
 use eo::{
     data::{Serializeable, StreamReader},
     net::{
-        packets::{client::character::Create, server::character::Reply},
+        packets::{client::character::Remove, server::character::Reply},
         Action, Family, replies::CharacterReply,
     },
 };
@@ -11,18 +11,18 @@ use crate::{
     PacketBuf, world::WorldHandle,
 };
 
-pub async fn create(
+pub async fn remove(
     buf: PacketBuf,
     player: PlayerHandle,
     world: WorldHandle
 ) {
-    let mut create = Create::default();
+    let mut remove = Remove::default();
     let reader = StreamReader::new(&buf);
-    create.deserialize(&reader);
+    remove.deserialize(&reader);
 
-    debug!("Recv: {:?}", create);
+    debug!("Recv: {:?}", remove);
 
-    let reply = match world.create_character(create, player.clone()).await {
+    let reply = match world.delete_character(remove.session_id, remove.character_id.into(), player.clone()).await {
         Ok(reply) => reply,
         Err(_) => Reply::no(CharacterReply::InvalidRequest),
     };

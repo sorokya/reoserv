@@ -9,20 +9,22 @@ pub async fn request(
     buf: PacketBuf,
     player: PlayerHandle,
     world: WorldHandle,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) {
     let mut request = Request::default();
     let reader = StreamReader::new(&buf);
     request.deserialize(&reader);
 
     debug!("Recv: {:?}", request);
 
-    let reply = world
+    match world
         .request_account_creation(request.name, player.clone())
-        .await?;
+        .await
+    {
+        Ok(reply) => {
+            debug!("Reply: {:?}", reply);
 
-    debug!("Reply: {:?}", reply);
-
-    player.send(Action::Reply, Family::Account, reply.serialize());
-
-    Ok(())
+            player.send(Action::Reply, Family::Account, reply.serialize());
+        }
+        Err(_) => {} // eat the error
+    }
 }

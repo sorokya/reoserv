@@ -6,7 +6,7 @@ use tokio::sync::oneshot;
 
 use crate::PacketBuf;
 
-use super::State;
+use super::{State, InvalidStateError};
 
 #[derive(Debug)]
 pub enum Command {
@@ -32,6 +32,9 @@ pub enum Command {
     },
     GetIpAddr {
         respond_to: oneshot::Sender<String>,
+    },
+    GetAccountId {
+        respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
     },
     SetState(State),
     SetBusy(bool),

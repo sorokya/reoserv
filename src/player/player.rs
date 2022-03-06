@@ -1,14 +1,14 @@
 use std::{cell::RefCell, collections::VecDeque};
 
-use eo::data::{EOChar, EOShort, StreamBuilder};
+use eo::data::{EOShort, StreamBuilder};
 use tokio::{
     net::TcpStream,
-    sync::mpsc::{UnboundedReceiver, UnboundedSender},
+    sync::mpsc::UnboundedReceiver,
 };
 
 use crate::{world::WorldHandle, PacketBuf};
 
-use super::{packet_bus::PacketBus, Command, State};
+use super::{packet_bus::PacketBus, Command, State, InvalidStateError};
 
 pub struct Player {
     pub id: EOShort,
@@ -17,11 +17,8 @@ pub struct Player {
     pub bus: PacketBus,
     pub world: WorldHandle,
     pub busy: bool,
-    state: State,
+    pub state: State,
     ip: String,
-    account_id: EOShort,
-    num_of_characters: EOChar,
-    character_id: u32,
 }
 
 impl Player {
@@ -40,9 +37,6 @@ impl Player {
             bus: PacketBus::new(socket),
             state: State::Uninitialized,
             ip,
-            account_id: 0,
-            character_id: 0,
-            num_of_characters: 0,
             busy: false,
         }
     }
@@ -93,6 +87,10 @@ impl Player {
                 self.busy = busy;
             }
             Command::Ping => {
+                if self.state == State::Uninitialized {
+                    return true;
+                }
+
                 if self.bus.need_pong {
                     info!("player {} connection closed: ping timeout", self.id);
                     return false;
@@ -119,6 +117,13 @@ impl Player {
             Command::GetIpAddr { respond_to } => {
                 let _ = respond_to.send(self.ip.clone());
             }
+            Command::GetAccountId { respond_to } => {
+                if let State::LoggedIn { account_id} = self.state {
+                    let _ = respond_to.send(Ok(account_id));
+                } else {
+                    let _ = respond_to.send(Err(InvalidStateError::new(State::LoggedIn { account_id: 0 }, self.state)));
+                }
+            },
         }
 
         true

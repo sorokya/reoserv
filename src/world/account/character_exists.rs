@@ -3,7 +3,7 @@ use mysql_async::{prelude::*, Conn, Params, Row};
 pub async fn character_exists(
     conn: &mut Conn,
     name: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
+) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
     match conn
         .exec_first::<Row, &str, Params>(
             r"SELECT id FROM `Character` WHERE `name` = :name",

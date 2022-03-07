@@ -15,7 +15,7 @@ impl MapHandle {
         let (tx, rx) = mpsc::unbounded_channel();
         let map = Map::new(id, file, rx);
         tokio::task::Builder::new()
-            .name("run_map")
+            .name(&format!("Map {}", id))
             .spawn(run_map(map));
 
         Self { tx }

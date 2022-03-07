@@ -26,7 +26,7 @@ impl WorldHandle {
         let (tx, rx) = mpsc::unbounded_channel();
         let world = World::new(rx, pool);
         tokio::task::Builder::new()
-            .name("run_world")
+            .name("World")
             .spawn(run_world(world));
 
         Self { tx, is_alive: true }

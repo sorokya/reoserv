@@ -219,7 +219,7 @@ impl Character {
                 "race" => &(self.race as u32),
                 "hair_style" => &(self.hair_style as u32),
                 "hair_color" => &(self.hair_color as u32),
-                "bank_max" => &(0 as u32), // TODO: figure out bank max
+                "bank_max" => &0_u32, // TODO: figure out bank max
             },
         )
         .await?;
@@ -276,7 +276,7 @@ impl Character {
 
     async fn update(
         &self,
-        conn: &mut Conn,
+        _conn: &mut Conn,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         todo!()
     }

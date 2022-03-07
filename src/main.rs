@@ -8,6 +8,7 @@ extern crate serde_derive;
 use lazy_static::lazy_static;
 
 mod character;
+mod map;
 mod player;
 mod settings;
 mod utils;

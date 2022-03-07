@@ -2,7 +2,7 @@ use crate::{
     character::Character,
     player::{PlayerHandle, State},
     world::MapNotFoundError,
-    SETTINGS,
+    SETTINGS, map::MapHandle,
 };
 
 use super::{account, data, Command};
@@ -37,7 +37,7 @@ pub struct World {
     players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
     accounts: Arc<Mutex<Vec<EOInt>>>,
     pool: Pool,
-    maps: Option<Arc<Mutex<HashMap<EOShort, MapFile>>>>,
+    maps: Option<Arc<Mutex<HashMap<EOShort, MapHandle>>>>,
     class_file: Option<Arc<Mutex<ClassFile>>>,
     drop_file: Option<Arc<Mutex<DropFile>>>,
     inn_file: Option<Arc<Mutex<InnFile>>>,
@@ -282,7 +282,7 @@ impl World {
                 let result = self.get_file(&mut conn, file_type, player).await;
                 let _ = respond_to.send(result);
             }
-            Command::EnterGame { player, respond_to } => todo!(),
+            Command::EnterGame { player: _, respond_to: _ } => todo!(),
         }
     }
 
@@ -302,7 +302,7 @@ impl World {
                     return Err(Box::new(MapNotFoundError::new(character.map_id)));
                 }
             };
-            (map.hash, map.size)
+            map.get_hash_and_size().await
         };
 
         let (eif_hash, eif_length) = {
@@ -395,7 +395,7 @@ impl World {
                         return Err(Box::new(MapNotFoundError::new(character.map_id)));
                     }
                 };
-                reply.data = map.serialize();
+                reply.data = map.serialize().await;
                 Ok(init::Reply {
                     reply_code: InitReply::FileMap,
                     reply: Box::new(reply),

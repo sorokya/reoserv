@@ -34,7 +34,13 @@ pub enum Command {
         respond_to: oneshot::Sender<String>,
     },
     GetAccountId {
-        respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
+        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
+    },
+    GetPlayerId {
+        respond_to: oneshot::Sender<EOShort>,
+    },
+    GetCharacterId {
+        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
     SetState(State),
     SetBusy(bool),

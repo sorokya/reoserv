@@ -20,5 +20,7 @@ mod request_character_creation;
 pub use request_character_creation::request_character_creation;
 mod request_character_deletion;
 pub use request_character_deletion::request_character_deletion;
+mod select_character;
+pub use select_character::select_character;
 mod wrong_account_error;
 pub use wrong_account_error::WrongAccountError;

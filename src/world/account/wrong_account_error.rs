@@ -1,13 +1,13 @@
-use eo::data::EOShort;
+use eo::data::EOInt;
 
 #[derive(Debug)]
 pub struct WrongAccountError {
-    pub expected: EOShort,
-    pub actual: EOShort,
+    pub expected: EOInt,
+    pub actual: EOInt,
 }
 
 impl WrongAccountError {
-    pub fn new(expected: EOShort, actual: EOShort) -> Self {
+    pub fn new(expected: EOInt, actual: EOInt) -> Self {
         Self { expected, actual }
     }
 }

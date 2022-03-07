@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, EOInt},
-    net::packets::{server::{account, character, login}, client},
+    net::{packets::{server::{account, character, login, welcome, init}, client}, FileType},
 };
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
@@ -80,7 +80,7 @@ impl WorldHandle {
         &mut self,
         name: String,
         password: String,
-    ) -> Result<(login::Reply, EOShort), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(login::Reply, EOInt), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Login {
             name,
@@ -162,10 +162,10 @@ impl WorldHandle {
     }
 
     pub async fn drop_player(
-        &mut self,
+        &self,
         player_id: EOShort,
-        account_id: EOShort,
-        character_id: EOShort,
+        account_id: EOInt,
+        character_id: EOInt,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DropPlayer {
@@ -176,6 +176,46 @@ impl WorldHandle {
         });
         rx.await.unwrap();
         Ok(())
+    }
+
+    pub async fn select_character(
+        &self,
+        character_id: EOInt,
+        player: PlayerHandle,
+    ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::SelectCharacter {
+            character_id,
+            player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_file(
+        &self,
+        file_type: FileType,
+        player: PlayerHandle,
+    ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetFile {
+            file_type,
+            player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn enter_game(
+        &self,
+        player: PlayerHandle,
+    ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::EnterGame {
+            player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
     }
 
     pub async fn load_maps(&self) {

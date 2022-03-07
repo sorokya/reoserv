@@ -16,7 +16,7 @@ use crate::SETTINGS;
 #[derive(Debug, Clone, Default)]
 pub struct Character {
     pub id: EOInt,
-    pub account_id: EOShort,
+    pub account_id: EOInt,
     pub name: String,
     pub title: Option<String>,
     pub home: String,
@@ -59,7 +59,7 @@ pub struct Character {
 }
 
 impl Character {
-    pub fn from_creation(account_id: EOShort, create: &Create) -> Self {
+    pub fn from_creation(account_id: EOInt, create: &Create) -> Self {
         let mut character = Character::default();
         character.account_id = account_id;
         character.gender = create.gender;

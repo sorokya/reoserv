@@ -30,10 +30,18 @@ pub struct NewCharacter {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Jail {
+    pub map: u32,
+    pub x: u32,
+    pub y: u32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
     pub new_character: NewCharacter,
+    pub jail: Jail,
 }
 
 impl Settings {

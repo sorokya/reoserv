@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort},
+    data::{EOChar, EOInt},
     net::{packets::server::login::Reply, replies::LoginReply, CharacterList},
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
@@ -14,8 +14,8 @@ pub async fn login(
     conn: &mut Conn,
     name: &str,
     password: &str,
-    accounts: &mut MutexGuard<'_, Vec<EOShort>>,
-) -> Result<(Reply, EOShort), Box<dyn std::error::Error + Send + Sync>> {
+    accounts: &mut MutexGuard<'_, Vec<EOInt>>,
+) -> Result<(Reply, EOInt), Box<dyn std::error::Error + Send + Sync>> {
     let exists = account_exists(conn, name).await?;
     if !exists {
         return Ok((
@@ -53,7 +53,7 @@ pub async fn login(
         }
     };
 
-    let account_id: EOShort = row.get("id").unwrap();
+    let account_id: EOInt = row.get("id").unwrap();
     if accounts.contains(&account_id) {
         return Ok((
             Reply {

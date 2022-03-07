@@ -1,14 +1,11 @@
 use std::{cell::RefCell, collections::VecDeque};
 
 use eo::data::{EOShort, StreamBuilder};
-use tokio::{
-    net::TcpStream,
-    sync::mpsc::UnboundedReceiver,
-};
+use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
 use crate::{world::WorldHandle, PacketBuf};
 
-use super::{packet_bus::PacketBus, Command, State, InvalidStateError};
+use super::{packet_bus::PacketBus, Command, InvalidStateError, State};
 
 pub struct Player {
     pub id: EOShort,
@@ -117,11 +114,58 @@ impl Player {
             Command::GetIpAddr { respond_to } => {
                 let _ = respond_to.send(self.ip.clone());
             }
-            Command::GetAccountId { respond_to } => {
-                if let State::LoggedIn { account_id} = self.state {
+            Command::GetAccountId { respond_to } => match self.state {
+                State::LoggedIn {
+                    account_id,
+                } => {
                     let _ = respond_to.send(Ok(account_id));
-                } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(State::LoggedIn { account_id: 0 }, self.state)));
+                },
+                State::EnteringWorld {
+                    account_id,
+                    character_id: _,
+                } => {
+                    let _ = respond_to.send(Ok(account_id));
+                }
+                State::Playing {
+                    account_id,
+                    character_id: _,
+                } => {
+                    let _ = respond_to.send(Ok(account_id));
+                }
+                _ => {
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        State::EnteringWorld {
+                            account_id: 0,
+                            character_id: 0,
+                        },
+                        self.state,
+                    )));
+                }
+            },
+            Command::GetPlayerId { respond_to } => {
+                let _ = respond_to.send(self.id);
+            }
+            Command::GetCharacterId { respond_to } => match self.state {
+                State::EnteringWorld {
+                    account_id: _,
+                    character_id,
+                } => {
+                    let _ = respond_to.send(Ok(character_id));
+                }
+                State::Playing {
+                    account_id: _,
+                    character_id,
+                } => {
+                    let _ = respond_to.send(Ok(character_id));
+                }
+                _ => {
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        State::EnteringWorld {
+                            account_id: 0,
+                            character_id: 0,
+                        },
+                        self.state,
+                    )));
                 }
             },
         }

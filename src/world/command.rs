@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, EOInt},
-    net::packets::server::{account, character, login},
+    net::{packets::server::{account, character, login, welcome, init}, FileType},
 };
 use tokio::sync::oneshot;
 
@@ -30,8 +30,8 @@ pub enum Command {
     },
     DropPlayer {
         player_id: EOShort,
-        account_id: EOShort,
-        character_id: EOShort,
+        account_id: EOInt,
+        character_id: EOInt,
         respond_to: oneshot::Sender<()>,
     },
     RequestAccountCreation {
@@ -50,7 +50,7 @@ pub enum Command {
         name: String,
         password: String,
         respond_to: oneshot::Sender<
-            Result<(login::Reply, EOShort), Box<dyn std::error::Error + Send + Sync>>,
+            Result<(login::Reply, EOInt), Box<dyn std::error::Error + Send + Sync>>,
         >,
     },
     RequestCharacterCreation {
@@ -76,5 +76,20 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    SelectCharacter {
+        character_id: EOInt,
+        player: PlayerHandle,
+        respond_to:
+            oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    GetFile {
+        file_type: FileType,
+        player: PlayerHandle,
+        respond_to: oneshot::Sender<Result<init::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    EnterGame {
+        player: PlayerHandle,
+        respond_to: oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     }
 }

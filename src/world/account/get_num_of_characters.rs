@@ -1,9 +1,9 @@
-use eo::data::EOShort;
+use eo::data::EOInt;
 use mysql_async::{prelude::*, Conn, Params, Row};
 
 pub async fn get_num_of_characters(
     conn: &mut Conn,
-    account_id: EOShort,
+    account_id: EOInt,
 ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
     match conn
         .exec_first::<Row, &str, Params>(

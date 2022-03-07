@@ -93,9 +93,21 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_account_id(&self) -> Result<EOShort, InvalidStateError> {
+    pub async fn get_account_id(&self) -> Result<EOInt, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_player_id(&self) -> EOShort {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPlayerId { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_character_id(&self) -> Result<EOInt, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacterId { respond_to: tx });
         rx.await.unwrap()
     }
 

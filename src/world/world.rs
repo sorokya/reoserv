@@ -1,15 +1,31 @@
-use crate::{player::PlayerHandle, SETTINGS};
-
-use super::{account, Command, data};
-use eo::data::{
-    map::MapFile,
-    pubs::{
-        ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile, TalkFile,
-    },
-    EOShort,
+use crate::{
+    character::Character,
+    player::{PlayerHandle, State},
+    world::MapNotFoundError,
+    SETTINGS,
 };
-use mysql_async::Pool;
-use std::{collections::HashMap, sync::Arc, time::Duration};
+
+use super::{account, data, Command};
+use eo::{
+    data::{
+        map::MapFile,
+        pubs::{
+            ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile,
+            TalkFile,
+        },
+        EOShort, EOInt, Serializeable,
+    },
+    net::{
+        packets::server::{
+            init,
+            welcome::{self, SelectCharacter},
+        },
+        replies::{WelcomeReply, InitReply},
+        FileType, ServerSettings,
+    },
+};
+use mysql_async::{Pool, Conn};
+use std::{collections::HashMap, convert::TryInto, sync::Arc, time::Duration};
 use tokio::{
     sync::{mpsc::UnboundedReceiver, Mutex},
     time,
@@ -19,7 +35,7 @@ use tokio::{
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
-    accounts: Arc<Mutex<Vec<EOShort>>>,
+    accounts: Arc<Mutex<Vec<EOInt>>>,
     pool: Pool,
     maps: Option<Arc<Mutex<HashMap<EOShort, MapFile>>>>,
     class_file: Option<Arc<Mutex<ClassFile>>>,
@@ -179,33 +195,256 @@ impl World {
                 let result = account::login(&mut conn, &name, &password, &mut accounts).await;
                 let _ = respond_to.send(result);
             }
-            Command::RequestCharacterCreation {
-                player,
-                respond_to,
-            } => {
+            Command::RequestCharacterCreation { player, respond_to } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let result = account::request_character_creation(&mut conn, player).await;
                 let _ = respond_to.send(result);
             }
-            Command::CreateCharacter { details, player, respond_to } => {
+            Command::CreateCharacter {
+                details,
+                player,
+                respond_to,
+            } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let result = account::create_character(&mut conn, details, player).await;
                 let _ = respond_to.send(result);
-            },
+            }
             Command::RequestCharacterDeletion {
                 character_id,
                 player,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::request_character_deletion(&mut conn, character_id, player).await;
+                let result =
+                    account::request_character_deletion(&mut conn, character_id, player).await;
                 let _ = respond_to.send(result);
-            },
-            Command::DeleteCharacter { session_id, character_id, player, respond_to } => {
+            }
+            Command::DeleteCharacter {
+                session_id,
+                character_id,
+                player,
+                respond_to,
+            } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::delete_character(&mut conn, session_id, character_id, player).await;
+                let result =
+                    account::delete_character(&mut conn, session_id, character_id, player).await;
                 let _ = respond_to.send(result);
+            }
+            Command::SelectCharacter {
+                character_id,
+                player,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let character = match account::select_character(
+                    &mut conn,
+                    character_id,
+                    player.clone(),
+                )
+                .await
+                {
+                    Ok(character) => character,
+                    Err(err) => {
+                        let _ = respond_to.send(Err(err));
+                        return;
+                    }
+                };
+
+                let select_character = match self
+                    .get_welcome_request_data(player.clone(), &character)
+                    .await
+                {
+                    Ok(select_character) => select_character,
+                    Err(err) => {
+                        let _ = respond_to.send(Err(err));
+                        return;
+                    }
+                };
+
+                let account_id = player.get_account_id().await.unwrap();
+                player.set_state(State::EnteringWorld {
+                    account_id,
+                    character_id: character.id.try_into().expect("invalid character id"),
+                });
+
+                let _ = respond_to.send(Ok(welcome::Reply {
+                    reply: WelcomeReply::SelectCharacter,
+                    select_character: Some(select_character),
+                    enter_game: None,
+                }));
+            }
+            Command::GetFile {
+                file_type,
+                player,
+                respond_to,
+            } => {
+                let mut conn = self.pool.get_conn().await.unwrap();
+                let result = self.get_file(&mut conn, file_type, player).await;
+                let _ = respond_to.send(result);
+            }
+            Command::EnterGame { player, respond_to } => todo!(),
+        }
+    }
+
+    async fn get_welcome_request_data(
+        &self,
+        player: PlayerHandle,
+        character: &Character,
+    ) -> Result<SelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
+        let player_id = player.get_player_id().await;
+        let (map_hash, map_filesize) = {
+            let maps = self.maps.as_ref().expect("Maps not loaded");
+            let maps = maps.lock().await;
+            let map = match maps.get(&character.map_id) {
+                Some(map) => map,
+                None => {
+                    error!("Map not found: {}", character.map_id);
+                    return Err(Box::new(MapNotFoundError::new(character.map_id)));
+                }
+            };
+            (map.hash, map.size)
+        };
+
+        let (eif_hash, eif_length) = {
+            let item_file = self.item_file.as_ref().expect("Item file not loaded");
+            let item_file = item_file.lock().await;
+            (item_file.hash, item_file.len())
+        };
+
+        let (ecf_hash, ecf_length) = {
+            let class_file = self.class_file.as_ref().expect("Class file not loaded");
+            let class_file = class_file.lock().await;
+            (class_file.hash, class_file.len())
+        };
+
+        let (enf_hash, enf_length) = {
+            let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
+            let npc_file = npc_file.lock().await;
+            (npc_file.hash, npc_file.len())
+        };
+
+        let (esf_hash, esf_length) = {
+            let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
+            let spell_file = spell_file.lock().await;
+            (spell_file.hash, spell_file.len())
+        };
+
+        let settings = ServerSettings {
+            jail_map_id: SETTINGS.jail.map.try_into().expect("Invalid map id"),
+            unknown_1: 4,
+            unknown_2: 24,
+            unknown_3: 24,
+            light_guide_flood_rate: 10,
+            guardian_flood_rate: 10,
+            game_master_flood_rate: 10,
+            unknown_4: 2,
+        };
+
+        Ok(SelectCharacter {
+            player_id,
+            character_id: character.id,
+            map_id: character.map_id,
+            map_hash,
+            map_filesize,
+            eif_hash,
+            eif_length,
+            enf_hash,
+            enf_length,
+            esf_hash,
+            esf_length,
+            ecf_hash,
+            ecf_length,
+            name: character.name.to_string(),
+            title: character.title.clone().unwrap_or_default(),
+            guild_name: character.guild_name.clone().unwrap_or_default(),
+            guild_rank_name: character.guild_rank_string.clone().unwrap_or_default(),
+            class_id: character.class,
+            guild_tag: character.guild_tag.clone().unwrap_or_default(),
+            admin_level: character.admin_level,
+            level: character.level,
+            experience: character.experience,
+            usage: character.usage,
+            stats: character.get_character_stats_2(),
+            paperdoll: character.paperdoll,
+            guild_rank: character.guild_rank_id.unwrap_or_default(),
+            settings,
+            login_message: match character.usage {
+                0 => 2,
+                _ => 0,
             },
+        })
+    }
+
+    async fn get_file(
+        &self,
+        conn: &mut Conn,
+        file_type: FileType,
+        player: PlayerHandle,
+    ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
+        match file_type {
+            FileType::Map => {
+                let character_id = player.get_character_id().await?;
+                let character = account::select_character(conn, character_id, player).await?;
+                let mut reply = init::ReplyFileMap::new();
+                let maps = self.maps.as_ref().expect("Maps not loaded");
+                let maps = maps.lock().await;
+                let map = match maps.get(&character.map_id) {
+                    Some(map) => map,
+                    None => {
+                        error!("Map not found: {}", character.map_id);
+                        return Err(Box::new(MapNotFoundError::new(character.map_id)));
+                    }
+                };
+                reply.data = map.serialize();
+                Ok(init::Reply {
+                    reply_code: InitReply::FileMap,
+                    reply: Box::new(reply),
+                })
+            }
+            FileType::Item => {
+                let mut reply = init::ReplyFileItem::new();
+                let item_file = self.item_file.as_ref().expect("Item file not loaded");
+                let item_file = item_file.lock().await;
+                reply.id = 1;
+                reply.data = item_file.serialize();
+                Ok(init::Reply {
+                    reply_code: InitReply::FileItem,
+                    reply: Box::new(reply),
+                })
+            }
+            FileType::NPC => {
+                let mut reply = init::ReplyFileNPC::new();
+                let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
+                let npc_file = npc_file.lock().await;
+                reply.id = 1;
+                reply.data = npc_file.serialize();
+                Ok(init::Reply {
+                    reply_code: InitReply::FileNPC,
+                    reply: Box::new(reply),
+                })
+            }
+            FileType::Spell => {
+                let mut reply = init::ReplyFileSpell::new();
+                let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
+                let spell_file = spell_file.lock().await;
+                reply.id = 1;
+                reply.data = spell_file.serialize();
+                Ok(init::Reply {
+                    reply_code: InitReply::FileSpell,
+                    reply: Box::new(reply),
+                })
+            }
+            FileType::Class => {
+                let mut reply = init::ReplyFileClass::new();
+                let class_file = self.class_file.as_ref().expect("Class file not loaded");
+                let class_file = class_file.lock().await;
+                reply.id = 1;
+                reply.data = class_file.serialize();
+                Ok(init::Reply {
+                    reply_code: InitReply::FileClass,
+                    reply: Box::new(reply),
+                })
+            }
         }
     }
 }

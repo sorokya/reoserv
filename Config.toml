@@ -34,6 +34,11 @@ spawn_y = 6
 spawn_direction = 0
 home = "Wanderer"
 
+[jail]
+map = 176
+x = 1
+y = 1
+
 [database]
 host = "127.0.0.1"
 port = "3306"

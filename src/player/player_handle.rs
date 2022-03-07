@@ -9,7 +9,7 @@ use tokio::{
 
 use crate::{world::WorldHandle, PacketBuf};
 
-use super::{handle_packet::handle_packet, player::Player, Command, State, InvalidStateError};
+use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -169,10 +169,16 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
 
     let (account_id, character_id) = match player.state {
         State::LoggedIn { account_id } => (account_id, 0),
-        State::Playing { account_id, character_id } => (account_id, character_id),
+        State::Playing {
+            account_id,
+            character_id,
+        } => (account_id, character_id),
         _ => (0, 0),
     };
 
-
-    player.world.drop_player(player.id, account_id, character_id).await.unwrap();
+    player
+        .world
+        .drop_player(player.id, account_id, character_id)
+        .await
+        .unwrap();
 }

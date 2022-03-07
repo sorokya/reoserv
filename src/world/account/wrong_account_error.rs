@@ -16,6 +16,10 @@ impl std::error::Error for WrongAccountError {}
 
 impl std::fmt::Display for WrongAccountError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Wrong account id: expected {}, got {}", self.expected, self.actual)
+        write!(
+            f,
+            "Wrong account id: expected {}, got {}",
+            self.expected, self.actual
+        )
     }
 }

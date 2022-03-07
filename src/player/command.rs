@@ -6,7 +6,7 @@ use tokio::sync::oneshot;
 
 use crate::PacketBuf;
 
-use super::{State, InvalidStateError};
+use super::{InvalidStateError, State};
 
 #[derive(Debug)]
 pub enum Command {

@@ -13,18 +13,18 @@ use eo::{
             ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile,
             TalkFile,
         },
-        EOShort, EOInt, Serializeable,
+        EOInt, EOShort, Serializeable,
     },
     net::{
         packets::server::{
             init,
             welcome::{self, SelectCharacter},
         },
-        replies::{WelcomeReply, InitReply},
+        replies::{InitReply, WelcomeReply},
         FileType, ServerSettings,
     },
 };
-use mysql_async::{Pool, Conn};
+use mysql_async::{Conn, Pool};
 use std::{collections::HashMap, convert::TryInto, sync::Arc, time::Duration};
 use tokio::{
     sync::{mpsc::UnboundedReceiver, Mutex},

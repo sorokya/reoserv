@@ -17,7 +17,7 @@ pub async fn get_num_of_characters(
         Some(row) => {
             let count: usize = row.get(0).unwrap();
             Ok(count)
-        },
+        }
         _ => Ok(0),
     }
 }

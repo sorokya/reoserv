@@ -1,6 +1,9 @@
 use eo::{
-    data::{EOShort, EOInt},
-    net::{packets::server::{account, character, login, welcome, init}, FileType},
+    data::{EOInt, EOShort},
+    net::{
+        packets::server::{account, character, init, login, welcome},
+        FileType,
+    },
 };
 use tokio::sync::oneshot;
 
@@ -90,6 +93,7 @@ pub enum Command {
     },
     EnterGame {
         player: PlayerHandle,
-        respond_to: oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    }
+        respond_to:
+            oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
 }

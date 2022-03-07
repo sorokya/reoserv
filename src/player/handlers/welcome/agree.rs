@@ -1,20 +1,11 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{
-        packets::{
-            client::welcome::Agree,
-        },
-        Action, Family,
-    },
+    net::{packets::client::welcome::Agree, Action, Family},
 };
 
-use crate::{PacketBuf, player::PlayerHandle, world::WorldHandle};
+use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
-pub async fn agree(
-    buf: PacketBuf,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
+pub async fn agree(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     let mut agree = Agree::default();
     let reader = StreamReader::new(&buf);
     agree.deserialize(&reader);
@@ -25,12 +16,8 @@ pub async fn agree(
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
 
-            player.send(
-                Action::Init,
-                Family::Init,
-                reply.serialize(),
-            );
-        },
+            player.send(Action::Init, Family::Init, reply.serialize());
+        }
         Err(_) => {}
     }
 

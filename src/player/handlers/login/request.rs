@@ -44,9 +44,7 @@ pub async fn request(
     debug!("Reply: {:?}", reply);
 
     if reply.reply == LoginReply::OK {
-        player.set_state(State::LoggedIn {
-            account_id,
-        });
+        player.set_state(State::LoggedIn { account_id });
     }
 
     player.send(Action::Reply, Family::Login, reply.serialize());

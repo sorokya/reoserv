@@ -1,6 +1,12 @@
 use eo::{
-    data::{EOShort, EOInt},
-    net::{packets::{server::{account, character, login, welcome, init}, client}, FileType},
+    data::{EOInt, EOShort},
+    net::{
+        packets::{
+            client,
+            server::{account, character, init, login, welcome},
+        },
+        FileType,
+    },
 };
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};

@@ -8,9 +8,7 @@ use eo::{
 };
 use mysql_async::Conn;
 
-use crate::{
-    character::Character, player::PlayerHandle,
-};
+use crate::{character::Character, player::PlayerHandle};
 
 use super::{character_exists, get_character_list};
 
@@ -35,7 +33,10 @@ pub async fn create_character(
 
     let mut character = Character::from_creation(account_id, &details);
     if let Err(e) = character.save(conn).await {
-        error!("Error creating character: {}\n\taccount_id: {}\n\tdetails: {:?}", e, account_id, details);
+        error!(
+            "Error creating character: {}\n\taccount_id: {}\n\tdetails: {:?}",
+            e, account_id, details
+        );
         return Err(e);
     }
 

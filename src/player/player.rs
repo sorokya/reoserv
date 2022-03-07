@@ -115,11 +115,9 @@ impl Player {
                 let _ = respond_to.send(self.ip.clone());
             }
             Command::GetAccountId { respond_to } => match self.state {
-                State::LoggedIn {
-                    account_id,
-                } => {
+                State::LoggedIn { account_id } => {
                     let _ = respond_to.send(Ok(account_id));
-                },
+                }
                 State::EnteringWorld {
                     account_id,
                     character_id: _,

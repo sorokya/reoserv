@@ -1,8 +1,11 @@
-use eo::{net::{packets::server::character::Reply, CharacterList}, data::{EOShort, EOInt, EOChar}};
+use eo::{
+    data::{EOChar, EOInt, EOShort},
+    net::{packets::server::character::Reply, CharacterList},
+};
 use mysql_async::Conn;
 
-use crate::{player::PlayerHandle, character::Character};
-use super::{WrongAccountError, get_character_list};
+use super::{get_character_list, WrongAccountError};
+use crate::{character::Character, player::PlayerHandle};
 
 pub async fn delete_character(
     conn: &mut Conn,
@@ -15,7 +18,10 @@ pub async fn delete_character(
     let account_id = match player.get_account_id().await {
         Ok(account_id) => account_id,
         Err(e) => {
-            warn!("Tried to request character deletion with invalid state: {:?}", e.actual);
+            warn!(
+                "Tried to request character deletion with invalid state: {:?}",
+                e.actual
+            );
             return Err(Box::new(e));
         }
     };
@@ -23,14 +29,23 @@ pub async fn delete_character(
     let character = match Character::load(conn, character_id).await {
         Ok(character) => character,
         Err(e) => {
-            warn!("Tried to request character deletion for a character that doesn't exist: {}", character_id);
+            warn!(
+                "Tried to request character deletion for a character that doesn't exist: {}",
+                character_id
+            );
             return Err(e);
         }
     };
 
     if character.account_id != account_id {
-        warn!("Player {} attempted to delete character ({}) belonging to another account: {}", account_id, character.name, character.account_id);
-        return Err(Box::new(WrongAccountError::new(character.account_id, account_id)));
+        warn!(
+            "Player {} attempted to delete character ({}) belonging to another account: {}",
+            account_id, character.name, character.account_id
+        );
+        return Err(Box::new(WrongAccountError::new(
+            character.account_id,
+            account_id,
+        )));
     }
 
     character.delete(conn).await?;

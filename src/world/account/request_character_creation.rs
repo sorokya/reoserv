@@ -1,6 +1,4 @@
-use eo::{
-    net::{packets::server::character::Reply, replies::CharacterReply},
-};
+use eo::net::{packets::server::character::Reply, replies::CharacterReply};
 use mysql_async::Conn;
 
 use crate::player::PlayerHandle;

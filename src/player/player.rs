@@ -1,9 +1,15 @@
-use std::{cell::RefCell, collections::VecDeque};
+use std::{cell::RefCell, collections::VecDeque, sync::Arc};
 
-use eo::data::{EOShort, StreamBuilder};
-use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
+use eo::{
+    data::{EOChar, EOInt, EOShort, StreamBuilder},
+    net::Weight,
+};
+use tokio::{
+    net::TcpStream,
+    sync::{mpsc::UnboundedReceiver, Mutex},
+};
 
-use crate::{world::WorldHandle, PacketBuf};
+use crate::{character::Character, utils, world::WorldHandle, PacketBuf};
 
 use super::{packet_bus::PacketBus, Command, InvalidStateError, State};
 
@@ -14,8 +20,11 @@ pub struct Player {
     pub bus: PacketBus,
     pub world: WorldHandle,
     pub busy: bool,
-    pub state: State,
+    pub account_id: EOInt,
+    pub character_id: EOInt,
+    state: State,
     ip: String,
+    character: Option<Arc<Mutex<Character>>>,
 }
 
 impl Player {
@@ -35,6 +44,9 @@ impl Player {
             state: State::Uninitialized,
             ip,
             busy: false,
+            account_id: 0,
+            character_id: 0,
+            character: None,
         }
     }
 
@@ -114,58 +126,112 @@ impl Player {
             Command::GetIpAddr { respond_to } => {
                 let _ = respond_to.send(self.ip.clone());
             }
-            Command::GetAccountId { respond_to } => match self.state {
-                State::LoggedIn { account_id } => {
-                    let _ = respond_to.send(Ok(account_id));
+            Command::SetAccountId(account_id) => {
+                self.account_id = account_id;
+            }
+            Command::GetAccountId { respond_to } => {
+                if let State::LoggedIn | State::Playing = self.state {
+                    let _ = respond_to.send(Ok(self.account_id));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::LoggedIn, self.state)));
                 }
-                State::EnteringWorld {
-                    account_id,
-                    character_id: _,
-                } => {
-                    let _ = respond_to.send(Ok(account_id));
-                }
-                State::Playing {
-                    account_id,
-                    character_id: _,
-                } => {
-                    let _ = respond_to.send(Ok(account_id));
-                }
-                _ => {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        State::EnteringWorld {
-                            account_id: 0,
-                            character_id: 0,
-                        },
-                        self.state,
-                    )));
-                }
-            },
+            }
             Command::GetPlayerId { respond_to } => {
                 let _ = respond_to.send(self.id);
             }
-            Command::GetCharacterId { respond_to } => match self.state {
-                State::EnteringWorld {
-                    account_id: _,
-                    character_id,
-                } => {
-                    let _ = respond_to.send(Ok(character_id));
+            Command::GetCharacterId { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.id));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
-                State::Playing {
-                    account_id: _,
-                    character_id,
-                } => {
-                    let _ = respond_to.send(Ok(character_id));
+            }
+            Command::SetCharacter(character) => {
+                self.character = Some(Arc::new(Mutex::new(character)));
+            }
+            Command::GetMapId { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.map_id));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
-                _ => {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        State::EnteringWorld {
-                            account_id: 0,
-                            character_id: 0,
-                        },
-                        self.state,
-                    )));
+            }
+            Command::CalculateStats { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let mut character = character.lock().await;
+                    character.calculate_stats(self.world.clone());
+                    let _ = respond_to.send(Ok(()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
-            },
+            }
+            Command::GetCoords { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.coords));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetWeight { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(Weight {
+                        current: character.weight as EOChar,
+                        max: character.max_weight as EOChar,
+                    }));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetItems { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.items.clone()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetSpells { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.spells.clone()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetCharacterMapInfo { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.to_map_info(self.id)));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::IsInRange { coords, respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(utils::in_range(
+                        coords.x.into(),
+                        coords.y.into(),
+                        character.coords.x.into(),
+                        character.coords.y.into(),
+                    ));
+                } else {
+                    let _ = respond_to.send(false);
+                }
+            }
         }
 
         true

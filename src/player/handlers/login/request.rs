@@ -24,28 +24,21 @@ pub async fn request(
         request.name
     );
 
-    let (reply, account_id) = match world
-        .login(request.name.clone(), request.password.clone())
+    let reply = match world
+        .login(player.clone(), request.name.clone(), request.password.clone())
         .await
     {
-        Ok((reply, account_id)) => (reply, account_id),
+        Ok(reply) => reply,
         Err(e) => {
             error!("Login error: {}", e);
-            (
-                Reply {
-                    reply: LoginReply::Busy,
-                    character_list: None,
-                },
-                0,
-            )
+            Reply {
+                reply: LoginReply::Busy,
+                character_list: None,
+            }
         }
     };
 
     debug!("Reply: {:?}", reply);
-
-    if reply.reply == LoginReply::OK {
-        player.set_state(State::LoggedIn { account_id });
-    }
 
     player.send(Action::Reply, Family::Login, reply.serialize());
 

@@ -4,15 +4,6 @@ use eo::data::EOInt;
 pub enum State {
     Uninitialized,
     Initialized,
-    LoggedIn {
-        account_id: EOInt,
-    },
-    EnteringWorld {
-        account_id: EOInt,
-        character_id: EOInt,
-    },
-    Playing {
-        account_id: EOInt,
-        character_id: EOInt,
-    },
+    LoggedIn,
+    Playing,
 }

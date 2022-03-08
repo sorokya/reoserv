@@ -1,9 +1,9 @@
 use eo::{
     character::{AdminLevel, Gender, Race, SitState},
-    data::{EOChar, EOInt, EOShort},
+    data::{EOChar, EOInt, EOShort, MAX1},
     net::{
         packets::client::character::Create, CharacterBaseStats, CharacterSecondaryStats,
-        CharacterStats2, Item, PaperdollFull, Spell,
+        CharacterStats2, Item, PaperdollFull, Spell, CharacterMapInfo,
     },
     world::{Coords, Direction},
 };
@@ -11,7 +11,7 @@ use eo::{
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use num_traits::FromPrimitive;
 
-use crate::SETTINGS;
+use crate::{SETTINGS, world::WorldHandle};
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
@@ -42,12 +42,29 @@ pub struct Character {
     pub tp: EOShort,
     pub max_tp: EOShort,
     pub max_sp: EOShort,
-    pub base_stats: CharacterBaseStats,
+    pub weight: EOInt,
+    pub max_weight: EOInt,
+    pub base_strength: EOShort,
+    pub base_intelligence: EOShort,
+    pub base_wisdom: EOShort,
+    pub base_agility: EOShort,
+    pub base_constitution: EOShort,
+    pub base_charisma: EOShort,
+    pub adj_strength: EOShort,
+    pub adj_intelligence: EOShort,
+    pub adj_wisdom: EOShort,
+    pub adj_agility: EOShort,
+    pub adj_constitution: EOShort,
+    pub adj_charisma: EOShort,
     pub stat_points: EOShort,
     pub skill_points: EOShort,
     pub karma: EOShort,
     pub usage: EOInt,
-    pub secondary_stats: CharacterSecondaryStats,
+    pub min_damage: EOShort,
+    pub max_damage: EOShort,
+    pub accuracy: EOShort,
+    pub evasion: EOShort,
+    pub armor: EOShort,
     pub map_id: EOShort,
     pub coords: Coords,
     pub direction: Direction,
@@ -69,6 +86,97 @@ impl Character {
         character.name = create.name.clone();
         character
     }
+
+    pub fn to_map_info(&self, player_id: EOShort) -> CharacterMapInfo {
+        CharacterMapInfo {
+            name: self.name.clone(),
+            id: player_id,
+            map_id: self.map_id,
+            coords: self.coords,
+            direction: self.direction,
+            class_id: self.class,
+            guild_tag: match self.guild_tag {
+                Some(ref tag) => tag.to_string(),
+                None => String::new(),
+            },
+            level: self.level,
+            gender: self.gender,
+            hair_style: self.hair_style as EOChar,
+            hair_color: self.hair_color as EOChar,
+            race: self.race,
+            max_hp: self.max_hp,
+            hp: self.hp,
+            max_tp: self.max_tp,
+            tp: self.tp,
+            paperdoll: self.paperdoll.to_paperdoll_b000a0hsw(),
+            sit_state: self.sit_state,
+            invisible: self.hidden,
+        }
+    }
+
+    pub async fn calculate_stats(&mut self, world: WorldHandle) {
+        match world.get_class(self.class).await {
+            Ok(class) => {
+                self.adj_strength = self.base_strength + class.strength;
+                self.adj_intelligence = self.base_intelligence + class.intelligence;
+                self.adj_wisdom = self.base_wisdom + class.wisdom;
+                self.adj_agility = self.base_agility + class.agility;
+                self.adj_constitution = self.base_constitution + class.constitution;
+                self.adj_charisma = self.base_charisma + class.charisma;
+            },
+            _ => {},
+        }
+
+        self.max_weight = 70;
+        self.weight = 0;
+        self.max_hp = 0;
+        self.max_tp = 0;
+        self.min_damage = 0;
+        self.max_damage = 0;
+        self.accuracy = 0;
+        self.evasion = 0;
+        self.armor = 0;
+        self.max_sp = 0;
+
+        for item in &self.items {
+            match world.get_item(item.id).await {
+                Ok(record) => {
+                    self.weight += record.weight as EOInt * item.amount;
+                    if self.weight >= 250 {
+                        break;
+                    }
+                },
+                _ => {},
+            }
+        }
+
+        for item in self.paperdoll {
+            match world.get_item(item).await {
+                Ok(item) => {
+                    self.weight += item.weight as EOInt;
+                    self.max_hp += item.hp;
+                    self.max_tp += item.tp;
+                    self.min_damage += item.min_damage;
+                    self.max_damage += item.max_damage;
+                    self.accuracy += item.accuracy;
+                    self.evasion += item.evade;
+                    self.armor += item.armor;
+                    self.adj_strength += item.strength as EOShort;
+                    self.adj_intelligence += item.intelligence as EOShort;
+                    self.adj_wisdom += item.wisdom as EOShort;
+                    self.adj_agility += item.agility as EOShort;
+                    self.adj_constitution += item.constitution as EOShort;
+                    self.adj_charisma += item.charisma as EOShort;
+                },
+                _ => {},
+            }
+        }
+
+        if self.weight > 250 {
+            self.weight = 250;
+        }
+    }
+
     pub async fn load(
         conn: &mut Conn,
         id: EOInt,
@@ -127,12 +235,12 @@ impl Character {
         character.experience = row.take("experience").unwrap();
         character.hp = row.take("hp").unwrap();
         character.tp = row.take("tp").unwrap();
-        character.base_stats.strength = row.take("strength").unwrap();
-        character.base_stats.intelligence = row.take("intelligence").unwrap();
-        character.base_stats.wisdom = row.take("wisdom").unwrap();
-        character.base_stats.agility = row.take("agility").unwrap();
-        character.base_stats.constitution = row.take("constitution").unwrap();
-        character.base_stats.charisma = row.take("charisma").unwrap();
+        character.base_strength = row.take("strength").unwrap();
+        character.base_intelligence = row.take("intelligence").unwrap();
+        character.base_wisdom = row.take("wisdom").unwrap();
+        character.base_agility = row.take("agility").unwrap();
+        character.base_constitution = row.take("constitution").unwrap();
+        character.base_charisma = row.take("charisma").unwrap();
         character.stat_points = row.take("stat_points").unwrap();
         character.skill_points = row.take("skill_points").unwrap();
         character.karma = row.take("karma").unwrap();
@@ -184,10 +292,6 @@ impl Character {
                 },
             )
             .await?;
-
-        // TOOD: hack until I implement stat calculations
-        character.max_hp = character.hp;
-        character.max_tp = character.tp;
 
         Ok(character)
     }
@@ -357,8 +461,21 @@ impl Character {
             stat_points: self.stat_points,
             skill_points: self.skill_points,
             karma: self.karma,
-            secondary: self.secondary_stats.clone(),
-            base: self.base_stats.clone(),
+            secondary: CharacterSecondaryStats {
+                min_damage: self.min_damage,
+                max_damage: self.max_damage,
+                accuracy: self.accuracy,
+                evasion: self.evasion,
+                armor: self.armor,
+            },
+            base: CharacterBaseStats {
+                strength: self.adj_strength,
+                intelligence: self.adj_intelligence,
+                wisdom: self.adj_wisdom,
+                agility: self.adj_agility,
+                constitution: self.adj_constitution,
+                charisma: self.adj_charisma,
+            },
         }
     }
 }

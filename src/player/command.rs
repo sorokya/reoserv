@@ -1,10 +1,10 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family},
+    net::{Action, Family, Weight, Item, Spell, CharacterMapInfo}, world::Coords,
 };
 use tokio::sync::oneshot;
 
-use crate::PacketBuf;
+use crate::{PacketBuf, character::Character};
 
 use super::{InvalidStateError, State};
 
@@ -42,8 +42,35 @@ pub enum Command {
     GetCharacterId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
+    GetMapId {
+        respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
+    },
+    GetCoords {
+        respond_to: oneshot::Sender<Result<Coords, InvalidStateError>>,
+    },
+    GetWeight {
+        respond_to: oneshot::Sender<Result<Weight, InvalidStateError>>,
+    },
+    GetItems {
+        respond_to: oneshot::Sender<Result<Vec<Item>, InvalidStateError>>,
+    },
+    GetSpells {
+        respond_to: oneshot::Sender<Result<Vec<Spell>, InvalidStateError>>,
+    },
+    GetCharacterMapInfo {
+        respond_to: oneshot::Sender<Result<CharacterMapInfo, InvalidStateError>>,
+    },
+    IsInRange {
+        coords: Coords,
+        respond_to: oneshot::Sender<bool>,
+    },
+    SetAccountId(EOInt),
+    SetCharacter(Character),
     SetState(State),
     SetBusy(bool),
+    CalculateStats {
+        respond_to: oneshot::Sender<Result<(), InvalidStateError>>,
+    },
     Ping,
     Pong,
 }

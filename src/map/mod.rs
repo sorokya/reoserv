@@ -1,6 +1,10 @@
 mod command;
 pub use command::Command;
+mod item;
+pub use item::Item;
 mod map;
 pub use map::Map;
+mod npc;
+pub use npc::NPC;
 mod map_handle;
 pub use map_handle::MapHandle;

@@ -1,13 +1,13 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family},
+    net::{Action, Family, Weight, Item, Spell, CharacterMapInfo}, world::Coords,
 };
 use tokio::{
     net::TcpStream,
     sync::{mpsc, oneshot},
 };
 
-use crate::{world::WorldHandle, PacketBuf};
+use crate::{world::WorldHandle, PacketBuf, character::Character};
 
 use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
 
@@ -93,6 +93,10 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
+    pub fn set_account_id(&self, account_id: EOInt) {
+        let _ = self.tx.send(Command::SetAccountId(account_id));
+    }
+
     pub async fn get_account_id(&self) -> Result<EOInt, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
@@ -111,12 +115,64 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_weight(&self) -> Result<Weight, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetWeight { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_items(&self) -> Result<Vec<Item>, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetItems { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_spells(&self) -> Result<Vec<Spell>, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetSpells { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_coords(&self) -> Result<Coords, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCoords { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn is_in_range(&self, coords: Coords) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::IsInRange { coords, respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_character_map_info(&self) -> Result<CharacterMapInfo, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacterMapInfo { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub fn send(&self, action: Action, family: Family, buf: PacketBuf) {
         let _ = self.tx.send(Command::Send(action, family, buf));
     }
 
     pub fn set_state(&self, state: State) {
         let _ = self.tx.send(Command::SetState(state));
+    }
+
+    pub fn set_character(&self, character: Character) {
+        let _ = self.tx.send(Command::SetCharacter(character));
+    }
+
+    pub async fn get_map_id(&self) -> Result<EOShort, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetMapId { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn calculate_stats(&self) -> Result<(), InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::CalculateStats { respond_to: tx });
+        rx.await.unwrap()
     }
 }
 
@@ -167,18 +223,9 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
         }
     }
 
-    let (account_id, character_id) = match player.state {
-        State::LoggedIn { account_id } => (account_id, 0),
-        State::Playing {
-            account_id,
-            character_id,
-        } => (account_id, character_id),
-        _ => (0, 0),
-    };
-
     player
         .world
-        .drop_player(player.id, account_id, character_id)
+        .drop_player(player.id, player.account_id, player.character_id)
         .await
         .unwrap();
 }

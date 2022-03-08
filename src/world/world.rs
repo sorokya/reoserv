@@ -1,11 +1,11 @@
 use crate::{
     character::Character,
     player::{PlayerHandle, State},
-    world::MapNotFoundError,
+    world::DataNotFoundError,
     SETTINGS, map::MapHandle,
 };
 
-use super::{account, data, Command};
+use super::{account, data, Command, enter_game};
 use eo::{
     data::{
         map::MapFile,
@@ -188,12 +188,21 @@ impl World {
             Command::Login {
                 name,
                 password,
+                player,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let mut accounts = self.accounts.lock().await;
-                let result = account::login(&mut conn, &name, &password, &mut accounts).await;
-                let _ = respond_to.send(result);
+                let (reply, account_id) = match account::login(&mut conn, &name, &password, &mut accounts).await {
+                    Ok((reply, account_id)) => (reply, account_id),
+                    Err(err) => {
+                        let _ = respond_to.send(Err(err));
+                        return;
+                    },
+                };
+                player.set_account_id(account_id);
+                player.set_state(State::LoggedIn);
+                let _ = respond_to.send(Ok(reply));
             }
             Command::RequestCharacterCreation { player, respond_to } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
@@ -261,11 +270,7 @@ impl World {
                     }
                 };
 
-                let account_id = player.get_account_id().await.unwrap();
-                player.set_state(State::EnteringWorld {
-                    account_id,
-                    character_id: character.id.try_into().expect("invalid character id"),
-                });
+                player.set_character(character);
 
                 let _ = respond_to.send(Ok(welcome::Reply {
                     reply: WelcomeReply::SelectCharacter,
@@ -282,7 +287,54 @@ impl World {
                 let result = self.get_file(&mut conn, file_type, player).await;
                 let _ = respond_to.send(result);
             }
-            Command::EnterGame { player: _, respond_to: _ } => todo!(),
+            Command::EnterGame { player, respond_to } => {
+                let map_id = match player.get_map_id().await {
+                    Ok(map_id) => map_id,
+                    Err(e) => {
+                        error!("Couldn't get map id: {}", e);
+                        return;
+                    }
+                };
+
+                let maps = self.maps.as_ref().expect("maps not loaded");
+                let maps = maps.lock().await;
+                let map = match maps.get(&map_id) {
+                    Some(map) => map,
+                    None => {
+                        error!("Map not found: {}", map_id);
+                        // TODO: warp player to valid position
+                        return;
+                    }
+                };
+                let result = enter_game(map, &player).await;
+                let _ = respond_to.send(result);
+            },
+            Command::GetClass { class_id, respond_to } => {
+                let classes = self.class_file.as_ref().expect("classes not loaded");
+                let classes = classes.lock().await;
+                match classes.records.iter().find(|c| c.id == class_id as EOInt) {
+                    Some(class) => {
+                        let _ = respond_to.send(Ok(class.clone()));
+                    },
+                    None => {
+                        error!("Class not found: {}", class_id);
+                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new("Class".to_string(), class_id as EOShort))));
+                    }
+                }
+            },
+            Command::GetItem { item_id, respond_to } => {
+                let item_file = self.item_file.as_ref().expect("classes not loaded");
+                let item_file = item_file.lock().await;
+                match item_file.records.iter().find(|i| i.id == item_id as EOInt) {
+                    Some(item) => {
+                        let _ = respond_to.send(Ok(item.clone()));
+                    },
+                    None => {
+                        error!("Item not found: {}", item_id);
+                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new("Item".to_string(), item_id))));
+                    }
+                }
+            },
         }
     }
 
@@ -299,7 +351,7 @@ impl World {
                 Some(map) => map,
                 None => {
                     error!("Map not found: {}", character.map_id);
-                    return Err(Box::new(MapNotFoundError::new(character.map_id)));
+                    return Err(Box::new(DataNotFoundError::new("Map".to_string(), character.map_id)));
                 }
             };
             map.get_hash_and_size().await
@@ -392,7 +444,7 @@ impl World {
                     Some(map) => map,
                     None => {
                         error!("Map not found: {}", character.map_id);
-                        return Err(Box::new(MapNotFoundError::new(character.map_id)));
+                        return Err(Box::new(DataNotFoundError::new("Map".to_string(), character.map_id)));
                     }
                 };
                 reply.data = map.serialize().await;

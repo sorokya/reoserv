@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, EOShort, pubs::{ClassRecord, ItemRecord}, EOChar},
     net::{
         packets::{
             client,
@@ -84,11 +84,13 @@ impl WorldHandle {
 
     pub async fn login(
         &mut self,
+        player: PlayerHandle,
         name: String,
         password: String,
-    ) -> Result<(login::Reply, EOInt), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<login::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Login {
+            player,
             name,
             password,
             respond_to: tx,
@@ -219,6 +221,24 @@ impl WorldHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::EnterGame {
             player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_class(&self, class_id: EOChar) -> Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetClass {
+            class_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_item(&self, item_id: EOShort) -> Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetItem {
+            item_id,
             respond_to: tx,
         });
         rx.await.unwrap()

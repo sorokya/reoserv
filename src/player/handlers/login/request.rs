@@ -5,7 +5,7 @@ use eo::{
 };
 
 use crate::{
-    player::{PlayerHandle, State},
+    player::{PlayerHandle},
     world::WorldHandle,
     PacketBuf,
 };

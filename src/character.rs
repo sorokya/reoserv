@@ -1,6 +1,6 @@
 use eo::{
     character::{AdminLevel, Gender, Race, SitState},
-    data::{EOChar, EOInt, EOShort, MAX1},
+    data::{EOChar, EOInt, EOShort},
     net::{
         packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
         CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,

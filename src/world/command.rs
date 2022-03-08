@@ -10,7 +10,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::player::{Player, PlayerHandle};
+use crate::player::{PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {

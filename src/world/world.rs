@@ -9,7 +9,6 @@ use crate::{
 use super::{account, data, enter_game, Command};
 use eo::{
     data::{
-        map::MapFile,
         pubs::{
             ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile,
             TalkFile,

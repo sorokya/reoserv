@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use eo::{
     data::{map::MapFile, EOShort, Serializeable},
-    net::{ItemMapInfo, NearbyInfo, NpcMapInfo},
+    net::{NearbyInfo},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
 

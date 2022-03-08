@@ -1,10 +1,11 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family, Weight, Item, Spell, CharacterMapInfo}, world::Coords,
+    net::{Action, CharacterMapInfo, Family, Item, Spell, Weight},
+    world::Coords,
 };
 use tokio::sync::oneshot;
 
-use crate::{PacketBuf, character::Character};
+use crate::{character::Character, PacketBuf};
 
 use super::{InvalidStateError, State};
 

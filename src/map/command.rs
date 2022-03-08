@@ -1,7 +1,10 @@
-use eo::{data::{EOByte, EOInt, EOShort}, net::NearbyInfo};
+use eo::{
+    data::{EOByte, EOInt, EOShort},
+    net::NearbyInfo,
+};
 use tokio::sync::oneshot;
 
-use crate::{PacketBuf, player::PlayerHandle};
+use crate::{player::PlayerHandle, PacketBuf};
 
 #[derive(Debug)]
 pub enum Command {
@@ -15,5 +18,5 @@ pub enum Command {
     GetNearbyInfo {
         target_player_id: EOShort,
         respond_to: oneshot::Sender<NearbyInfo>,
-    }
+    },
 }

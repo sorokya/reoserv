@@ -1,13 +1,14 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family, Weight, Item, Spell, CharacterMapInfo}, world::Coords,
+    net::{Action, CharacterMapInfo, Family, Item, Spell, Weight},
+    world::Coords,
 };
 use tokio::{
     net::TcpStream,
     sync::{mpsc, oneshot},
 };
 
-use crate::{world::WorldHandle, PacketBuf, character::Character};
+use crate::{character::Character, world::WorldHandle, PacketBuf};
 
 use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
 
@@ -141,13 +142,18 @@ impl PlayerHandle {
 
     pub async fn is_in_range(&self, coords: Coords) -> bool {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::IsInRange { coords, respond_to: tx });
+        let _ = self.tx.send(Command::IsInRange {
+            coords,
+            respond_to: tx,
+        });
         rx.await.unwrap()
     }
 
     pub async fn get_character_map_info(&self) -> Result<CharacterMapInfo, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetCharacterMapInfo { respond_to: tx });
+        let _ = self
+            .tx
+            .send(Command::GetCharacterMapInfo { respond_to: tx });
         rx.await.unwrap()
     }
 

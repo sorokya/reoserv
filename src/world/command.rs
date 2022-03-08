@@ -1,5 +1,8 @@
 use eo::{
-    data::{EOInt, EOShort, pubs::{ClassRecord, ItemRecord}, EOChar},
+    data::{
+        pubs::{ClassRecord, ItemRecord},
+        EOChar, EOInt, EOShort,
+    },
     net::{
         packets::server::{account, character, init, login, welcome},
         FileType,
@@ -7,7 +10,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::player::{PlayerHandle, Player};
+use crate::player::{Player, PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {
@@ -53,9 +56,7 @@ pub enum Command {
         name: String,
         password: String,
         player: PlayerHandle,
-        respond_to: oneshot::Sender<
-            Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>,
-        >,
+        respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     RequestCharacterCreation {
         player: PlayerHandle,
@@ -104,5 +105,5 @@ pub enum Command {
     GetItem {
         item_id: EOShort,
         respond_to: oneshot::Sender<Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>>>,
-    }
+    },
 }

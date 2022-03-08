@@ -25,7 +25,11 @@ pub async fn request(
     );
 
     let reply = match world
-        .login(player.clone(), request.name.clone(), request.password.clone())
+        .login(
+            player.clone(),
+            request.name.clone(),
+            request.password.clone(),
+        )
         .await
     {
         Ok(reply) => reply,

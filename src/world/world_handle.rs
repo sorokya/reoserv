@@ -1,5 +1,8 @@
 use eo::{
-    data::{EOInt, EOShort, pubs::{ClassRecord, ItemRecord}, EOChar},
+    data::{
+        pubs::{ClassRecord, ItemRecord},
+        EOChar, EOInt, EOShort,
+    },
     net::{
         packets::{
             client,
@@ -226,7 +229,10 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_class(&self, class_id: EOChar) -> Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_class(
+        &self,
+        class_id: EOChar,
+    ) -> Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetClass {
             class_id,
@@ -235,7 +241,10 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_item(&self, item_id: EOShort) -> Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_item(
+        &self,
+        item_id: EOShort,
+    ) -> Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetItem {
             item_id,

@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path};
 use eo::data::{map::MapFile, EOShort};
 use futures::{stream, StreamExt};
 
-use crate::{SETTINGS, map::MapHandle};
+use crate::{map::MapHandle, SETTINGS};
 
 pub async fn load_maps(
 ) -> Result<HashMap<EOShort, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {

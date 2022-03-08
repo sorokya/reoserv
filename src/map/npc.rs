@@ -1,4 +1,8 @@
-use eo::{data::{EOChar, EOShort}, world::{TinyCoords, Direction}, net::NpcMapInfo};
+use eo::{
+    data::{EOChar, EOShort},
+    net::NpcMapInfo,
+    world::{Direction, TinyCoords},
+};
 
 pub struct NPC {
     pub index: EOChar,

@@ -2,8 +2,8 @@ use eo::{
     character::{AdminLevel, Gender, Race, SitState},
     data::{EOChar, EOInt, EOShort, MAX1},
     net::{
-        packets::client::character::Create, CharacterBaseStats, CharacterSecondaryStats,
-        CharacterStats2, Item, PaperdollFull, Spell, CharacterMapInfo,
+        packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
+        CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,
     },
     world::{Coords, Direction},
 };
@@ -11,7 +11,7 @@ use eo::{
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use num_traits::FromPrimitive;
 
-use crate::{SETTINGS, world::WorldHandle};
+use crate::{world::WorldHandle, SETTINGS};
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
@@ -123,8 +123,8 @@ impl Character {
                 self.adj_agility = self.base_agility + class.agility;
                 self.adj_constitution = self.base_constitution + class.constitution;
                 self.adj_charisma = self.base_charisma + class.charisma;
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
         self.max_weight = 70;
@@ -145,8 +145,8 @@ impl Character {
                     if self.weight >= 250 {
                         break;
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
 
@@ -167,8 +167,8 @@ impl Character {
                     self.adj_agility += item.agility as EOShort;
                     self.adj_constitution += item.constitution as EOShort;
                     self.adj_charisma += item.charisma as EOShort;
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
 

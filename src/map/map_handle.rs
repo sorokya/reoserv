@@ -1,7 +1,13 @@
-use eo::{data::{EOShort, map::MapFile, EOByte, EOInt}, net::NearbyInfo};
-use tokio::sync::{mpsc::{UnboundedSender, self}, oneshot};
+use eo::{
+    data::{map::MapFile, EOByte, EOInt, EOShort},
+    net::NearbyInfo,
+};
+use tokio::sync::{
+    mpsc::{self, UnboundedSender},
+    oneshot,
+};
 
-use crate::{PacketBuf, player::PlayerHandle};
+use crate::{player::PlayerHandle, PacketBuf};
 
 use super::{Command, Map};
 

@@ -1,4 +1,8 @@
-use eo::{net::ItemMapInfo, data::{EOShort, EOInt}, world::Coords};
+use eo::{
+    data::{EOInt, EOShort},
+    net::ItemMapInfo,
+    world::Coords,
+};
 
 pub struct Item {
     pub uid: EOShort,

@@ -9,7 +9,7 @@ use tokio::{
     sync::{mpsc::UnboundedReceiver, Mutex},
 };
 
-use crate::{character::Character, utils, world::WorldHandle, PacketBuf};
+use crate::{character::Character, utils, world::WorldHandle, PacketBuf, map::MapHandle};
 
 use super::{packet_bus::PacketBus, Command, InvalidStateError, State};
 
@@ -19,6 +19,7 @@ pub struct Player {
     pub queue: RefCell<VecDeque<PacketBuf>>,
     pub bus: PacketBus,
     pub world: WorldHandle,
+    pub map: Option<MapHandle>,
     pub busy: bool,
     pub account_id: EOInt,
     pub character_id: EOInt,
@@ -38,34 +39,66 @@ impl Player {
         Self {
             id,
             rx,
-            world,
             queue: RefCell::new(VecDeque::new()),
             bus: PacketBus::new(socket),
-            state: State::Uninitialized,
-            ip,
+            world,
+            map: None,
             busy: false,
             account_id: 0,
             character_id: 0,
+            state: State::Uninitialized,
+            ip,
             character: None,
         }
     }
 
     pub async fn handle_command(&mut self, command: Command) -> bool {
         match command {
-            Command::Send(action, family, data) => {
-                let _ = self.bus.send(action, family, data).await;
-            }
-            Command::PongNewSequence { respond_to } => {
-                self.bus.sequencer.pong_new_sequence();
-                let _ = respond_to.send(());
-            }
-            Command::GenSequence { respond_to } => {
-                let sequence = self.bus.sequencer.gen_sequence();
-                let _ = respond_to.send(sequence);
+            Command::CalculateStats { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let mut character = character.lock().await;
+                    character.calculate_stats(self.world.clone());
+                    let _ = respond_to.send(Ok(()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
             }
             Command::Close(reason) => {
                 info!("player {} connection closed: {:?}", self.id, reason);
                 return false;
+            }
+            Command::EnsureValidSequenceForAccountCreation { respond_to } => {
+                if self.bus.sequencer.too_big_for_account_reply() {
+                    self.bus.sequencer.account_reply_new_sequence();
+                }
+                let _ = respond_to.send(());
+            }
+            Command::GetAccountId { respond_to } => {
+                if let State::LoggedIn | State::Playing = self.state {
+                    let _ = respond_to.send(Ok(self.account_id));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::LoggedIn, self.state)));
+                }
+            }
+            Command::GetCharacterMapInfo { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.to_map_info(self.id)));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetCoords { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.coords));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
             }
             Command::GetEncodingMultiples { respond_to } => {
                 respond_to
@@ -75,25 +108,90 @@ impl Player {
                     ])
                     .unwrap();
             }
-            Command::EnsureValidSequenceForAccountCreation { respond_to } => {
-                if self.bus.sequencer.too_big_for_account_reply() {
-                    self.bus.sequencer.account_reply_new_sequence();
-                }
-                let _ = respond_to.send(());
+            Command::GetIpAddr { respond_to } => {
+                let _ = respond_to.send(self.ip.clone());
             }
-            Command::GetSequenceStart { respond_to } => {
-                let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
+            Command::GetItems { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.items.clone()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetMapId { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.map_id));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetPlayerId { respond_to } => {
+                let _ = respond_to.send(self.id);
             }
             Command::GetSequenceBytes { respond_to } => {
                 respond_to
                     .send(self.bus.sequencer.get_init_sequence_bytes())
                     .unwrap();
             }
-            Command::SetState(state) => {
-                self.state = state;
+            Command::GetSequenceStart { respond_to } => {
+                let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
+            }
+            Command::GetSpells { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(character.spells.clone()));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GetWeight { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(Ok(Weight {
+                        current: character.weight as EOChar,
+                        max: character.max_weight as EOChar,
+                    }));
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
+            Command::GenSequence { respond_to } => {
+                let sequence = self.bus.sequencer.gen_sequence();
+                let _ = respond_to.send(sequence);
+            }
+            Command::IsInRange { coords, respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let character = character.lock().await;
+                    let _ = respond_to.send(utils::in_range(
+                        coords.x.into(),
+                        coords.y.into(),
+                        character.coords.x.into(),
+                        character.coords.y.into(),
+                    ));
+                } else {
+                    let _ = respond_to.send(false);
+                }
+            }
+            Command::Send(action, family, data) => {
+                let _ = self.bus.send(action, family, data).await;
+            }
+            Command::SetAccountId(account_id) => {
+                self.account_id = account_id;
             }
             Command::SetBusy(busy) => {
                 self.busy = busy;
+            }
+            Command::SetCharacter(character) => {
+                self.character = Some(Arc::new(Mutex::new(character)));
+            }
+            Command::SetState(state) => {
+                self.state = state;
             }
             Command::Ping => {
                 if self.state == State::Uninitialized {
@@ -123,114 +221,9 @@ impl Player {
             Command::Pong => {
                 self.bus.need_pong = false;
             }
-            Command::GetIpAddr { respond_to } => {
-                let _ = respond_to.send(self.ip.clone());
-            }
-            Command::SetAccountId(account_id) => {
-                self.account_id = account_id;
-            }
-            Command::GetAccountId { respond_to } => {
-                if let State::LoggedIn | State::Playing = self.state {
-                    let _ = respond_to.send(Ok(self.account_id));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::LoggedIn, self.state)));
-                }
-            }
-            Command::GetPlayerId { respond_to } => {
-                let _ = respond_to.send(self.id);
-            }
-            Command::GetCharacterId { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.id));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::SetCharacter(character) => {
-                self.character = Some(Arc::new(Mutex::new(character)));
-            }
-            Command::GetMapId { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.map_id));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::CalculateStats { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let mut character = character.lock().await;
-                    character.calculate_stats(self.world.clone());
-                    let _ = respond_to.send(Ok(()));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::GetCoords { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.coords));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::GetWeight { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(Weight {
-                        current: character.weight as EOChar,
-                        max: character.max_weight as EOChar,
-                    }));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::GetItems { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.items.clone()));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::GetSpells { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.spells.clone()));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::GetCharacterMapInfo { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(Ok(character.to_map_info(self.id)));
-                } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
-                }
-            }
-            Command::IsInRange { coords, respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
-                    let _ = respond_to.send(utils::in_range(
-                        coords.x.into(),
-                        coords.y.into(),
-                        character.coords.x.into(),
-                        character.coords.y.into(),
-                    ));
-                } else {
-                    let _ = respond_to.send(false);
-                }
+            Command::PongNewSequence { respond_to } => {
+                self.bus.sequencer.pong_new_sequence();
+                let _ = respond_to.send(());
             }
         }
 

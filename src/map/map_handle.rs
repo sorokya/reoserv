@@ -37,18 +37,18 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn serialize(&self) -> PacketBuf {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::Serialize { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub async fn get_nearby_info(&self, target_player_id: EOShort) -> NearbyInfo {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNearbyInfo {
             target_player_id,
             respond_to: tx,
         });
+        rx.await.unwrap()
+    }
+
+    pub async fn serialize(&self) -> PacketBuf {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Serialize { respond_to: tx });
         rx.await.unwrap()
     }
 }

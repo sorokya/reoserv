@@ -11,22 +11,21 @@ use super::{InvalidStateError, State};
 
 #[derive(Debug)]
 pub enum Command {
-    Send(Action, Family, PacketBuf),
-    PongNewSequence {
-        respond_to: oneshot::Sender<()>,
-    },
-    GenSequence {
-        respond_to: oneshot::Sender<EOInt>,
+    CalculateStats {
+        respond_to: oneshot::Sender<Result<(), InvalidStateError>>,
     },
     Close(String),
     EnsureValidSequenceForAccountCreation {
         respond_to: oneshot::Sender<()>,
     },
-    GetSequenceStart {
-        respond_to: oneshot::Sender<EOInt>,
+    GetAccountId {
+        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
-    GetSequenceBytes {
-        respond_to: oneshot::Sender<(EOShort, EOChar)>,
+    GetCharacterMapInfo {
+        respond_to: oneshot::Sender<Result<CharacterMapInfo, InvalidStateError>>,
+    },
+    GetCoords {
+        respond_to: oneshot::Sender<Result<Coords, InvalidStateError>>,
     },
     GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
@@ -34,44 +33,42 @@ pub enum Command {
     GetIpAddr {
         respond_to: oneshot::Sender<String>,
     },
-    GetAccountId {
-        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
-    },
-    GetPlayerId {
-        respond_to: oneshot::Sender<EOShort>,
-    },
-    GetCharacterId {
-        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
+    GetItems {
+        respond_to: oneshot::Sender<Result<Vec<Item>, InvalidStateError>>,
     },
     GetMapId {
         respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
     },
-    GetCoords {
-        respond_to: oneshot::Sender<Result<Coords, InvalidStateError>>,
+    GetPlayerId {
+        respond_to: oneshot::Sender<EOShort>,
     },
-    GetWeight {
-        respond_to: oneshot::Sender<Result<Weight, InvalidStateError>>,
+    GetSequenceBytes {
+        respond_to: oneshot::Sender<(EOShort, EOChar)>,
     },
-    GetItems {
-        respond_to: oneshot::Sender<Result<Vec<Item>, InvalidStateError>>,
+    GetSequenceStart {
+        respond_to: oneshot::Sender<EOInt>,
     },
     GetSpells {
         respond_to: oneshot::Sender<Result<Vec<Spell>, InvalidStateError>>,
     },
-    GetCharacterMapInfo {
-        respond_to: oneshot::Sender<Result<CharacterMapInfo, InvalidStateError>>,
+    GetWeight {
+        respond_to: oneshot::Sender<Result<Weight, InvalidStateError>>,
+    },
+    GenSequence {
+        respond_to: oneshot::Sender<EOInt>,
     },
     IsInRange {
         coords: Coords,
         respond_to: oneshot::Sender<bool>,
     },
+    Send(Action, Family, PacketBuf),
     SetAccountId(EOInt),
+    SetBusy(bool),
     SetCharacter(Character),
     SetState(State),
-    SetBusy(bool),
-    CalculateStats {
-        respond_to: oneshot::Sender<Result<(), InvalidStateError>>,
-    },
     Ping,
     Pong,
+    PongNewSequence {
+        respond_to: oneshot::Sender<()>,
+    },
 }

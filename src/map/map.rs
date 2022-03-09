@@ -45,9 +45,6 @@ impl Map {
             Command::GetHashAndSize { respond_to } => {
                 let _ = respond_to.send((self.file.hash, self.file.size));
             }
-            Command::Serialize { respond_to } => {
-                let _ = respond_to.send(self.file.serialize());
-            }
             Command::GetNearbyInfo {
                 target_player_id,
                 respond_to,
@@ -83,6 +80,9 @@ impl Map {
                     npcs: nearby_npcs,
                     characters: nearby_characters,
                 });
+            }
+            Command::Serialize { respond_to } => {
+                let _ = respond_to.send(self.file.serialize());
             }
         }
     }

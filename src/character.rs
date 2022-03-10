@@ -139,6 +139,10 @@ impl Character {
         self.max_sp = 0;
 
         for item in &self.items {
+            if item.id == 0 {
+                continue;
+            }
+
             match world.get_item(item.id).await {
                 Ok(record) => {
                     self.weight += record.weight as EOInt * item.amount;
@@ -151,6 +155,10 @@ impl Character {
         }
 
         for item in self.paperdoll {
+            if item == 0 {
+                continue;
+            }
+
             match world.get_item(item).await {
                 Ok(item) => {
                     self.weight += item.weight as EOInt;

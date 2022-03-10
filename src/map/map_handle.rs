@@ -1,6 +1,6 @@
 use eo::{
     data::{map::MapFile, EOByte, EOInt, EOShort},
-    net::NearbyInfo, world::Direction,
+    net::{NearbyInfo, packets::server::map_info}, world::Direction,
 };
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -33,6 +33,18 @@ impl MapHandle {
 
     pub fn face(&self, player_id: EOShort, direction: Direction) {
         let _ = self.tx.send(Command::Face(player_id, direction));
+    }
+
+    pub async fn get_character_map_info(
+        &self,
+        player_id: EOShort,
+    ) -> Result<map_info::Reply, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacterMapInfo {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await?
     }
 
     pub async fn get_hash_and_size(&self) -> ([EOByte; 4], EOInt) {

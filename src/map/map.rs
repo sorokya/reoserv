@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use eo::{
     data::{map::MapFile, EOShort, Serializeable},
-    net::{NearbyInfo, packets::server::face, Action, Family},
+    net::{NearbyInfo, packets::server::{face, map_info}, Action, Family},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
 
@@ -56,6 +56,21 @@ impl Map {
                         player.send(Action::Player, Family::Face, buf.clone());
                     }
                 }
+            }
+            Command::GetCharacterMapInfo { player_id, respond_to } => {
+                let players = self.players.lock().await;
+                let player = players.get(&player_id).unwrap();
+                let character_info = match player.get_character_map_info().await {
+                    Ok(character_info) => character_info,
+                    Err(e) => {
+                        warn!("Requested character map info for player {} failed: {}", player_id, e);
+                        let _ = respond_to.send(Err(Box::new(e)));
+                        return;
+                    }
+                };
+
+                let reply = map_info::Reply::character(character_info);
+                let _ = respond_to.send(Ok(reply));
             }
             Command::GetHashAndSize { respond_to } => {
                 let _ = respond_to.send((self.file.hash, self.file.size));

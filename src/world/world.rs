@@ -147,8 +147,12 @@ impl World {
                         return;
                     }
                 };
-                let result = enter_game(map, player).await;
-                let _ = respond_to.send(result);
+                tokio::task::Builder::new()
+                    .name("enter_game")
+                    .spawn(async move {
+                        let result = enter_game(map, player).await;
+                        let _ = respond_to.send(result);
+                    });
             }
             Command::GetClass {
                 class_id,

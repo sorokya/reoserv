@@ -57,7 +57,7 @@ impl Player {
             Command::CalculateStats { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
                     let mut character = character.lock().await;
-                    character.calculate_stats(self.world.clone());
+                    character.calculate_stats(self.world.clone()).await;
                     let _ = respond_to.send(Ok(()));
                 } else {
                     let _ =

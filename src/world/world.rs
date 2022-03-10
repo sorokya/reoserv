@@ -114,7 +114,6 @@ impl World {
             Command::DropPlayer {
                 player_id,
                 account_id,
-                character_id: _,
                 respond_to,
             } => {
                 let mut players = players.lock().await;
@@ -125,7 +124,6 @@ impl World {
                     accounts.retain(|id| *id != account_id);
                 }
 
-                // TODO: unload character too
                 let _ = respond_to.send(());
             }
             Command::EnterGame { player, respond_to } => {
@@ -468,10 +466,7 @@ impl World {
                     Some(map) => map,
                     None => {
                         error!("Requested map not found: {}", map_id);
-                        return Err(Box::new(DataNotFoundError::new(
-                            "Map".to_string(),
-                            map_id,
-                        )));
+                        return Err(Box::new(DataNotFoundError::new("Map".to_string(), map_id)));
                     }
                 };
                 reply.data = map.serialize().await;

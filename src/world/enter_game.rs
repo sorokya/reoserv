@@ -53,12 +53,8 @@ async fn get_news() -> [String; 9] {
                 String::default(),
             ];
             for i in 0..9 {
-                match lines.next_line().await {
-                    Ok(line) => match line {
-                        Some(line) => news[i] = line,
-                        None => {}
-                    },
-                    Err(_) => {}
+                if let Ok(Some(line)) = lines.next_line().await {
+                    news[i] = line
                 }
             }
             news

@@ -9,7 +9,7 @@ use tokio::{
     sync::{mpsc::UnboundedReceiver, Mutex},
 };
 
-use crate::{character::Character, utils, world::WorldHandle, PacketBuf, map::MapHandle};
+use crate::{character::Character, map::MapHandle, utils, world::WorldHandle, PacketBuf};
 
 use super::{packet_bus::PacketBus, Command, InvalidStateError, State};
 
@@ -65,6 +65,15 @@ impl Player {
                 }
             }
             Command::Close(reason) => {
+                if let Some(map) = self.map.as_ref() {
+                    let character = self.character.as_ref().unwrap().lock().await;
+                    map.drop_player(self.id, character.coords);
+                }
+
+                self.world
+                    .drop_player(self.id, self.account_id)
+                    .await
+                    .unwrap();
                 info!("player {} connection closed: {:?}", self.id, reason);
                 return false;
             }
@@ -124,7 +133,8 @@ impl Player {
                 if let Some(map) = self.map.as_ref() {
                     let _ = respond_to.send(Ok(map.to_owned()));
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
             }
             Command::GetMapId { respond_to } => {

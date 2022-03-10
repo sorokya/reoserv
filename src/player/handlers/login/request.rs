@@ -4,11 +4,7 @@ use eo::{
     net::{packets::client::login::Request, replies::LoginReply, Action, Family},
 };
 
-use crate::{
-    player::{PlayerHandle},
-    world::WorldHandle,
-    PacketBuf,
-};
+use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
 pub async fn request(
     buf: PacketBuf,

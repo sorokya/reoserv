@@ -1,6 +1,7 @@
 use eo::{
     data::{map::MapFile, EOByte, EOInt, EOShort},
-    net::{NearbyInfo, packets::server::map_info}, world::Direction,
+    net::{packets::server::map_info, NearbyInfo},
+    world::{Coords, Direction, WarpAnimation},
 };
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -25,6 +26,10 @@ impl MapHandle {
             .spawn(run_map(map));
 
         Self { tx }
+    }
+
+    pub fn drop_player(&self, player_id: EOShort, coords: Coords) {
+        let _ = self.tx.send(Command::DropPlayer(player_id, coords));
     }
 
     pub fn enter(&self, player_id: EOShort, player: PlayerHandle) {
@@ -60,6 +65,26 @@ impl MapHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub async fn leave(&self, target_player_id: EOShort) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Leave {
+            target_player_id,
+            warp_animation: None,
+            respond_to: tx,
+        });
+        let _ = rx.await;
+    }
+
+    pub async fn leave_animated(&self, target_player_id: EOShort, warp_animation: WarpAnimation) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Leave {
+            target_player_id,
+            warp_animation: Some(warp_animation),
+            respond_to: tx,
+        });
+        let _ = rx.await;
     }
 
     pub async fn serialize(&self) -> PacketBuf {

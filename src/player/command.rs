@@ -5,7 +5,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::{character::Character, PacketBuf, map::MapHandle};
+use crate::{character::Character, map::MapHandle, PacketBuf};
 
 use super::{InvalidStateError, State};
 

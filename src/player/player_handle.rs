@@ -8,7 +8,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, world::WorldHandle, PacketBuf, map::MapHandle};
+use crate::{character::Character, map::MapHandle, world::WorldHandle, PacketBuf};
 
 use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
 
@@ -197,12 +197,10 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                 Some(Err(e)) => {
                     match e.kind() {
                         std::io::ErrorKind::BrokenPipe => {
-                            info!("player {} connection closed by peer", player.id);
-                            break;
+                            player_handle.close("Closed by peer".to_string());
                         },
                         _ => {
-                            info!("player {} connection closed due to unknown error: {:?}", player.id, e);
-                            break;
+                            player_handle.close(format!("Due to unknown error: {:?}", e));
                         }
                     }
                 },
@@ -232,10 +230,4 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                 ));
         }
     }
-
-    player
-        .world
-        .drop_player(player.id, player.account_id, player.character_id)
-        .await
-        .unwrap();
 }

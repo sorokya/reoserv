@@ -10,7 +10,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::player::{PlayerHandle};
+use crate::player::PlayerHandle;
 
 #[derive(Debug)]
 pub enum Command {
@@ -41,7 +41,6 @@ pub enum Command {
     DropPlayer {
         player_id: EOShort,
         account_id: EOInt,
-        character_id: EOInt,
         respond_to: oneshot::Sender<()>,
     },
     EnterGame {

@@ -98,14 +98,12 @@ impl WorldHandle {
         &self,
         player_id: EOShort,
         account_id: EOInt,
-        character_id: EOInt,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DropPlayer {
             respond_to: tx,
             player_id,
             account_id,
-            character_id,
         });
         rx.await.unwrap();
         Ok(())

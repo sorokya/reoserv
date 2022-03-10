@@ -118,7 +118,7 @@ pub async fn handle_packet(
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
-        }
+        },
         Family::CharacterMapInfo => match action {
             Action::Request => {
                 handlers::character_map_info::request(buf, player.clone()).await;
@@ -126,7 +126,7 @@ pub async fn handle_packet(
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
-        }
+        },
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);
         }

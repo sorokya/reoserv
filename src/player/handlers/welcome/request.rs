@@ -12,15 +12,11 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", request);
 
-    match world
+    if let Ok(reply) = world
         .select_character(request.character_id, player.clone())
         .await
     {
-        Ok(reply) => {
-            debug!("Reply: {:?}", reply);
-
-            player.send(Action::Reply, Family::Welcome, reply.serialize());
-        }
-        Err(_) => {}
+        debug!("Reply: {:?}", reply);
+        player.send(Action::Reply, Family::Welcome, reply.serialize());
     }
 }

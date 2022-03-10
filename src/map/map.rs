@@ -2,7 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use eo::{
     data::{map::MapFile, EOShort, Serializeable},
-    net::{NearbyInfo, packets::server::{face, map_info}, Action, Family},
+    net::{
+        packets::server::{avatar, face, map_info, players},
+        Action, Family, NearbyInfo,
+    },
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
 
@@ -31,16 +34,31 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::Enter(player_id, player) => {
-                // let coords = player.get_coords().await;
+            Command::DropPlayer(target_player_id, coords) => {
                 let mut players = self.players.lock().await;
-                players.insert(player_id, player);
-
-                // TODO: send character map info to nearby players
-                // let players = players;
-                // for player in players.values() {
-                //     player.send_if_in_range()
-                // }
+                players.remove(&target_player_id).unwrap();
+                let packet = avatar::Remove {
+                    player_id: target_player_id,
+                    warp_animation: None,
+                };
+                let buf = packet.serialize();
+                for player in players.values() {
+                    if player.is_in_range(coords).await {
+                        player.send(Action::Remove, Family::Avatar, buf.clone());
+                    }
+                }
+            }
+            Command::Enter(target_player_id, target) => {
+                let character_map_info = target.get_character_map_info().await.unwrap();
+                let packet = players::Agree::new(character_map_info);
+                let buf = packet.serialize();
+                let mut players = self.players.lock().await;
+                for player in players.values() {
+                    if target.is_in_range(player.get_coords().await.unwrap()).await {
+                        player.send(Action::Agree, Family::Players, buf.clone());
+                    }
+                }
+                players.insert(target_player_id, target);
             }
             Command::Face(target_player_id, direction) => {
                 let packet = face::Player::new(target_player_id, direction);
@@ -57,13 +75,19 @@ impl Map {
                     }
                 }
             }
-            Command::GetCharacterMapInfo { player_id, respond_to } => {
+            Command::GetCharacterMapInfo {
+                player_id,
+                respond_to,
+            } => {
                 let players = self.players.lock().await;
                 let player = players.get(&player_id).unwrap();
                 let character_info = match player.get_character_map_info().await {
                     Ok(character_info) => character_info,
                     Err(e) => {
-                        warn!("Requested character map info for player {} failed: {}", player_id, e);
+                        warn!(
+                            "Requested character map info for player {} failed: {}",
+                            player_id, e
+                        );
                         let _ = respond_to.send(Err(Box::new(e)));
                         return;
                     }
@@ -110,6 +134,25 @@ impl Map {
                     npcs: nearby_npcs,
                     characters: nearby_characters,
                 });
+            }
+            Command::Leave {
+                target_player_id,
+                warp_animation,
+                respond_to,
+            } => {
+                let mut players = self.players.lock().await;
+                let target = players.remove(&target_player_id).unwrap();
+                let packet = avatar::Remove {
+                    player_id: target_player_id,
+                    warp_animation,
+                };
+                let buf = packet.serialize();
+                for player in players.values() {
+                    if target.is_in_range(player.get_coords().await.unwrap()).await {
+                        player.send(Action::Remove, Family::Avatar, buf.clone());
+                    }
+                }
+                let _ = respond_to.send(());
             }
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());

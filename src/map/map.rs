@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use eo::{
     data::{map::MapFile, EOShort, Serializeable},
-    net::{NearbyInfo},
+    net::{NearbyInfo, packets::server::face, Action, Family},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
 
@@ -41,6 +41,21 @@ impl Map {
                 // for player in players.values() {
                 //     player.send_if_in_range()
                 // }
+            }
+            Command::Face(target_player_id, direction) => {
+                let packet = face::Player::new(target_player_id, direction);
+                let buf = packet.serialize();
+                let players = self.players.lock().await;
+                let target = players.get(&target_player_id).unwrap();
+                for player in players.values() {
+                    let player_id = player.get_player_id().await;
+                    // TODO: don't unwrap
+                    if target_player_id != player_id
+                        && target.is_in_range(player.get_coords().await.unwrap()).await
+                    {
+                        player.send(Action::Player, Family::Face, buf.clone());
+                    }
+                }
             }
             Command::GetHashAndSize { respond_to } => {
                 let _ = respond_to.send((self.file.hash, self.file.size));

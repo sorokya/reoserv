@@ -1,6 +1,6 @@
 use eo::{
     data::{map::MapFile, EOByte, EOInt, EOShort},
-    net::NearbyInfo,
+    net::NearbyInfo, world::Direction,
 };
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -11,7 +11,7 @@ use crate::{player::PlayerHandle, PacketBuf};
 
 use super::{Command, Map};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MapHandle {
     tx: UnboundedSender<Command>,
 }
@@ -29,6 +29,10 @@ impl MapHandle {
 
     pub fn enter(&self, player_id: EOShort, player: PlayerHandle) {
         let _ = self.tx.send(Command::Enter(player_id, player));
+    }
+
+    pub fn face(&self, player_id: EOShort, direction: Direction) {
+        let _ = self.tx.send(Command::Face(player_id, direction));
     }
 
     pub async fn get_hash_and_size(&self) -> ([EOByte; 4], EOInt) {

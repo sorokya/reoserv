@@ -8,7 +8,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, world::WorldHandle, PacketBuf};
+use crate::{character::Character, world::WorldHandle, PacketBuf, map::MapHandle};
 
 use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
 
@@ -90,6 +90,12 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_map(&self) -> Result<MapHandle, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetMap { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn get_map_id(&self) -> Result<EOShort, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapId { respond_to: tx });
@@ -155,6 +161,10 @@ impl PlayerHandle {
 
     pub fn set_character(&self, character: Character) {
         let _ = self.tx.send(Command::SetCharacter(character));
+    }
+
+    pub fn set_map(&self, map: MapHandle) {
+        let _ = self.tx.send(Command::SetMap(map));
     }
 
     pub fn set_state(&self, state: State) {

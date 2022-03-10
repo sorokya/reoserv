@@ -5,7 +5,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::{character::Character, PacketBuf};
+use crate::{character::Character, PacketBuf, map::MapHandle};
 
 use super::{InvalidStateError, State};
 
@@ -36,6 +36,9 @@ pub enum Command {
     GetItems {
         respond_to: oneshot::Sender<Result<Vec<Item>, InvalidStateError>>,
     },
+    GetMap {
+        respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
+    },
     GetMapId {
         respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
     },
@@ -65,6 +68,7 @@ pub enum Command {
     SetAccountId(EOInt),
     SetBusy(bool),
     SetCharacter(Character),
+    SetMap(MapHandle),
     SetState(State),
     Ping,
     Pong,

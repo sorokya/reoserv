@@ -111,6 +111,14 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
+        Family::Face => match action {
+            Action::Player => {
+                handlers::face::player(buf, player.clone()).await;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        }
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);
         }

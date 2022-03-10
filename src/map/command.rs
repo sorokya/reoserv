@@ -1,6 +1,6 @@
 use eo::{
     data::{EOByte, EOInt, EOShort},
-    net::NearbyInfo,
+    net::NearbyInfo, world::Direction,
 };
 use tokio::sync::oneshot;
 
@@ -9,6 +9,7 @@ use crate::{player::PlayerHandle, PacketBuf};
 #[derive(Debug)]
 pub enum Command {
     Enter(EOShort, PlayerHandle),
+    Face(EOShort, Direction),
     GetHashAndSize {
         respond_to: oneshot::Sender<([EOByte; 4], EOInt)>,
     },

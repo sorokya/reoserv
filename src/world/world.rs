@@ -140,14 +140,14 @@ impl World {
                 let maps = self.maps.as_ref().expect("maps not loaded");
                 let maps = maps.lock().await;
                 let map = match maps.get(&map_id) {
-                    Some(map) => map,
+                    Some(map) => map.to_owned(),
                     None => {
                         error!("Map not found: {}", map_id);
                         // TODO: warp player to valid position
                         return;
                     }
                 };
-                let result = enter_game(map, &player).await;
+                let result = enter_game(map, player).await;
                 let _ = respond_to.send(result);
             }
             Command::GetClass {

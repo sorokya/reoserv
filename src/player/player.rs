@@ -120,6 +120,13 @@ impl Player {
                         respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
             }
+            Command::GetMap { respond_to } => {
+                if let Some(map) = self.map.as_ref() {
+                    let _ = respond_to.send(Ok(map.to_owned()));
+                } else {
+                    let _ = respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                }
+            }
             Command::GetMapId { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
                     let character = character.lock().await;
@@ -189,6 +196,9 @@ impl Player {
             }
             Command::SetCharacter(character) => {
                 self.character = Some(Arc::new(Mutex::new(character)));
+            }
+            Command::SetMap(map) => {
+                self.map = Some(map);
             }
             Command::SetState(state) => {
                 self.state = state;

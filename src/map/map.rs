@@ -9,7 +9,7 @@ use eo::{
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
 
-use crate::player::PlayerHandle;
+use crate::{character::Character};
 
 use super::{Command, Item, NPC};
 
@@ -18,7 +18,7 @@ pub struct Map {
     file: MapFile,
     items: Arc<Mutex<Vec<Item>>>,
     npcs: Arc<Mutex<Vec<NPC>>>,
-    players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
+    characters: Arc<Mutex<HashMap<EOShort, Character>>>,
 }
 
 impl Map {
@@ -28,50 +28,57 @@ impl Map {
             rx,
             items: Arc::new(Mutex::new(Vec::new())),
             npcs: Arc::new(Mutex::new(Vec::new())),
-            players: Arc::new(Mutex::new(HashMap::new())),
+            characters: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::DropPlayer(target_player_id, coords) => {
-                let mut players = self.players.lock().await;
-                players.remove(&target_player_id).unwrap();
-                let packet = avatar::Remove {
-                    player_id: target_player_id,
-                    warp_animation: None,
-                };
-                let buf = packet.serialize();
-                for player in players.values() {
-                    if player.is_in_range(coords).await {
-                        player.send(Action::Remove, Family::Avatar, buf.clone());
-                    }
-                }
-            }
-            Command::Enter(target_player_id, target) => {
-                let character_map_info = target.get_character_map_info().await.unwrap();
+            // Command::DropPlayer(target_player_id, coords) => {
+            //     let mut players = self.players.lock().await;
+            //     players.remove(&target_player_id).unwrap();
+            //     let packet = avatar::Remove {
+            //         player_id: target_player_id,
+            //         warp_animation: None,
+            //     };
+            //     let buf = packet.serialize();
+            //     for player in players.values() {
+            //         if player.is_in_range(coords).await {
+            //             player.send(Action::Remove, Family::Avatar, buf.clone());
+            //         }
+            //     }
+            // }
+            Command::Enter(new_character, respond_to) => {
+                let character_map_info = new_character.to_map_info();
                 let packet = players::Agree::new(character_map_info);
                 let buf = packet.serialize();
-                let mut players = self.players.lock().await;
-                for player in players.values() {
-                    if target.is_in_range(player.get_coords().await.unwrap()).await {
-                        player.send(Action::Agree, Family::Players, buf.clone());
+                let mut characters = self.characters.lock().await;
+                for character in characters.values() {
+                    if new_character.is_in_range(character.coords) {
+                        character.player.as_ref().unwrap().send(
+                            Action::Agree,
+                            Family::Players,
+                            buf.clone(),
+                        );
                     }
                 }
-                players.insert(target_player_id, target);
+                characters.insert(new_character.player_id.unwrap(), new_character);
+                let _ = respond_to.send(());
             }
             Command::Face(target_player_id, direction) => {
                 let packet = face::Player::new(target_player_id, direction);
                 let buf = packet.serialize();
-                let players = self.players.lock().await;
-                let target = players.get(&target_player_id).unwrap();
-                for player in players.values() {
-                    let player_id = player.get_player_id().await;
-                    // TODO: don't unwrap
-                    if target_player_id != player_id
-                        && target.is_in_range(player.get_coords().await.unwrap()).await
+                let characters = self.characters.lock().await;
+                let target = characters.get(&target_player_id).unwrap();
+                for character in characters.values() {
+                    if target_player_id != character.player_id.unwrap()
+                        && target.is_in_range(character.coords)
                     {
-                        player.send(Action::Player, Family::Face, buf.clone());
+                        character.player.as_ref().unwrap().send(
+                            Action::Player,
+                            Family::Face,
+                            buf.clone(),
+                        );
                     }
                 }
             }
@@ -79,20 +86,9 @@ impl Map {
                 player_id,
                 respond_to,
             } => {
-                let players = self.players.lock().await;
-                let player = players.get(&player_id).unwrap();
-                let character_info = match player.get_character_map_info().await {
-                    Ok(character_info) => character_info,
-                    Err(e) => {
-                        warn!(
-                            "Requested character map info for player {} failed: {}",
-                            player_id, e
-                        );
-                        let _ = respond_to.send(Err(Box::new(e)));
-                        return;
-                    }
-                };
-
+                let characters = self.characters.lock().await;
+                let character = characters.get(&player_id).unwrap();
+                let character_info = character.to_map_info();
                 let reply = map_info::Reply::character(character_info);
                 let _ = respond_to.send(Ok(reply));
             }
@@ -103,30 +99,28 @@ impl Map {
                 target_player_id,
                 respond_to,
             } => {
-                let players = self.players.lock().await;
-                let target = players.get(&target_player_id).unwrap();
+                let characters = self.characters.lock().await;
+                let target = characters.get(&target_player_id).unwrap();
                 let items = self.items.lock().await;
                 let npcs = self.npcs.lock().await;
                 let mut nearby_items = Vec::new();
                 let mut nearby_npcs = Vec::new();
                 let mut nearby_characters = Vec::new();
                 for item in items.iter() {
-                    if target.is_in_range(item.coords).await {
+                    if target.is_in_range(item.coords) {
                         nearby_items.push(item.to_item_map_info());
                     }
                 }
                 for npc in npcs.iter() {
-                    if target.is_in_range(npc.coords.to_coords()).await {
+                    if target.is_in_range(npc.coords.to_coords()) {
                         nearby_npcs.push(npc.to_npc_map_info());
                     }
                 }
-                for player in players.values() {
-                    let player_id = player.get_player_id().await;
-                    // TODO: don't unwrap
-                    if target_player_id == player_id
-                        || target.is_in_range(player.get_coords().await.unwrap()).await
+                for character in characters.values() {
+                    if target_player_id == character.player_id.unwrap()
+                        || target.is_in_range(character.coords)
                     {
-                        nearby_characters.push(player.get_character_map_info().await.unwrap());
+                        nearby_characters.push(character.to_map_info());
                     }
                 }
                 let _ = respond_to.send(NearbyInfo {
@@ -140,16 +134,20 @@ impl Map {
                 warp_animation,
                 respond_to,
             } => {
-                let mut players = self.players.lock().await;
-                let target = players.remove(&target_player_id).unwrap();
+                let mut characters = self.characters.lock().await;
+                let target = characters.remove(&target_player_id).unwrap();
                 let packet = avatar::Remove {
                     player_id: target_player_id,
                     warp_animation,
                 };
                 let buf = packet.serialize();
-                for player in players.values() {
-                    if target.is_in_range(player.get_coords().await.unwrap()).await {
-                        player.send(Action::Remove, Family::Avatar, buf.clone());
+                for character in characters.values() {
+                    if target.is_in_range(character.coords) {
+                        character.player.as_ref().unwrap().send(
+                            Action::Remove,
+                            Family::Avatar,
+                            buf.clone(),
+                        );
                     }
                 }
                 let _ = respond_to.send(());

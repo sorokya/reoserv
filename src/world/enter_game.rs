@@ -1,9 +1,9 @@
 use std::{io::Cursor, path::Path};
 
-use eo::net::{
+use eo::{net::{
     packets::server::welcome::{EnterGame, Reply},
-    replies::WelcomeReply,
-};
+    replies::WelcomeReply, Weight,
+}, data::EOChar};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
@@ -15,11 +15,17 @@ pub async fn enter_game(
 ) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
-    map.enter(player_id, player.clone());
-    let _ = player.calculate_stats().await;
-    let weight = player.get_weight().await?;
-    let items = player.get_items().await?;
-    let spells = player.get_spells().await?;
+    let mut character = player.take_character().await?;
+    character.calculate_stats().await;
+
+    let weight = Weight {
+        current: character.weight as EOChar,
+        max: character.max_weight as EOChar,
+    };
+    let items = character.items.clone();
+    let spells = character.spells.clone();
+
+    map.enter(character).await;
     let nearby_info = map.get_nearby_info(player_id).await;
     Ok(Reply {
         reply: WelcomeReply::EnterGame,

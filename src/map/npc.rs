@@ -12,7 +12,7 @@ pub struct NPC {
 }
 
 impl NPC {
-    pub fn new(index: EOChar, id: EOShort, coords: TinyCoords, direction: Direction) -> Self {
+    pub fn _new(index: EOChar, id: EOShort, coords: TinyCoords, direction: Direction) -> Self {
         Self {
             index,
             id,

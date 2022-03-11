@@ -11,10 +11,13 @@ use eo::{
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use num_traits::FromPrimitive;
 
-use crate::{world::WorldHandle, SETTINGS};
+use crate::{player::PlayerHandle, utils, world::WorldHandle, SETTINGS};
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
+    pub player_id: Option<EOShort>,
+    pub player: Option<PlayerHandle>,
+    pub world: Option<WorldHandle>,
     pub id: EOInt,
     pub account_id: EOInt,
     pub name: String,
@@ -87,10 +90,19 @@ impl Character {
         character
     }
 
-    pub fn to_map_info(&self, player_id: EOShort) -> CharacterMapInfo {
+    pub fn is_in_range(&self, coords: Coords) -> bool {
+        utils::in_range(
+            self.coords.x.into(),
+            self.coords.y.into(),
+            coords.x.into(),
+            coords.y.into(),
+        )
+    }
+
+    pub fn to_map_info(&self) -> CharacterMapInfo {
         CharacterMapInfo {
             name: self.name.clone(),
-            id: player_id,
+            id: self.player_id.expect("Character has no player id"),
             map_id: self.map_id,
             coords: self.coords,
             direction: self.direction,
@@ -114,7 +126,8 @@ impl Character {
         }
     }
 
-    pub async fn calculate_stats(&mut self, world: WorldHandle) {
+    pub async fn calculate_stats(&mut self) {
+        let world = self.world.as_ref().expect("Character has no world");
         match world.get_class(self.class).await {
             Ok(class) => {
                 self.adj_strength = self.base_strength + class.strength;

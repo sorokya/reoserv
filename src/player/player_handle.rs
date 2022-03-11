@@ -1,7 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, CharacterMapInfo, Family, Item, Spell, Weight},
-    world::Coords,
+    net::{Action, Family},
 };
 use tokio::{
     net::TcpStream,
@@ -32,12 +31,6 @@ impl PlayerHandle {
         Self { tx }
     }
 
-    pub async fn calculate_stats(&self) -> Result<(), InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::CalculateStats { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub fn close(&self, reason: String) {
         let _ = self.tx.send(Command::Close(reason));
     }
@@ -56,20 +49,6 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_character_map_info(&self) -> Result<CharacterMapInfo, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .tx
-            .send(Command::GetCharacterMapInfo { respond_to: tx });
-        rx.await.unwrap()
-    }
-
-    pub async fn get_coords(&self) -> Result<Coords, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetCoords { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub async fn get_encoding_multiples(&self) -> [EOByte; 2] {
         let (tx, rx) = oneshot::channel();
         let _ = self
@@ -81,12 +60,6 @@ impl PlayerHandle {
     pub async fn get_ip_addr(&self) -> String {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetIpAddr { respond_to: tx });
-        rx.await.unwrap()
-    }
-
-    pub async fn get_items(&self) -> Result<Vec<Item>, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetItems { respond_to: tx });
         rx.await.unwrap()
     }
 
@@ -120,31 +93,24 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_spells(&self) -> Result<Vec<Spell>, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetSpells { respond_to: tx });
-        rx.await.unwrap()
-    }
-
-    pub async fn get_weight(&self) -> Result<Weight, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetWeight { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub async fn gen_sequence(&self) -> EOInt {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenSequence { respond_to: tx });
         rx.await.unwrap()
     }
 
-    pub async fn is_in_range(&self, coords: Coords) -> bool {
+    pub fn ping(&self) {
+        let _ = self.tx.send(Command::Ping);
+    }
+
+    pub fn pong(&self) {
+        let _ = self.tx.send(Command::Pong);
+    }
+
+    pub async fn pong_new_sequence(&self) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::IsInRange {
-            coords,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
+        let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
+        rx.await.unwrap();
     }
 
     pub fn send(&self, action: Action, family: Family, buf: PacketBuf) {
@@ -171,18 +137,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetState(state));
     }
 
-    pub fn ping(&self) {
-        let _ = self.tx.send(Command::Ping);
-    }
-
-    pub fn pong(&self) {
-        let _ = self.tx.send(Command::Pong);
-    }
-
-    pub async fn pong_new_sequence(&self) {
+    pub async fn take_character(&self) -> Result<Character, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
-        rx.await.unwrap();
+        let _ = self.tx.send(Command::TakeCharacter { respond_to: tx });
+        rx.await.unwrap()
     }
 }
 

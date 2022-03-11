@@ -1,16 +1,15 @@
 use eo::{
     data::{EOByte, EOInt, EOShort},
     net::{packets::server::map_info, NearbyInfo},
-    world::{Coords, Direction, WarpAnimation},
+    world::{Direction, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
-use crate::{player::PlayerHandle, PacketBuf};
+use crate::{PacketBuf, character::Character};
 
 #[derive(Debug)]
 pub enum Command {
-    DropPlayer(EOShort, Coords),
-    Enter(EOShort, PlayerHandle),
+    Enter(Character, oneshot::Sender<()>),
     Face(EOShort, Direction),
     GetCharacterMapInfo {
         player_id: EOShort,

@@ -1,7 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, CharacterMapInfo, Family, Item, Spell, Weight},
-    world::Coords,
+    net::{Action, Family},
 };
 use tokio::sync::oneshot;
 
@@ -11,9 +10,6 @@ use super::{InvalidStateError, State};
 
 #[derive(Debug)]
 pub enum Command {
-    CalculateStats {
-        respond_to: oneshot::Sender<Result<(), InvalidStateError>>,
-    },
     Close(String),
     EnsureValidSequenceForAccountCreation {
         respond_to: oneshot::Sender<()>,
@@ -21,20 +17,11 @@ pub enum Command {
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
-    GetCharacterMapInfo {
-        respond_to: oneshot::Sender<Result<CharacterMapInfo, InvalidStateError>>,
-    },
-    GetCoords {
-        respond_to: oneshot::Sender<Result<Coords, InvalidStateError>>,
-    },
     GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
     },
     GetIpAddr {
         respond_to: oneshot::Sender<String>,
-    },
-    GetItems {
-        respond_to: oneshot::Sender<Result<Vec<Item>, InvalidStateError>>,
     },
     GetMap {
         respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
@@ -51,18 +38,13 @@ pub enum Command {
     GetSequenceStart {
         respond_to: oneshot::Sender<EOInt>,
     },
-    GetSpells {
-        respond_to: oneshot::Sender<Result<Vec<Spell>, InvalidStateError>>,
-    },
-    GetWeight {
-        respond_to: oneshot::Sender<Result<Weight, InvalidStateError>>,
-    },
     GenSequence {
         respond_to: oneshot::Sender<EOInt>,
     },
-    IsInRange {
-        coords: Coords,
-        respond_to: oneshot::Sender<bool>,
+    Ping,
+    Pong,
+    PongNewSequence {
+        respond_to: oneshot::Sender<()>,
     },
     Send(Action, Family, PacketBuf),
     SetAccountId(EOInt),
@@ -70,9 +52,7 @@ pub enum Command {
     SetCharacter(Character),
     SetMap(MapHandle),
     SetState(State),
-    Ping,
-    Pong,
-    PongNewSequence {
-        respond_to: oneshot::Sender<()>,
+    TakeCharacter {
+        respond_to: oneshot::Sender<Result<Character, InvalidStateError>>,
     },
 }

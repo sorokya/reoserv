@@ -14,7 +14,7 @@ pub struct Item {
 }
 
 impl Item {
-    pub fn new(uid: EOShort, id: EOShort, amount: EOInt, coords: Coords, owner: EOShort) -> Self {
+    pub fn _new(uid: EOShort, id: EOShort, amount: EOInt, coords: Coords, owner: EOShort) -> Self {
         Self {
             uid,
             id,

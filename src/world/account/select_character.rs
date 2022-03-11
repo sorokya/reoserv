@@ -20,7 +20,7 @@ pub async fn select_character(
         }
     };
 
-    let character = match Character::load(conn, character_id).await {
+    let mut character = match Character::load(conn, character_id).await {
         Ok(character) => character,
         Err(e) => {
             warn!(
@@ -41,6 +41,10 @@ pub async fn select_character(
             account_id,
         )));
     }
+
+    let player_id = player.get_player_id().await;
+    character.player_id = Some(player_id);
+    character.player = Some(player);
 
     Ok(character)
 }

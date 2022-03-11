@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOByte, EOInt, EOShort},
+    data::{EOByte, EOInt, EOShort, EOChar},
     net::{packets::server::map_info, NearbyInfo},
     world::{Direction, WarpAnimation},
 };
@@ -11,8 +11,9 @@ use crate::{PacketBuf, character::Character};
 pub enum Command {
     Enter(Character, oneshot::Sender<()>),
     Face(EOShort, Direction),
-    GetCharacterMapInfo {
-        player_id: EOShort,
+    GetMapInfo {
+        player_ids: Option<Vec<EOShort>>,
+        _npc_indexes: Option<Vec<EOChar>>,
         respond_to:
             oneshot::Sender<Result<map_info::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },

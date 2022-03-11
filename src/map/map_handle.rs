@@ -1,5 +1,5 @@
 use eo::{
-    data::{map::MapFile, EOByte, EOInt, EOShort},
+    data::{map::MapFile, EOByte, EOInt, EOShort, EOChar},
     net::{packets::server::map_info, NearbyInfo},
     world::{Direction, WarpAnimation},
 };
@@ -42,13 +42,15 @@ impl MapHandle {
         let _ = self.tx.send(Command::Face(player_id, direction));
     }
 
-    pub async fn get_character_map_info(
+    pub async fn get_map_info(
         &self,
-        player_id: EOShort,
+        player_ids: Option<Vec<EOShort>>,
+        npc_indexes: Option<Vec<EOChar>>,
     ) -> Result<map_info::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetCharacterMapInfo {
-            player_id,
+        let _ = self.tx.send(Command::GetMapInfo {
+            player_ids,
+            _npc_indexes: npc_indexes,
             respond_to: tx,
         });
         rx.await?

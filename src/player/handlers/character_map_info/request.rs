@@ -13,7 +13,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
     debug!("Recv: {:?}", request);
 
     if let Ok(map) = player.get_map().await {
-        if let Ok(map_info_reply) = map.get_character_map_info(request.player_id).await {
+        if let Ok(map_info_reply) = map.get_map_info(Some(request.player_ids), None).await {
             debug!("Reply: {:?}", map_info_reply);
             player.send(Action::Reply, Family::CharacterMapInfo, map_info_reply.serialize());
         }

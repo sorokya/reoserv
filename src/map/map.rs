@@ -4,7 +4,7 @@ use eo::{
     data::{map::MapFile, EOShort, Serializeable},
     net::{
         packets::server::{avatar, face, map_info, players},
-        Action, Family, NearbyInfo,
+        Action, Family, NearbyInfo, CharacterMapInfo, NpcMapInfo,
     },
 };
 use tokio::sync::{mpsc::UnboundedReceiver, Mutex};
@@ -34,20 +34,6 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            // Command::DropPlayer(target_player_id, coords) => {
-            //     let mut players = self.players.lock().await;
-            //     players.remove(&target_player_id).unwrap();
-            //     let packet = avatar::Remove {
-            //         player_id: target_player_id,
-            //         warp_animation: None,
-            //     };
-            //     let buf = packet.serialize();
-            //     for player in players.values() {
-            //         if player.is_in_range(coords).await {
-            //             player.send(Action::Remove, Family::Avatar, buf.clone());
-            //         }
-            //     }
-            // }
             Command::Enter(new_character, respond_to) => {
                 let character_map_info = new_character.to_map_info();
                 let packet = players::Agree::new(character_map_info);
@@ -82,14 +68,32 @@ impl Map {
                     }
                 }
             }
-            Command::GetCharacterMapInfo {
-                player_id,
+            Command::GetMapInfo {
+                player_ids,
+                _npc_indexes,
                 respond_to,
             } => {
-                let characters = self.characters.lock().await;
-                let character = characters.get(&player_id).unwrap();
-                let character_info = character.to_map_info();
-                let reply = map_info::Reply::character(character_info);
+                let characters = {
+                    if let Some(player_ids) = player_ids {
+                        let mut character_infos = Vec::with_capacity(player_ids.len());
+                        let characters = self.characters.lock().await;
+                        for player_id in player_ids {
+                            if let Some(character) = characters.get(&player_id) {
+                                if !character_infos.iter().any(|c: &CharacterMapInfo| c.id == player_id) {
+                                    character_infos.push(character.to_map_info());
+                                }
+                            }
+                        }
+                        Some(character_infos)
+                    } else {
+                        None
+                    }
+                };
+                let npcs: Option<Vec<NpcMapInfo>> = None; // TODO
+                let reply = map_info::Reply {
+                    characters,
+                    npcs,
+                };
                 let _ = respond_to.send(Ok(reply));
             }
             Command::GetHashAndSize { respond_to } => {

@@ -37,11 +37,17 @@ pub struct Jail {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct World {
+    pub see_distance: u32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
     pub new_character: NewCharacter,
     pub jail: Jail,
+    pub world: World,
 }
 
 impl Settings {

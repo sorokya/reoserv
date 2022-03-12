@@ -1,14 +1,14 @@
 use eo::{
-    data::{map::MapFile, EOByte, EOInt, EOShort, EOChar},
+    data::{map::MapFile, EOByte, EOChar, EOInt, EOShort, EOThree},
     net::{packets::server::map_info, NearbyInfo},
-    world::{Direction, WarpAnimation},
+    world::{Direction, TinyCoords, WarpAnimation},
 };
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     oneshot,
 };
 
-use crate::{PacketBuf, character::Character};
+use crate::{character::Character, PacketBuf};
 
 use super::{Command, Map};
 
@@ -28,10 +28,6 @@ impl MapHandle {
         Self { tx }
     }
 
-    // pub fn drop_player(&self, player_id: EOShort, coords: Coords) {
-    //     let _ = self.tx.send(Command::DropPlayer(player_id, coords));
-    // }
-
     pub async fn enter(&self, character: Character) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter(character, tx));
@@ -46,14 +42,14 @@ impl MapHandle {
         &self,
         player_ids: Option<Vec<EOShort>>,
         npc_indexes: Option<Vec<EOChar>>,
-    ) -> Result<map_info::Reply, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> map_info::Reply {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapInfo {
             player_ids,
-            _npc_indexes: npc_indexes,
+            npc_indexes,
             respond_to: tx,
         });
-        rx.await?
+        rx.await.unwrap()
     }
 
     pub async fn get_hash_and_size(&self) -> ([EOByte; 4], EOInt) {
@@ -95,6 +91,21 @@ impl MapHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });
         rx.await.unwrap()
+    }
+
+    pub fn walk(
+        &self,
+        target_player_id: EOShort,
+        timestamp: EOThree,
+        coords: TinyCoords,
+        direction: Direction,
+    ) {
+        let _ = self.tx.send(Command::Walk {
+            target_player_id,
+            timestamp,
+            coords,
+            direction,
+        });
     }
 }
 

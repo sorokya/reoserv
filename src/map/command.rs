@@ -1,11 +1,11 @@
 use eo::{
-    data::{EOByte, EOInt, EOShort, EOChar},
+    data::{EOByte, EOChar, EOInt, EOShort, EOThree},
     net::{packets::server::map_info, NearbyInfo},
-    world::{Direction, WarpAnimation},
+    world::{Direction, TinyCoords, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
-use crate::{PacketBuf, character::Character};
+use crate::{character::Character, PacketBuf};
 
 #[derive(Debug)]
 pub enum Command {
@@ -13,9 +13,8 @@ pub enum Command {
     Face(EOShort, Direction),
     GetMapInfo {
         player_ids: Option<Vec<EOShort>>,
-        _npc_indexes: Option<Vec<EOChar>>,
-        respond_to:
-            oneshot::Sender<Result<map_info::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+        npc_indexes: Option<Vec<EOChar>>,
+        respond_to: oneshot::Sender<map_info::Reply>,
     },
     GetHashAndSize {
         respond_to: oneshot::Sender<([EOByte; 4], EOInt)>,
@@ -31,5 +30,11 @@ pub enum Command {
     },
     Serialize {
         respond_to: oneshot::Sender<PacketBuf>,
+    },
+    Walk {
+        target_player_id: EOShort,
+        timestamp: EOThree,
+        coords: TinyCoords,
+        direction: Direction,
     },
 }

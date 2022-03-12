@@ -97,6 +97,14 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
+        Family::Walk => match action {
+            Action::Player => {
+                handlers::walk::player(buf, player.clone()).await;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
         Family::Welcome => match action {
             Action::Request => {
                 handlers::welcome::request(buf, player.clone(), world.clone()).await;
@@ -122,6 +130,14 @@ pub async fn handle_packet(
         Family::CharacterMapInfo => match action {
             Action::Request => {
                 handlers::character_map_info::request(buf, player.clone()).await;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        },
+        Family::MapInfo => match action {
+            Action::Request => {
+                handlers::map_info::request(buf, player.clone()).await;
             }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

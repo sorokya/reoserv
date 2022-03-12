@@ -1,8 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque, sync::Arc};
 
-use eo::{
-    data::{EOInt, EOShort, StreamBuilder},
-};
+use eo::data::{EOInt, EOShort, StreamBuilder};
 use tokio::{
     net::TcpStream,
     sync::{mpsc::UnboundedReceiver, Mutex},
@@ -180,12 +178,10 @@ impl Player {
                     drop(character);
                     self.character = None;
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        State::Playing,
-                        self.state,
-                    )));
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
-            },
+            }
         }
 
         true

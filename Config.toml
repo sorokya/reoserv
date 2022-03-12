@@ -39,6 +39,10 @@ map = 176
 x = 1
 y = 1
 
+[world]
+# Size of the characters view port
+see_distance = 12
+
 [database]
 host = "127.0.0.1"
 port = "3306"

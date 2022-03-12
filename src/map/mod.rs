@@ -8,3 +8,5 @@ mod npc;
 pub use npc::NPC;
 mod map_handle;
 pub use map_handle::MapHandle;
+mod get_new_viewable_coords;
+pub use get_new_viewable_coords::get_new_viewable_coords;

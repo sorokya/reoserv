@@ -1,9 +1,13 @@
 use std::{io::Cursor, path::Path};
 
-use eo::{net::{
-    packets::server::welcome::{EnterGame, Reply},
-    replies::WelcomeReply, Weight,
-}, data::EOChar};
+use eo::{
+    data::EOChar,
+    net::{
+        packets::server::welcome::{EnterGame, Reply},
+        replies::WelcomeReply,
+        Weight,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 

@@ -28,6 +28,10 @@ pub enum Command {
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<()>,
     },
+    OpenDoor {
+        target_player_id: EOShort,
+        door_coords: TinyCoords,
+    },
     Serialize {
         respond_to: oneshot::Sender<PacketBuf>,
     },

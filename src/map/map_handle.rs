@@ -87,6 +87,13 @@ impl MapHandle {
         let _ = rx.await;
     }
 
+    pub fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
+        let _ = self.tx.send(Command::OpenDoor {
+            target_player_id,
+            door_coords,
+        });
+    }
+
     pub async fn serialize(&self) -> PacketBuf {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });

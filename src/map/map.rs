@@ -3,14 +3,14 @@ use std::{collections::HashMap, sync::Arc};
 use eo::{
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, face, map_info, players, walk},
+        packets::server::{avatar, door, face, map_info, players, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
-    world::{Coords, Direction, TinyCoords},
+    world::{Direction, TinyCoords},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot, Mutex};
 
-use crate::{character::Character, SETTINGS};
+use crate::character::Character;
 
 use super::{get_new_viewable_coords, is_in_bounds, is_tile_walkable, Command, Item, NPC};
 
@@ -106,6 +106,21 @@ impl Map {
         let _ = respond_to.send(reply);
     }
 
+    async fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
+        let characters = self.characters.lock().await;
+        let target = characters.get(&target_player_id).unwrap();
+        let coords = door_coords.to_coords();
+        if target.is_in_range(coords) {
+            let packet = door::Open::new(door_coords.x, door_coords.y);
+            let buf = packet.serialize();
+            for character in characters.values() {
+                if character.is_in_range(coords) {
+                    character.player.as_ref().unwrap().send(Action::Open, Family::Door, buf.clone());
+                }
+            }
+        }
+    }
+
     async fn walk(
         &self,
         target_player_id: EOShort,
@@ -154,7 +169,6 @@ impl Map {
                 let packet = {
                     let mut packet = walk::Reply::default();
                     let characters = self.characters.lock().await;
-                    debug!("New coords: {:?}", new_viewable_coords);
                     for coords in new_viewable_coords {
                         for (player_id, character) in characters.iter() {
                             if character.coords == coords {
@@ -266,6 +280,12 @@ impl Map {
                     }
                 }
                 let _ = respond_to.send(());
+            }
+            Command::OpenDoor {
+                target_player_id,
+                door_coords,
+            } => {
+                self.open_door(target_player_id, door_coords).await
             }
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());

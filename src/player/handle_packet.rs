@@ -101,6 +101,12 @@ pub async fn handle_packet(
             Action::Player => {
                 handlers::walk::player(buf, player.clone()).await;
             }
+            Action::Spec => {
+                handlers::walk::spec(buf, player.clone()).await;
+            }
+            Action::Admin => {
+                handlers::walk::admin(buf, player.clone()).await;
+            }
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }

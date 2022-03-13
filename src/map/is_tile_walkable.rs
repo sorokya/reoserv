@@ -1,0 +1,48 @@
+use eo::{
+    data::{
+        map::{TileRow, TileSpec},
+        EOShort,
+    },
+    world::Coords,
+};
+
+pub fn is_tile_walkable(coords: Coords, tile_rows: &Vec<TileRow>) -> bool {
+    if let Some(tile_row) = tile_rows
+        .iter()
+        .find(|tile_row| tile_row.y as EOShort == coords.y)
+    {
+        if let Some(tile) = tile_row
+            .tiles
+            .iter()
+            .find(|tile| tile.x as EOShort == coords.x)
+        {
+            match tile.spec {
+                TileSpec::Wall
+                | TileSpec::ChairDown
+                | TileSpec::ChairLeft
+                | TileSpec::ChairRight
+                | TileSpec::ChairUp
+                | TileSpec::ChairDownRight
+                | TileSpec::ChairUpLeft
+                | TileSpec::ChairAll
+                | TileSpec::Chest
+                | TileSpec::BankVault
+                | TileSpec::MapEdge
+                | TileSpec::Board1
+                | TileSpec::Board2
+                | TileSpec::Board3
+                | TileSpec::Board4
+                | TileSpec::Board5
+                | TileSpec::Board6
+                | TileSpec::Board7
+                | TileSpec::Board8
+                | TileSpec::Jukebox => false,
+                _ => true,
+            }
+        } else {
+            true
+        }
+    } else {
+        true
+    }
+}

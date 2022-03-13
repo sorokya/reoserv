@@ -12,7 +12,7 @@ use tokio::sync::{mpsc::UnboundedReceiver, oneshot, Mutex};
 
 use crate::{character::Character, SETTINGS};
 
-use super::{get_new_viewable_coords, Command, Item, NPC};
+use super::{get_new_viewable_coords, is_in_bounds, is_tile_walkable, Command, Item, NPC};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -116,20 +116,29 @@ impl Map {
         if let Some((target_coords, target_player)) = {
             let mut characters = self.characters.lock().await;
             if let Some(target) = characters.get_mut(&target_player_id) {
+                let mut coords = target.coords;
                 match direction {
-                    Direction::Up => target.coords.y -= 1,
-                    Direction::Down => target.coords.y += 1,
-                    Direction::Left => target.coords.x -= 1,
-                    Direction::Right => target.coords.x += 1,
+                    Direction::Up => coords.y -= 1,
+                    Direction::Down => coords.y += 1,
+                    Direction::Left => coords.x -= 1,
+                    Direction::Right => coords.x += 1,
                 }
                 target.direction = direction;
+
+                if is_in_bounds(
+                    coords,
+                    self.file.width as EOShort,
+                    self.file.height as EOShort,
+                ) && is_tile_walkable(coords, &self.file.tile_rows)
+                {
+                    target.coords = coords;
+                }
+
                 Some((target.coords, target.player.clone()))
             } else {
                 None
             }
         } {
-            // TODO: bounds check
-
             // TODO: Ghost timer check
 
             // TODO: Warp
@@ -152,8 +161,8 @@ impl Map {
                                 packet.player_ids.push(*player_id);
                             }
                         }
-                        // TODO items
-                        // TODO npcs
+                        // TODO: items
+                        // TODO: npcs
                     }
                     packet
                 };

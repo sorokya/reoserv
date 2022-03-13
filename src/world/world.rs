@@ -358,7 +358,7 @@ impl World {
         character: &Character,
     ) -> Result<SelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
         let player_id = player.get_player_id().await;
-        let (map_hash, map_filesize) = {
+        let (map_rid, map_filesize) = {
             let maps = self.maps.as_ref().expect("Maps not loaded");
             let maps = maps.lock().await;
             let map = match maps.get(&character.map_id) {
@@ -371,31 +371,31 @@ impl World {
                     )));
                 }
             };
-            map.get_hash_and_size().await
+            map.get_rid_and_size().await
         };
 
-        let (eif_hash, eif_length) = {
+        let (eif_rid, eif_length) = {
             let item_file = self.item_file.as_ref().expect("Item file not loaded");
             let item_file = item_file.lock().await;
-            (item_file.hash, item_file.len())
+            (item_file.rid, item_file.len())
         };
 
-        let (ecf_hash, ecf_length) = {
+        let (ecf_rid, ecf_length) = {
             let class_file = self.class_file.as_ref().expect("Class file not loaded");
             let class_file = class_file.lock().await;
-            (class_file.hash, class_file.len())
+            (class_file.rid, class_file.len())
         };
 
-        let (enf_hash, enf_length) = {
+        let (enf_rid, enf_length) = {
             let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
             let npc_file = npc_file.lock().await;
-            (npc_file.hash, npc_file.len())
+            (npc_file.rid, npc_file.len())
         };
 
-        let (esf_hash, esf_length) = {
+        let (esf_rid, esf_length) = {
             let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
             let spell_file = spell_file.lock().await;
-            (spell_file.hash, spell_file.len())
+            (spell_file.rid, spell_file.len())
         };
 
         let settings = ServerSettings {
@@ -413,15 +413,15 @@ impl World {
             player_id,
             character_id: character.id,
             map_id: character.map_id,
-            map_hash,
+            map_rid,
             map_filesize,
-            eif_hash,
+            eif_rid,
             eif_length,
-            enf_hash,
+            enf_rid,
             enf_length,
-            esf_hash,
+            esf_rid,
             esf_length,
-            ecf_hash,
+            ecf_rid,
             ecf_length,
             name: character.name.to_string(),
             title: character.title.clone().unwrap_or_default(),

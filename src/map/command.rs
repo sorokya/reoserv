@@ -16,12 +16,12 @@ pub enum Command {
         npc_indexes: Option<Vec<EOChar>>,
         respond_to: oneshot::Sender<map_info::Reply>,
     },
-    GetHashAndSize {
-        respond_to: oneshot::Sender<([EOByte; 4], EOInt)>,
-    },
     GetNearbyInfo {
         target_player_id: EOShort,
         respond_to: oneshot::Sender<NearbyInfo>,
+    },
+    GetRidAndSize {
+        respond_to: oneshot::Sender<([EOShort; 2], EOInt)>,
     },
     Leave {
         target_player_id: EOShort,

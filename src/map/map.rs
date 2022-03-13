@@ -221,9 +221,6 @@ impl Map {
                 npc_indexes,
                 respond_to,
             } => self.get_map_info(player_ids, npc_indexes, respond_to).await,
-            Command::GetHashAndSize { respond_to } => {
-                let _ = respond_to.send((self.file.hash, self.file.size));
-            }
             Command::GetNearbyInfo {
                 target_player_id,
                 respond_to,
@@ -257,6 +254,9 @@ impl Map {
                     npcs: nearby_npcs,
                     characters: nearby_characters,
                 });
+            }
+            Command::GetRidAndSize { respond_to } => {
+                let _ = respond_to.send((self.file.rid, self.file.size));
             }
             Command::Leave {
                 target_player_id,

@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let player_id = world.get_next_player_id().await.unwrap();
 
-        let player = PlayerHandle::new(player_id, socket, world.clone());
+        let player = PlayerHandle::new(player_id, socket, world.clone(), pool.clone());
         world.add_player(player_id, player).await.unwrap();
 
         info!(

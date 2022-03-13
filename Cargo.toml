@@ -9,6 +9,7 @@ console = ["console-subscriber"]
 
 [dependencies]
 config = { version = "0.11", features = ["toml"] }
+chrono = "0.4"
 lazy_static = "1.0"
 log = "0.4"
 num-traits = "0.2"

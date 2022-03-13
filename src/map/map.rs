@@ -6,7 +6,7 @@ use eo::{
         packets::server::{avatar, door, face, map_info, players, walk, warp},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
-    world::{Coords, Direction, TinyCoords},
+    world::{Coords, Direction, TinyCoords}, character::AdminLevel,
 };
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot, Mutex};
 
@@ -147,11 +147,12 @@ impl Map {
                 }
                 target.direction = direction;
 
+                let is_tile_walkable = target.admin_level as EOChar >= 1 || is_tile_walkable(coords, &self.file.tile_rows);
                 if is_in_bounds(
                     coords,
                     self.file.width as EOShort,
                     self.file.height as EOShort,
-                ) && is_tile_walkable(coords, &self.file.tile_rows)
+                ) && is_tile_walkable
                 {
                     target.coords = coords;
                 }

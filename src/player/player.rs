@@ -4,6 +4,7 @@ use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder},
     net::{packets::server::warp, Action, Family},
 };
+use mysql_async::Pool;
 use tokio::{
     net::TcpStream,
     sync::{mpsc::UnboundedReceiver, Mutex},
@@ -23,6 +24,7 @@ pub struct Player {
     pub busy: bool,
     pub account_id: EOInt,
     pub character_id: EOInt,
+    pool: Pool,
     state: State,
     ip: String,
     character: Option<Arc<Mutex<Character>>>,
@@ -35,6 +37,7 @@ impl Player {
         socket: TcpStream,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
+        pool: Pool,
     ) -> Self {
         let ip = socket.peer_addr().unwrap().ip().to_string();
         Self {
@@ -51,6 +54,7 @@ impl Player {
             ip,
             character: None,
             warp_session: None,
+            pool,
         }
     }
 
@@ -95,7 +99,13 @@ impl Player {
             }
             Command::Close(reason) => {
                 if let Some(map) = self.map.as_ref() {
-                    map.leave(self.id).await;
+                    let mut character = map.leave(self.id).await;
+                    let mut conn = self.pool.get_conn().await.unwrap();
+                    if let Some(logged_in_at) = character.logged_in_at {
+                        let now = chrono::Utc::now();
+                        character.usage += (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
+                    }
+                    character.save(&mut conn).await.unwrap();
                 }
 
                 self.world

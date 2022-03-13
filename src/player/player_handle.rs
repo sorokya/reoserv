@@ -3,6 +3,7 @@ use eo::{
     net::{Action, Family},
     world::TinyCoords,
 };
+use mysql_async::Pool;
 use tokio::{
     net::TcpStream,
     sync::{mpsc, oneshot},
@@ -18,9 +19,9 @@ pub struct PlayerHandle {
 }
 
 impl PlayerHandle {
-    pub fn new(id: EOShort, socket: TcpStream, world: WorldHandle) -> Self {
+    pub fn new(id: EOShort, socket: TcpStream, world: WorldHandle, pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(id, socket, rx, world);
+        let player = Player::new(id, socket, rx, world, pool);
         tokio::task::Builder::new()
             .name(&format!("Player {}", id))
             .spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));

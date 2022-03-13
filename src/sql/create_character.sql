@@ -7,7 +7,7 @@ INSERT INTO `Character` (
     `hair_style`,
     `hair_color`,
     `bank_max`,
-    `created_on`
+    `created_at`
 ) VALUES (
 	:account_id,
     :name,
@@ -17,5 +17,5 @@ INSERT INTO `Character` (
     :hair_style,
     :hair_color,
     :bank_max,
-    NOW()
+    UTC_TIMESTAMP()
 );

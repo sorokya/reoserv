@@ -34,7 +34,9 @@ CREATE TABLE `Account` (
   `computer` varchar(64) NOT NULL,
   `hdid` int NOT NULL,
   `register_ip` varchar(15) NOT NULL,
+  `last_login_ip` varchar(15) NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -82,7 +84,8 @@ CREATE TABLE `Character` (
   `guild_id` int DEFAULT NULL,
   `guild_rank_id` int DEFAULT NULL,
   `guild_rank_string` varchar(16) DEFAULT NULL,
-  `created_on` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`),
   KEY `account_id_idx` (`account_id`),
@@ -102,7 +105,7 @@ CREATE TABLE `Guild` (
   `tag` varchar(3) NOT NULL,
   `name` varchar(32) NOT NULL,
   `description` text,
-  `created_on` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `bank` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

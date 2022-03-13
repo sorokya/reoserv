@@ -45,6 +45,7 @@ pub async fn select_character(
     let player_id = player.get_player_id().await;
     character.player_id = Some(player_id);
     character.player = Some(player);
+    character.logged_in_at = Some(chrono::Utc::now());
 
     Ok(character)
 }

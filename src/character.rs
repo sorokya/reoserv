@@ -8,6 +8,7 @@ use eo::{
     world::{Coords, Direction},
 };
 
+use chrono::prelude::*;
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use num_traits::FromPrimitive;
 
@@ -76,6 +77,7 @@ pub struct Character {
     pub items: Vec<Item>,
     pub bank: Vec<Item>,
     pub spells: Vec<Spell>,
+    pub logged_in_at: Option<DateTime<Utc>>,
 }
 
 impl Character {
@@ -401,9 +403,94 @@ impl Character {
 
     async fn update(
         &self,
-        _conn: &mut Conn,
+        conn: &mut Conn,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        todo!()
+        let mut tx = conn.start_transaction(TxOpts::default()).await?;
+
+        tx.exec_drop(
+            include_str!("./sql/update_character.sql"),
+            params! {
+                "character_id" => self.id,
+                "title" => &self.title,
+                "home" => &self.home,
+                "fiance" => &self.fiance,
+                "partner" => &self.partner,
+                "admin_level" => self.admin_level as u32,
+                "class" => self.class as u32,
+                "gender" => self.gender as u32,
+                "race" => self.race as u32,
+                "hair_style" => self.hair_style as u32,
+                "hair_color" => self.hair_color as u32,
+                "bank_max" => self.bank_max as u32,
+                "gold_bank" => self.gold_bank as u32,
+            },
+        )
+        .await?;
+
+        tx.exec_drop(
+            include_str!("./sql/update_paperdoll.sql"),
+            params! {
+                "character_id" => self.id,
+                "boots" => self.paperdoll.boots as u32,
+                "accessory" => self.paperdoll.accessory as u32,
+                "gloves" => self.paperdoll.gloves as u32,
+                "belt" => self.paperdoll.belt as u32,
+                "armor" => self.paperdoll.armor as u32,
+                "necklace" => self.paperdoll.necklace as u32,
+                "hat" => self.paperdoll.hat as u32,
+                "shield" => self.paperdoll.shield as u32,
+                "weapon" => self.paperdoll.weapon as u32,
+                "ring" => self.paperdoll.rings[0] as u32,
+                "ring2" => self.paperdoll.rings[1] as u32,
+                "armlet" => self.paperdoll.armlets[0] as u32,
+                "armlet2" => self.paperdoll.armlets[1] as u32,
+                "bracer" => self.paperdoll.bracers[0] as u32,
+                "bracer2" => self.paperdoll.bracers[1] as u32,
+            }
+        )
+        .await?;
+
+        tx.exec_drop(
+            include_str!("./sql/update_position.sql"),
+            params! {
+                "character_id" => self.id,
+                "map_id" => self.map_id as u32,
+                "x" => self.coords.x as u32,
+                "y" => self.coords.y as u32,
+                "direction" => self.direction as u32,
+                "sitting" => self.sit_state as u32,
+                "hidden" => if self.hidden { 1 } else { 0 },
+            }
+        )
+        .await?;
+
+        tx.exec_drop(
+            include_str!("./sql/update_stats.sql"),
+            params! {
+                "character_id" => self.id,
+                "level" => self.level as u32,
+                "experience" => self.experience as u32,
+                "hp" => self.hp as u32,
+                "tp" => self.tp as u32,
+                "strength" => self.base_strength as u32,
+                "intelligence" => self.base_intelligence as u32,
+                "wisdom" => self.base_wisdom as u32,
+                "agility" => self.base_agility as u32,
+                "constitution" => self.base_constitution as u32,
+                "charisma" => self.base_charisma as u32,
+                "stat_points" => self.stat_points as u32,
+                "skill_points" => self.skill_points as u32,
+                "karma" => self.karma as u32,
+                "usage" => self.usage,
+            }
+        )
+        .await?;
+
+        // TODO: save inventory/bank/spells
+
+        tx.commit().await?;
+
+        Ok(())
     }
 
     pub async fn delete(

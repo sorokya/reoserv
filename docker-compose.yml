@@ -9,6 +9,7 @@ services:
       MYSQL_USER: reoserv
       MYSQL_DATABASE: reoserv
       MYSQL_PASSWORD: ${MYSQL_REOSERV_PASSWORD}
+      TZ: UTC
     ports:
       - "3306:3306"
     volumes:

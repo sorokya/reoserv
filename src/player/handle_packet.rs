@@ -143,6 +143,14 @@ pub async fn handle_packet(
                 error!("Unhandled packet {:?}_{:?}", action, family);
             }
         },
+        Family::Refresh => match action {
+            Action::Request => {
+                handlers::refresh::request(player.clone()).await;
+            }
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
+        }
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);
         }

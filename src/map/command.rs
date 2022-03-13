@@ -26,7 +26,7 @@ pub enum Command {
     Leave {
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,
-        respond_to: oneshot::Sender<()>,
+        respond_to: oneshot::Sender<Character>,
     },
     OpenDoor {
         target_player_id: EOShort,

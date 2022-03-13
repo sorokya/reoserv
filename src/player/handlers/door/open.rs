@@ -1,11 +1,11 @@
-use eo::{net::packets::client::door, data::{StreamReader, Serializeable}};
+use eo::{
+    data::{Serializeable, StreamReader},
+    net::packets::client::door,
+};
 
-use crate::{PacketBuf, player::PlayerHandle};
+use crate::{player::PlayerHandle, PacketBuf};
 
-pub async fn open(
-    buf: PacketBuf,
-    player: PlayerHandle,
-) {
+pub async fn open(buf: PacketBuf, player: PlayerHandle) {
     let mut open = door::Open::default();
     let reader = StreamReader::new(&buf);
     open.deserialize(&reader);

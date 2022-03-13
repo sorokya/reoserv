@@ -10,7 +10,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {
@@ -60,6 +60,10 @@ pub enum Command {
         file_type: FileType,
         player: PlayerHandle,
         respond_to: oneshot::Sender<Result<init::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    GetMap {
+        map_id: EOShort,
+        respond_to: oneshot::Sender<Result<MapHandle, Box<dyn std::error::Error + Send + Sync>>>,
     },
     GetNextPlayerId {
         respond_to: oneshot::Sender<EOShort>,

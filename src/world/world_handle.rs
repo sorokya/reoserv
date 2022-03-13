@@ -14,7 +14,7 @@ use eo::{
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
 use super::{world::World, Command};
 
@@ -154,6 +154,18 @@ impl WorldHandle {
         let _ = self.tx.send(Command::GetFile {
             file_type,
             player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_map(
+        &self,
+        map_id: EOShort,
+    ) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetMap {
+            map_id,
             respond_to: tx,
         });
         rx.await.unwrap()

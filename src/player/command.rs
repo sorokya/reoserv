@@ -1,6 +1,7 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     net::{Action, Family},
+    world::TinyCoords,
 };
 use tokio::sync::oneshot;
 
@@ -10,6 +11,10 @@ use super::{InvalidStateError, State};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptWarp {
+        map_id: EOShort,
+        warp_id: EOShort,
+    },
     Close(String),
     EnsureValidSequenceForAccountCreation {
         respond_to: oneshot::Sender<()>,
@@ -45,6 +50,11 @@ pub enum Command {
     Pong,
     PongNewSequence {
         respond_to: oneshot::Sender<()>,
+    },
+    RequestWarp {
+        local: bool,
+        map_id: EOShort,
+        coords: TinyCoords,
     },
     Send(Action, Family, PacketBuf),
     SetAccountId(EOInt),

@@ -3,16 +3,18 @@ use std::{collections::HashMap, sync::Arc};
 use eo::{
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, door, face, map_info, players, walk},
+        packets::server::{avatar, door, face, map_info, players, walk, warp},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
-    world::{Direction, TinyCoords},
+    world::{Coords, Direction, TinyCoords},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot, Mutex};
 
 use crate::character::Character;
 
-use super::{get_new_viewable_coords, is_in_bounds, is_tile_walkable, Command, Item, NPC};
+use super::{
+    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, NPC,
+};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -40,6 +42,7 @@ impl Map {
         let mut characters = self.characters.lock().await;
         for character in characters.values() {
             if new_character.is_in_range(character.coords) {
+                debug!("Send: {:?}", packet);
                 character.player.as_ref().unwrap().send(
                     Action::Agree,
                     Family::Players,
@@ -115,7 +118,11 @@ impl Map {
             let buf = packet.serialize();
             for character in characters.values() {
                 if character.is_in_range(coords) {
-                    character.player.as_ref().unwrap().send(Action::Open, Family::Door, buf.clone());
+                    character.player.as_ref().unwrap().send(
+                        Action::Open,
+                        Family::Door,
+                        buf.clone(),
+                    );
                 }
             }
         }
@@ -155,37 +162,50 @@ impl Map {
             }
         } {
             // TODO: Ghost timer check
-
-            // TODO: Warp
-
-            let new_viewable_coords = get_new_viewable_coords(
-                target_coords,
-                direction,
-                self.file.width as EOShort,
-                self.file.height as EOShort,
-            );
-
-            if new_viewable_coords.len() > 0 {
-                let packet = {
-                    let mut packet = walk::Reply::default();
-                    let characters = self.characters.lock().await;
-                    for coords in new_viewable_coords {
-                        for (player_id, character) in characters.iter() {
-                            if character.coords == coords {
-                                packet.player_ids.push(*player_id);
-                            }
-                        }
-                        // TODO: items
-                        // TODO: npcs
-                    }
-                    packet
-                };
-
-                target_player.as_ref().unwrap().send(
-                    Action::Reply,
-                    Family::Walk,
-                    packet.serialize(),
+            if let Some(warp) = get_warp_at(target_coords, &self.file.warp_rows) {
+                // TODO verify warp requirements
+                let mut characters = self.characters.lock().await;
+                if let Some(target) = characters.get_mut(&target_player_id) {
+                    target.player.as_ref().unwrap().request_warp(
+                        warp.warp_map,
+                        TinyCoords {
+                            x: warp.warp_x,
+                            y: warp.warp_y,
+                        },
+                        target.map_id == warp.warp_map,
+                    );
+                }
+            } else {
+                let new_viewable_coords = get_new_viewable_coords(
+                    target_coords,
+                    direction,
+                    self.file.width as EOShort,
+                    self.file.height as EOShort,
                 );
+
+                if new_viewable_coords.len() > 0 {
+                    let packet = {
+                        let mut packet = walk::Reply::default();
+                        let characters = self.characters.lock().await;
+                        for coords in new_viewable_coords {
+                            for (player_id, character) in characters.iter() {
+                                if character.coords == coords {
+                                    packet.player_ids.push(*player_id);
+                                }
+                            }
+                            // TODO: items
+                            // TODO: npcs
+                        }
+                        packet
+                    };
+
+                    debug!("Send: {:?}", packet);
+                    target_player.as_ref().unwrap().send(
+                        Action::Reply,
+                        Family::Walk,
+                        packet.serialize(),
+                    );
+                }
             }
 
             let walk_packet = walk::Player {
@@ -272,6 +292,7 @@ impl Map {
                 let buf = packet.serialize();
                 for character in characters.values() {
                     if target.is_in_range(character.coords) {
+                        debug!("Send: {:?}", packet);
                         character.player.as_ref().unwrap().send(
                             Action::Remove,
                             Family::Avatar,
@@ -279,14 +300,12 @@ impl Map {
                         );
                     }
                 }
-                let _ = respond_to.send(());
+                let _ = respond_to.send(target);
             }
             Command::OpenDoor {
                 target_player_id,
                 door_coords,
-            } => {
-                self.open_door(target_player_id, door_coords).await
-            }
+            } => self.open_door(target_player_id, door_coords).await,
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());
             }

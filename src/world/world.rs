@@ -198,6 +198,22 @@ impl World {
                 let result = self.get_file(file_type, player).await;
                 let _ = respond_to.send(result);
             }
+            Command::GetMap { map_id, respond_to } => {
+                let maps = self.maps.as_ref().expect("maps not loaded");
+                let maps = maps.lock().await;
+                match maps.get(&map_id) {
+                    Some(map) => {
+                        let _ = respond_to.send(Ok(map.to_owned()));
+                    }
+                    None => {
+                        error!("Map not found: {}", map_id);
+                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
+                            "Map".to_string(),
+                            map_id,
+                        ))));
+                    }
+                }
+            }
             Command::GetNextPlayerId { respond_to } => {
                 let players = players.lock().await;
                 let _ = respond_to.send(get_next_player_id(&players, 1));

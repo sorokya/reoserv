@@ -9,4 +9,5 @@ pub mod login;
 pub mod map_info;
 pub mod refresh;
 pub mod walk;
+pub mod warp;
 pub mod welcome;

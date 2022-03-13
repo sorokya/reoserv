@@ -67,24 +67,28 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn leave(&self, target_player_id: EOShort) {
+    pub async fn leave(&self, target_player_id: EOShort) -> Character {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
             target_player_id,
             warp_animation: None,
             respond_to: tx,
         });
-        let _ = rx.await;
+        rx.await.unwrap()
     }
 
-    pub async fn _leave_animated(&self, target_player_id: EOShort, warp_animation: WarpAnimation) {
+    pub async fn _leave_animated(
+        &self,
+        target_player_id: EOShort,
+        warp_animation: WarpAnimation,
+    ) -> Character {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
             target_player_id,
             warp_animation: Some(warp_animation),
             respond_to: tx,
         });
-        let _ = rx.await;
+        rx.await.unwrap()
     }
 
     pub fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {

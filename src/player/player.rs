@@ -1,6 +1,9 @@
 use std::{cell::RefCell, collections::VecDeque, sync::Arc};
 
-use eo::data::{EOInt, EOShort, StreamBuilder};
+use eo::{
+    data::{EOInt, EOShort, Serializeable, StreamBuilder},
+    net::{packets::server::warp, Action, Family},
+};
 use tokio::{
     net::TcpStream,
     sync::{mpsc::UnboundedReceiver, Mutex},
@@ -8,7 +11,7 @@ use tokio::{
 
 use crate::{character::Character, map::MapHandle, world::WorldHandle, PacketBuf};
 
-use super::{packet_bus::PacketBus, Command, InvalidStateError, State};
+use super::{packet_bus::PacketBus, Command, InvalidStateError, State, WarpSession};
 
 pub struct Player {
     pub id: EOShort,
@@ -23,6 +26,7 @@ pub struct Player {
     state: State,
     ip: String,
     character: Option<Arc<Mutex<Character>>>,
+    warp_session: Option<WarpSession>,
 }
 
 impl Player {
@@ -46,11 +50,49 @@ impl Player {
             state: State::Uninitialized,
             ip,
             character: None,
+            warp_session: None,
         }
     }
 
     pub async fn handle_command(&mut self, command: Command) -> bool {
         match command {
+            Command::AcceptWarp { map_id, warp_id } => {
+                if let Some(warp_session) = &self.warp_session {
+                    if warp_session.id != warp_id || warp_session.map_id != map_id {
+                        return true;
+                    }
+
+                    if let Some(current_map) = &self.map {
+                        let agree = if warp_session.local {
+                            let mut character = current_map.leave(self.id).await;
+                            character.coords = warp_session.coords.to_coords();
+                            current_map.enter(character).await;
+                            let nearby_info = current_map.get_nearby_info(self.id).await;
+                            warp::Agree::local(nearby_info)
+                        } else {
+                            if let Ok(new_map) = self.world.get_map(map_id).await {
+                                let mut character = current_map.leave(self.id).await;
+                                character.map_id = warp_session.map_id;
+                                character.coords = warp_session.coords.to_coords();
+                                new_map.enter(character).await;
+                                let nearby_info = new_map.get_nearby_info(self.id).await;
+                                self.map = Some(new_map);
+
+                                warp::Agree::remote(map_id, None, nearby_info)
+                            } else {
+                                warn!("Map not found: {}", map_id);
+                                return true;
+                            }
+                        };
+
+                        debug!("Send: {:?}", agree);
+                        let _ = self
+                            .bus
+                            .send(Action::Agree, Family::Warp, agree.serialize())
+                            .await;
+                    }
+                }
+            }
             Command::Close(reason) => {
                 if let Some(map) = self.map.as_ref() {
                     map.leave(self.id).await;
@@ -100,6 +142,8 @@ impl Player {
                 if let Some(character) = self.character.as_ref() {
                     let character = character.lock().await;
                     let _ = respond_to.send(Ok(character.map_id));
+                } else if let Some(warp_session) = &self.warp_session {
+                    let _ = respond_to.send(Ok(warp_session.map_id));
                 } else {
                     let _ =
                         respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
@@ -151,6 +195,40 @@ impl Player {
             Command::PongNewSequence { respond_to } => {
                 self.bus.sequencer.pong_new_sequence();
                 let _ = respond_to.send(());
+            }
+            Command::RequestWarp {
+                map_id,
+                coords,
+                local,
+            } => {
+                let warp_session = WarpSession {
+                    id: 1000, // TODO: randomize
+                    map_id,
+                    coords,
+                    local,
+                };
+
+                let request = if local {
+                    warp::Request::local(map_id, warp_session.id)
+                } else {
+                    match self.world.get_map(map_id).await {
+                        Ok(map) => {
+                            let (map_rid, map_filesize) = map.get_rid_and_size().await;
+                            warp::Request::remote(map_id, warp_session.id, map_rid, map_filesize)
+                        }
+                        Err(err) => {
+                            warn!("{:?}", err);
+                            return true;
+                        }
+                    }
+                };
+
+                self.warp_session = Some(warp_session);
+                debug!("Send: {:?}", request);
+                let _ = self
+                    .bus
+                    .send(Action::Request, Family::Warp, request.serialize())
+                    .await;
             }
             Command::Send(action, family, data) => {
                 let _ = self.bus.send(action, family, data).await;

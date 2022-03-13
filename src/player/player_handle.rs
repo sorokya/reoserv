@@ -1,6 +1,7 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     net::{Action, Family},
+    world::TinyCoords,
 };
 use tokio::{
     net::TcpStream,
@@ -29,6 +30,10 @@ impl PlayerHandle {
 
     fn for_tx(tx: mpsc::UnboundedSender<Command>) -> Self {
         Self { tx }
+    }
+
+    pub fn accept_warp(&self, map_id: EOShort, warp_id: EOShort) {
+        let _ = self.tx.send(Command::AcceptWarp { map_id, warp_id });
     }
 
     pub fn close(&self, reason: String) {
@@ -111,6 +116,14 @@ impl PlayerHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
         rx.await.unwrap();
+    }
+
+    pub fn request_warp(&self, map_id: EOShort, coords: TinyCoords, local: bool) {
+        let _ = self.tx.send(Command::RequestWarp {
+            map_id,
+            coords,
+            local,
+        });
     }
 
     pub fn send(&self, action: Action, family: Family, buf: PacketBuf) {

@@ -200,7 +200,7 @@ impl WorldHandle {
     }
 
     pub async fn login(
-        &mut self,
+        &self,
         player: PlayerHandle,
         name: String,
         password: String,
@@ -213,6 +213,10 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn ping_players(&self) {
+        let _ = self.tx.send(Command::PingPlayers);
     }
 
     pub async fn request_account_creation(
@@ -267,12 +271,6 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
-    }
-
-    pub async fn start_ping_timer(&self) {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::StartPingTimer { respond_to: tx });
-        rx.await.unwrap();
     }
 }
 

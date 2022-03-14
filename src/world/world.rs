@@ -25,28 +25,27 @@ use eo::{
     },
 };
 use mysql_async::Pool;
-use std::{collections::HashMap, convert::TryInto, sync::Arc, time::Duration};
+use std::{collections::HashMap, convert::TryInto};
 use tokio::{
-    sync::{mpsc::UnboundedReceiver, Mutex},
-    time,
+    sync::mpsc::UnboundedReceiver,
 };
 
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
-    players: Arc<Mutex<HashMap<EOShort, PlayerHandle>>>,
-    accounts: Arc<Mutex<Vec<EOInt>>>,
+    players: HashMap<EOShort, PlayerHandle>,
+    accounts: Vec<EOInt>,
     pool: Pool,
-    maps: Option<Arc<Mutex<HashMap<EOShort, MapHandle>>>>,
-    class_file: Option<Arc<Mutex<ClassFile>>>,
-    drop_file: Option<Arc<Mutex<DropFile>>>,
-    inn_file: Option<Arc<Mutex<InnFile>>>,
-    item_file: Option<Arc<Mutex<ItemFile>>>,
-    master_file: Option<Arc<Mutex<MasterFile>>>,
-    npc_file: Option<Arc<Mutex<NPCFile>>>,
-    shop_file: Option<Arc<Mutex<ShopFile>>>,
-    spell_file: Option<Arc<Mutex<SpellFile>>>,
-    talk_file: Option<Arc<Mutex<TalkFile>>>,
+    maps: Option<HashMap<EOShort, MapHandle>>,
+    class_file: Option<ClassFile>,
+    drop_file: Option<DropFile>,
+    inn_file: Option<InnFile>,
+    item_file: Option<ItemFile>,
+    master_file: Option<MasterFile>,
+    npc_file: Option<NPCFile>,
+    shop_file: Option<ShopFile>,
+    spell_file: Option<SpellFile>,
+    talk_file: Option<TalkFile>,
 }
 
 impl World {
@@ -54,8 +53,8 @@ impl World {
         Self {
             rx,
             pool,
-            players: Arc::new(Mutex::new(HashMap::new())),
-            accounts: Arc::new(Mutex::new(Vec::new())),
+            players: HashMap::new(),
+            accounts: Vec::new(),
             maps: None,
             class_file: None,
             drop_file: None,
@@ -70,16 +69,13 @@ impl World {
     }
 
     pub async fn handle_command(&mut self, command: Command) {
-        let players = self.players.clone();
-
         match command {
             Command::AddPlayer {
                 respond_to,
                 player_id,
                 player,
             } => {
-                let mut players = players.lock().await;
-                players.insert(player_id, player);
+                self.players.insert(player_id, player);
                 let _ = respond_to.send(());
             }
             Command::CreateAccount {
@@ -116,12 +112,10 @@ impl World {
                 account_id,
                 respond_to,
             } => {
-                let mut players = players.lock().await;
-                players.remove(&player_id).unwrap();
+                self.players.remove(&player_id).unwrap();
 
                 if account_id > 0 {
-                    let mut accounts = self.accounts.lock().await;
-                    accounts.retain(|id| *id != account_id);
+                    self.accounts.retain(|id| *id != account_id);
                 }
 
                 let _ = respond_to.send(());
@@ -135,29 +129,29 @@ impl World {
                     }
                 };
 
-                let maps = self.maps.as_ref().expect("maps not loaded");
-                let maps = maps.lock().await;
-                let map = match maps.get(&map_id) {
-                    Some(map) => map.to_owned(),
-                    None => {
+                if let Some(maps) = self.maps.as_ref() {
+                    if let Some(map) = maps.get(&map_id) {
+                        let player = player.to_owned();
+                        let map = map.to_owned();
+                        tokio::task::Builder::new()
+                            .name("enter_game")
+                            .spawn(async move {
+                                let result = enter_game(map, player).await;
+                                let _ = respond_to.send(result);
+                            });
+                    } else {
                         error!("Map not found: {}", map_id);
                         // TODO: warp player to valid position
-                        return;
                     }
-                };
-                tokio::task::Builder::new()
-                    .name("enter_game")
-                    .spawn(async move {
-                        let result = enter_game(map, player).await;
-                        let _ = respond_to.send(result);
-                    });
+                } else {
+                    error!("Maps not loaded");
+                }
             }
             Command::GetClass {
                 class_id,
                 respond_to,
             } => {
                 let classes = self.class_file.as_ref().expect("classes not loaded");
-                let classes = classes.lock().await;
                 match classes.records.iter().find(|c| c.id == class_id as EOInt) {
                     Some(class) => {
                         let _ = respond_to.send(Ok(class.clone()));
@@ -176,7 +170,6 @@ impl World {
                 respond_to,
             } => {
                 let item_file = self.item_file.as_ref().expect("classes not loaded");
-                let item_file = item_file.lock().await;
                 match item_file.records.iter().find(|i| i.id == item_id as EOInt) {
                     Some(item) => {
                         let _ = respond_to.send(Ok(item.clone()));
@@ -200,7 +193,6 @@ impl World {
             }
             Command::GetMap { map_id, respond_to } => {
                 let maps = self.maps.as_ref().expect("maps not loaded");
-                let maps = maps.lock().await;
                 match maps.get(&map_id) {
                     Some(map) => {
                         let _ = respond_to.send(Ok(map.to_owned()));
@@ -215,16 +207,14 @@ impl World {
                 }
             }
             Command::GetNextPlayerId { respond_to } => {
-                let players = players.lock().await;
-                let _ = respond_to.send(get_next_player_id(&players, 1));
+                let _ = respond_to.send(get_next_player_id(&self.players, 1));
             }
             Command::GetPlayerCount { respond_to } => {
-                let players = players.lock().await;
-                let _ = respond_to.send(players.len());
+                let _ = respond_to.send(self.players.len());
             }
             Command::LoadMapFiles { respond_to } => match data::load_maps().await {
                 Ok(maps) => {
-                    self.maps = Some(Arc::new(Mutex::new(maps)));
+                    self.maps = Some(maps);
                     let _ = respond_to.send(());
                 }
                 Err(err) => {
@@ -254,15 +244,15 @@ impl World {
                     data::load_spell_file("pub/dsl001.esf".to_string()),
                     data::load_talk_file("pub/ttd001.etf".to_string()),
                 );
-                self.class_file = Some(Arc::new(Mutex::new(class_file.unwrap())));
-                self.drop_file = Some(Arc::new(Mutex::new(drop_file.unwrap())));
-                self.inn_file = Some(Arc::new(Mutex::new(inn_file.unwrap())));
-                self.item_file = Some(Arc::new(Mutex::new(item_file.unwrap())));
-                self.master_file = Some(Arc::new(Mutex::new(master_file.unwrap())));
-                self.npc_file = Some(Arc::new(Mutex::new(npc_file.unwrap())));
-                self.shop_file = Some(Arc::new(Mutex::new(shop_file.unwrap())));
-                self.spell_file = Some(Arc::new(Mutex::new(spell_file.unwrap())));
-                self.talk_file = Some(Arc::new(Mutex::new(talk_file.unwrap())));
+                self.class_file = Some(class_file.unwrap());
+                self.drop_file = Some(drop_file.unwrap());
+                self.inn_file = Some(inn_file.unwrap());
+                self.item_file = Some(item_file.unwrap());
+                self.master_file = Some(master_file.unwrap());
+                self.npc_file = Some(npc_file.unwrap());
+                self.shop_file = Some(shop_file.unwrap());
+                self.spell_file = Some(spell_file.unwrap());
+                self.talk_file = Some(talk_file.unwrap());
                 let _ = respond_to.send(());
             }
             Command::Login {
@@ -272,9 +262,8 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let mut accounts = self.accounts.lock().await;
                 let (reply, account_id) =
-                    match account::login(&mut conn, &name, &password, &mut accounts).await {
+                    match account::login(&mut conn, &name, &password, &mut self.accounts).await {
                         Ok((reply, account_id)) => (reply, account_id),
                         Err(err) => {
                             let _ = respond_to.send(Err(err));
@@ -284,6 +273,11 @@ impl World {
                 player.set_account_id(account_id);
                 player.set_state(State::LoggedIn);
                 let _ = respond_to.send(Ok(reply));
+            }
+            Command::PingPlayers => {
+                for player in self.players.values() {
+                    player.ping();
+                }
             }
             Command::RequestAccountCreation {
                 name,
@@ -348,23 +342,6 @@ impl World {
                     enter_game: None,
                 }));
             }
-            Command::StartPingTimer { respond_to } => {
-                let mut ping_interval =
-                    time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
-                let ping_players = players.clone();
-                // Skip the first tick because it's instant
-                ping_interval.tick().await;
-                tokio::spawn(async move {
-                    loop {
-                        ping_interval.tick().await;
-                        let players = ping_players.lock().await;
-                        for (_, player) in players.iter() {
-                            player.ping();
-                        }
-                    }
-                });
-                let _ = respond_to.send(());
-            }
         }
     }
 
@@ -376,7 +353,6 @@ impl World {
         let player_id = player.get_player_id().await;
         let (map_rid, map_filesize) = {
             let maps = self.maps.as_ref().expect("Maps not loaded");
-            let maps = maps.lock().await;
             let map = match maps.get(&character.map_id) {
                 Some(map) => map,
                 None => {
@@ -392,25 +368,21 @@ impl World {
 
         let (eif_rid, eif_length) = {
             let item_file = self.item_file.as_ref().expect("Item file not loaded");
-            let item_file = item_file.lock().await;
             (item_file.rid, item_file.len())
         };
 
         let (ecf_rid, ecf_length) = {
             let class_file = self.class_file.as_ref().expect("Class file not loaded");
-            let class_file = class_file.lock().await;
             (class_file.rid, class_file.len())
         };
 
         let (enf_rid, enf_length) = {
             let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-            let npc_file = npc_file.lock().await;
             (npc_file.rid, npc_file.len())
         };
 
         let (esf_rid, esf_length) = {
             let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-            let spell_file = spell_file.lock().await;
             (spell_file.rid, spell_file.len())
         };
 
@@ -477,7 +449,6 @@ impl World {
 
                 let mut reply = init::ReplyFileMap::new();
                 let maps = self.maps.as_ref().expect("Maps not loaded");
-                let maps = maps.lock().await;
                 let map = match maps.get(&map_id) {
                     Some(map) => map,
                     None => {
@@ -494,7 +465,6 @@ impl World {
             FileType::Item => {
                 let mut reply = init::ReplyFileItem::new();
                 let item_file = self.item_file.as_ref().expect("Item file not loaded");
-                let item_file = item_file.lock().await;
                 reply.id = 1;
                 reply.data = item_file.serialize();
                 Ok(init::Reply {
@@ -505,7 +475,6 @@ impl World {
             FileType::NPC => {
                 let mut reply = init::ReplyFileNPC::new();
                 let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-                let npc_file = npc_file.lock().await;
                 reply.id = 1;
                 reply.data = npc_file.serialize();
                 Ok(init::Reply {
@@ -516,7 +485,6 @@ impl World {
             FileType::Spell => {
                 let mut reply = init::ReplyFileSpell::new();
                 let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-                let spell_file = spell_file.lock().await;
                 reply.id = 1;
                 reply.data = spell_file.serialize();
                 Ok(init::Reply {
@@ -527,7 +495,6 @@ impl World {
             FileType::Class => {
                 let mut reply = init::ReplyFileClass::new();
                 let class_file = self.class_file.as_ref().expect("Class file not loaded");
-                let class_file = class_file.lock().await;
                 reply.id = 1;
                 reply.data = class_file.serialize();
                 Ok(init::Reply {
@@ -540,7 +507,7 @@ impl World {
 }
 
 fn get_next_player_id(
-    players: &tokio::sync::MutexGuard<HashMap<EOShort, PlayerHandle>>,
+    players: &HashMap<EOShort, PlayerHandle>,
     seed: EOShort,
 ) -> EOShort {
     let id = seed;

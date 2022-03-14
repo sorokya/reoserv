@@ -4,7 +4,6 @@ use eo::{
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
 use sha2::{Digest, Sha256};
-use tokio::sync::MutexGuard;
 
 use crate::SETTINGS;
 
@@ -14,7 +13,7 @@ pub async fn login(
     conn: &mut Conn,
     name: &str,
     password: &str,
-    accounts: &mut MutexGuard<'_, Vec<EOInt>>,
+    accounts: &mut Vec<EOInt>,
 ) -> Result<(Reply, EOInt), Box<dyn std::error::Error + Send + Sync>> {
     let exists = account_exists(conn, name).await?;
     if !exists {

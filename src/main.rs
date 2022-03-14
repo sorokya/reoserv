@@ -5,6 +5,8 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
+use std::time::Duration;
+
 use lazy_static::lazy_static;
 
 mod character;
@@ -18,7 +20,7 @@ use settings::Settings;
 use eo::data::EOByte;
 use mysql_async::prelude::*;
 
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, time};
 use world::WorldHandle;
 
 use crate::player::PlayerHandle;
@@ -89,12 +91,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
-        let _ = tokio::join!(
-            world.load_pubs(),
-            world.load_maps(),
-            world.start_ping_timer(),
-        );
+        let _ = tokio::join!(world.load_pubs(), world.load_maps());
     }
+
+    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
+    ping_interval.tick().await;
+    let ping_timer_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            ping_interval.tick().await;
+            ping_timer_world.ping_players();
+        }
+    });
 
     let tcp_listener =
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))

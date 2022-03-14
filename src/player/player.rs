@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque, sync::Arc};
+use std::{cell::RefCell, collections::VecDeque};
 
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder},
@@ -7,7 +7,7 @@ use eo::{
 use mysql_async::Pool;
 use tokio::{
     net::TcpStream,
-    sync::{mpsc::UnboundedReceiver, Mutex},
+    sync::{mpsc::UnboundedReceiver},
 };
 
 use crate::{character::Character, map::MapHandle, world::WorldHandle, PacketBuf};
@@ -27,7 +27,7 @@ pub struct Player {
     pool: Pool,
     state: State,
     ip: String,
-    character: Option<Arc<Mutex<Character>>>,
+    character: Option<Character>,
     warp_session: Option<WarpSession>,
 }
 
@@ -100,12 +100,18 @@ impl Player {
             Command::Close(reason) => {
                 if let Some(map) = self.map.as_ref() {
                     let mut character = map.leave(self.id).await;
-                    let mut conn = self.pool.get_conn().await.unwrap();
-                    if let Some(logged_in_at) = character.logged_in_at {
-                        let now = chrono::Utc::now();
-                        character.usage += (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
-                    }
-                    character.save(&mut conn).await.unwrap();
+                    let pool = self.pool.clone();
+                    tokio::task::Builder::new()
+                        .name("character_save")
+                        .spawn(async move {
+                            let mut conn = pool.get_conn().await.unwrap();
+                            if let Some(logged_in_at) = character.logged_in_at {
+                                let now = chrono::Utc::now();
+                                character.usage +=
+                                    (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
+                            }
+                            character.save(&mut conn).await.unwrap();
+                        });
                 }
 
                 self.world
@@ -150,7 +156,6 @@ impl Player {
             }
             Command::GetMapId { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
                     let _ = respond_to.send(Ok(character.map_id));
                 } else if let Some(warp_session) = &self.warp_session {
                     let _ = respond_to.send(Ok(warp_session.map_id));
@@ -251,7 +256,7 @@ impl Player {
             }
             Command::SetCharacter(mut character) => {
                 character.world = Some(self.world.clone());
-                self.character = Some(Arc::new(Mutex::new(character)));
+                self.character = Some(character);
             }
             Command::SetMap(map) => {
                 self.map = Some(map);
@@ -261,7 +266,6 @@ impl Player {
             }
             Command::TakeCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
-                    let character = character.lock().await;
                     let _ = respond_to.send(Ok(character.to_owned()));
                     drop(character);
                     self.character = None;

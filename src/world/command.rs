@@ -83,6 +83,7 @@ pub enum Command {
         player: PlayerHandle,
         respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
+    PingPlayers,
     RequestAccountCreation {
         name: String,
         player: PlayerHandle,
@@ -105,8 +106,5 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    },
-    StartPingTimer {
-        respond_to: oneshot::Sender<()>,
     },
 }

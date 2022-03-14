@@ -1,14 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap};
 
 use eo::{
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, door, face, map_info, players, walk, warp},
+        packets::server::{avatar, door, face, map_info, players, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
-    world::{Coords, Direction, TinyCoords}, character::AdminLevel,
+    world::{Direction, TinyCoords},
 };
-use tokio::sync::{mpsc::UnboundedReceiver, oneshot, Mutex};
+use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
 use crate::character::Character;
 
@@ -19,9 +19,9 @@ use super::{
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     file: MapFile,
-    items: Arc<Mutex<Vec<Item>>>,
-    npcs: Arc<Mutex<Vec<NPC>>>,
-    characters: Arc<Mutex<HashMap<EOShort, Character>>>,
+    items: Vec<Item>,
+    npcs: Vec<NPC>,
+    characters: HashMap<EOShort, Character>,
 }
 
 impl Map {
@@ -29,9 +29,9 @@ impl Map {
         Self {
             file,
             rx,
-            items: Arc::new(Mutex::new(Vec::new())),
-            npcs: Arc::new(Mutex::new(Vec::new())),
-            characters: Arc::new(Mutex::new(HashMap::new())),
+            items: Vec::new(),
+            npcs: Vec::new(),
+            characters: HashMap::new(),
         }
     }
 
@@ -39,8 +39,7 @@ impl Map {
         let character_map_info = new_character.to_map_info();
         let packet = players::Agree::new(character_map_info);
         let buf = packet.serialize();
-        let mut characters = self.characters.lock().await;
-        for character in characters.values() {
+        for character in self.characters.values() {
             if new_character.is_in_range(character.coords) {
                 debug!("Send: {:?}", packet);
                 character.player.as_ref().unwrap().send(
@@ -50,22 +49,20 @@ impl Map {
                 );
             }
         }
-        characters.insert(new_character.player_id.unwrap(), new_character);
+        self.characters.insert(new_character.player_id.unwrap(), new_character);
         let _ = respond_to.send(());
     }
 
     async fn face(&mut self, target_player_id: EOShort, direction: Direction) {
         {
-            let mut characters = self.characters.lock().await;
-            let mut target = characters.get_mut(&target_player_id).unwrap();
+            let mut target = self.characters.get_mut(&target_player_id).unwrap();
             target.direction = direction;
         }
 
         let packet = face::Player::new(target_player_id, direction);
         let buf = packet.serialize();
-        let characters = self.characters.lock().await;
-        let target = characters.get(&target_player_id).unwrap();
-        for character in characters.values() {
+        let target = self.characters.get(&target_player_id).unwrap();
+        for character in self.characters.values() {
             if target_player_id != character.player_id.unwrap()
                 && target.is_in_range(character.coords)
             {
@@ -88,9 +85,8 @@ impl Map {
         let characters = {
             if let Some(player_ids) = player_ids {
                 let mut character_infos = Vec::with_capacity(player_ids.len());
-                let characters = self.characters.lock().await;
                 for player_id in player_ids {
-                    if let Some(character) = characters.get(&player_id) {
+                    if let Some(character) = self.characters.get(&player_id) {
                         if !character_infos
                             .iter()
                             .any(|c: &CharacterMapInfo| c.id == player_id)
@@ -110,13 +106,12 @@ impl Map {
     }
 
     async fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
-        let characters = self.characters.lock().await;
-        let target = characters.get(&target_player_id).unwrap();
+        let target = self.characters.get(&target_player_id).unwrap();
         let coords = door_coords.to_coords();
         if target.is_in_range(coords) {
             let packet = door::Open::new(door_coords.x, door_coords.y);
             let buf = packet.serialize();
-            for character in characters.values() {
+            for character in self.characters.values() {
                 if character.is_in_range(coords) {
                     character.player.as_ref().unwrap().send(
                         Action::Open,
@@ -129,15 +124,14 @@ impl Map {
     }
 
     async fn walk(
-        &self,
+        &mut self,
         target_player_id: EOShort,
-        timestamp: EOThree,
+        _timestamp: EOThree,
         _coords: TinyCoords,
         direction: Direction,
     ) {
         if let Some((target_coords, target_player)) = {
-            let mut characters = self.characters.lock().await;
-            if let Some(target) = characters.get_mut(&target_player_id) {
+            if let Some(target) = self.characters.get_mut(&target_player_id) {
                 let mut coords = target.coords;
                 match direction {
                     Direction::Up => coords.y -= 1,
@@ -165,8 +159,7 @@ impl Map {
             // TODO: Ghost timer check
             if let Some(warp) = get_warp_at(target_coords, &self.file.warp_rows) {
                 // TODO verify warp requirements
-                let mut characters = self.characters.lock().await;
-                if let Some(target) = characters.get_mut(&target_player_id) {
+                if let Some(target) = self.characters.get_mut(&target_player_id) {
                     target.player.as_ref().unwrap().request_warp(
                         warp.warp_map,
                         TinyCoords {
@@ -187,9 +180,8 @@ impl Map {
                 if new_viewable_coords.len() > 0 {
                     let packet = {
                         let mut packet = walk::Reply::default();
-                        let characters = self.characters.lock().await;
                         for coords in new_viewable_coords {
-                            for (player_id, character) in characters.iter() {
+                            for (player_id, character) in self.characters.iter() {
                                 if character.coords == coords {
                                     packet.player_ids.push(*player_id);
                                 }
@@ -215,8 +207,7 @@ impl Map {
                 coords: target_coords.to_tiny_coords(),
             };
             let walk_packet_buf = walk_packet.serialize();
-            let characters = self.characters.lock().await;
-            for (player_id, character) in characters.iter() {
+            for (player_id, character) in self.characters.iter() {
                 if target_player_id != *player_id && character.is_in_range(target_coords) {
                     debug!("Send: {:?}", walk_packet);
                     character.player.as_ref().unwrap().send(
@@ -246,24 +237,21 @@ impl Map {
                 target_player_id,
                 respond_to,
             } => {
-                let characters = self.characters.lock().await;
-                let target = characters.get(&target_player_id).unwrap();
-                let items = self.items.lock().await;
-                let npcs = self.npcs.lock().await;
+                let target = self.characters.get(&target_player_id).unwrap();
                 let mut nearby_items = Vec::new();
                 let mut nearby_npcs = Vec::new();
                 let mut nearby_characters = Vec::new();
-                for item in items.iter() {
+                for item in self.items.iter() {
                     if target.is_in_range(item.coords) {
                         nearby_items.push(item.to_item_map_info());
                     }
                 }
-                for npc in npcs.iter() {
+                for npc in self.npcs.iter() {
                     if target.is_in_range(npc.coords.to_coords()) {
                         nearby_npcs.push(npc.to_npc_map_info());
                     }
                 }
-                for character in characters.values() {
+                for character in self.characters.values() {
                     if target_player_id == character.player_id.unwrap()
                         || target.is_in_range(character.coords)
                     {
@@ -284,14 +272,13 @@ impl Map {
                 warp_animation,
                 respond_to,
             } => {
-                let mut characters = self.characters.lock().await;
-                let target = characters.remove(&target_player_id).unwrap();
+                let target = self.characters.remove(&target_player_id).unwrap();
                 let packet = avatar::Remove {
                     player_id: target_player_id,
                     warp_animation,
                 };
                 let buf = packet.serialize();
-                for character in characters.values() {
+                for character in self.characters.values() {
                     if target.is_in_range(character.coords) {
                         debug!("Send: {:?}", packet);
                         character.player.as_ref().unwrap().send(

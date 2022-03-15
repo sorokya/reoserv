@@ -1,19 +1,22 @@
 use crate::{
     character::Character,
+    errors::{DataNotFoundError, MissingSessionIdError, WrongSessionIdError},
     map::MapHandle,
     player::{PlayerHandle, State},
-    world::DataNotFoundError,
     SETTINGS,
 };
 
-use super::{account, data, enter_game, Command};
+use super::{
+    account::{self},
+    data, enter_game, Command,
+};
 use eo::{
     data::{
         pubs::{
             ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile,
             TalkFile,
         },
-        EOInt, EOShort, Serializeable,
+        EOChar, EOInt, EOShort, Serializeable,
     },
     net::{
         packets::server::{
@@ -26,9 +29,7 @@ use eo::{
 };
 use mysql_async::Pool;
 use std::{collections::HashMap, convert::TryInto};
-use tokio::{
-    sync::mpsc::UnboundedReceiver,
-};
+use tokio::sync::mpsc::UnboundedReceiver;
 
 #[derive(Debug)]
 pub struct World {
@@ -79,12 +80,12 @@ impl World {
                 let _ = respond_to.send(());
             }
             Command::CreateAccount {
+                player,
                 details,
-                register_ip,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::create_account(&mut conn, details, register_ip).await;
+                let result = account::create_account(&mut conn, player, details).await;
                 let _ = respond_to.send(result);
             }
             Command::CreateCharacter {
@@ -97,14 +98,14 @@ impl World {
                 let _ = respond_to.send(result);
             }
             Command::DeleteCharacter {
-                session_id,
+                player_id,
                 character_id,
                 player,
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
                 let result =
-                    account::delete_character(&mut conn, session_id, character_id, player).await;
+                    account::delete_character(&mut conn, player_id, character_id, player).await;
                 let _ = respond_to.send(result);
             }
             Command::DropPlayer {
@@ -185,10 +186,12 @@ impl World {
             }
             Command::GetFile {
                 file_type,
+                session_id,
+                file_id,
                 player,
                 respond_to,
             } => {
-                let result = self.get_file(file_type, player).await;
+                let result = self.get_file(file_type, session_id, file_id, player).await;
                 let _ = respond_to.send(result);
             }
             Command::GetMap { map_id, respond_to } => {
@@ -207,7 +210,7 @@ impl World {
                 }
             }
             Command::GetNextPlayerId { respond_to } => {
-                let _ = respond_to.send(get_next_player_id(&self.players, 1));
+                let _ = respond_to.send(get_next_player_id(&self.players, 300));
             }
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
@@ -350,7 +353,6 @@ impl World {
         player: PlayerHandle,
         character: &Character,
     ) -> Result<SelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
-        let player_id = player.get_player_id().await;
         let (map_rid, map_filesize) = {
             let maps = self.maps.as_ref().expect("Maps not loaded");
             let map = match maps.get(&character.map_id) {
@@ -397,8 +399,10 @@ impl World {
             unknown_4: 2,
         };
 
+        let session_id = player.generate_session_id().await;
+
         Ok(SelectCharacter {
-            player_id,
+            session_id,
             character_id: character.id,
             map_id: character.map_id,
             map_rid,
@@ -435,86 +439,97 @@ impl World {
     async fn get_file(
         &self,
         file_type: FileType,
+        session_id: EOShort,
+        file_id: Option<EOChar>,
         player: PlayerHandle,
     ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        match file_type {
-            FileType::Map => {
-                let map_id = match player.get_map_id().await {
-                    Ok(map_id) => map_id,
-                    Err(e) => {
-                        warn!("Player requested map with no character selected");
-                        return Err(Box::new(e));
-                    }
-                };
+        if let Ok(actual_session_id) = player.get_session_id().await {
+            if actual_session_id != session_id {
+                return Err(Box::new(WrongSessionIdError::new(
+                    actual_session_id,
+                    session_id,
+                )));
+            }
 
-                let mut reply = init::ReplyFileMap::new();
-                let maps = self.maps.as_ref().expect("Maps not loaded");
-                let map = match maps.get(&map_id) {
-                    Some(map) => map,
-                    None => {
-                        error!("Requested map not found: {}", map_id);
-                        return Err(Box::new(DataNotFoundError::new("Map".to_string(), map_id)));
-                    }
-                };
-                reply.data = map.serialize().await;
-                Ok(init::Reply {
-                    reply_code: InitReply::FileMap,
-                    reply: Box::new(reply),
-                })
+            match file_type {
+                FileType::Map => {
+                    let map_id = match player.get_map_id().await {
+                        Ok(map_id) => map_id,
+                        Err(e) => {
+                            warn!("Player requested map with no character selected");
+                            return Err(Box::new(e));
+                        }
+                    };
+
+                    let mut reply = init::ReplyFileMap::new();
+                    let maps = self.maps.as_ref().expect("Maps not loaded");
+                    let map = match maps.get(&map_id) {
+                        Some(map) => map,
+                        None => {
+                            error!("Requested map not found: {}", map_id);
+                            return Err(Box::new(DataNotFoundError::new(
+                                "Map".to_string(),
+                                map_id,
+                            )));
+                        }
+                    };
+                    reply.data = map.serialize().await;
+                    Ok(init::Reply {
+                        reply_code: InitReply::FileMap,
+                        reply: Box::new(reply),
+                    })
+                }
+                FileType::Item => {
+                    let mut reply = init::ReplyFileItem::new();
+                    let item_file = self.item_file.as_ref().expect("Item file not loaded");
+                    reply.id = 1;
+                    reply.data = item_file.serialize();
+                    Ok(init::Reply {
+                        reply_code: InitReply::FileItem,
+                        reply: Box::new(reply),
+                    })
+                }
+                FileType::NPC => {
+                    let mut reply = init::ReplyFileNPC::new();
+                    let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
+                    reply.id = 1;
+                    reply.data = npc_file.serialize();
+                    Ok(init::Reply {
+                        reply_code: InitReply::FileNPC,
+                        reply: Box::new(reply),
+                    })
+                }
+                FileType::Spell => {
+                    let mut reply = init::ReplyFileSpell::new();
+                    let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
+                    reply.id = 1;
+                    reply.data = spell_file.serialize();
+                    Ok(init::Reply {
+                        reply_code: InitReply::FileSpell,
+                        reply: Box::new(reply),
+                    })
+                }
+                FileType::Class => {
+                    let mut reply = init::ReplyFileClass::new();
+                    let class_file = self.class_file.as_ref().expect("Class file not loaded");
+                    reply.id = 1;
+                    reply.data = class_file.serialize();
+                    Ok(init::Reply {
+                        reply_code: InitReply::FileClass,
+                        reply: Box::new(reply),
+                    })
+                }
             }
-            FileType::Item => {
-                let mut reply = init::ReplyFileItem::new();
-                let item_file = self.item_file.as_ref().expect("Item file not loaded");
-                reply.id = 1;
-                reply.data = item_file.serialize();
-                Ok(init::Reply {
-                    reply_code: InitReply::FileItem,
-                    reply: Box::new(reply),
-                })
-            }
-            FileType::NPC => {
-                let mut reply = init::ReplyFileNPC::new();
-                let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-                reply.id = 1;
-                reply.data = npc_file.serialize();
-                Ok(init::Reply {
-                    reply_code: InitReply::FileNPC,
-                    reply: Box::new(reply),
-                })
-            }
-            FileType::Spell => {
-                let mut reply = init::ReplyFileSpell::new();
-                let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-                reply.id = 1;
-                reply.data = spell_file.serialize();
-                Ok(init::Reply {
-                    reply_code: InitReply::FileSpell,
-                    reply: Box::new(reply),
-                })
-            }
-            FileType::Class => {
-                let mut reply = init::ReplyFileClass::new();
-                let class_file = self.class_file.as_ref().expect("Class file not loaded");
-                reply.id = 1;
-                reply.data = class_file.serialize();
-                Ok(init::Reply {
-                    reply_code: InitReply::FileClass,
-                    reply: Box::new(reply),
-                })
-            }
+        } else {
+            Err(Box::new(MissingSessionIdError))
         }
     }
 }
 
-fn get_next_player_id(
-    players: &HashMap<EOShort, PlayerHandle>,
-    seed: EOShort,
-) -> EOShort {
-    let id = seed;
-    for player_id in players.iter().map(|c| *c.0) {
-        if player_id == id {
-            return get_next_player_id(players, id + 1);
-        }
+fn get_next_player_id(players: &HashMap<EOShort, PlayerHandle>, seed: EOShort) -> EOShort {
+    if players.iter().any(|(id, _)| *id == seed) {
+        get_next_player_id(players, seed + 1)
+    } else {
+        seed
     }
-    id
 }

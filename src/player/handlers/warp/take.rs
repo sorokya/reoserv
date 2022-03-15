@@ -12,7 +12,10 @@ pub async fn take(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", take);
 
-    if let Ok(mut reply) = world.get_file(FileType::Map, player.clone()).await {
+    if let Ok(mut reply) = world
+        .get_file(FileType::Map, take.session_id, None, player.clone())
+        .await
+    {
         reply.reply_code = InitReply::WarpMap;
         debug!("Reply: {:?}", reply);
         player.send(Action::Init, Family::Init, reply.serialize());

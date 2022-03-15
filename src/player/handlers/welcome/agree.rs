@@ -12,8 +12,21 @@ pub async fn agree(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", agree);
 
-    if let Ok(reply) = world.get_file(agree.file_type, player.clone()).await {
-        debug!("Reply: {:?}", reply);
-        player.send(Action::Init, Family::Init, reply.serialize());
+    match world
+        .get_file(
+            agree.file_type,
+            agree.session_id,
+            agree.file_id,
+            player.clone(),
+        )
+        .await
+    {
+        Ok(reply) => {
+            debug!("Reply: {:?}", reply);
+            player.send(Action::Init, Family::Init, reply.serialize());
+        }
+        Err(e) => {
+            error!("Error getting file: {}", e);
+        }
     }
 }

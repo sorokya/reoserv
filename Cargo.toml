@@ -22,3 +22,4 @@ console-subscriber = { version = "0.1", optional = true }
 mysql_async = "0.29"
 sha2 = "0.10"
 eo = { git = "https://github.com/sorokya/eo" }
+rand = "0.8"

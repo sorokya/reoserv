@@ -5,19 +5,27 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::{character::Character, map::MapHandle, PacketBuf};
+use crate::{
+    character::Character,
+    errors::{InvalidStateError, MissingSessionIdError},
+    map::MapHandle,
+    PacketBuf,
+};
 
-use super::{InvalidStateError, State};
+use super::State;
 
 #[derive(Debug)]
 pub enum Command {
     AcceptWarp {
         map_id: EOShort,
-        warp_id: EOShort,
+        session_id: EOShort,
     },
     Close(String),
     EnsureValidSequenceForAccountCreation {
         respond_to: oneshot::Sender<()>,
+    },
+    GenerateSessionId {
+        respond_to: oneshot::Sender<EOShort>,
     },
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
@@ -36,6 +44,9 @@ pub enum Command {
     },
     GetPlayerId {
         respond_to: oneshot::Sender<EOShort>,
+    },
+    GetSessionId {
+        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
     GetSequenceBytes {
         respond_to: oneshot::Sender<(EOShort, EOChar)>,
@@ -64,5 +75,8 @@ pub enum Command {
     SetState(State),
     TakeCharacter {
         respond_to: oneshot::Sender<Result<Character, InvalidStateError>>,
+    },
+    TakeSessionId {
+        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
 }

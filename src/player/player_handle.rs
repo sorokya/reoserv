@@ -9,9 +9,15 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, map::MapHandle, world::WorldHandle, PacketBuf};
+use crate::{
+    character::Character,
+    errors::{InvalidStateError, MissingSessionIdError},
+    map::MapHandle,
+    world::WorldHandle,
+    PacketBuf,
+};
 
-use super::{handle_packet::handle_packet, player::Player, Command, InvalidStateError, State};
+use super::{handle_packet::handle_packet, player::Player, Command, State};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -33,8 +39,8 @@ impl PlayerHandle {
         Self { tx }
     }
 
-    pub fn accept_warp(&self, map_id: EOShort, warp_id: EOShort) {
-        let _ = self.tx.send(Command::AcceptWarp { map_id, warp_id });
+    pub fn accept_warp(&self, map_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
     pub fn close(&self, reason: String) {
@@ -47,6 +53,12 @@ impl PlayerHandle {
             .tx
             .send(Command::EnsureValidSequenceForAccountCreation { respond_to: tx });
         rx.await.unwrap();
+    }
+
+    pub async fn generate_session_id(&self) -> EOShort {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
+        rx.await.unwrap()
     }
 
     pub async fn get_account_id(&self) -> Result<EOInt, InvalidStateError> {
@@ -84,6 +96,12 @@ impl PlayerHandle {
     pub async fn get_player_id(&self) -> EOShort {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerId { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_session_id(&self) -> Result<EOShort, MissingSessionIdError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetSessionId { respond_to: tx });
         rx.await.unwrap()
     }
 
@@ -156,6 +174,12 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::TakeCharacter { respond_to: tx });
         rx.await.unwrap()
     }
+
+    pub async fn take_session_id(&self) -> Result<EOShort, MissingSessionIdError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::TakeSessionId { respond_to: tx });
+        rx.await.unwrap()
+    }
 }
 
 async fn run_player(mut player: Player, player_handle: PlayerHandle) {
@@ -196,7 +220,6 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                 .name("handle_packet")
                 .spawn(handle_packet(
                     packet,
-                    player.id,
                     player_handle.clone(),
                     player.world.clone(),
                 ));

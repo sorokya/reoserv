@@ -1,8 +1,7 @@
 use eo::data::EOInt;
 use mysql_async::Conn;
 
-use super::WrongAccountError;
-use crate::{character::Character, player::PlayerHandle};
+use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
 
 pub async fn select_character(
     conn: &mut Conn,

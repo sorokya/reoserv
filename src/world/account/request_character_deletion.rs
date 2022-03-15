@@ -1,8 +1,7 @@
 use eo::{data::EOInt, net::packets::server::character::Player};
 use mysql_async::Conn;
 
-use super::WrongAccountError;
-use crate::{character::Character, player::PlayerHandle};
+use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
 
 pub async fn request_character_deletion(
     conn: &mut Conn,
@@ -42,8 +41,10 @@ pub async fn request_character_deletion(
         )));
     }
 
+    let session_id = player.generate_session_id().await;
+
     Ok(Player {
-        session_id: 1000,
+        session_id,
         character_id,
     })
 }

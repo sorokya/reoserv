@@ -16,12 +16,13 @@ pub async fn create(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", create);
 
-    let reply = match world.create_character(create, player.clone()).await {
-        Ok(reply) => reply,
-        Err(_) => Reply::no(CharacterReply::InvalidRequest),
+    match world.create_character(create, player.clone()).await {
+        Ok(reply) => {
+            debug!("Reply: {:?}", reply);
+            player.send(Action::Reply, Family::Character, reply.serialize());
+        }
+        Err(e) => {
+            error!("Create character failed: {}", e);
+        }
     };
-
-    debug!("Reply: {:?}", reply);
-
-    player.send(Action::Reply, Family::Character, reply.serialize());
 }

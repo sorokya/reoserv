@@ -22,7 +22,7 @@ pub async fn request_character_creation(
     if num_of_characters >= 3 {
         Ok(Reply::no(CharacterReply::Full))
     } else {
-        // TODO: session id
-        Ok(Reply::r#continue(1000))
+        let session_id = player.generate_session_id().await;
+        Ok(Reply::r#continue(session_id))
     }
 }

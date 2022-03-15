@@ -10,6 +10,7 @@ use std::time::Duration;
 use lazy_static::lazy_static;
 
 mod character;
+mod errors;
 mod map;
 mod player;
 mod settings;

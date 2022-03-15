@@ -20,8 +20,8 @@ pub enum Command {
         player: PlayerHandle,
     },
     CreateAccount {
+        player: PlayerHandle,
         details: eo::net::packets::client::account::Create,
-        register_ip: String,
         respond_to:
             oneshot::Sender<Result<account::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
@@ -32,7 +32,7 @@ pub enum Command {
             oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     DeleteCharacter {
-        session_id: EOShort,
+        player_id: EOShort,
         character_id: EOInt,
         player: PlayerHandle,
         respond_to:
@@ -58,6 +58,8 @@ pub enum Command {
     },
     GetFile {
         file_type: FileType,
+        session_id: EOShort,
+        file_id: Option<EOChar>,
         player: PlayerHandle,
         respond_to: oneshot::Sender<Result<init::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },

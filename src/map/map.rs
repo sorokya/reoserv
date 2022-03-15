@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use eo::{
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
@@ -49,7 +49,8 @@ impl Map {
                 );
             }
         }
-        self.characters.insert(new_character.player_id.unwrap(), new_character);
+        self.characters
+            .insert(new_character.player_id.unwrap(), new_character);
         let _ = respond_to.send(());
     }
 
@@ -141,7 +142,8 @@ impl Map {
                 }
                 target.direction = direction;
 
-                let is_tile_walkable = target.admin_level as EOChar >= 1 || is_tile_walkable(coords, &self.file.tile_rows);
+                let is_tile_walkable = target.admin_level as EOChar >= 1
+                    || is_tile_walkable(coords, &self.file.tile_rows);
                 if is_in_bounds(
                     coords,
                     self.file.width as EOShort,

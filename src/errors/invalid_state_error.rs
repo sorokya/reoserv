@@ -1,4 +1,4 @@
-use super::State;
+use crate::player::State;
 
 #[derive(Debug)]
 pub struct InvalidStateError {

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort, StreamReader, MAX1},
+    data::{EOInt, StreamReader, MAX1},
     net::{Action, Family},
 };
 use num_traits::FromPrimitive;
@@ -10,7 +10,6 @@ use crate::{world::WorldHandle, PacketBuf, SETTINGS};
 
 pub async fn handle_packet(
     packet: PacketBuf,
-    player_id: EOShort,
     player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -44,13 +43,13 @@ pub async fn handle_packet(
     match family {
         Family::Init => match action {
             Action::Init => {
-                handlers::init::request(buf, player_id, player.clone()).await;
+                handlers::init::request(buf, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         Family::Connection => match action {
             Action::Accept => {
-                handlers::connection::accept(buf, player_id, player.clone()).await;
+                handlers::connection::accept(buf, player.clone()).await;
             }
             Action::Ping => {
                 player.pong();

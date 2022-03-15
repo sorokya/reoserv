@@ -446,7 +446,7 @@ impl Character {
                 "armlet2" => self.paperdoll.armlets[1] as u32,
                 "bracer" => self.paperdoll.bracers[0] as u32,
                 "bracer2" => self.paperdoll.bracers[1] as u32,
-            }
+            },
         )
         .await?;
 
@@ -460,7 +460,7 @@ impl Character {
                 "direction" => self.direction as u32,
                 "sitting" => self.sit_state as u32,
                 "hidden" => if self.hidden { 1 } else { 0 },
-            }
+            },
         )
         .await?;
 
@@ -482,7 +482,7 @@ impl Character {
                 "skill_points" => self.skill_points as u32,
                 "karma" => self.karma as u32,
                 "usage" => self.usage,
-            }
+            },
         )
         .await?;
 

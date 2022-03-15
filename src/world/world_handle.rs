@@ -52,13 +52,13 @@ impl WorldHandle {
 
     pub async fn create_account(
         &self,
+        player: PlayerHandle,
         details: client::account::Create,
-        register_ip: String,
     ) -> Result<account::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::CreateAccount {
+            player,
             details,
-            register_ip,
             respond_to: tx,
         });
         rx.await.unwrap()
@@ -80,13 +80,13 @@ impl WorldHandle {
 
     pub async fn delete_character(
         &self,
-        session_id: EOShort,
+        player_id: EOShort,
         character_id: EOInt,
         player: PlayerHandle,
     ) -> Result<character::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DeleteCharacter {
-            session_id,
+            player_id,
             character_id,
             player,
             respond_to: tx,
@@ -148,11 +148,15 @@ impl WorldHandle {
     pub async fn get_file(
         &self,
         file_type: FileType,
+        session_id: EOShort,
+        file_id: Option<EOChar>,
         player: PlayerHandle,
     ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetFile {
             file_type,
+            session_id,
+            file_id,
             player,
             respond_to: tx,
         });

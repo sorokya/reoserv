@@ -3,7 +3,7 @@ use crate::{
     PacketBuf,
 };
 use eo::{
-    data::{EOByte, EOShort, Serializeable, StreamReader},
+    data::{EOByte, Serializeable, StreamReader},
     net::{
         packets::{
             client::init::Request,
@@ -13,7 +13,7 @@ use eo::{
         stupid_hash, Action, Family,
     },
 };
-pub async fn request(buf: PacketBuf, player_id: EOShort, player: PlayerHandle) {
+pub async fn request(buf: PacketBuf, player: PlayerHandle) {
     let mut packet = Request::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
@@ -25,6 +25,8 @@ pub async fn request(buf: PacketBuf, player_id: EOShort, player: PlayerHandle) {
 
     let mut init_ok = ReplyOk::new();
     init_ok.challenge_response = stupid_hash(packet.challenge);
+
+    let player_id = player.get_player_id().await;
     init_ok.player_id = player_id;
 
     let sequence_bytes = player.get_sequence_bytes().await;

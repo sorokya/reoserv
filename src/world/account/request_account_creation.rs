@@ -17,12 +17,11 @@ pub async fn request_account_creation(
 
     let exists = account_exists(conn, &name).await?;
     if exists {
-        return Ok(Reply::no(AccountReply::Exists));
+        Ok(Reply::no(AccountReply::Exists))
+    } else {
+        let session_id = player.generate_session_id().await;
+        player.ensure_valid_sequence_for_account_creation().await;
+        let sequence_start = player.get_sequence_start().await;
+        Ok(Reply::r#continue(session_id, sequence_start as EOChar))
     }
-
-    player.ensure_valid_sequence_for_account_creation().await;
-    let sequence_start = player.get_sequence_start().await;
-
-    // TODO: session id
-    Ok(Reply::r#continue(1000, sequence_start as EOChar))
 }

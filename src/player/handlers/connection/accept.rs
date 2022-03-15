@@ -1,20 +1,21 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{Serializeable, StreamReader},
     net::packets::client::connection::Accept,
 };
 
 use crate::{player::PlayerHandle, PacketBuf};
 
-pub async fn accept(buf: PacketBuf, player_id: EOShort, player: PlayerHandle) {
+pub async fn accept(buf: PacketBuf, player: PlayerHandle) {
     let mut packet = Accept::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
 
+    let player_id = player.get_player_id().await;
     if player_id != packet.player_id {
         player.close(format!(
-            "sending invalid player id: Got {}, expected {}.",
+            "sending invalid connection id: Got {}, expected {}.",
             packet.player_id, player_id
         ));
     }

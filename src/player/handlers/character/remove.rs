@@ -16,19 +16,16 @@ pub async fn remove(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", remove);
 
-    let reply = match world
-        .delete_character(
-            remove.session_id,
-            remove.character_id.into(),
-            player.clone(),
-        )
+    match world
+        .delete_character(remove.session_id, remove.character_id, player.clone())
         .await
     {
-        Ok(reply) => reply,
-        Err(_) => Reply::no(CharacterReply::InvalidRequest),
+        Ok(reply) => {
+            debug!("Reply: {:?}", reply);
+            player.send(Action::Reply, Family::Character, reply.serialize());
+        }
+        Err(e) => {
+            error!("Delete character failed: {}", e);
+        }
     };
-
-    debug!("Reply: {:?}", reply);
-
-    player.send(Action::Reply, Family::Character, reply.serialize());
 }

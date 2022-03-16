@@ -111,10 +111,12 @@ impl WorldHandle {
 
     pub async fn enter_game(
         &self,
+        session_id: EOShort,
         player: PlayerHandle,
     ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::EnterGame {
+            session_id,
             player,
             respond_to: tx,
         });

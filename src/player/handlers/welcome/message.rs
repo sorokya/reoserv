@@ -1,18 +1,21 @@
 use eo::{
-    data::{Serializeable, StreamReader},
+    data::{EOShort, Serializeable, StreamReader},
     net::{packets::client::welcome::Message, Action, Family},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
 pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
-    let mut request = Message::default();
+    let mut message = Message::default();
     let reader = StreamReader::new(&buf);
-    request.deserialize(&reader);
+    message.deserialize(&reader);
 
-    debug!("Recv: {:?}", request);
+    debug!("Recv: {:?}", message);
 
-    if let Ok(reply) = world.enter_game(player.clone()).await {
+    if let Ok(reply) = world
+        .enter_game(message.session_id as EOShort, player.clone())
+        .await
+    {
         debug!("Reply: {:?}", reply);
         player.send(Action::Reply, Family::Welcome, reply.serialize());
     }

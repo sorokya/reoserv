@@ -44,6 +44,7 @@ pub enum Command {
         respond_to: oneshot::Sender<()>,
     },
     EnterGame {
+        session_id: EOShort,
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,

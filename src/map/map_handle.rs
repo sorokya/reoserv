@@ -1,5 +1,5 @@
 use eo::{
-    data::{map::MapFile, EOByte, EOChar, EOInt, EOShort, EOThree},
+    data::{map::MapFile, EOChar, EOInt, EOShort, EOThree},
     net::{packets::server::map_info, NearbyInfo},
     world::{Direction, TinyCoords, WarpAnimation},
 };
@@ -28,7 +28,7 @@ impl MapHandle {
         Self { tx }
     }
 
-    pub async fn enter(&self, character: Character) {
+    pub async fn enter(&self, character: Box<Character>) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter(character, tx));
         rx.await.unwrap();

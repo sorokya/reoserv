@@ -81,23 +81,21 @@ impl Player {
                             let agree = if warp_session.local {
                                 let mut character = current_map.leave(self.id).await;
                                 character.coords = warp_session.coords.to_coords();
-                                current_map.enter(character).await;
+                                current_map.enter(Box::new(character)).await;
                                 let nearby_info = current_map.get_nearby_info(self.id).await;
                                 warp::Agree::local(nearby_info)
-                            } else {
-                                if let Ok(new_map) = self.world.get_map(map_id).await {
-                                    let mut character = current_map.leave(self.id).await;
-                                    character.map_id = warp_session.map_id;
-                                    character.coords = warp_session.coords.to_coords();
-                                    new_map.enter(character).await;
-                                    let nearby_info = new_map.get_nearby_info(self.id).await;
-                                    self.map = Some(new_map);
+                            } else if let Ok(new_map) = self.world.get_map(map_id).await {
+                                let mut character = current_map.leave(self.id).await;
+                                character.map_id = warp_session.map_id;
+                                character.coords = warp_session.coords.to_coords();
+                                new_map.enter(Box::new(character)).await;
+                                let nearby_info = new_map.get_nearby_info(self.id).await;
+                                self.map = Some(new_map);
 
-                                    warp::Agree::remote(map_id, None, nearby_info)
-                                } else {
-                                    warn!("Map not found: {}", map_id);
-                                    return true;
-                                }
+                                warp::Agree::remote(map_id, None, nearby_info)
+                            } else {
+                                warn!("Map not found: {}", map_id);
+                                return true;
                             };
 
                             debug!("Send: {:?}", agree);
@@ -290,7 +288,7 @@ impl Player {
             }
             Command::SetCharacter(mut character) => {
                 character.world = Some(self.world.clone());
-                self.character = Some(character);
+                self.character = Some(*character);
             }
             Command::SetMap(map) => {
                 self.map = Some(map);
@@ -301,7 +299,6 @@ impl Player {
             Command::TakeCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
                     let _ = respond_to.send(Ok(character.to_owned()));
-                    drop(character);
                     self.character = None;
                 } else {
                     let _ =

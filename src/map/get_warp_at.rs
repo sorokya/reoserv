@@ -6,19 +6,16 @@ use eo::{
     world::Coords,
 };
 
-pub fn get_warp_at(coords: Coords, warp_rows: &Vec<WarpRow>) -> Option<Warp> {
+pub fn get_warp_at(coords: Coords, warp_rows: &[WarpRow]) -> Option<Warp> {
     if let Some(warp_row) = warp_rows
         .iter()
         .find(|warp_row| warp_row.y as EOShort == coords.y)
     {
-        match warp_row
+        warp_row
             .tiles
             .iter()
             .find(|warp| warp.x as EOShort == coords.x)
-        {
-            Some(warp) => Some(warp.to_owned()),
-            None => None,
-        }
+            .map(|warp| warp.to_owned())
     } else {
         None
     }

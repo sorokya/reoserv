@@ -1,10 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{
-        packets::{client::character::Create, server::character::Reply},
-        replies::CharacterReply,
-        Action, Family,
-    },
+    net::{packets::client::character::Create, Action, Family},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};

@@ -2,10 +2,11 @@ mod command;
 pub use command::Command;
 mod item;
 pub use item::Item;
+#[allow(clippy::module_inception)]
 mod map;
 pub use map::Map;
 mod npc;
-pub use npc::NPC;
+pub use npc::Npc;
 mod map_handle;
 pub use map_handle::MapHandle;
 mod get_new_viewable_coords;

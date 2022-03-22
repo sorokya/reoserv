@@ -13,14 +13,14 @@ use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 use crate::character::Character;
 
 use super::{
-    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, NPC,
+    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc,
 };
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     file: MapFile,
     items: Vec<Item>,
-    npcs: Vec<NPC>,
+    npcs: Vec<Npc>,
     characters: HashMap<EOShort, Character>,
 }
 
@@ -35,7 +35,7 @@ impl Map {
         }
     }
 
-    async fn enter(&mut self, new_character: Character, respond_to: oneshot::Sender<()>) {
+    async fn enter(&mut self, new_character: Box<Character>, respond_to: oneshot::Sender<()>) {
         let character_map_info = new_character.to_map_info();
         let packet = players::Agree::new(character_map_info);
         let buf = packet.serialize();
@@ -50,7 +50,7 @@ impl Map {
             }
         }
         self.characters
-            .insert(new_character.player_id.unwrap(), new_character);
+            .insert(new_character.player_id.unwrap(), *new_character);
         let _ = respond_to.send(());
     }
 
@@ -179,7 +179,7 @@ impl Map {
                     self.file.height as EOShort,
                 );
 
-                if new_viewable_coords.len() > 0 {
+                if !new_viewable_coords.is_empty() {
                     let packet = {
                         let mut packet = walk::Reply::default();
                         for coords in new_viewable_coords {

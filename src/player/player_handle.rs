@@ -157,7 +157,7 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetBusy(busy));
     }
 
-    pub fn set_character(&self, character: Character) {
+    pub fn set_character(&self, character: Box<Character>) {
         let _ = self.tx.send(Command::SetCharacter(character));
     }
 

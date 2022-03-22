@@ -70,7 +70,7 @@ pub enum Command {
     Send(Action, Family, PacketBuf),
     SetAccountId(EOInt),
     SetBusy(bool),
-    SetCharacter(Character),
+    SetCharacter(Box<Character>),
     SetMap(MapHandle),
     SetState(State),
     TakeCharacter {

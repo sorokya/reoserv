@@ -12,15 +12,12 @@ pub async fn take(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", take);
 
-    match world
+    if let Ok(reply) = world
         .request_character_deletion(take.character_id, player.clone())
         .await
     {
-        Ok(reply) => {
-            debug!("Reply: {:?}", reply);
+        debug!("Reply: {:?}", reply);
 
-            player.send(Action::Player, Family::Character, reply.serialize());
-        }
-        Err(_) => {} // eat the error
+        player.send(Action::Player, Family::Character, reply.serialize());
     }
 }

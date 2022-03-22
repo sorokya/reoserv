@@ -82,14 +82,15 @@ pub struct Character {
 
 impl Character {
     pub fn from_creation(account_id: EOInt, create: &Create) -> Self {
-        let mut character = Character::default();
-        character.account_id = account_id;
-        character.gender = create.gender;
-        character.hair_style = create.hair_style;
-        character.hair_color = create.hair_color;
-        character.race = create.race;
-        character.name = create.name.clone();
-        character
+        Character {
+            account_id,
+            gender: create.gender,
+            hair_style: create.hair_style,
+            hair_color: create.hair_color,
+            race: create.race,
+            name: create.name.clone(),
+            ..Default::default()
+        }
     }
 
     pub fn is_in_range(&self, coords: Coords) -> bool {
@@ -130,16 +131,13 @@ impl Character {
 
     pub async fn calculate_stats(&mut self) {
         let world = self.world.as_ref().expect("Character has no world");
-        match world.get_class(self.class).await {
-            Ok(class) => {
-                self.adj_strength = self.base_strength + class.strength;
-                self.adj_intelligence = self.base_intelligence + class.intelligence;
-                self.adj_wisdom = self.base_wisdom + class.wisdom;
-                self.adj_agility = self.base_agility + class.agility;
-                self.adj_constitution = self.base_constitution + class.constitution;
-                self.adj_charisma = self.base_charisma + class.charisma;
-            }
-            _ => {}
+        if let Ok(class) = world.get_class(self.class).await {
+            self.adj_strength = self.base_strength + class.strength;
+            self.adj_intelligence = self.base_intelligence + class.intelligence;
+            self.adj_wisdom = self.base_wisdom + class.wisdom;
+            self.adj_agility = self.base_agility + class.agility;
+            self.adj_constitution = self.base_constitution + class.constitution;
+            self.adj_charisma = self.base_charisma + class.charisma;
         }
 
         self.max_weight = 70;
@@ -158,14 +156,11 @@ impl Character {
                 continue;
             }
 
-            match world.get_item(item.id).await {
-                Ok(record) => {
-                    self.weight += record.weight as EOInt * item.amount;
-                    if self.weight >= 250 {
-                        break;
-                    }
+            if let Ok(record) = world.get_item(item.id).await {
+                self.weight += record.weight as EOInt * item.amount;
+                if self.weight >= 250 {
+                    break;
                 }
-                _ => {}
             }
         }
 
@@ -174,24 +169,21 @@ impl Character {
                 continue;
             }
 
-            match world.get_item(item).await {
-                Ok(item) => {
-                    self.weight += item.weight as EOInt;
-                    self.max_hp += item.hp;
-                    self.max_tp += item.tp;
-                    self.min_damage += item.min_damage;
-                    self.max_damage += item.max_damage;
-                    self.accuracy += item.accuracy;
-                    self.evasion += item.evade;
-                    self.armor += item.armor;
-                    self.adj_strength += item.strength as EOShort;
-                    self.adj_intelligence += item.intelligence as EOShort;
-                    self.adj_wisdom += item.wisdom as EOShort;
-                    self.adj_agility += item.agility as EOShort;
-                    self.adj_constitution += item.constitution as EOShort;
-                    self.adj_charisma += item.charisma as EOShort;
-                }
-                _ => {}
+            if let Ok(item) = world.get_item(item).await {
+                self.weight += item.weight as EOInt;
+                self.max_hp += item.hp;
+                self.max_tp += item.tp;
+                self.min_damage += item.min_damage;
+                self.max_damage += item.max_damage;
+                self.accuracy += item.accuracy;
+                self.evasion += item.evade;
+                self.armor += item.armor;
+                self.adj_strength += item.strength as EOShort;
+                self.adj_intelligence += item.intelligence as EOShort;
+                self.adj_wisdom += item.wisdom as EOShort;
+                self.adj_agility += item.agility as EOShort;
+                self.adj_constitution += item.constitution as EOShort;
+                self.adj_charisma += item.charisma as EOShort;
             }
         }
 

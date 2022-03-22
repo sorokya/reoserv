@@ -12,15 +12,12 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", request);
 
-    match world
+    if let Ok(reply) = world
         .request_account_creation(request.name, player.clone())
         .await
     {
-        Ok(reply) => {
-            debug!("Reply: {:?}", reply);
+        debug!("Reply: {:?}", reply);
 
-            player.send(Action::Reply, Family::Account, reply.serialize());
-        }
-        Err(_) => {} // eat the error
+        player.send(Action::Reply, Family::Account, reply.serialize());
     }
 }

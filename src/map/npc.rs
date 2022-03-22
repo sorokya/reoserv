@@ -4,14 +4,14 @@ use eo::{
     world::{Direction, TinyCoords},
 };
 
-pub struct NPC {
+pub struct Npc {
     pub index: EOChar,
     pub id: EOShort,
     pub coords: TinyCoords,
     pub direction: Direction,
 }
 
-impl NPC {
+impl Npc {
     pub fn _new(index: EOChar, id: EOShort, coords: TinyCoords, direction: Direction) -> Self {
         Self {
             index,

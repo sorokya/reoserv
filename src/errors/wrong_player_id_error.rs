@@ -6,12 +6,6 @@ pub struct WrongPlayerIdError {
     pub actual: EOShort,
 }
 
-impl WrongPlayerIdError {
-    pub fn new(expected: EOShort, actual: EOShort) -> Self {
-        Self { expected, actual }
-    }
-}
-
 impl std::error::Error for WrongPlayerIdError {}
 
 impl std::fmt::Display for WrongPlayerIdError {

@@ -9,7 +9,7 @@ use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 pub async fn request(
     buf: PacketBuf,
     player: PlayerHandle,
-    mut world: WorldHandle,
+    world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut request = Request::default();
     let reader = StreamReader::new(&buf);

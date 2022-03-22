@@ -361,7 +361,7 @@ impl World {
                     }
                 };
 
-                player.set_character(character);
+                player.set_character(Box::new(character));
 
                 let _ = respond_to.send(Ok(welcome::Reply {
                     reply: WelcomeReply::SelectCharacter,
@@ -464,7 +464,7 @@ impl World {
         &self,
         file_type: FileType,
         session_id: EOShort,
-        file_id: Option<EOChar>,
+        _file_id: Option<EOChar>,
         player: PlayerHandle,
     ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
         if let Ok(actual_session_id) = player.get_session_id().await {

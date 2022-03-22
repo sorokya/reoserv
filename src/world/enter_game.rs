@@ -29,7 +29,7 @@ pub async fn enter_game(
     let items = character.items.clone();
     let spells = character.spells.clone();
 
-    map.enter(character).await;
+    map.enter(Box::new(character)).await;
     let nearby_info = map.get_nearby_info(player_id).await;
     Ok(Reply {
         reply: WelcomeReply::EnterGame,
@@ -62,9 +62,9 @@ async fn get_news() -> [String; 9] {
                 String::default(),
                 String::default(),
             ];
-            for i in 0..9 {
+            for entry in &mut news {
                 if let Ok(Some(line)) = lines.next_line().await {
-                    news[i] = line
+                    *entry = line
                 }
             }
             news

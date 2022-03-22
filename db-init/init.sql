@@ -32,7 +32,7 @@ CREATE TABLE `Account` (
   `location` varchar(64) NOT NULL,
   `email` varchar(64) NOT NULL,
   `computer` varchar(64) NOT NULL,
-  `hdid` int NOT NULL,
+  `hdid` int unsigned NOT NULL,
   `register_ip` varchar(15) NOT NULL,
   `last_login_ip` varchar(15) NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

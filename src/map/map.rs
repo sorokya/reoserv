@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use eo::{
+    character::Emote,
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, door, face, map_info, players, walk},
+        packets::server::{avatar, door, emote, face, map_info, players, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
     world::{Direction, TinyCoords},
@@ -32,6 +33,25 @@ impl Map {
             items: Vec::new(),
             npcs: Vec::new(),
             characters: HashMap::new(),
+        }
+    }
+
+    async fn emote(&self, target_player_id: EOShort, emote: Emote) {
+        if let Some(target) = self.characters.get(&target_player_id) {
+            let packet = emote::Player::new(target_player_id, emote);
+            let buf = packet.serialize();
+            for character in self.characters.values() {
+                if character.player_id.unwrap() != target_player_id
+                    && character.is_in_range(target.coords)
+                {
+                    debug!("Send: {:?}", packet);
+                    character.player.as_ref().unwrap().send(
+                        Action::Player,
+                        Family::Emote,
+                        buf.clone(),
+                    );
+                }
+            }
         }
     }
 
@@ -224,12 +244,18 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::Enter(new_character, respond_to) => {
-                self.enter(new_character, respond_to).await
-            }
-            Command::Face(target_player_id, direction) => {
-                self.face(target_player_id, direction).await
-            }
+            Command::Emote {
+                target_player_id,
+                emote,
+            } => self.emote(target_player_id, emote).await,
+            Command::Enter {
+                character,
+                respond_to,
+            } => self.enter(character, respond_to).await,
+            Command::Face {
+                target_player_id,
+                direction,
+            } => self.face(target_player_id, direction).await,
             Command::GetMapInfo {
                 player_ids,
                 npc_indexes,

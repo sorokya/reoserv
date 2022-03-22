@@ -1,4 +1,5 @@
 use eo::{
+    character::Emote,
     data::{map::MapFile, EOChar, EOInt, EOShort, EOThree},
     net::{packets::server::map_info, NearbyInfo},
     world::{Direction, TinyCoords, WarpAnimation},
@@ -28,14 +29,27 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn emote(&self, target_player_id: u16, emote: Emote) {
+        let _ = self.tx.send(Command::Emote {
+            target_player_id,
+            emote,
+        });
+    }
+
     pub async fn enter(&self, character: Box<Character>) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::Enter(character, tx));
+        let _ = self.tx.send(Command::Enter {
+            character,
+            respond_to: tx,
+        });
         rx.await.unwrap();
     }
 
-    pub fn face(&self, player_id: EOShort, direction: Direction) {
-        let _ = self.tx.send(Command::Face(player_id, direction));
+    pub fn face(&self, target_player_id: EOShort, direction: Direction) {
+        let _ = self.tx.send(Command::Face {
+            target_player_id,
+            direction,
+        });
     }
 
     pub async fn get_map_info(

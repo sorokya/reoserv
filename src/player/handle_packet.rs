@@ -92,6 +92,12 @@ pub async fn handle_packet(
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
+        Family::Emote => match action {
+            Action::Report => {
+                handlers::emote::report(buf, player.clone()).await;
+            }
+            _ => error!("Unhandled packet {:?}_{:?}", action, family),
+        },
         Family::Walk => match action {
             Action::Player => {
                 handlers::walk::player(buf, player.clone()).await;

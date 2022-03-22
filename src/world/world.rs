@@ -271,6 +271,7 @@ impl World {
                     data::load_spell_file("pub/dsl001.esf".to_string()),
                     data::load_talk_file("pub/ttd001.etf".to_string()),
                 );
+                // TODO: allow not having all of these
                 self.class_file = Some(class_file.unwrap());
                 self.drop_file = Some(drop_file.unwrap());
                 self.inn_file = Some(inn_file.unwrap());

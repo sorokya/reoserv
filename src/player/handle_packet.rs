@@ -41,6 +41,30 @@ pub async fn handle_packet(
 
     let buf = reader.get_vec(reader.remaining());
     match family {
+        Family::Talk => match action {
+            Action::Announce => {
+                handlers::talk::announce(buf, player.clone(), world.clone()).await;
+            }
+            // Action::Tell => {
+            //     handlers::talk::tell(buf, player.clone(), world.clone()).await;
+            // }
+            Action::Report => {
+                handlers::talk::report(buf, player.clone()).await;
+            }
+            Action::Admin => {
+                handlers::talk::admin(buf, player.clone(), world.clone()).await;
+            }
+            // Action::Open => {
+            //     handlers::talk::open(buf, player.clone(), world.clone()).await;
+            // }
+            // Action::Request => {
+            //     handlers::talk::request(buf, player.clone(), world.clone()).await;
+            // }
+            Action::Message => {
+                handlers::talk::message(buf, player.clone(), world.clone()).await;
+            }
+            _ => error!("Unhandled packet {:?}_{:?}", action, family),
+        },
         Family::Init => match action {
             Action::Init => {
                 handlers::init::request(buf, player.clone()).await;

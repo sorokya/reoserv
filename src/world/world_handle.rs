@@ -50,6 +50,28 @@ impl WorldHandle {
         Ok(())
     }
 
+    pub fn broadcast_admin_message(&self, name: String, message: String) {
+        let _ = self
+            .tx
+            .send(Command::BroadcastAdminMessage { name, message });
+    }
+
+    pub fn broadcast_announcement(&self, name: String, message: String) {
+        let _ = self
+            .tx
+            .send(Command::BroadcastAnnouncement { name, message });
+    }
+
+    pub fn broadcast_global_message(&self, name: String, message: String) {
+        let _ = self
+            .tx
+            .send(Command::BroadcastGlobalMessage { name, message });
+    }
+
+    pub fn broadcast_server_message(&self, message: String) {
+        let _ = self.tx.send(Command::BroadcastServerMessage { message });
+    }
+
     pub async fn create_account(
         &self,
         player: PlayerHandle,

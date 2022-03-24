@@ -8,6 +8,10 @@ use crate::{
 
 use super::{
     account::{self},
+    chat::{
+        broadcast_admin_message, broadcast_announcement, broadcast_global_message,
+        broadcast_server_message,
+    },
     data, enter_game, Command,
 };
 use eo::{
@@ -78,6 +82,18 @@ impl World {
             } => {
                 self.players.insert(player_id, player);
                 let _ = respond_to.send(());
+            }
+            Command::BroadcastAdminMessage { name, message } => {
+                broadcast_admin_message(name, message, &self.players).await;
+            }
+            Command::BroadcastAnnouncement { name, message } => {
+                broadcast_announcement(name, message, &self.players).await;
+            }
+            Command::BroadcastGlobalMessage { name, message } => {
+                broadcast_global_message(name, message, &self.players).await;
+            }
+            Command::BroadcastServerMessage { message } => {
+                broadcast_server_message(message, &self.players).await;
             }
             Command::CreateAccount {
                 player,

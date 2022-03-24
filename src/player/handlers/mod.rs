@@ -1,3 +1,4 @@
+pub mod talk;
 pub mod account;
 pub mod character;
 pub mod character_map_info;

@@ -123,6 +123,12 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_state(&self) -> State {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetState { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub fn ping(&self) {
         let _ = self.tx.send(Command::Ping);
     }
@@ -169,9 +175,9 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetState(state));
     }
 
-    pub async fn take_character(&self) -> Result<Character, InvalidStateError> {
+    pub async fn get_character(&self) -> Result<Character, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::TakeCharacter { respond_to: tx });
+        let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
         rx.await.unwrap()
     }
 

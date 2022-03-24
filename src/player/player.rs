@@ -24,6 +24,7 @@ pub struct Player {
     pub queue: RefCell<VecDeque<PacketBuf>>,
     pub bus: PacketBus,
     pub world: WorldHandle,
+    // TODO: just use character's map?
     pub map: Option<MapHandle>,
     pub busy: bool,
     pub account_id: EOInt,
@@ -202,6 +203,9 @@ impl Player {
             Command::GetSequenceStart { respond_to } => {
                 let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
             }
+            Command::GetState { respond_to } => {
+                let _ = respond_to.send(self.state);
+            }
             Command::GenSequence { respond_to } => {
                 let sequence = self.bus.sequencer.gen_sequence();
                 let _ = respond_to.send(sequence);
@@ -296,10 +300,9 @@ impl Player {
             Command::SetState(state) => {
                 self.state = state;
             }
-            Command::TakeCharacter { respond_to } => {
+            Command::GetCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
                     let _ = respond_to.send(Ok(character.to_owned()));
-                    self.character = None;
                 } else {
                     let _ =
                         respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));

@@ -30,6 +30,9 @@ pub enum Command {
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
+    GetCharacter {
+        respond_to: oneshot::Sender<Result<Character, InvalidStateError>>,
+    },
     GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
     },
@@ -54,6 +57,9 @@ pub enum Command {
     GetSequenceStart {
         respond_to: oneshot::Sender<EOInt>,
     },
+    GetState {
+        respond_to: oneshot::Sender<State>,
+    },
     GenSequence {
         respond_to: oneshot::Sender<EOInt>,
     },
@@ -73,9 +79,6 @@ pub enum Command {
     SetCharacter(Box<Character>),
     SetMap(MapHandle),
     SetState(State),
-    TakeCharacter {
-        respond_to: oneshot::Sender<Result<Character, InvalidStateError>>,
-    },
     TakeSessionId {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },

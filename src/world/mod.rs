@@ -1,4 +1,5 @@
 mod account;
+mod chat;
 mod command;
 pub use command::Command;
 mod data;

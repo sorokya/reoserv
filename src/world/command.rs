@@ -19,6 +19,21 @@ pub enum Command {
         player_id: EOShort,
         player: PlayerHandle,
     },
+    BroadcastAdminMessage {
+        name: String,
+        message: String,
+    },
+    BroadcastAnnouncement {
+        name: String,
+        message: String,
+    },
+    BroadcastGlobalMessage {
+        name: String,
+        message: String,
+    },
+    BroadcastServerMessage {
+        message: String,
+    },
     CreateAccount {
         player: PlayerHandle,
         details: eo::net::packets::client::account::Create,

@@ -9,7 +9,10 @@ use eo::{
     },
 };
 
-use crate::{map::MapHandle, player::PlayerHandle};
+use crate::{
+    map::MapHandle,
+    player::{PlayerHandle, State},
+};
 
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
@@ -19,7 +22,8 @@ pub async fn enter_game(
 ) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
-    let mut character = player.take_character().await?;
+    player.set_state(State::Playing);
+    let mut character = player.get_character().await?;
     character.calculate_stats().await;
 
     let weight = Weight {

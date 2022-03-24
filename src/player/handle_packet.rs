@@ -49,7 +49,7 @@ pub async fn handle_packet(
             //     handlers::talk::tell(buf, player.clone(), world.clone()).await;
             // }
             Action::Report => {
-                handlers::talk::report(buf, player.clone()).await;
+                handlers::talk::report(buf, player.clone(), world.clone()).await;
             }
             Action::Admin => {
                 handlers::talk::admin(buf, player.clone(), world.clone()).await;

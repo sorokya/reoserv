@@ -1,7 +1,7 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     net::{Action, Family},
-    world::TinyCoords,
+    world::{TinyCoords, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
@@ -31,7 +31,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
     GetCharacter {
-        respond_to: oneshot::Sender<Result<Character, InvalidStateError>>,
+        respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
     GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
@@ -72,6 +72,7 @@ pub enum Command {
         local: bool,
         map_id: EOShort,
         coords: TinyCoords,
+        animation: Option<WarpAnimation>,
     },
     Send(Action, Family, PacketBuf),
     SetAccountId(EOInt),
@@ -79,6 +80,9 @@ pub enum Command {
     SetCharacter(Box<Character>),
     SetMap(MapHandle),
     SetState(State),
+    TakeCharacter {
+        respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
+    },
     TakeSessionId {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },

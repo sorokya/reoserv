@@ -52,9 +52,11 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
-        let mut s = Config::new();
-        s.merge(File::with_name("Config.toml"))?;
-        s.merge(File::with_name("Config.local.toml").required(false))?;
-        s.try_into()
+        let s = Config::builder()
+            .add_source(File::with_name("Config.toml"))
+            .add_source(File::with_name("Config.local.toml").required(false))
+            .build()?;
+
+        s.try_deserialize()
     }
 }

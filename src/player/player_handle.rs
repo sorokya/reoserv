@@ -1,7 +1,7 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     net::{Action, Family},
-    world::TinyCoords,
+    world::{TinyCoords, WarpAnimation},
 };
 use mysql_async::Pool;
 use tokio::{
@@ -64,6 +64,12 @@ impl PlayerHandle {
     pub async fn get_account_id(&self) -> Result<EOInt, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_character(&self) -> Result<Box<Character>, InvalidStateError> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
         rx.await.unwrap()
     }
 
@@ -143,11 +149,18 @@ impl PlayerHandle {
         rx.await.unwrap();
     }
 
-    pub fn request_warp(&self, map_id: EOShort, coords: TinyCoords, local: bool) {
+    pub fn request_warp(
+        &self,
+        map_id: EOShort,
+        coords: TinyCoords,
+        local: bool,
+        animation: Option<WarpAnimation>,
+    ) {
         let _ = self.tx.send(Command::RequestWarp {
             map_id,
             coords,
             local,
+            animation,
         });
     }
 
@@ -175,9 +188,9 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetState(state));
     }
 
-    pub async fn get_character(&self) -> Result<Character, InvalidStateError> {
+    pub async fn take_character(&self) -> Result<Box<Character>, InvalidStateError> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
+        let _ = self.tx.send(Command::TakeCharacter { respond_to: tx });
         rx.await.unwrap()
     }
 

@@ -36,10 +36,11 @@ impl MapHandle {
         });
     }
 
-    pub async fn enter(&self, character: Box<Character>) {
+    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpAnimation>) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter {
             character,
+            warp_animation,
             respond_to: tx,
         });
         rx.await.unwrap();
@@ -50,6 +51,21 @@ impl MapHandle {
             target_player_id,
             direction,
         });
+    }
+
+    pub async fn get_character(&self, player_id: EOShort) -> Option<Box<Character>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacter {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_dimensions(&self) -> (EOChar, EOChar) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
+        rx.await.unwrap()
     }
 
     pub async fn get_map_info(
@@ -81,25 +97,15 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn leave(&self, target_player_id: EOShort) -> Character {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::Leave {
-            target_player_id,
-            warp_animation: None,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
-    pub async fn _leave_animated(
+    pub async fn leave(
         &self,
         target_player_id: EOShort,
-        warp_animation: WarpAnimation,
+        warp_animation: Option<WarpAnimation>,
     ) -> Character {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
             target_player_id,
-            warp_animation: Some(warp_animation),
+            warp_animation,
             respond_to: tx,
         });
         rx.await.unwrap()
@@ -109,6 +115,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenDoor {
             target_player_id,
             door_coords,
+        });
+    }
+
+    pub fn send_chat_message(&self, target_player_id: EOShort, message: String) {
+        let _ = self.tx.send(Command::SendChatMessage {
+            target_player_id,
+            message,
         });
     }
 

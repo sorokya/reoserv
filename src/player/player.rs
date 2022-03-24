@@ -27,8 +27,7 @@ pub struct Player {
     // TODO: just use character's map?
     pub map: Option<MapHandle>,
     pub busy: bool,
-    pub account_id: EOInt,
-    pub character_id: EOInt,
+    account_id: EOInt,
     pool: Pool,
     state: State,
     ip: String,
@@ -56,7 +55,6 @@ impl Player {
             map: None,
             busy: false,
             account_id: 0,
-            character_id: 0,
             state: State::Uninitialized,
             ip,
             character: None,
@@ -80,20 +78,26 @@ impl Player {
 
                         if let Some(current_map) = &self.map {
                             let agree = if warp_session.local {
-                                let mut character = current_map.leave(self.id).await;
+                                let mut character =
+                                    current_map.leave(self.id, warp_session.animation).await;
                                 character.coords = warp_session.coords.to_coords();
-                                current_map.enter(Box::new(character)).await;
+                                current_map
+                                    .enter(Box::new(character), warp_session.animation)
+                                    .await;
                                 let nearby_info = current_map.get_nearby_info(self.id).await;
                                 warp::Agree::local(nearby_info)
                             } else if let Ok(new_map) = self.world.get_map(map_id).await {
-                                let mut character = current_map.leave(self.id).await;
+                                let mut character =
+                                    current_map.leave(self.id, warp_session.animation).await;
                                 character.map_id = warp_session.map_id;
                                 character.coords = warp_session.coords.to_coords();
-                                new_map.enter(Box::new(character)).await;
+                                new_map
+                                    .enter(Box::new(character), warp_session.animation)
+                                    .await;
                                 let nearby_info = new_map.get_nearby_info(self.id).await;
                                 self.map = Some(new_map);
 
-                                warp::Agree::remote(map_id, None, nearby_info)
+                                warp::Agree::remote(map_id, warp_session.animation, nearby_info)
                             } else {
                                 warn!("Map not found: {}", map_id);
                                 return true;
@@ -114,7 +118,7 @@ impl Player {
             }
             Command::Close(reason) => {
                 if let Some(map) = self.map.as_ref() {
-                    let mut character = map.leave(self.id).await;
+                    let mut character = map.leave(self.id, None).await;
                     let pool = self.pool.clone();
                     tokio::task::Builder::new()
                         .name("character_save")
@@ -129,8 +133,13 @@ impl Player {
                         });
                 }
 
+                let character_name = self
+                    .character
+                    .as_ref()
+                    .map(|c| c.name.clone())
+                    .unwrap_or_default();
                 self.world
-                    .drop_player(self.id, self.account_id)
+                    .drop_player(self.id, self.account_id, character_name)
                     .await
                     .unwrap();
                 info!("player {} connection closed: {:?}", self.id, reason);
@@ -154,6 +163,18 @@ impl Player {
                 } else {
                     let _ =
                         respond_to.send(Err(InvalidStateError::new(State::LoggedIn, self.state)));
+                }
+            }
+            Command::GetCharacter { respond_to } => {
+                if let Some(character) = self.character.as_ref() {
+                    let _ = respond_to.send(Ok(Box::new(character.to_owned())));
+                } else if let Some(map) = self.map.as_ref() {
+                    if let Some(character) = map.get_character(self.id).await {
+                        let _ = respond_to.send(Ok(character));
+                    }
+                } else {
+                    let _ =
+                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
             }
             Command::GetEncodingMultiples { respond_to } => {
@@ -246,6 +267,7 @@ impl Player {
                 map_id,
                 coords,
                 local,
+                animation,
             } => {
                 let session_id = {
                     let mut rng = rand::thread_rng();
@@ -257,6 +279,7 @@ impl Player {
                     map_id,
                     coords,
                     local,
+                    animation,
                 };
 
                 let request = if local {
@@ -300,9 +323,10 @@ impl Player {
             Command::SetState(state) => {
                 self.state = state;
             }
-            Command::GetCharacter { respond_to } => {
+            Command::TakeCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
-                    let _ = respond_to.send(Ok(character.to_owned()));
+                    let _ = respond_to.send(Ok(Box::new(character.to_owned())));
+                    self.character = None;
                 } else {
                     let _ =
                         respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));

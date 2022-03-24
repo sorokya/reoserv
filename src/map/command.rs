@@ -16,11 +16,19 @@ pub enum Command {
     },
     Enter {
         character: Box<Character>,
+        warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<()>,
     },
     Face {
         target_player_id: EOShort,
         direction: Direction,
+    },
+    GetCharacter {
+        player_id: EOShort,
+        respond_to: oneshot::Sender<Option<Box<Character>>>,
+    },
+    GetDimensions {
+        respond_to: oneshot::Sender<(EOChar, EOChar)>,
     },
     GetMapInfo {
         player_ids: Option<Vec<EOShort>>,
@@ -42,6 +50,10 @@ pub enum Command {
     OpenDoor {
         target_player_id: EOShort,
         door_coords: TinyCoords,
+    },
+    SendChatMessage {
+        target_player_id: EOShort,
+        message: String,
     },
     Serialize {
         respond_to: oneshot::Sender<PacketBuf>,

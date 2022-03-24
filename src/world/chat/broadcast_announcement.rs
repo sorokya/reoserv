@@ -5,7 +5,7 @@ use eo::{
     net::{packets::server::talk, Action, Family},
 };
 
-use crate::player::{PlayerHandle, State};
+use crate::player::PlayerHandle;
 
 pub async fn broadcast_announcement(
     name: String,
@@ -18,9 +18,10 @@ pub async fn broadcast_announcement(
     };
     let buf = packet.serialize();
     for player in players.values() {
-        let state = player.get_state().await;
-        if state == State::Playing {
-            player.send(Action::Announce, Family::Talk, buf.clone());
+        if let Ok(character) = player.get_character().await {
+            if character.name != name {
+                player.send(Action::Announce, Family::Talk, buf.clone());
+            }
         }
     }
 }

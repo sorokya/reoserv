@@ -1,6 +1,8 @@
 use crate::{
     character::Character,
-    errors::{DataNotFoundError, MissingSessionIdError, WrongSessionIdError},
+    errors::{
+        CharacterNotFoundError, DataNotFoundError, MissingSessionIdError, WrongSessionIdError,
+    },
     map::MapHandle,
     player::{PlayerHandle, State},
     SETTINGS,
@@ -40,6 +42,7 @@ pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: HashMap<EOShort, PlayerHandle>,
     accounts: Vec<EOInt>,
+    characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
     class_file: Option<ClassFile>,
@@ -60,6 +63,7 @@ impl World {
             pool,
             players: HashMap::new(),
             accounts: Vec::new(),
+            characters: HashMap::new(),
             maps: None,
             class_file: None,
             drop_file: None,
@@ -127,12 +131,17 @@ impl World {
             Command::DropPlayer {
                 player_id,
                 account_id,
+                character_name,
                 respond_to,
             } => {
                 self.players.remove(&player_id).unwrap();
 
                 if account_id > 0 {
                     self.accounts.retain(|id| *id != account_id);
+                }
+
+                if self.characters.contains_key(&character_name) {
+                    self.characters.remove(&character_name);
                 }
 
                 let _ = respond_to.send(());
@@ -186,6 +195,22 @@ impl World {
                     Err(e) => {
                         let _ = respond_to.send(Err(Box::new(e)));
                     }
+                }
+            }
+            Command::GetCharacterByName { name, respond_to } => {
+                if let Some(player_id) = self.characters.get(&name) {
+                    if let Some(player) = self.players.get(player_id) {
+                        // Safe to assume this will work if we got this far
+                        let character = player.get_character().await.unwrap();
+                        let _ = respond_to.send(Ok(character));
+                    } else {
+                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
+                            "Player".to_string(),
+                            *player_id,
+                        ))));
+                    }
+                } else {
+                    let _ = respond_to.send(Err(Box::new(CharacterNotFoundError::new(name))));
                 }
             }
             Command::GetClass {
@@ -378,6 +403,9 @@ impl World {
                     }
                 };
 
+                let player_id = player.get_player_id().await;
+                self.characters
+                    .insert(character.name.to_string(), player_id);
                 player.set_character(Box::new(character));
 
                 let _ = respond_to.send(Ok(welcome::Reply {

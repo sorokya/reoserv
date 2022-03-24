@@ -4,10 +4,10 @@ use eo::{
     character::Emote,
     data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, door, emote, face, map_info, players, walk},
+        packets::server::{avatar, door, emote, face, map_info, players, talk, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
-    world::{Direction, TinyCoords},
+    world::{Direction, TinyCoords, WarpAnimation},
 };
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
@@ -55,8 +55,14 @@ impl Map {
         }
     }
 
-    async fn enter(&mut self, new_character: Box<Character>, respond_to: oneshot::Sender<()>) {
-        let character_map_info = new_character.to_map_info();
+    async fn enter(
+        &mut self,
+        new_character: Box<Character>,
+        warp_animation: Option<WarpAnimation>,
+        respond_to: oneshot::Sender<()>,
+    ) {
+        let mut character_map_info = new_character.to_map_info();
+        character_map_info.warp_animation = warp_animation;
         let packet = players::Agree::new(character_map_info);
         let buf = packet.serialize();
         for character in self.characters.values() {
@@ -189,6 +195,7 @@ impl Map {
                             y: warp.warp_y,
                         },
                         target.map_id == warp.warp_map,
+                        None,
                     );
                 }
             } else {
@@ -242,6 +249,27 @@ impl Map {
         }
     }
 
+    async fn send_chat_message(&self, target_player_id: EOShort, message: String) {
+        if let Some(target) = self.characters.get(&target_player_id) {
+            let packet = talk::Player {
+                player_id: target_player_id,
+                message,
+            };
+            let buf = packet.serialize();
+            for character in self.characters.values() {
+                if target_player_id != character.player_id.unwrap()
+                    && target.is_in_range(character.coords)
+                {
+                    character.player.as_ref().unwrap().send(
+                        Action::Player,
+                        Family::Talk,
+                        buf.clone(),
+                    );
+                }
+            }
+        }
+    }
+
     pub async fn handle_command(&mut self, command: Command) {
         match command {
             Command::Emote {
@@ -250,12 +278,26 @@ impl Map {
             } => self.emote(target_player_id, emote).await,
             Command::Enter {
                 character,
+                warp_animation,
                 respond_to,
-            } => self.enter(character, respond_to).await,
+            } => self.enter(character, warp_animation, respond_to).await,
             Command::Face {
                 target_player_id,
                 direction,
             } => self.face(target_player_id, direction).await,
+            Command::GetCharacter {
+                player_id,
+                respond_to,
+            } => {
+                if let Some(character) = self.characters.get(&player_id) {
+                    let _ = respond_to.send(Some(Box::new(character.to_owned())));
+                } else {
+                    let _ = respond_to.send(None);
+                }
+            }
+            Command::GetDimensions { respond_to } => {
+                let _ = respond_to.send((self.file.width, self.file.height));
+            }
             Command::GetMapInfo {
                 player_ids,
                 npc_indexes,
@@ -322,6 +364,10 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords).await,
+            Command::SendChatMessage {
+                target_player_id,
+                message,
+            } => self.send_chat_message(target_player_id, message).await,
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());
             }

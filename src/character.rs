@@ -126,6 +126,7 @@ impl Character {
             paperdoll: self.paperdoll.to_paperdoll_b000a0hsw(),
             sit_state: self.sit_state,
             invisible: self.hidden,
+            warp_animation: None,
         }
     }
 

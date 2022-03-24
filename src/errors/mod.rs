@@ -1,3 +1,5 @@
+mod character_not_found_error;
+pub use character_not_found_error::CharacterNotFoundError;
 mod data_not_found_error;
 pub use data_not_found_error::DataNotFoundError;
 mod invalid_state_error;

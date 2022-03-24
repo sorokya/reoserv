@@ -10,5 +10,6 @@ mod tell;
 pub use tell::tell;
 mod message;
 pub use message::message;
+mod handle_command;
 mod report;
 pub use report::report;

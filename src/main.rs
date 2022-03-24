@@ -10,10 +10,12 @@ use std::time::Duration;
 use lazy_static::lazy_static;
 
 mod character;
+mod commands;
 mod errors;
 mod map;
 mod player;
 mod settings;
+use commands::Commands;
 mod utils;
 mod world;
 use settings::Settings;
@@ -30,6 +32,7 @@ pub type PacketBuf = Vec<EOByte>;
 
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+    static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
 }
 
 #[tokio::main]
@@ -50,6 +53,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         \\/     \\/          \\/     \\/\nThe rusty endless online server: v{}\n",
         VERSION
     );
+
+    debug!("Commands: {:?}", COMMANDS.commands);
 
     let database_url = format!(
         "mysql://{}:{}@{}:{}/{}",

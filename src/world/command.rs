@@ -10,7 +10,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::{map::MapHandle, player::PlayerHandle};
+use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {
@@ -56,6 +56,7 @@ pub enum Command {
     DropPlayer {
         player_id: EOShort,
         account_id: EOInt,
+        character_name: String,
         respond_to: oneshot::Sender<()>,
     },
     EnterGame {
@@ -63,6 +64,11 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    GetCharacterByName {
+        name: String,
+        respond_to:
+            oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
     GetClass {
         class_id: EOChar,

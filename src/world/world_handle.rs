@@ -14,7 +14,7 @@ use eo::{
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::{map::MapHandle, player::PlayerHandle};
+use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
 use super::{world::World, Command};
 
@@ -120,12 +120,14 @@ impl WorldHandle {
         &self,
         player_id: EOShort,
         account_id: EOInt,
+        character_name: String,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DropPlayer {
             respond_to: tx,
             player_id,
             account_id,
+            character_name,
         });
         rx.await.unwrap();
         Ok(())
@@ -140,6 +142,18 @@ impl WorldHandle {
         let _ = self.tx.send(Command::EnterGame {
             session_id,
             player,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_character_by_name(
+        &self,
+        name: String,
+    ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetCharacterByName {
+            name,
             respond_to: tx,
         });
         rx.await.unwrap()

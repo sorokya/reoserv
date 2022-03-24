@@ -23,7 +23,7 @@ pub async fn enter_game(
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
     player.set_state(State::Playing);
-    let mut character = player.get_character().await?;
+    let mut character = player.take_character().await?;
     character.calculate_stats().await;
 
     let weight = Weight {
@@ -33,7 +33,7 @@ pub async fn enter_game(
     let items = character.items.clone();
     let spells = character.spells.clone();
 
-    map.enter(Box::new(character)).await;
+    map.enter(character, None).await;
     let nearby_info = map.get_nearby_info(player_id).await;
     Ok(Reply {
         reply: WelcomeReply::EnterGame,

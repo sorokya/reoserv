@@ -6,3 +6,7 @@ mod broadcast_global_message;
 pub use broadcast_global_message::broadcast_global_message;
 mod broadcast_server_message;
 pub use broadcast_server_message::broadcast_server_message;
+mod send_private_message;
+pub use send_private_message::send_private_message;
+mod send_player_not_found;
+pub use send_player_not_found::send_player_not_found;

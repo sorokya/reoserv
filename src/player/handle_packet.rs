@@ -45,9 +45,9 @@ pub async fn handle_packet(
             Action::Announce => {
                 handlers::talk::announce(buf, player.clone(), world.clone()).await;
             }
-            // Action::Tell => {
-            //     handlers::talk::tell(buf, player.clone(), world.clone()).await;
-            // }
+            Action::Tell => {
+                handlers::talk::tell(buf, player.clone(), world.clone()).await;
+            }
             Action::Report => {
                 handlers::talk::report(buf, player.clone(), world.clone()).await;
             }

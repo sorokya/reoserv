@@ -54,8 +54,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         VERSION
     );
 
-    debug!("Commands: {:?}", COMMANDS.commands);
-
     let database_url = format!(
         "mysql://{}:{}@{}:{}/{}",
         SETTINGS.database.username,

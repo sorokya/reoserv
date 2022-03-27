@@ -1,11 +1,11 @@
 mod request;
-pub use request::request;
+pub use request::_request;
 mod announce;
 pub use announce::announce;
 mod admin;
 pub use admin::admin;
 mod open;
-pub use open::open;
+pub use open::_open;
 mod tell;
 pub use tell::tell;
 mod message;

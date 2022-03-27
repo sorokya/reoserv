@@ -13,6 +13,10 @@ pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     debug!("Recv: {:?}", message);
 
     if let Ok(character) = player.get_character().await {
-        world.broadcast_global_message(character.name, message.message)
+        world.broadcast_global_message(
+            character.player_id.unwrap(),
+            character.name,
+            message.message,
+        )
     }
 }

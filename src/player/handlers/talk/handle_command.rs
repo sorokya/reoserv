@@ -8,7 +8,7 @@ use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 
 use crate::COMMANDS;
 
-async fn warp(args: Vec<String>, character: &Character, world: &WorldHandle) {
+async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
     let map_id = args[0].parse::<EOShort>().unwrap();
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
@@ -39,8 +39,8 @@ async fn warp(args: Vec<String>, character: &Character, world: &WorldHandle) {
     }
 }
 
-async fn warp_to_me(args: Vec<String>, character: &Character, world: &WorldHandle) {
-    let target_name = args[0].clone();
+async fn warp_to_me(args: &[&str], character: &Character, world: &WorldHandle) {
+    let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
         target.player.as_ref().unwrap().request_warp(
             character.map_id,
@@ -51,8 +51,8 @@ async fn warp_to_me(args: Vec<String>, character: &Character, world: &WorldHandl
     }
 }
 
-async fn warp_me_to(args: Vec<String>, character: &Character, world: &WorldHandle) {
-    let target_name = args[0].clone();
+async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
+    let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
         character.player.as_ref().unwrap().request_warp(
             target.map_id,
@@ -63,7 +63,7 @@ async fn warp_me_to(args: Vec<String>, character: &Character, world: &WorldHandl
     }
 }
 
-fn validate_args(args: &Vec<String>, command: &Command, player: &PlayerHandle) -> bool {
+fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
         let packet = talk::Server {
@@ -113,14 +113,13 @@ fn validate_args(args: &Vec<String>, command: &Command, player: &PlayerHandle) -
 }
 
 pub async fn handle_command(
-    args: &Vec<String>,
+    args: &[&str],
     character: &Character,
     player: PlayerHandle,
     world: WorldHandle,
 ) {
-    let command = args[0].clone();
-    let mut args = args.clone();
-    args.remove(0);
+    let command = (*args[0]).to_string();
+    let args = args[1..].to_vec();
     match COMMANDS
         .commands
         .iter()
@@ -131,9 +130,9 @@ pub async fn handle_command(
                 && validate_args(&args, command, &player)
             {
                 match command.name.as_str() {
-                    "warp" => warp(args, &character, &world).await,
-                    "warptome" => warp_to_me(args, &character, &world).await,
-                    "warpmeto" => warp_me_to(args, &character, &world).await,
+                    "warp" => warp(&args, character, &world).await,
+                    "warptome" => warp_to_me(&args, character, &world).await,
+                    "warpmeto" => warp_me_to(&args, character, &world).await,
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

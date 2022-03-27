@@ -12,7 +12,7 @@ use super::{
     account::{self},
     chat::{
         broadcast_admin_message, broadcast_announcement, broadcast_global_message,
-        broadcast_server_message,
+        broadcast_server_message, send_player_not_found, send_private_message,
     },
     data, enter_game, Command,
 };
@@ -88,16 +88,20 @@ impl World {
                 let _ = respond_to.send(());
             }
             Command::BroadcastAdminMessage { name, message } => {
-                broadcast_admin_message(name, message, &self.players).await;
+                broadcast_admin_message(&name, &message, &self.players).await;
             }
             Command::BroadcastAnnouncement { name, message } => {
-                broadcast_announcement(name, message, &self.players).await;
+                broadcast_announcement(&name, &message, &self.players).await;
             }
-            Command::BroadcastGlobalMessage { name, message } => {
-                broadcast_global_message(name, message, &self.players).await;
+            Command::BroadcastGlobalMessage {
+                target_player_id,
+                name,
+                message,
+            } => {
+                broadcast_global_message(target_player_id, &name, &message, &self.players).await;
             }
-            Command::BroadcastServerMessage { message } => {
-                broadcast_server_message(message, &self.players).await;
+            Command::_BroadcastServerMessage { message } => {
+                broadcast_server_message(&message, &self.players).await;
             }
             Command::CreateAccount {
                 player,
@@ -134,6 +138,10 @@ impl World {
                 character_name,
                 respond_to,
             } => {
+                debug!(
+                    "Dropping player! id: {}, account_id: {}, character_name: {}",
+                    player_id, account_id, character_name
+                );
                 self.players.remove(&player_id).unwrap();
 
                 if account_id > 0 {
@@ -198,20 +206,7 @@ impl World {
                 }
             }
             Command::GetCharacterByName { name, respond_to } => {
-                if let Some(player_id) = self.characters.get(&name) {
-                    if let Some(player) = self.players.get(player_id) {
-                        // Safe to assume this will work if we got this far
-                        let character = player.get_character().await.unwrap();
-                        let _ = respond_to.send(Ok(character));
-                    } else {
-                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                            "Player".to_string(),
-                            *player_id,
-                        ))));
-                    }
-                } else {
-                    let _ = respond_to.send(Err(Box::new(CharacterNotFoundError::new(name))));
-                }
+                let _ = respond_to.send(self.get_character_by_name(&name).await);
             }
             Command::GetClass {
                 class_id,
@@ -414,6 +409,38 @@ impl World {
                     enter_game: None,
                 }));
             }
+            Command::SendPrivateMessage { from, to, message } => {
+                if let Ok(from_character) = from.get_character().await {
+                    match self.get_character_by_name(&to).await {
+                        Ok(character) => send_private_message(
+                            &from_character.name,
+                            character.player.as_ref().unwrap(),
+                            &message,
+                        ),
+                        Err(_) => send_player_not_found(from, &to),
+                    }
+                }
+            }
+        }
+    }
+
+    async fn get_character_by_name(
+        &self,
+        name: &str,
+    ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
+        if let Some(player_id) = self.characters.get(name) {
+            if let Some(player) = self.players.get(player_id) {
+                // Safe to assume this will work if we got this far
+                let character = player.get_character().await.unwrap();
+                Ok(character)
+            } else {
+                Err(Box::new(DataNotFoundError::new(
+                    "Player".to_string(),
+                    *player_id,
+                )))
+            }
+        } else {
+            Err(Box::new(CharacterNotFoundError::new(name.to_string())))
         }
     }
 
@@ -459,13 +486,13 @@ impl World {
 
         let settings = ServerSettings {
             jail_map_id: SETTINGS.jail.map.try_into().expect("Invalid map id"),
-            unknown_1: 4,
-            unknown_2: 24,
-            unknown_3: 24,
+            recover_map: 4,
+            recover_x: 24,
+            recover_y: 24,
             light_guide_flood_rate: 10,
             guardian_flood_rate: 10,
             game_master_flood_rate: 10,
-            unknown_4: 2,
+            high_game_master_flood_rate: 0,
         };
 
         let session_id = player.generate_session_id().await;

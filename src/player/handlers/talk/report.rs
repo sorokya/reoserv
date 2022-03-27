@@ -16,22 +16,12 @@ pub async fn report(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     debug!("Recv: {:?}", report);
 
     if let Ok(character) = player.get_character().await {
-        if report.message.starts_with("$") && character.admin_level != AdminLevel::Player {
-            handle_command(
-                &report.message[1..]
-                    .split_whitespace()
-                    .map(|s| s.to_string())
-                    .collect(),
-                &character,
-                player,
-                world,
-            )
-            .await;
-        } else {
-            if let Ok(map) = player.get_map().await {
-                let player_id = player.get_player_id().await;
-                map.send_chat_message(player_id, report.message);
-            }
+        if report.message.starts_with('$') && character.admin_level != AdminLevel::Player {
+            let args: Vec<&str> = report.message[1..].split_whitespace().collect();
+            handle_command(args.as_slice(), &character, player, world).await;
+        } else if let Ok(map) = player.get_map().await {
+            let player_id = player.get_player_id().await;
+            map.send_chat_message(player_id, report.message);
         }
     }
 }

@@ -153,7 +153,7 @@ impl Player {
             }
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();
-                let id = rng.gen_range(10..MAX2) as EOShort;
+                let id = rng.gen_range(64000..MAX2) as EOShort;
                 self.session_id = Some(id);
                 let _ = respond_to.send(id);
             }

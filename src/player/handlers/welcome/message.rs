@@ -12,11 +12,16 @@ pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", message);
 
-    if let Ok(reply) = world
+    match world
         .enter_game(message.session_id as EOShort, player.clone())
         .await
     {
-        debug!("Reply: {:?}", reply);
-        player.send(Action::Reply, Family::Welcome, reply.serialize());
+        Ok(reply) => {
+            debug!("Reply: {:?}", reply);
+            player.send(Action::Reply, Family::Welcome, reply.serialize());
+        }
+        Err(e) => {
+            error!("{}", e);
+        }
     }
 }

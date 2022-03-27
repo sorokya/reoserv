@@ -10,5 +10,7 @@ pub async fn tell(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     let reader = StreamReader::new(&buf);
     tell.deserialize(&reader);
 
-    debug!("Recv: {:?}", tell);
+    debug!("Recv: Tell {{ name: {}, message: ******** }}", tell.name);
+
+    world.send_private_message(player, tell.name, tell.message);
 }

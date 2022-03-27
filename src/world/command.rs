@@ -28,10 +28,11 @@ pub enum Command {
         message: String,
     },
     BroadcastGlobalMessage {
+        target_player_id: EOShort,
         name: String,
         message: String,
     },
-    BroadcastServerMessage {
+    _BroadcastServerMessage {
         message: String,
     },
     CreateAccount {
@@ -130,5 +131,10 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    SendPrivateMessage {
+        from: PlayerHandle,
+        to: String,
+        message: String,
     },
 }

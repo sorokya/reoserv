@@ -9,13 +9,13 @@ use eo::{
 use crate::player::PlayerHandle;
 
 pub async fn broadcast_admin_message(
-    name: String,
-    message: String,
+    name: &str,
+    message: &str,
     players: &HashMap<EOShort, PlayerHandle>,
 ) {
     let packet = talk::Admin {
-        name: name.clone(),
-        message: message.clone(),
+        name: name.to_string(),
+        message: message.to_string(),
     };
     let buf = packet.serialize();
     for player in players.values() {

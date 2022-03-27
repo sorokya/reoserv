@@ -7,9 +7,9 @@ use eo::{
 
 use crate::player::{PlayerHandle, State};
 
-pub async fn broadcast_server_message(message: String, players: &HashMap<EOShort, PlayerHandle>) {
+pub async fn broadcast_server_message(message: &str, players: &HashMap<EOShort, PlayerHandle>) {
     let packet = talk::Server {
-        message: message.clone(),
+        message: message.to_string(),
     };
     let buf = packet.serialize();
     for player in players.values() {

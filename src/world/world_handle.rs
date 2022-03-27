@@ -62,14 +62,21 @@ impl WorldHandle {
             .send(Command::BroadcastAnnouncement { name, message });
     }
 
-    pub fn broadcast_global_message(&self, name: String, message: String) {
-        let _ = self
-            .tx
-            .send(Command::BroadcastGlobalMessage { name, message });
+    pub fn broadcast_global_message(
+        &self,
+        target_player_id: EOShort,
+        name: String,
+        message: String,
+    ) {
+        let _ = self.tx.send(Command::BroadcastGlobalMessage {
+            target_player_id,
+            name,
+            message,
+        });
     }
 
-    pub fn broadcast_server_message(&self, message: String) {
-        let _ = self.tx.send(Command::BroadcastServerMessage { message });
+    pub fn _broadcast_server_message(&self, message: String) {
+        let _ = self.tx.send(Command::_BroadcastServerMessage { message });
     }
 
     pub async fn create_account(
@@ -313,6 +320,12 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn send_private_message(&self, from: PlayerHandle, to: String, message: String) {
+        let _ = self
+            .tx
+            .send(Command::SendPrivateMessage { from, to, message });
     }
 }
 

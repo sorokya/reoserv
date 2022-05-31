@@ -21,7 +21,7 @@ pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     file: MapFile,
     items: Vec<Item>,
-    npcs: Vec<Npc>,
+    npcs: HashMap<EOChar, Npc>,
     characters: HashMap<EOShort, Character>,
 }
 
@@ -31,7 +31,7 @@ impl Map {
             file,
             rx,
             items: Vec::new(),
-            npcs: Vec::new(),
+            npcs: HashMap::new(),
             characters: HashMap::new(),
         }
     }
@@ -127,7 +127,12 @@ impl Map {
                 None
             }
         };
-        let npcs: Option<Vec<NpcMapInfo>> = None; // TODO
+        let npcs: Option<Vec<NpcMapInfo>> = Some(
+            self.npcs
+                .iter()
+                .map(|(index, npc)| npc.to_npc_map_info(index))
+                .collect(),
+        );
         let reply = map_info::Reply { characters, npcs };
         let _ = respond_to.send(reply);
     }
@@ -186,7 +191,7 @@ impl Map {
         } {
             // TODO: Ghost timer check
             if let Some(warp) = get_warp_at(target_coords, &self.file.warp_rows) {
-                // TODO verify warp requirements
+                // TODO: verify warp requirements
                 if let Some(target) = self.characters.get_mut(&target_player_id) {
                     target.player.as_ref().unwrap().request_warp(
                         warp.warp_map,
@@ -215,8 +220,16 @@ impl Map {
                                     packet.player_ids.push(*player_id);
                                 }
                             }
-                            // TODO: items
-                            // TODO: npcs
+                            for item in self.items.iter() {
+                                if item.coords == coords {
+                                    packet.items.push(item.to_item_map_info());
+                                }
+                            }
+                            for (index, npc) in self.npcs.iter() {
+                                if npc.coords == coords.to_tiny_coords() {
+                                    packet.npc_indexes.push(*index);
+                                }
+                            }
                         }
                         packet
                     };
@@ -316,9 +329,9 @@ impl Map {
                         nearby_items.push(item.to_item_map_info());
                     }
                 }
-                for npc in self.npcs.iter() {
+                for (index, npc) in self.npcs.iter() {
                     if target.is_in_range(npc.coords.to_coords()) {
-                        nearby_npcs.push(npc.to_npc_map_info());
+                        nearby_npcs.push(npc.to_npc_map_info(index));
                     }
                 }
                 for character in self.characters.values() {

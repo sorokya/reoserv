@@ -80,7 +80,7 @@ impl Player {
                             let agree = if warp_session.local {
                                 let mut character =
                                     current_map.leave(self.id, warp_session.animation).await;
-                                character.coords = warp_session.coords.to_coords();
+                                character.coords = warp_session.coords;
                                 current_map
                                     .enter(Box::new(character), warp_session.animation)
                                     .await;
@@ -90,7 +90,7 @@ impl Player {
                                 let mut character =
                                     current_map.leave(self.id, warp_session.animation).await;
                                 character.map_id = warp_session.map_id;
-                                character.coords = warp_session.coords.to_coords();
+                                character.coords = warp_session.coords;
                                 new_map
                                     .enter(Box::new(character), warp_session.animation)
                                     .await;

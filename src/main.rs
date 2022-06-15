@@ -108,6 +108,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    let mut npc_spawn_interval = time::interval(Duration::from_secs(1));
+    npc_spawn_interval.tick().await;
+    let npc_spawn_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            npc_spawn_interval.tick().await;
+            npc_spawn_world.spawn_npcs();
+        }
+    });
+
     let tcp_listener =
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))
             .await

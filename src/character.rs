@@ -5,7 +5,7 @@ use eo::{
         packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
         CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,
     },
-    world::{Coords, Direction},
+    world::{Coords, Direction, TinyCoords},
 };
 
 use chrono::prelude::*;
@@ -70,7 +70,7 @@ pub struct Character {
     pub evasion: EOShort,
     pub armor: EOShort,
     pub map_id: EOShort,
-    pub coords: Coords,
+    pub coords: TinyCoords,
     pub direction: Direction,
     pub sit_state: SitState,
     pub hidden: bool,
@@ -93,7 +93,7 @@ impl Character {
         }
     }
 
-    pub fn is_in_range(&self, coords: Coords) -> bool {
+    pub fn is_in_range(&self, coords: TinyCoords) -> bool {
         utils::in_range(
             self.coords.x.into(),
             self.coords.y.into(),
@@ -107,7 +107,7 @@ impl Character {
             name: self.name.clone(),
             id: self.player_id.expect("Character has no player id"),
             map_id: self.map_id,
-            coords: self.coords,
+            coords: self.coords.to_coords(),
             direction: self.direction,
             class_id: self.class,
             guild_tag: match self.guild_tag {

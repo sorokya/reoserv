@@ -1,20 +1,20 @@
 use eo::{
     data::{EOInt, EOShort},
     net::ItemMapInfo,
-    world::Coords,
+    world::TinyCoords,
 };
 
 pub struct Item {
     pub uid: EOShort,
     pub id: EOShort,
     pub amount: EOInt,
-    pub coords: Coords,
+    pub coords: TinyCoords,
     pub owner: EOShort,
     // TODO: unprotect timer
 }
 
 impl Item {
-    pub fn _new(uid: EOShort, id: EOShort, amount: EOInt, coords: Coords, owner: EOShort) -> Self {
+    pub fn _new(uid: EOShort, id: EOShort, amount: EOInt, coords: TinyCoords, owner: EOShort) -> Self {
         Self {
             uid,
             id,
@@ -29,7 +29,7 @@ impl Item {
             uid: self.uid,
             id: self.id,
             amount: self.amount,
-            coords: self.coords,
+            coords: self.coords.to_coords(),
         }
     }
 }

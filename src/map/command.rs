@@ -64,4 +64,5 @@ pub enum Command {
         coords: TinyCoords,
         direction: Direction,
     },
+    SpawnNpcs,
 }

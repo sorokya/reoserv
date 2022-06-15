@@ -44,7 +44,7 @@ async fn warp_to_me(args: &[&str], character: &Character, world: &WorldHandle) {
     if let Ok(target) = world.get_character_by_name(target_name).await {
         target.player.as_ref().unwrap().request_warp(
             character.map_id,
-            character.coords.to_tiny_coords(),
+            character.coords,
             false,
             Some(WarpAnimation::Admin),
         );
@@ -56,7 +56,7 @@ async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
     if let Ok(target) = world.get_character_by_name(target_name).await {
         character.player.as_ref().unwrap().request_warp(
             target.map_id,
-            target.coords.to_tiny_coords(),
+            target.coords,
             false,
             Some(WarpAnimation::Admin),
         );

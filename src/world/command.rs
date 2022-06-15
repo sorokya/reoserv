@@ -137,4 +137,5 @@ pub enum Command {
         to: String,
         message: String,
     },
+    SpawnNpcs,
 }

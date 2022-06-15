@@ -1,20 +1,22 @@
-use std::collections::HashMap;
+use std::{collections::{HashMap, HashSet}, cmp};
 
+use chrono::Duration;
 use eo::{
     character::Emote,
-    data::{map::MapFile, EOChar, EOShort, EOThree, Serializeable},
+    data::{map::{MapFile, NPCSpawn}, EOChar, EOShort, EOThree, Serializeable},
     net::{
         packets::server::{avatar, door, emote, face, map_info, players, talk, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
     world::{Direction, TinyCoords, WarpAnimation},
 };
+use rand::Rng;
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
 use crate::character::Character;
 
 use super::{
-    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc,
+    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc, is_occupied,
 };
 
 pub struct Map {
@@ -106,7 +108,7 @@ impl Map {
     async fn get_map_info(
         &self,
         player_ids: Option<Vec<EOShort>>,
-        _npc_indexes: Option<Vec<EOChar>>,
+        npc_indexes: Option<Vec<EOChar>>,
         respond_to: oneshot::Sender<map_info::Reply>,
     ) {
         let characters = {
@@ -127,24 +129,30 @@ impl Map {
                 None
             }
         };
-        let npcs: Option<Vec<NpcMapInfo>> = Some(
-            self.npcs
-                .iter()
-                .map(|(index, npc)| npc.to_npc_map_info(index))
-                .collect(),
-        );
+        let npcs: Option<Vec<NpcMapInfo>> = {
+            if let Some(npc_indexes) = npc_indexes {
+                let mut npc_infos = Vec::with_capacity(npc_indexes.len());
+                for npc_index in npc_indexes {
+                    if let Some(npc) = self.npcs.get(&npc_index) {
+                        npc_infos.push(npc.to_map_info(&npc_index));
+                    }
+                }
+                Some(npc_infos)
+            } else {
+                None
+            }
+        };
         let reply = map_info::Reply { characters, npcs };
         let _ = respond_to.send(reply);
     }
 
     async fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
         let target = self.characters.get(&target_player_id).unwrap();
-        let coords = door_coords.to_coords();
-        if target.is_in_range(coords) {
+        if target.is_in_range(door_coords) {
             let packet = door::Open::new(door_coords.x, door_coords.y);
             let buf = packet.serialize();
             for character in self.characters.values() {
-                if character.is_in_range(coords) {
+                if character.is_in_range(door_coords) {
                     character.player.as_ref().unwrap().send(
                         Action::Open,
                         Family::Door,
@@ -177,8 +185,8 @@ impl Map {
                     || is_tile_walkable(coords, &self.file.tile_rows);
                 if is_in_bounds(
                     coords,
-                    self.file.width as EOShort,
-                    self.file.height as EOShort,
+                    self.file.width,
+                    self.file.height,
                 ) && is_tile_walkable
                 {
                     target.coords = coords;
@@ -226,7 +234,7 @@ impl Map {
                                 }
                             }
                             for (index, npc) in self.npcs.iter() {
-                                if npc.coords == coords.to_tiny_coords() {
+                                if npc.coords == coords {
                                     packet.npc_indexes.push(*index);
                                 }
                             }
@@ -246,7 +254,7 @@ impl Map {
             let walk_packet = walk::Player {
                 player_id: target_player_id,
                 direction,
-                coords: target_coords.to_tiny_coords(),
+                coords: target_coords,
             };
             let walk_packet_buf = walk_packet.serialize();
             for (player_id, character) in self.characters.iter() {
@@ -278,6 +286,60 @@ impl Map {
                         Family::Talk,
                         buf.clone(),
                     );
+                }
+            }
+        }
+    }
+
+    fn spawn_npcs(&mut self) {
+        // TODO: test if this is actually how GameServer.exe works
+        let now = chrono::Utc::now();
+        let mut rng = rand::thread_rng();
+
+        if !self.file.npc_spawns.is_empty() {
+            if self.npcs.is_empty() {
+                let mut npc_index: EOChar = 0;
+                for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
+                    // TODO: bounds check
+                    for _ in 0..spawn.amount {
+                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, now - Duration::hours(1)));
+                        npc_index += 1;
+                    }
+                }
+            }
+
+            // get occupied tiles of all characters and npcs
+            let mut occupied_tiles = HashSet::new();
+            for character in self.characters.values() {
+                occupied_tiles.insert(character.coords);
+            }
+            for npc in self.npcs.values() {
+                occupied_tiles.insert(npc.coords);
+            }
+
+            for npc in self.npcs.values_mut() {
+                let spawn = &self.file.npc_spawns[npc.spawn_index];
+                if !npc.alive && now.timestamp() - npc.dead_since.timestamp() > spawn.respawn_time.into() {
+                    npc.alive = true;
+
+                    let mut coords = TinyCoords::new(spawn.x, spawn.y);
+
+                    // TODO: break loop after a certain number of tries
+                    while is_occupied(coords, &occupied_tiles) || !is_tile_walkable(coords, &self.file.tile_rows) {
+                        // set position to random spot in a radius of 3
+                        coords.x = cmp::max(0, rng.gen_range(coords.x as i32 - 3..coords.x as i32 + 3)) as EOChar;
+                        coords.y = cmp::max(0, rng.gen_range(coords.y as i32 - 3..coords.y as i32 + 3)) as EOChar;
+                    }
+
+                    npc.coords = coords;
+                    npc.direction = match rand::random::<u8>() % 4 {
+                        0 => Direction::Down,
+                        1 => Direction::Left,
+                        2 => Direction::Up,
+                        3 => Direction::Right,
+                        _ => unreachable!(),
+                    };
+                    occupied_tiles.insert(coords);
                 }
             }
         }
@@ -330,8 +392,8 @@ impl Map {
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
-                    if target.is_in_range(npc.coords.to_coords()) {
-                        nearby_npcs.push(npc.to_npc_map_info(index));
+                    if target.is_in_range(npc.coords) {
+                        nearby_npcs.push(npc.to_map_info(index));
                     }
                 }
                 for character in self.characters.values() {
@@ -384,6 +446,7 @@ impl Map {
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());
             }
+            Command::SpawnNpcs => self.spawn_npcs(),
             Command::Walk {
                 target_player_id,
                 timestamp,

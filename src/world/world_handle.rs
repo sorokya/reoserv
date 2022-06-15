@@ -327,6 +327,10 @@ impl WorldHandle {
             .tx
             .send(Command::SendPrivateMessage { from, to, message });
     }
+
+    pub fn spawn_npcs(&self) {
+        let _ = self.tx.send(Command::SpawnNpcs);
+    }
 }
 
 async fn run_world(mut world: World) {

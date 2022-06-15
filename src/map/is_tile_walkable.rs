@@ -3,18 +3,18 @@ use eo::{
         map::{TileRow, TileSpec},
         EOShort,
     },
-    world::Coords,
+    world::TinyCoords,
 };
 
-pub fn is_tile_walkable(coords: Coords, tile_rows: &[TileRow]) -> bool {
+pub fn is_tile_walkable(coords: TinyCoords, tile_rows: &[TileRow]) -> bool {
     if let Some(tile_row) = tile_rows
         .iter()
-        .find(|tile_row| tile_row.y as EOShort == coords.y)
+        .find(|tile_row| tile_row.y == coords.y)
     {
         if let Some(tile) = tile_row
             .tiles
             .iter()
-            .find(|tile| tile.x as EOShort == coords.x)
+            .find(|tile| tile.x == coords.x)
         {
             !matches!(
                 tile.spec,

@@ -15,5 +15,7 @@ mod get_warp_at;
 pub use get_warp_at::get_warp_at;
 mod is_in_bounds;
 pub use is_in_bounds::is_in_bounds;
+mod is_occupied;
+pub use is_occupied::is_occupied;
 mod is_tile_walkable;
 pub use is_tile_walkable::is_tile_walkable;

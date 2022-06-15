@@ -9,8 +9,6 @@ mod npc;
 pub use npc::Npc;
 mod map_handle;
 pub use map_handle::MapHandle;
-mod get_new_viewable_coords;
-pub use get_new_viewable_coords::get_new_viewable_coords;
 mod get_warp_at;
 pub use get_warp_at::get_warp_at;
 mod is_in_bounds;

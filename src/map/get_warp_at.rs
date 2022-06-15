@@ -1,7 +1,6 @@
 use eo::{
     data::{
         map::{Warp, WarpRow},
-        EOShort,
     },
     world::TinyCoords,
 };

@@ -4,6 +4,8 @@ use eo::{
     world::TinyCoords,
 };
 
+use crate::utils;
+
 pub struct Item {
     pub uid: EOShort,
     pub id: EOShort,
@@ -22,6 +24,15 @@ impl Item {
             coords,
             owner,
         }
+    }
+
+    pub fn is_in_range(&self, coords: TinyCoords) -> bool {
+        utils::in_range(
+            self.coords.x.into(),
+            self.coords.y.into(),
+            coords.x.into(),
+            coords.y.into(),
+        )
     }
 
     pub fn to_item_map_info(&self) -> ItemMapInfo {

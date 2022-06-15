@@ -41,7 +41,7 @@ y = 1
 
 [world]
 # Size of the characters view port
-see_distance = 12
+see_distance = 11
 
 [npcs]
 # Should NPCs spawn immediately when the server starts?

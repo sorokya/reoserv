@@ -1,7 +1,6 @@
 use eo::{
     data::{
         map::{TileRow, TileSpec},
-        EOShort,
     },
     world::TinyCoords,
 };

@@ -5,7 +5,7 @@ use eo::{
         packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
         CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,
     },
-    world::{Coords, Direction, TinyCoords},
+    world::{Direction, TinyCoords},
 };
 
 use chrono::prelude::*;

@@ -3,7 +3,7 @@ use std::{collections::{HashMap, HashSet}, cmp};
 use chrono::Duration;
 use eo::{
     character::Emote,
-    data::{map::{MapFile, NPCSpawn, NPCSpeed}, EOChar, EOShort, EOThree, Serializeable},
+    data::{map::{MapFile, NPCSpeed}, EOChar, EOShort, EOThree, Serializeable},
     net::{
         packets::server::{avatar, door, emote, face, map_info, players, talk, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
@@ -17,7 +17,7 @@ use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 use crate::{character::Character, SETTINGS};
 
 use super::{
-    get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc, is_occupied,
+    get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc, is_occupied,
 };
 
 pub struct Map {
@@ -171,8 +171,9 @@ impl Map {
         _coords: TinyCoords,
         direction: Direction,
     ) {
-        if let Some((target_coords, target_player)) = {
+        if let Some((target_previous_coords, target_coords, target_player)) = {
             if let Some(target) = self.characters.get_mut(&target_player_id) {
+                let previous_coords = target.coords;
                 let mut coords = target.coords;
                 match direction {
                     Direction::Up => coords.y -= 1,
@@ -193,7 +194,7 @@ impl Map {
                     target.coords = coords;
                 }
 
-                Some((target.coords, target.player.clone()))
+                Some((previous_coords, target.coords, target.player.clone()))
             } else {
                 None
             }
@@ -213,43 +214,34 @@ impl Map {
                     );
                 }
             } else {
-                let new_viewable_coords = get_new_viewable_coords(
-                    target_coords,
-                    direction,
-                    self.file.width as EOShort,
-                    self.file.height as EOShort,
-                );
+                let packet = {
+                    let mut packet = walk::Reply::default();
+                    let mod_range = 0.0;
 
-                if !new_viewable_coords.is_empty() {
-                    let packet = {
-                        let mut packet = walk::Reply::default();
-                        for coords in new_viewable_coords {
-                            for (player_id, character) in self.characters.iter() {
-                                if character.coords == coords {
-                                    packet.player_ids.push(*player_id);
-                                }
-                            }
-                            for item in self.items.iter() {
-                                if item.coords == coords {
-                                    packet.items.push(item.to_item_map_info());
-                                }
-                            }
-                            for (index, npc) in self.npcs.iter() {
-                                if npc.coords == coords {
-                                    packet.npc_indexes.push(*index);
-                                }
-                            }
+                    for (player_id, character) in self.characters.iter() {
+                        if *player_id != target_player_id && character.is_in_range(target_coords) && !character.is_in_range(target_previous_coords) {
+                            packet.player_ids.push(*player_id);
                         }
-                        packet
-                    };
+                    }
+                    for item in self.items.iter() {
+                        if item.is_in_range(target_coords) && !item.is_in_range(target_previous_coords) {
+                            packet.items.push(item.to_item_map_info());
+                        }
+                    }
+                    for (index, npc) in self.npcs.iter() {
+                        if npc.is_in_range(target_coords) && !npc.is_in_range(target_previous_coords) {
+                            packet.npc_indexes.push(*index);
+                        }
+                    }
+                    packet
+                };
 
-                    debug!("Send: {:?}", packet);
-                    target_player.as_ref().unwrap().send(
-                        Action::Reply,
-                        Family::Walk,
-                        packet.serialize(),
-                    );
-                }
+                debug!("Send: {:?}", packet);
+                target_player.as_ref().unwrap().send(
+                    Action::Reply,
+                    Family::Walk,
+                    packet.serialize(),
+                );
             }
 
             let walk_packet = walk::Player {

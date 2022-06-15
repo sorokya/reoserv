@@ -42,12 +42,19 @@ pub struct World {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct NPCs {
+    pub instant_spawn: bool,
+    pub freeze_on_empty_map: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
     pub new_character: NewCharacter,
     pub jail: Jail,
     pub world: World,
+    pub npcs: NPCs,
 }
 
 impl Settings {

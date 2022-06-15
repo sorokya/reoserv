@@ -3,17 +3,18 @@ use std::{collections::{HashMap, HashSet}, cmp};
 use chrono::Duration;
 use eo::{
     character::Emote,
-    data::{map::{MapFile, NPCSpawn}, EOChar, EOShort, EOThree, Serializeable},
+    data::{map::{MapFile, NPCSpawn, NPCSpeed}, EOChar, EOShort, EOThree, Serializeable},
     net::{
         packets::server::{avatar, door, emote, face, map_info, players, talk, walk},
         Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
     },
     world::{Direction, TinyCoords, WarpAnimation},
 };
+use num_traits::FromPrimitive;
 use rand::Rng;
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
-use crate::character::Character;
+use crate::{character::Character, SETTINGS};
 
 use super::{
     get_new_viewable_coords, get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc, is_occupied,
@@ -299,13 +300,24 @@ impl Map {
         if !self.file.npc_spawns.is_empty() {
             if self.npcs.is_empty() {
                 let mut npc_index: EOChar = 0;
+
+                let dead_since = if SETTINGS.npcs.instant_spawn {
+                    now - Duration::days(1)
+                } else {
+                    now
+                };
+
                 for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
                     // TODO: bounds check
                     for _ in 0..spawn.amount {
-                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, now - Duration::hours(1)));
+                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, dead_since));
                         npc_index += 1;
                     }
                 }
+            }
+
+            if SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
+                return;
             }
 
             // get occupied tiles of all characters and npcs
@@ -332,12 +344,16 @@ impl Map {
                     }
 
                     npc.coords = coords;
-                    npc.direction = match rand::random::<u8>() % 4 {
-                        0 => Direction::Down,
-                        1 => Direction::Left,
-                        2 => Direction::Up,
-                        3 => Direction::Right,
-                        _ => unreachable!(),
+                    npc.direction = if spawn.speed == NPCSpeed::Frozen {
+                        Direction::from_u16(spawn.respawn_time & 0x03).unwrap()
+                    } else {
+                        match rand::random::<u8>() % 4 {
+                            0 => Direction::Down,
+                            1 => Direction::Left,
+                            2 => Direction::Up,
+                            3 => Direction::Right,
+                            _ => unreachable!(),
+                        }
                     };
                     occupied_tiles.insert(coords);
                 }

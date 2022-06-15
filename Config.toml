@@ -43,6 +43,15 @@ y = 1
 # Size of the characters view port
 see_distance = 12
 
+[npcs]
+# Should NPCs spawn immediately when the server starts?
+# if false they will spawn after their respawn time
+instant_spawn = false
+
+# Should NPCs stand still if there are no players on their map?
+# if false they will always act even if there are no players
+freeze_on_empty_map = true
+
 [database]
 host = "127.0.0.1"
 port = "3306"

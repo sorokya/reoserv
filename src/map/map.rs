@@ -1,12 +1,12 @@
 use std::{collections::{HashMap, HashSet}, cmp};
 
-use chrono::Duration;
+use chrono::{Duration, Utc};
 use eo::{
     character::Emote,
     data::{map::{MapFile, NPCSpeed}, EOChar, EOShort, EOThree, Serializeable},
     net::{
-        packets::server::{avatar, door, emote, face, map_info, players, talk, walk},
-        Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo,
+        packets::server::{avatar, door, emote, face, map_info, players, talk, walk, npc},
+        Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo, NPCPosition,
     },
     world::{Direction, TinyCoords, WarpAnimation},
 };
@@ -302,7 +302,7 @@ impl Map {
                 for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
                     // TODO: bounds check
                     for _ in 0..spawn.amount {
-                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, dead_since));
+                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, dead_since, dead_since, dead_since));
                         npc_index += 1;
                     }
                 }
@@ -351,6 +351,93 @@ impl Map {
                 }
             }
         }
+    }
+
+    fn act_npcs(&mut self) {
+        let mut packet = npc::Player::new();
+
+        let now = Utc::now();
+
+        let mut rng = rand::thread_rng();
+
+        // TODO: attacks
+
+        // TODO: Split packets by groups of players in range of NPC
+
+        for (index, npc) in &mut self.npcs {
+            let spawn = &self.file.npc_spawns[npc.spawn_index];
+            let act_rate = match spawn.speed {
+                NPCSpeed::Speed1 => SETTINGS.npcs.speed_0,
+                NPCSpeed::Speed2 => SETTINGS.npcs.speed_1,
+                NPCSpeed::Speed3 => SETTINGS.npcs.speed_2,
+                NPCSpeed::Speed4 => SETTINGS.npcs.speed_3,
+                NPCSpeed::Speed5 => SETTINGS.npcs.speed_4,
+                NPCSpeed::Speed6 => SETTINGS.npcs.speed_5,
+                NPCSpeed::Speed7 => SETTINGS.npcs.speed_6,
+                NPCSpeed::Frozen => 0,
+            };
+
+            let act_delta = now - npc.last_act;
+
+            if act_rate > 0 && act_delta >= Duration::milliseconds(act_rate.into()) {
+                // TODO: attack
+                // TODO: walk rate? NPCs appear to have a chance to actually move randomly
+
+                let action = rng.gen_range(1..10);
+                if action >= 7 && action <= 9 {
+                    npc.direction = Direction::from_u8(rng.gen_range(0..3)).unwrap();
+                }
+
+                if action != 10 {
+                    let new_coords = match npc.direction {
+                        Direction::Down => if npc.coords.y >= self.file.height {
+                            npc.coords
+                        } else {
+                            TinyCoords { x: npc.coords.x, y: npc.coords.y + 1 }
+                        },
+                        Direction::Left => if npc.coords.x == 0 {
+                            npc.coords
+                        } else {
+                            TinyCoords { x: npc.coords.x - 1, y: npc.coords.y }
+                        },
+                        Direction::Up => if npc.coords.y == 0 {
+                            npc.coords
+                        } else {
+                            TinyCoords { x: npc.coords.x, y: npc.coords.y - 1 }
+                        },
+                        Direction::Right => if npc.coords.x >= self.file.width {
+                            npc.coords
+                        } else {
+                            TinyCoords { x: npc.coords.x + 1, y: npc.coords.y }
+                        },
+                    };
+
+                    if is_tile_walkable(new_coords, &self.file.tile_rows) {
+                        npc.coords = new_coords;
+                        packet.positions.push(NPCPosition {
+                            index: *index,
+                            coords: npc.coords,
+                            direction: npc.direction,
+                        });
+                    }
+                }
+            }
+
+            if packet.positions.len() > 0 || packet.attacks.len() > 0 || packet.chats.len() > 0 {
+                let buf = packet.serialize();
+                for character in self.characters.values() {
+                    if character.is_in_range(npc.coords)
+                    {
+                        character.player.as_ref().unwrap().send(
+                            Action::Player,
+                            Family::Npc,
+                            buf.clone(),
+                        );
+                    }
+                }
+            }
+        }
+
     }
 
     pub async fn handle_command(&mut self, command: Command) {
@@ -455,6 +542,7 @@ impl Map {
                 let _ = respond_to.send(self.file.serialize());
             }
             Command::SpawnNpcs => self.spawn_npcs(),
+            Command::ActNpcs => self.act_npcs(),
             Command::Walk {
                 target_player_id,
                 timestamp,

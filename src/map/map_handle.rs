@@ -135,6 +135,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::SpawnNpcs);
     }
 
+    pub fn act_npcs(&self) {
+        let _ = self.tx.send(Command::ActNpcs);
+    }
+
     pub fn walk(
         &self,
         target_player_id: EOShort,

@@ -108,13 +108,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    let mut npc_spawn_interval = time::interval(Duration::from_secs(1));
+    let mut npc_spawn_interval = time::interval(Duration::from_secs(SETTINGS.npcs.respawn_rate.into()));
     npc_spawn_interval.tick().await;
     let npc_spawn_world = world.clone();
     tokio::spawn(async move {
         loop {
             npc_spawn_interval.tick().await;
             npc_spawn_world.spawn_npcs();
+        }
+    });
+
+    let mut npc_act_interval = time::interval(Duration::from_millis(SETTINGS.npcs.act_rate.into()));
+    npc_act_interval.tick().await;
+    let npc_act_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            npc_act_interval.tick().await;
+            npc_act_world.act_npcs();
         }
     });
 

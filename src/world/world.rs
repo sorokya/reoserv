@@ -426,6 +426,11 @@ impl World {
                     map.spawn_npcs();
                 }
             }
+            Command::ActNpcs => {
+                for map in self.maps.as_ref().unwrap().values() {
+                    map.act_npcs();
+                }
+            }
         }
     }
 

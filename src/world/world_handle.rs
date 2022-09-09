@@ -331,6 +331,10 @@ impl WorldHandle {
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
     }
+
+    pub fn act_npcs(&self) {
+        let _ = self.tx.send(Command::ActNpcs);
+    }
 }
 
 async fn run_world(mut world: World) {

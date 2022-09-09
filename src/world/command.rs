@@ -138,4 +138,5 @@ pub enum Command {
         message: String,
     },
     SpawnNpcs,
+    ActNpcs,
 }

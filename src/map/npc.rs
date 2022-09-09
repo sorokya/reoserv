@@ -14,10 +14,12 @@ pub struct Npc {
     pub spawn_index: usize,
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
+    pub last_act: DateTime<Utc>,
+    pub last_talk: DateTime<Utc>,
 }
 
 impl Npc {
-    pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>) -> Self {
+    pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>, last_act: DateTime<Utc>, last_talk: DateTime<Utc>) -> Self {
         Self {
             id,
             coords,
@@ -25,6 +27,8 @@ impl Npc {
             spawn_index,
             alive: false,
             dead_since,
+            last_act,
+            last_talk,
         }
     }
 

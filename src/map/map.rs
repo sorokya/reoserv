@@ -17,7 +17,7 @@ use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 use crate::{character::Character, SETTINGS};
 
 use super::{
-    get_warp_at, is_in_bounds, is_tile_walkable, Command, Item, Npc, is_occupied,
+    get_warp_at, is_in_bounds, is_tile_walkable::{is_tile_walkable, is_tile_walkable_for_npc}, Command, Item, Npc, is_occupied,
 };
 
 pub struct Map {
@@ -354,8 +354,6 @@ impl Map {
     }
 
     fn act_npcs(&mut self) {
-        let mut packet = npc::Player::new();
-
         let now = Utc::now();
 
         let mut rng = rand::thread_rng();
@@ -363,6 +361,17 @@ impl Map {
         // TODO: attacks
 
         // TODO: Split packets by groups of players in range of NPC
+
+        // get occupied tiles of all characters and npcs
+        let mut occupied_tiles = HashSet::new();
+        for character in self.characters.values() {
+            occupied_tiles.insert(character.coords);
+        }
+        for npc in self.npcs.values() {
+            occupied_tiles.insert(npc.coords);
+        }
+
+        let mut position_updates: Vec<NPCPosition> = Vec::with_capacity(self.npcs.len());
 
         for (index, npc) in &mut self.npcs {
             let spawn = &self.file.npc_spawns[npc.spawn_index];
@@ -379,11 +388,11 @@ impl Map {
 
             let act_delta = now - npc.last_act;
 
-            if act_rate > 0 && act_delta >= Duration::milliseconds(act_rate.into()) {
+            if npc.alive && act_rate > 0 && act_delta >= Duration::milliseconds(act_rate.into()) {
                 // TODO: attack
                 // TODO: walk rate? NPCs appear to have a chance to actually move randomly
 
-                let action = rng.gen_range(1..10);
+                let action = rng.gen_range(1..=10);
                 if action >= 7 && action <= 9 {
                     npc.direction = Direction::from_u8(rng.gen_range(0..3)).unwrap();
                 }
@@ -412,29 +421,42 @@ impl Map {
                         },
                     };
 
-                    if is_tile_walkable(new_coords, &self.file.tile_rows) {
+                    if !is_occupied(new_coords, &occupied_tiles) && is_tile_walkable_for_npc(new_coords, &self.file.tile_rows, &self.file.warp_rows) {
+                        occupied_tiles.remove(&npc.coords);
                         npc.coords = new_coords;
-                        packet.positions.push(NPCPosition {
+                        position_updates.push(NPCPosition {
                             index: *index,
                             coords: npc.coords,
                             direction: npc.direction,
                         });
+                        occupied_tiles.insert(new_coords);
                     }
+
+                    npc.last_act = Utc::now();
                 }
             }
+        }
 
-            if packet.positions.len() > 0 || packet.attacks.len() > 0 || packet.chats.len() > 0 {
-                let buf = packet.serialize();
-                for character in self.characters.values() {
-                    if character.is_in_range(npc.coords)
-                    {
-                        character.player.as_ref().unwrap().send(
-                            Action::Player,
-                            Family::Npc,
-                            buf.clone(),
-                        );
-                    }
-                }
+        if position_updates.len() > 0 {
+            for character in self.characters.values() {
+                // TODO: might also need to check NPCs previous position..
+                let position_updates_in_rage: Vec<NPCPosition> = position_updates.iter().filter(|update| {
+                    let npc = &self.npcs[&update.index];
+                    character.is_in_range(npc.coords)
+                }).cloned().collect();
+
+                let packet = npc::Player {
+                    positions: position_updates_in_rage,
+                    attacks: Vec::new(),
+                    chats: Vec::new(),
+                };
+
+                debug!("Send: {:?}", packet);
+                character.player.as_ref().unwrap().send(
+                    Action::Player,
+                    Family::Npc,
+                    packet.serialize(),
+                );
             }
         }
 

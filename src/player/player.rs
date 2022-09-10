@@ -120,7 +120,7 @@ impl Player {
                 if let Some(map) = self.map.as_ref() {
                     let mut character = map.leave(self.id, None).await;
                     let pool = self.pool.clone();
-                    tokio::task::Builder::new()
+                    let _ = tokio::task::Builder::new()
                         .name("character_save")
                         .spawn(async move {
                             let mut conn = pool.get_conn().await.unwrap();

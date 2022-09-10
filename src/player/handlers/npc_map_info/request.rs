@@ -18,7 +18,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
             .await;
         if reply.characters.is_some() || reply.npcs.is_some() {
             debug!("Reply: {:?}", reply);
-            player.send(Action::Reply, Family::MapInfo, reply.serialize());
+            player.send(Action::Agree, Family::Npc, reply.serialize());
         }
     }
 }

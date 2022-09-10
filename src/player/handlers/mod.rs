@@ -1,6 +1,7 @@
 pub mod account;
 pub mod character;
 pub mod character_map_info;
+pub mod npc_map_info;
 pub mod connection;
 pub mod door;
 pub mod emote;

@@ -171,6 +171,10 @@ pub async fn handle_packet(
             Action::Take => handlers::warp::take(buf, player.clone(), world.clone()).await,
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
+        Family::NpcMapInfo => match action {
+            Action::Request => handlers::npc_map_info::request(buf, player.clone()).await,
+            _ => error!("Unhandles packet {:?}_{:?}", action, family),
+        }
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);
         }

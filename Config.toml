@@ -20,7 +20,7 @@ password_salt = "ChangeMe"
 
 # Validate the sequence number sent by the client
 # matches the one on the server
-enforce_sequence = true
+enforce_sequence = false
 
 # Number of maps to attempt to load
 num_of_maps = 282

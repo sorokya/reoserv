@@ -400,7 +400,7 @@ impl Map {
 
                 let action = rng.gen_range(1..=10);
                 if action >= 7 && action <= 9 {
-                    npc.direction = Direction::from_u8(rng.gen_range(0..3)).unwrap();
+                    npc.direction = Direction::from_u8(rng.gen_range(0..=3)).unwrap();
                 }
 
                 if action != 10 {

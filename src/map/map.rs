@@ -147,7 +147,9 @@ impl Map {
                 let mut npc_infos = Vec::with_capacity(npc_indexes.len());
                 for npc_index in npc_indexes {
                     if let Some(npc) = self.npcs.get(&npc_index) {
-                        npc_infos.push(npc.to_map_info(&npc_index));
+                        if npc.alive {
+                            npc_infos.push(npc.to_map_info(&npc_index));
+                        }
                     }
                 }
                 Some(npc_infos)
@@ -320,6 +322,15 @@ impl Map {
                 };
 
                 for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
+
+                    // Only 20% of npcs in a group will speak
+                    let num_of_chatters = cmp::max(1, (spawn.amount as f64 * 0.2).floor() as EOChar);
+                    let mut chatter_indexes: Vec<usize> = Vec::with_capacity(num_of_chatters as usize);
+                    let chatter_distribution = spawn.amount / num_of_chatters;
+                    for i in 0..num_of_chatters {
+                        chatter_indexes.push(((i * chatter_distribution) + npc_index) as usize);
+                    }
+
                     // TODO: bounds check
                     for _ in 0..spawn.amount {
                         self.npcs.insert(
@@ -331,7 +342,8 @@ impl Map {
                                 spawn_index,
                                 dead_since,
                                 dead_since,
-                                dead_since,
+                                chatter_indexes.contains(&(npc_index as usize)),
+                                now,
                             ),
                         );
                         npc_index += 1;
@@ -362,15 +374,6 @@ impl Map {
                 }
             }
 
-            // get occupied tiles of all characters and npcs
-            let mut occupied_tiles = HashSet::new();
-            for character in self.characters.values() {
-                occupied_tiles.insert(character.coords);
-            }
-            for npc in self.npcs.values() {
-                occupied_tiles.insert(npc.coords);
-            }
-
             let mut rng = rand::thread_rng();
             for npc in self.npcs.values_mut() {
                 let spawn = &self.file.npc_spawns[npc.spawn_index];
@@ -378,23 +381,13 @@ impl Map {
                     && now.timestamp() - npc.dead_since.timestamp() > spawn.respawn_time.into()
                 {
                     npc.alive = true;
+                    npc.coords = TinyCoords::new(spawn.x, spawn.y);
 
-                    let mut coords = TinyCoords::new(spawn.x, spawn.y);
-
-                    // TODO: break loop after a certain number of tries
-                    while is_occupied(coords, &occupied_tiles)
-                        || !is_tile_walkable(coords, &self.file.tile_rows)
-                    {
-                        // set position to random spot in a radius of 3
-                        coords.x =
-                            cmp::max(0, rng.gen_range(coords.x as i32 - 3..coords.x as i32 + 3))
-                                as EOChar;
-                        coords.y =
-                            cmp::max(0, rng.gen_range(coords.y as i32 - 3..coords.y as i32 + 3))
-                                as EOChar;
+                    while !is_tile_walkable_for_npc(npc.coords, &self.file.tile_rows, &self.file.warp_rows) {
+                        npc.coords.x += cmp::max(rng.gen_range(-2..=2), 0) as EOChar;
+                        npc.coords.y += cmp::max(rng.gen_range(-2..=2), 0) as EOChar;
                     }
 
-                    npc.coords = coords;
                     npc.direction = if spawn.speed == NPCSpeed::Frozen {
                         Direction::from_u16(spawn.respawn_time & 0x03).unwrap()
                     } else {
@@ -406,7 +399,6 @@ impl Map {
                             _ => unreachable!(),
                         }
                     };
-                    occupied_tiles.insert(coords);
                 }
             }
         }
@@ -535,7 +527,7 @@ impl Map {
             if let Some(npc_data) = self.npc_data.get(&npc.id) {
                 if let Some(talk_record) = &npc_data.talk_record {
                     let talk_delta = now - npc.last_talk;
-                    if npc.alive
+                    if npc.alive && npc.does_talk
                         && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
                     {
                         let roll = rng.gen_range(0..=100);
@@ -555,22 +547,24 @@ impl Map {
         if position_updates.len() > 0 || talk_updates.len() > 0 {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
+
+                let in_range_npc_indexes: Vec<EOChar> = self
+                    .npcs
+                    .iter()
+                    .filter(|(_, n)| n.is_in_range(character.coords))
+                    .map(|(i, _)| i)
+                    .cloned()
+                    .collect();
+
                 let position_updates_in_rage: Vec<NPCPosition> = position_updates
                     .iter()
-                    .filter(|update| {
-                        let npc = &self.npcs[&update.index];
-                        character.is_in_range(npc.coords)
-                    })
+                    .filter(|update| in_range_npc_indexes.contains(&update.index))
                     .cloned()
                     .collect();
 
                 let talk_updates_in_range: Vec<NPCChat> = talk_updates
                     .iter()
-                    .filter(|update| {
-                        position_updates_in_rage
-                            .iter()
-                            .any(|pu| pu.index == update.index)
-                    })
+                    .filter(|update| in_range_npc_indexes.contains(&update.index))
                     .cloned()
                     .collect();
 
@@ -639,7 +633,7 @@ impl Map {
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
-                    if target.is_in_range(npc.coords) {
+                    if npc.alive && target.is_in_range(npc.coords) {
                         nearby_npcs.push(npc.to_map_info(index));
                     }
                 }

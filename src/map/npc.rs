@@ -15,12 +15,13 @@ pub struct Npc {
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
     pub last_act: DateTime<Utc>,
+    pub does_talk: bool,
     pub last_talk: DateTime<Utc>,
     pub walk_idle_for: Option<Duration>,
 }
 
 impl Npc {
-    pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>, last_act: DateTime<Utc>, last_talk: DateTime<Utc>) -> Self {
+    pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>, last_act: DateTime<Utc>, does_talk: bool, last_talk: DateTime<Utc>) -> Self {
         Self {
             id,
             coords,
@@ -29,6 +30,7 @@ impl Npc {
             alive: false,
             dead_since,
             last_act,
+            does_talk,
             last_talk,
             walk_idle_for: None,
         }

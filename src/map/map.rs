@@ -384,8 +384,8 @@ impl Map {
                     npc.coords = TinyCoords::new(spawn.x, spawn.y);
 
                     while !is_tile_walkable_for_npc(npc.coords, &self.file.tile_rows, &self.file.warp_rows) {
-                        npc.coords.x += cmp::max(rng.gen_range(-2..=2), 0) as EOChar;
-                        npc.coords.y += cmp::max(rng.gen_range(-2..=2), 0) as EOChar;
+                        npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                        npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
                     }
 
                     npc.direction = if spawn.speed == NPCSpeed::Frozen {
@@ -519,6 +519,7 @@ impl Map {
                     }
 
                     npc.last_act = Utc::now();
+                    npc.walk_idle_for = None;
                 } else {
                     npc.walk_idle_for = Some(Duration::seconds(rng.gen_range(1..=4)));
                 }

@@ -218,7 +218,12 @@ impl Map {
                     let mut packet = walk::Reply::default();
 
                     // This helped some but still doesn't feel "perfect"
-                    let see_distance = (SETTINGS.world.see_distance - 3) as f64;
+                    let see_distance = match direction {
+                        Direction::Down => (SETTINGS.world.see_distance - 1) as f64,
+                        Direction::Left => (SETTINGS.world.see_distance - 3) as f64,
+                        Direction::Up => (SETTINGS.world.see_distance - 1) as f64,
+                        Direction::Right => (SETTINGS.world.see_distance - 3) as f64,
+                    };
 
                     for (player_id, character) in self.characters.iter() {
                         if *player_id != target_player_id && character.is_in_range_distance(target_coords, see_distance) && !character.is_in_range_distance(target_previous_coords, see_distance) {
@@ -310,10 +315,6 @@ impl Map {
                 }
             }
 
-            if SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
-                return;
-            }
-
             // get occupied tiles of all characters and npcs
             let mut occupied_tiles = HashSet::new();
             for character in self.characters.values() {
@@ -356,6 +357,10 @@ impl Map {
     }
 
     fn act_npcs(&mut self) {
+        if SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
+            return;
+        }
+
         let now = Utc::now();
 
         let mut rng = rand::thread_rng();
@@ -453,18 +458,20 @@ impl Map {
                     character.is_in_range(npc.coords)
                 }).cloned().collect();
 
-                let packet = npc::Player {
-                    positions: position_updates_in_rage,
-                    attacks: Vec::new(),
-                    chats: Vec::new(),
-                };
-
-                debug!("Send: {:?}", packet);
-                character.player.as_ref().unwrap().send(
-                    Action::Player,
-                    Family::Npc,
-                    packet.serialize(),
-                );
+                if position_updates_in_rage.len() > 0 {
+                    let packet = npc::Player {
+                        positions: position_updates_in_rage,
+                        attacks: Vec::new(),
+                        chats: Vec::new(),
+                    };
+    
+                    debug!("Send: {:?}", packet);
+                    character.player.as_ref().unwrap().send(
+                        Action::Player,
+                        Family::Npc,
+                        packet.serialize(),
+                    );
+                }
             }
         }
 

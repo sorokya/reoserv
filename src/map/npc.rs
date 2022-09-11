@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Duration};
 use eo::{
     data::{EOChar, EOShort},
     net::NpcMapInfo,
@@ -16,6 +16,7 @@ pub struct Npc {
     pub dead_since: DateTime<Utc>,
     pub last_act: DateTime<Utc>,
     pub last_talk: DateTime<Utc>,
+    pub walk_idle_for: Option<Duration>,
 }
 
 impl Npc {
@@ -29,6 +30,7 @@ impl Npc {
             dead_since,
             last_act,
             last_talk,
+            walk_idle_for: None,
         }
     }
 
@@ -38,6 +40,16 @@ impl Npc {
             self.coords.y.into(),
             coords.x.into(),
             coords.y.into(),
+        )
+    }
+
+    pub fn is_in_range_distance(&self, coords: TinyCoords, distance: f64) -> bool {
+        utils::in_range_distance(
+            self.coords.x.into(),
+            self.coords.y.into(),
+            coords.x.into(),
+            coords.y.into(),
+            distance,
         )
     }
 

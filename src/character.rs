@@ -102,6 +102,16 @@ impl Character {
         )
     }
 
+    pub fn is_in_range_distance(&self, coords: TinyCoords, distance: f64) -> bool {
+        utils::in_range_distance(
+            self.coords.x.into(),
+            self.coords.y.into(),
+            coords.x.into(),
+            coords.y.into(),
+            distance,
+        )
+    }
+
     pub fn to_map_info(&self) -> CharacterMapInfo {
         CharacterMapInfo {
             name: self.name.clone(),

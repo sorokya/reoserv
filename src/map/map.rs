@@ -216,20 +216,22 @@ impl Map {
             } else {
                 let packet = {
                     let mut packet = walk::Reply::default();
-                    let mod_range = 0.0;
+
+                    // This helped some but still doesn't feel "perfect"
+                    let see_distance = (SETTINGS.world.see_distance - 3) as f64;
 
                     for (player_id, character) in self.characters.iter() {
-                        if *player_id != target_player_id && character.is_in_range(target_coords) && !character.is_in_range(target_previous_coords) {
+                        if *player_id != target_player_id && character.is_in_range_distance(target_coords, see_distance) && !character.is_in_range_distance(target_previous_coords, see_distance) {
                             packet.player_ids.push(*player_id);
                         }
                     }
                     for item in self.items.iter() {
-                        if item.is_in_range(target_coords) && !item.is_in_range(target_previous_coords) {
+                        if item.is_in_range_distance(target_coords, see_distance) && !item.is_in_range_distance(target_previous_coords, see_distance) {
                             packet.items.push(item.to_item_map_info());
                         }
                     }
                     for (index, npc) in self.npcs.iter() {
-                        if npc.is_in_range(target_coords) && !npc.is_in_range(target_previous_coords) {
+                        if npc.is_in_range_distance(target_coords, see_distance) && !npc.is_in_range_distance(target_previous_coords, see_distance) {
                             packet.npc_indexes.push(*index);
                         }
                     }
@@ -387,8 +389,12 @@ impl Map {
             };
 
             let act_delta = now - npc.last_act;
-
-            if npc.alive && act_rate > 0 && act_delta >= Duration::milliseconds(act_rate.into()) {
+            let walk_idle_for_ms = if let Some(walk_idle_for) = npc.walk_idle_for {
+                walk_idle_for.num_milliseconds()
+            } else {
+                0
+            };
+            if npc.alive && act_rate > 0 && act_delta >= Duration::milliseconds(act_rate as i64 + walk_idle_for_ms) {
                 // TODO: attack
                 // TODO: walk rate? NPCs appear to have a chance to actually move randomly
 
@@ -433,6 +439,8 @@ impl Map {
                     }
 
                     npc.last_act = Utc::now();
+                } else {
+                    npc.walk_idle_for = Some(Duration::seconds(rng.gen_range(1..=4)));
                 }
             }
         }

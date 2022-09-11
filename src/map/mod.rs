@@ -7,6 +7,8 @@ mod map;
 pub use map::Map;
 mod npc;
 pub use npc::Npc;
+mod npc_data;
+pub use npc_data::NpcData;
 mod map_handle;
 pub use map_handle::MapHandle;
 mod get_warp_at;

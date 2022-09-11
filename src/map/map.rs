@@ -1,12 +1,18 @@
-use std::{collections::{HashMap, HashSet}, cmp};
+use std::{
+    cmp,
+    collections::{HashMap, HashSet},
+};
 
 use chrono::{Duration, Utc};
 use eo::{
     character::Emote,
-    data::{map::{MapFile, NPCSpeed}, EOChar, EOShort, EOThree, Serializeable},
+    data::{
+        map::{MapFile, NPCSpeed},
+        EOChar, EOShort, EOThree, Serializeable,
+    },
     net::{
-        packets::server::{avatar, door, emote, face, map_info, players, talk, walk, npc},
-        Action, CharacterMapInfo, Family, NearbyInfo, NpcMapInfo, NPCPosition,
+        packets::server::{avatar, door, emote, face, map_info, npc, players, talk, walk},
+        Action, CharacterMapInfo, Family, NPCChat, NPCPosition, NearbyInfo, NpcMapInfo,
     },
     world::{Direction, TinyCoords, WarpAnimation},
 };
@@ -14,27 +20,33 @@ use num_traits::FromPrimitive;
 use rand::Rng;
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
-use crate::{character::Character, SETTINGS};
+use crate::{character::Character, world::WorldHandle, SETTINGS};
 
 use super::{
-    get_warp_at, is_in_bounds, is_tile_walkable::{is_tile_walkable, is_tile_walkable_for_npc}, Command, Item, Npc, is_occupied,
+    get_warp_at, is_in_bounds, is_occupied,
+    is_tile_walkable::{is_tile_walkable, is_tile_walkable_for_npc},
+    Command, Item, Npc, NpcData,
 };
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
+    world: WorldHandle,
     file: MapFile,
     items: Vec<Item>,
     npcs: HashMap<EOChar, Npc>,
+    npc_data: HashMap<EOShort, NpcData>,
     characters: HashMap<EOShort, Character>,
 }
 
 impl Map {
-    pub fn new(file: MapFile, rx: UnboundedReceiver<Command>) -> Self {
+    pub fn new(file: MapFile, rx: UnboundedReceiver<Command>, world: WorldHandle) -> Self {
         Self {
             file,
             rx,
+            world,
             items: Vec::new(),
             npcs: HashMap::new(),
+            npc_data: HashMap::new(),
             characters: HashMap::new(),
         }
     }
@@ -185,12 +197,7 @@ impl Map {
 
                 let is_tile_walkable = target.admin_level as EOChar >= 1
                     || is_tile_walkable(coords, &self.file.tile_rows);
-                if is_in_bounds(
-                    coords,
-                    self.file.width,
-                    self.file.height,
-                ) && is_tile_walkable
-                {
+                if is_in_bounds(coords, self.file.width, self.file.height) && is_tile_walkable {
                     target.coords = coords;
                 }
 
@@ -226,17 +233,24 @@ impl Map {
                     };
 
                     for (player_id, character) in self.characters.iter() {
-                        if *player_id != target_player_id && character.is_in_range_distance(target_coords, see_distance) && !character.is_in_range_distance(target_previous_coords, see_distance) {
+                        if *player_id != target_player_id
+                            && character.is_in_range_distance(target_coords, see_distance)
+                            && !character.is_in_range_distance(target_previous_coords, see_distance)
+                        {
                             packet.player_ids.push(*player_id);
                         }
                     }
                     for item in self.items.iter() {
-                        if item.is_in_range_distance(target_coords, see_distance) && !item.is_in_range_distance(target_previous_coords, see_distance) {
+                        if item.is_in_range_distance(target_coords, see_distance)
+                            && !item.is_in_range_distance(target_previous_coords, see_distance)
+                        {
                             packet.items.push(item.to_item_map_info());
                         }
                     }
                     for (index, npc) in self.npcs.iter() {
-                        if npc.is_in_range_distance(target_coords, see_distance) && !npc.is_in_range_distance(target_previous_coords, see_distance) {
+                        if npc.is_in_range_distance(target_coords, see_distance)
+                            && !npc.is_in_range_distance(target_previous_coords, see_distance)
+                        {
                             packet.npc_indexes.push(*index);
                         }
                     }
@@ -291,10 +305,9 @@ impl Map {
         }
     }
 
-    fn spawn_npcs(&mut self) {
+    async fn spawn_npcs(&mut self) {
         // TODO: test if this is actually how GameServer.exe works
         let now = chrono::Utc::now();
-        let mut rng = rand::thread_rng();
 
         if !self.file.npc_spawns.is_empty() {
             if self.npcs.is_empty() {
@@ -309,8 +322,42 @@ impl Map {
                 for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
                     // TODO: bounds check
                     for _ in 0..spawn.amount {
-                        self.npcs.insert(npc_index, Npc::new(spawn.npc_id, TinyCoords::new(0, 0), Direction::Down, spawn_index, dead_since, dead_since, dead_since));
+                        self.npcs.insert(
+                            npc_index,
+                            Npc::new(
+                                spawn.npc_id,
+                                TinyCoords::new(0, 0),
+                                Direction::Down,
+                                spawn_index,
+                                dead_since,
+                                dead_since,
+                                dead_since,
+                            ),
+                        );
                         npc_index += 1;
+                    }
+
+                    if !self.npc_data.contains_key(&spawn.npc_id) {
+                        let data_record = match self.world.get_npc(spawn.npc_id).await {
+                            Ok(npc) => Some(npc),
+                            Err(e) => {
+                                error!("Failed to load NPC {}", e);
+                                None
+                            }
+                        };
+
+                        if data_record.is_some() {
+                            let drop_record = self.world.get_drop_record(spawn.npc_id).await;
+                            let talk_record = self.world.get_talk_record(spawn.npc_id).await;
+                            self.npc_data.insert(
+                                spawn.npc_id,
+                                NpcData {
+                                    npc_record: data_record.unwrap(),
+                                    drop_record,
+                                    talk_record,
+                                },
+                            );
+                        }
                     }
                 }
             }
@@ -324,18 +371,27 @@ impl Map {
                 occupied_tiles.insert(npc.coords);
             }
 
+            let mut rng = rand::thread_rng();
             for npc in self.npcs.values_mut() {
                 let spawn = &self.file.npc_spawns[npc.spawn_index];
-                if !npc.alive && now.timestamp() - npc.dead_since.timestamp() > spawn.respawn_time.into() {
+                if !npc.alive
+                    && now.timestamp() - npc.dead_since.timestamp() > spawn.respawn_time.into()
+                {
                     npc.alive = true;
 
                     let mut coords = TinyCoords::new(spawn.x, spawn.y);
 
                     // TODO: break loop after a certain number of tries
-                    while is_occupied(coords, &occupied_tiles) || !is_tile_walkable(coords, &self.file.tile_rows) {
+                    while is_occupied(coords, &occupied_tiles)
+                        || !is_tile_walkable(coords, &self.file.tile_rows)
+                    {
                         // set position to random spot in a radius of 3
-                        coords.x = cmp::max(0, rng.gen_range(coords.x as i32 - 3..coords.x as i32 + 3)) as EOChar;
-                        coords.y = cmp::max(0, rng.gen_range(coords.y as i32 - 3..coords.y as i32 + 3)) as EOChar;
+                        coords.x =
+                            cmp::max(0, rng.gen_range(coords.x as i32 - 3..coords.x as i32 + 3))
+                                as EOChar;
+                        coords.y =
+                            cmp::max(0, rng.gen_range(coords.y as i32 - 3..coords.y as i32 + 3))
+                                as EOChar;
                     }
 
                     npc.coords = coords;
@@ -367,8 +423,6 @@ impl Map {
 
         // TODO: attacks
 
-        // TODO: Split packets by groups of players in range of NPC
-
         // get occupied tiles of all characters and npcs
         let mut occupied_tiles = HashSet::new();
         for character in self.characters.values() {
@@ -379,6 +433,7 @@ impl Map {
         }
 
         let mut position_updates: Vec<NPCPosition> = Vec::with_capacity(self.npcs.len());
+        let mut talk_updates: Vec<NPCChat> = Vec::with_capacity(self.npcs.len());
 
         for (index, npc) in &mut self.npcs {
             let spawn = &self.file.npc_spawns[npc.spawn_index];
@@ -399,9 +454,11 @@ impl Map {
             } else {
                 0
             };
-            if npc.alive && act_rate > 0 && act_delta >= Duration::milliseconds(act_rate as i64 + walk_idle_for_ms) {
+            if npc.alive
+                && act_rate > 0
+                && act_delta >= Duration::milliseconds(act_rate as i64 + walk_idle_for_ms)
+            {
                 // TODO: attack
-                // TODO: walk rate? NPCs appear to have a chance to actually move randomly
 
                 let action = rng.gen_range(1..=10);
                 if action >= 7 && action <= 9 {
@@ -410,29 +467,55 @@ impl Map {
 
                 if action != 10 {
                     let new_coords = match npc.direction {
-                        Direction::Down => if npc.coords.y >= self.file.height {
-                            npc.coords
-                        } else {
-                            TinyCoords { x: npc.coords.x, y: npc.coords.y + 1 }
-                        },
-                        Direction::Left => if npc.coords.x == 0 {
-                            npc.coords
-                        } else {
-                            TinyCoords { x: npc.coords.x - 1, y: npc.coords.y }
-                        },
-                        Direction::Up => if npc.coords.y == 0 {
-                            npc.coords
-                        } else {
-                            TinyCoords { x: npc.coords.x, y: npc.coords.y - 1 }
-                        },
-                        Direction::Right => if npc.coords.x >= self.file.width {
-                            npc.coords
-                        } else {
-                            TinyCoords { x: npc.coords.x + 1, y: npc.coords.y }
-                        },
+                        Direction::Down => {
+                            if npc.coords.y >= self.file.height {
+                                npc.coords
+                            } else {
+                                TinyCoords {
+                                    x: npc.coords.x,
+                                    y: npc.coords.y + 1,
+                                }
+                            }
+                        }
+                        Direction::Left => {
+                            if npc.coords.x == 0 {
+                                npc.coords
+                            } else {
+                                TinyCoords {
+                                    x: npc.coords.x - 1,
+                                    y: npc.coords.y,
+                                }
+                            }
+                        }
+                        Direction::Up => {
+                            if npc.coords.y == 0 {
+                                npc.coords
+                            } else {
+                                TinyCoords {
+                                    x: npc.coords.x,
+                                    y: npc.coords.y - 1,
+                                }
+                            }
+                        }
+                        Direction::Right => {
+                            if npc.coords.x >= self.file.width {
+                                npc.coords
+                            } else {
+                                TinyCoords {
+                                    x: npc.coords.x + 1,
+                                    y: npc.coords.y,
+                                }
+                            }
+                        }
                     };
 
-                    if !is_occupied(new_coords, &occupied_tiles) && is_tile_walkable_for_npc(new_coords, &self.file.tile_rows, &self.file.warp_rows) {
+                    if !is_occupied(new_coords, &occupied_tiles)
+                        && is_tile_walkable_for_npc(
+                            new_coords,
+                            &self.file.tile_rows,
+                            &self.file.warp_rows,
+                        )
+                    {
                         occupied_tiles.remove(&npc.coords);
                         npc.coords = new_coords;
                         position_updates.push(NPCPosition {
@@ -448,23 +531,56 @@ impl Map {
                     npc.walk_idle_for = Some(Duration::seconds(rng.gen_range(1..=4)));
                 }
             }
+
+            if let Some(npc_data) = self.npc_data.get(&npc.id) {
+                if let Some(talk_record) = &npc_data.talk_record {
+                    let talk_delta = now - npc.last_talk;
+                    if npc.alive
+                        && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
+                    {
+                        let roll = rng.gen_range(0..=100);
+                        if roll <= talk_record.rate {
+                            let message_index = rng.gen_range(0..talk_record.messages.len());
+                            talk_updates.push(NPCChat {
+                                index: *index,
+                                message: talk_record.messages[message_index].to_string(),
+                            })
+                        }
+                        npc.last_talk = now;
+                    }
+                }
+            }
         }
 
-        if position_updates.len() > 0 {
+        if position_updates.len() > 0 || talk_updates.len() > 0 {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
-                let position_updates_in_rage: Vec<NPCPosition> = position_updates.iter().filter(|update| {
-                    let npc = &self.npcs[&update.index];
-                    character.is_in_range(npc.coords)
-                }).cloned().collect();
+                let position_updates_in_rage: Vec<NPCPosition> = position_updates
+                    .iter()
+                    .filter(|update| {
+                        let npc = &self.npcs[&update.index];
+                        character.is_in_range(npc.coords)
+                    })
+                    .cloned()
+                    .collect();
 
-                if position_updates_in_rage.len() > 0 {
+                let talk_updates_in_range: Vec<NPCChat> = talk_updates
+                    .iter()
+                    .filter(|update| {
+                        position_updates_in_rage
+                            .iter()
+                            .any(|pu| pu.index == update.index)
+                    })
+                    .cloned()
+                    .collect();
+
+                if position_updates_in_rage.len() > 0 || talk_updates_in_range.len() > 0 {
                     let packet = npc::Player {
                         positions: position_updates_in_rage,
                         attacks: Vec::new(),
-                        chats: Vec::new(),
+                        chats: talk_updates_in_range,
                     };
-    
+
                     debug!("Send: {:?}", packet);
                     character.player.as_ref().unwrap().send(
                         Action::Player,
@@ -474,7 +590,6 @@ impl Map {
                 }
             }
         }
-
     }
 
     pub async fn handle_command(&mut self, command: Command) {
@@ -578,7 +693,7 @@ impl Map {
             Command::Serialize { respond_to } => {
                 let _ = respond_to.send(self.file.serialize());
             }
-            Command::SpawnNpcs => self.spawn_npcs(),
+            Command::SpawnNpcs => self.spawn_npcs().await,
             Command::ActNpcs => self.act_npcs(),
             Command::Walk {
                 target_player_id,

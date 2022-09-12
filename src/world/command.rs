@@ -1,6 +1,6 @@
 use eo::{
     data::{
-        pubs::{ClassRecord, ItemRecord, NPCRecord, DropRecord, TalkRecord, DropNPCRecord},
+        pubs::{ClassRecord, ItemRecord, NPCRecord, TalkRecord, DropNPCRecord},
         EOChar, EOInt, EOShort,
     },
     net::{

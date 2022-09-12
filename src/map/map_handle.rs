@@ -22,7 +22,7 @@ impl MapHandle {
     pub fn new(id: EOShort, file: MapFile, world_handle: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let map = Map::new(file, rx, world_handle);
-        tokio::task::Builder::new()
+        let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));
 

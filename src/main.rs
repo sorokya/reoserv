@@ -11,14 +11,16 @@ use lazy_static::lazy_static;
 
 mod character;
 mod commands;
+use commands::Commands;
+mod formulas;
+use formulas::Formulas;
 mod errors;
 mod map;
 mod player;
 mod settings;
-use commands::Commands;
+use settings::Settings;
 mod utils;
 mod world;
-use settings::Settings;
 
 use eo::data::EOByte;
 use mysql_async::prelude::*;
@@ -33,6 +35,7 @@ pub type PacketBuf = Vec<EOByte>;
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
+    static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
 }
 
 #[tokio::main]

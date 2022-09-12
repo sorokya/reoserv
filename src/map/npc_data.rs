@@ -6,13 +6,3 @@ pub struct NpcData {
     pub drop_record: Option<DropNPCRecord>,
     pub talk_record: Option<TalkRecord>,
 }
-
-impl NpcData {
-    pub fn new(npc_record: NPCRecord, drop_record: Option<DropNPCRecord>, talk_record: Option<TalkRecord>) -> Self {
-        Self {
-            npc_record,
-            drop_record,
-            talk_record,
-        }
-    }
-}

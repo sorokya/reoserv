@@ -8,7 +8,7 @@ use eo::{
     character::Emote,
     data::{
         map::{MapFile, NPCSpeed},
-        EOChar, EOShort, EOThree, Serializeable,
+        EOChar, EOShort, EOThree, Serializeable, pubs::NPCRecord,
     },
     net::{
         packets::server::{avatar, door, emote, face, map_info, npc, players, talk, walk},
@@ -349,7 +349,7 @@ impl Map {
                         npc_index += 1;
                     }
 
-                    if !self.npc_data.contains_key(&spawn.npc_id) {
+                    self.npc_data.entry(spawn.npc_id).or_insert({
                         let data_record = match self.world.get_npc(spawn.npc_id).await {
                             Ok(npc) => Some(npc),
                             Err(e) => {
@@ -361,16 +361,19 @@ impl Map {
                         if data_record.is_some() {
                             let drop_record = self.world.get_drop_record(spawn.npc_id).await;
                             let talk_record = self.world.get_talk_record(spawn.npc_id).await;
-                            self.npc_data.insert(
-                                spawn.npc_id,
-                                NpcData {
-                                    npc_record: data_record.unwrap(),
-                                    drop_record,
-                                    talk_record,
-                                },
-                            );
+                            NpcData {
+                                npc_record: data_record.unwrap(),
+                                drop_record,
+                                talk_record,
+                            }
+                        } else {
+                            NpcData {
+                                npc_record: NPCRecord::default(),
+                                drop_record: None,
+                                talk_record: None
+                            }
                         }
-                    }
+                    });
                 }
             }
 
@@ -453,7 +456,7 @@ impl Map {
                 // TODO: attack
 
                 let action = rng.gen_range(1..=10);
-                if action >= 7 && action <= 9 {
+                if (7..=9).contains(&action) {
                     npc.direction = Direction::from_u8(rng.gen_range(0..=3)).unwrap();
                 }
 
@@ -545,7 +548,7 @@ impl Map {
             }
         }
 
-        if position_updates.len() > 0 || talk_updates.len() > 0 {
+        if !position_updates.is_empty() || !talk_updates.is_empty()  {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
 
@@ -569,7 +572,7 @@ impl Map {
                     .cloned()
                     .collect();
 
-                if position_updates_in_rage.len() > 0 || talk_updates_in_range.len() > 0 {
+                if !position_updates_in_rage.is_empty() || !talk_updates_in_range.is_empty() {
                     let packet = npc::Player {
                         positions: position_updates_in_rage,
                         attacks: Vec::new(),

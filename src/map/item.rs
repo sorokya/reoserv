@@ -26,7 +26,7 @@ impl Item {
         }
     }
 
-    pub fn is_in_range(&self, coords: TinyCoords) -> bool {
+    pub fn _is_in_range(&self, coords: TinyCoords) -> bool {
         utils::in_range(
             self.coords.x.into(),
             self.coords.y.into(),

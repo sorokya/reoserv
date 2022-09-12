@@ -50,7 +50,7 @@ pub fn is_tile_walkable_for_npc(coords: TinyCoords, tile_rows: &[TileRow], warp_
     if let Some(warp_row) = warp_rows
         .iter()
         .find(|warp_row| warp_row.y == coords.y) {
-            if let Some(warp) = warp_row
+            if let Some(_warp) = warp_row
                 .tiles
                 .iter()
                 .find(|warp| warp.x == coords.x)

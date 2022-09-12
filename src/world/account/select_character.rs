@@ -1,12 +1,14 @@
-use eo::data::EOInt;
+use eo::data::{EOInt, pubs::{ClassRecord, ClassFile, ItemFile}};
 use mysql_async::Conn;
 
-use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
+use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle, world::WorldHandle};
 
 pub async fn select_character(
     conn: &mut Conn,
     character_id: EOInt,
     player: PlayerHandle,
+    class_file: &ClassFile,
+    item_file: &ItemFile,
 ) -> Result<Character, Box<dyn std::error::Error + Send + Sync>> {
     let account_id = match player.get_account_id().await {
         Ok(account_id) => account_id,
@@ -45,6 +47,9 @@ pub async fn select_character(
     character.player_id = Some(player_id);
     character.player = Some(player);
     character.logged_in_at = Some(chrono::Utc::now());
+
+    let class = &class_file.records[(character.class - 1) as usize];
+    character.calculate_stats(&class, &item_file).await;
 
     Ok(character)
 }

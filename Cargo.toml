@@ -23,3 +23,4 @@ mysql_async = "0.29"
 sha2 = "0.10"
 eo = { git = "https://github.com/sorokya/eo", features = ["use_serde"] }
 rand = "0.8"
+evalexpr = "8.1.0"

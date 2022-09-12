@@ -423,6 +423,8 @@ impl World {
                     &mut conn,
                     character_id,
                     player.clone(),
+                    self.class_file.as_ref().unwrap(),
+                    self.item_file.as_ref().unwrap(),
                 )
                 .await
                 {

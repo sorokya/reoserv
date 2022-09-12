@@ -313,8 +313,7 @@ impl Player {
             Command::SetBusy(busy) => {
                 self.busy = busy;
             }
-            Command::SetCharacter(mut character) => {
-                character.world = Some(self.world.clone());
+            Command::SetCharacter(character) => {
                 self.character = Some(*character);
             }
             Command::SetMap(map) => {

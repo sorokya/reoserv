@@ -28,7 +28,7 @@ impl PlayerHandle {
     pub fn new(id: EOShort, socket: TcpStream, world: WorldHandle, pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let player = Player::new(id, socket, rx, world, pool);
-        tokio::task::Builder::new()
+        let _ = tokio::task::Builder::new()
             .name(&format!("Player {}", id))
             .spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));
 
@@ -235,7 +235,7 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
         }
 
         if let Some(packet) = player.queue.get_mut().pop_front() {
-            tokio::task::Builder::new()
+            let _ = tokio::task::Builder::new()
                 .name("handle_packet")
                 .spawn(handle_packet(
                     packet,

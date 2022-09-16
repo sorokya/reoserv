@@ -23,8 +23,7 @@ pub async fn enter_game(
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
     player.set_state(State::Playing);
-    let mut character = player.take_character().await?;
-    character.calculate_stats().await;
+    let character = player.take_character().await?;
 
     let weight = Weight {
         current: character.weight as EOChar,

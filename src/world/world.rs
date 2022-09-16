@@ -180,7 +180,7 @@ impl World {
                             if let Some(map) = maps.get(&map_id) {
                                 let player = player.to_owned();
                                 let map = map.to_owned();
-                                tokio::task::Builder::new()
+                                let _ = tokio::task::Builder::new()
                                     .name("enter_game")
                                     .spawn(async move {
                                         let result = enter_game(map, player).await;
@@ -218,11 +218,25 @@ impl World {
                         let _ = respond_to.send(Ok(class.clone()));
                     }
                     None => {
-                        error!("Class not found: {}", class_id);
+                        warn!("Class not found: {}", class_id);
                         let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
                             "Class".to_string(),
                             class_id as EOShort,
                         ))));
+                    }
+                }
+            }
+            Command::GetDropRecord {
+                npc_id, 
+                respond_to 
+            } => {
+                let drops= self.drop_file.as_ref().expect("drops not loaded");
+                match drops.records.iter().find(|d| d.npc_id == npc_id) {
+                    Some(drop) => {
+                        let _ = respond_to.send(Some(drop.clone()));
+                    }
+                    None => {
+                        let _ = respond_to.send(None);
                     }
                 }
             }
@@ -236,7 +250,7 @@ impl World {
                         let _ = respond_to.send(Ok(item.clone()));
                     }
                     None => {
-                        error!("Item not found: {}", item_id);
+                        warn!("Item not found: {}", item_id);
                         let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
                             "Item".to_string(),
                             item_id,
@@ -261,7 +275,7 @@ impl World {
                         let _ = respond_to.send(Ok(map.to_owned()));
                     }
                     None => {
-                        error!("Map not found: {}", map_id);
+                        warn!("Map not found: {}", map_id);
                         let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
                             "Map".to_string(),
                             map_id,
@@ -272,10 +286,42 @@ impl World {
             Command::GetNextPlayerId { respond_to } => {
                 let _ = respond_to.send(get_next_player_id(&self.players, 300));
             }
+            Command::GetNpc {
+                npc_id,
+                respond_to,
+            } => {
+                let npcs = self.npc_file.as_ref().expect("npcs not loaded");
+                match npcs.records.iter().find(|n| n.id == npc_id as EOInt) {
+                    Some(npc) => {
+                        let _ = respond_to.send(Ok(npc.clone()));
+                    }
+                    None => {
+                        warn!("NPC not found: {}", npc_id);
+                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
+                            "NPC".to_string(),
+                            npc_id,
+                        ))));
+                    }
+                }
+            }
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
             }
-            Command::LoadMapFiles { respond_to } => match data::load_maps().await {
+            Command::GetTalkRecord {
+                npc_id, 
+                respond_to 
+            } => {
+                let talks= self.talk_file.as_ref().expect("talks not loaded");
+                match talks.records.iter().find(|t| t.npc_id == npc_id) {
+                    Some(talk) => {
+                        let _ = respond_to.send(Some(talk.clone()));
+                    }
+                    None => {
+                        let _ = respond_to.send(None);
+                    }
+                }
+            }
+            Command::LoadMapFiles { world_handle, respond_to } => match data::load_maps(world_handle).await {
                 Ok(maps) => {
                     self.maps = Some(maps);
                     let _ = respond_to.send(());
@@ -377,6 +423,8 @@ impl World {
                     &mut conn,
                     character_id,
                     player.clone(),
+                    self.class_file.as_ref().unwrap(),
+                    self.item_file.as_ref().unwrap(),
                 )
                 .await
                 {
@@ -424,6 +472,11 @@ impl World {
             Command::SpawnNpcs => {
                 for map in self.maps.as_ref().unwrap().values() {
                     map.spawn_npcs();
+                }
+            }
+            Command::ActNpcs => {
+                for map in self.maps.as_ref().unwrap().values() {
+                    map.act_npcs();
                 }
             }
         }

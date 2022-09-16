@@ -65,4 +65,5 @@ pub enum Command {
         direction: Direction,
     },
     SpawnNpcs,
+    ActNpcs,
 }

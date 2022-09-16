@@ -1,6 +1,6 @@
 use eo::{
     data::{
-        pubs::{ClassRecord, ItemRecord},
+        pubs::{ClassRecord, ItemRecord, NPCRecord, TalkRecord, DropNPCRecord},
         EOChar, EOInt, EOShort,
     },
     net::{
@@ -28,7 +28,7 @@ impl WorldHandle {
     pub fn new(pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let world = World::new(rx, pool);
-        tokio::task::Builder::new()
+        let _ = tokio::task::Builder::new()
             .name("World")
             .spawn(run_world(world));
 
@@ -178,6 +178,18 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_drop_record(
+        &self,
+        npc_id: EOShort,
+    ) -> Option<DropNPCRecord> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetDropRecord {
+            npc_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn get_item(
         &self,
         item_id: EOShort,
@@ -228,6 +240,18 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
+    pub async fn get_npc(
+        &self,
+        npc_id: EOShort,
+    ) -> Result<NPCRecord, Box<dyn std::error::Error + Send + Sync>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetNpc {
+            npc_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn get_player_count(
         &self,
     ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
@@ -236,9 +260,24 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
+    pub async fn get_talk_record(
+        &self,
+        npc_id: EOShort,
+    ) -> Option<TalkRecord> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetTalkRecord {
+            npc_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::LoadMapFiles { respond_to: tx });
+        let _ = self.tx.send(Command::LoadMapFiles {
+            world_handle: self.clone(),
+            respond_to: tx,
+        });
         rx.await.unwrap();
     }
 
@@ -312,6 +351,7 @@ impl WorldHandle {
         &self,
         character_id: EOInt,
         player: PlayerHandle,
+        world: WorldHandle,
     ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::SelectCharacter {
@@ -330,6 +370,10 @@ impl WorldHandle {
 
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
+    }
+
+    pub fn act_npcs(&self) {
+        let _ = self.tx.send(Command::ActNpcs);
     }
 }
 

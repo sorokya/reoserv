@@ -1,6 +1,6 @@
 use eo::{
     data::{
-        pubs::{ClassRecord, ItemRecord},
+        pubs::{ClassRecord, ItemRecord, NPCRecord, TalkRecord, DropNPCRecord},
         EOChar, EOInt, EOShort,
     },
     net::{
@@ -11,6 +11,8 @@ use eo::{
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
+
+use super::WorldHandle;
 
 #[derive(Debug)]
 pub enum Command {
@@ -75,6 +77,10 @@ pub enum Command {
         class_id: EOChar,
         respond_to: oneshot::Sender<Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>>>,
     },
+    GetDropRecord {
+        npc_id: EOShort,
+        respond_to: oneshot::Sender<Option<DropNPCRecord>>,
+    },
     GetItem {
         item_id: EOShort,
         respond_to: oneshot::Sender<Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>>>,
@@ -93,10 +99,19 @@ pub enum Command {
     GetNextPlayerId {
         respond_to: oneshot::Sender<EOShort>,
     },
+    GetNpc {
+        npc_id: EOShort,
+        respond_to: oneshot::Sender<Result<NPCRecord, Box<dyn std::error::Error + Send + Sync>>>,
+    },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
+    GetTalkRecord {
+        npc_id: EOShort,
+        respond_to: oneshot::Sender<Option<TalkRecord>>,
+    },
     LoadMapFiles {
+        world_handle: WorldHandle,
         respond_to: oneshot::Sender<()>,
     },
     LoadPubFiles {
@@ -138,4 +153,5 @@ pub enum Command {
         message: String,
     },
     SpawnNpcs,
+    ActNpcs,
 }

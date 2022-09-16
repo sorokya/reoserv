@@ -45,6 +45,16 @@ pub struct World {
 pub struct NPCs {
     pub instant_spawn: bool,
     pub freeze_on_empty_map: bool,
+    pub respawn_rate: u32,
+    pub act_rate: u32,
+    pub speed_0: u32,
+    pub speed_1: u32,
+    pub speed_2: u32,
+    pub speed_3: u32,
+    pub speed_4: u32,
+    pub speed_5: u32,
+    pub speed_6: u32,
+    pub talk_rate: u32,
 }
 
 #[derive(Debug, Deserialize)]

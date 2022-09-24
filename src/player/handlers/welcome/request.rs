@@ -13,7 +13,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     debug!("Recv: {:?}", request);
 
     if let Ok(reply) = world
-        .select_character(request.character_id, player.clone(), world.clone())
+        .select_character(request.character_id, player.clone())
         .await
     {
         debug!("Reply: {:?}", reply);

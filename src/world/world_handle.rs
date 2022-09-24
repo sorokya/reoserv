@@ -351,7 +351,6 @@ impl WorldHandle {
         &self,
         character_id: EOInt,
         player: PlayerHandle,
-        world: WorldHandle,
     ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::SelectCharacter {

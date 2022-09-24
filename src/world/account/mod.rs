@@ -1,5 +1,7 @@
 mod account_exists;
 pub use account_exists::account_exists;
+mod calculate_stats;
+pub use calculate_stats::calculate_stats;
 mod character_exists;
 pub use character_exists::character_exists;
 mod create_account;

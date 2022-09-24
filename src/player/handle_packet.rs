@@ -29,7 +29,7 @@ pub async fn handle_packet(
             reader.get_char() as EOInt
         };
 
-        if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
+        if SETTINGS.server.enforce_sequence && server_sequence.abs_diff(client_sequence) > 1 {
             player.close(format!(
                 "sending invalid sequence: Got {}, expected {}.",
                 client_sequence, server_sequence

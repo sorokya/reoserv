@@ -63,31 +63,32 @@ async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
     }
 }
 
+async fn set(args: &[&str], _character: &Character, world: &WorldHandle) {
+    let stat_name = args[0].to_string();
+    let target_name = args[1].to_string();
+    let value = args[2].parse::<EOShort>().unwrap();
+    world.set_character_stat(target_name, stat_name, value);
+}
+
 fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
-        let packet = talk::Server {
-            message: format!(
-                "Wrong number of args. Got {}, expected: {}. (usage: \"{}\")",
-                args.len(),
-                required_args_length,
-                command.usage
-            ),
-        };
-        player.send(Action::Server, Family::Talk, packet.serialize());
+        send_error_message(player, format!(
+            "Wrong number of args. Got {}, expected: {}. (usage: \"{}\")",
+            args.len(),
+            required_args_length,
+            command.usage
+        ));
         return false;
     }
 
     if args.len() > command.args.len() {
-        let packet = talk::Server {
-            message: format!(
-                "Too many args. Got {}, expected: {}. (usage: \"{}\")",
-                args.len(),
-                command.args.len(),
-                command.usage
-            ),
-        };
-        player.send(Action::Server, Family::Talk, packet.serialize());
+        send_error_message(player, format!(
+            "Too many args. Got {}, expected: {}. (usage: \"{}\")",
+            args.len(),
+            command.args.len(),
+            command.usage
+        ));
         return false;
     }
 
@@ -112,6 +113,13 @@ fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> boo
     true
 }
 
+fn send_error_message(player: &PlayerHandle, message: String) {
+    let packet = talk::Server {
+        message,
+    };
+    player.send(Action::Server, Family::Talk, packet.serialize());
+}
+
 pub async fn handle_command(
     args: &[&str],
     character: &Character,
@@ -133,6 +141,7 @@ pub async fn handle_command(
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
+                    "set" => set(&args, character, &world).await,
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

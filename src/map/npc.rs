@@ -21,6 +21,7 @@ pub struct Npc {
 }
 
 impl Npc {
+    // TODO: builder pattern?
     pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>, last_act: DateTime<Utc>, does_talk: bool, last_talk: DateTime<Utc>) -> Self {
         Self {
             id,

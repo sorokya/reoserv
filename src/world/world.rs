@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    account::{self},
+    account::{self, calculate_stats, set_character_stat},
     chat::{
         broadcast_admin_message, broadcast_announcement, broadcast_global_message,
         broadcast_server_message, send_player_not_found, send_private_message,
@@ -208,7 +208,7 @@ impl World {
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
             }
-            Command::GetClass {
+            Command::_GetClass {
                 class_id,
                 respond_to,
             } => {
@@ -240,7 +240,7 @@ impl World {
                     }
                 }
             }
-            Command::GetItem {
+            Command::_GetItem {
                 item_id,
                 respond_to,
             } => {
@@ -419,12 +419,10 @@ impl World {
                 respond_to,
             } => {
                 let mut conn = self.pool.get_conn().await.unwrap();
-                let character = match account::select_character(
+                let mut character = match account::select_character(
                     &mut conn,
                     character_id,
                     player.clone(),
-                    self.class_file.as_ref().unwrap(),
-                    self.item_file.as_ref().unwrap(),
                 )
                 .await
                 {
@@ -434,6 +432,10 @@ impl World {
                         return;
                     }
                 };
+
+                let item_file = self.item_file.as_ref().expect("Item file not found");
+                let class_file = self.class_file.as_ref().expect("Class file not found");
+                calculate_stats(&mut character, item_file, class_file);
 
                 let select_character = match self
                     .get_welcome_request_data(player.clone(), &character)
@@ -467,6 +469,17 @@ impl World {
                         ),
                         Err(_) => send_player_not_found(from, &to),
                     }
+                }
+            }
+            Command::SetCharacterStat { target_name, stat_name, value } => {
+                if let Ok(mut character) = self.get_character_by_name(&target_name).await {
+                    set_character_stat(&mut character, stat_name, value);
+
+                    let item_file = self.item_file.as_ref().expect("Item file not found");
+                    let class_file = self.class_file.as_ref().expect("Class file not found");
+                    calculate_stats(&mut character, item_file, class_file);
+
+                    // TODO: send packet telling player stats changed
                 }
             }
             Command::SpawnNpcs => {

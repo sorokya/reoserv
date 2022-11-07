@@ -73,7 +73,7 @@ pub enum Command {
         respond_to:
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
-    GetClass {
+    _GetClass {
         class_id: EOChar,
         respond_to: oneshot::Sender<Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>>>,
     },
@@ -81,7 +81,7 @@ pub enum Command {
         npc_id: EOShort,
         respond_to: oneshot::Sender<Option<DropNPCRecord>>,
     },
-    GetItem {
+    _GetItem {
         item_id: EOShort,
         respond_to: oneshot::Sender<Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>>>,
     },
@@ -151,6 +151,11 @@ pub enum Command {
         from: PlayerHandle,
         to: String,
         message: String,
+    },
+    SetCharacterStat {
+        target_name: String,
+        stat_name: String,
+        value: EOShort,
     },
     SpawnNpcs,
     ActNpcs,

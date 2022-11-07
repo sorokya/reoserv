@@ -1,5 +1,7 @@
 mod account_exists;
 pub use account_exists::account_exists;
+mod calculate_stats;
+pub use calculate_stats::calculate_stats;
 mod character_exists;
 pub use character_exists::character_exists;
 mod create_account;
@@ -22,3 +24,5 @@ mod request_character_deletion;
 pub use request_character_deletion::request_character_deletion;
 mod select_character;
 pub use select_character::select_character;
+mod set_character_stat;
+pub use set_character_stat::set_character_stat;

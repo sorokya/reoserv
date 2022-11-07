@@ -166,12 +166,12 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_class(
+    pub async fn _get_class(
         &self,
         class_id: EOChar,
     ) -> Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetClass {
+        let _ = self.tx.send(Command::_GetClass {
             class_id,
             respond_to: tx,
         });
@@ -190,12 +190,12 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_item(
+    pub async fn _get_item(
         &self,
         item_id: EOShort,
     ) -> Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetItem {
+        let _ = self.tx.send(Command::_GetItem {
             item_id,
             respond_to: tx,
         });
@@ -351,7 +351,6 @@ impl WorldHandle {
         &self,
         character_id: EOInt,
         player: PlayerHandle,
-        world: WorldHandle,
     ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::SelectCharacter {
@@ -366,6 +365,12 @@ impl WorldHandle {
         let _ = self
             .tx
             .send(Command::SendPrivateMessage { from, to, message });
+    }
+
+    pub fn set_character_stat(&self, target_name: String, stat_name: String, value: EOShort) {
+        let _ = self
+            .tx
+            .send(Command::SetCharacterStat { target_name, stat_name, value });
     }
 
     pub fn spawn_npcs(&self) {

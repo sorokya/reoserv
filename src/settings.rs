@@ -9,6 +9,8 @@ pub struct Server {
     pub ping_rate: u32,
     pub enforce_sequence: bool,
     pub num_of_maps: u32,
+    pub min_version: String,
+    pub max_version: String,
 }
 
 #[derive(Debug, Deserialize)]

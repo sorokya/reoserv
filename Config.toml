@@ -25,6 +25,10 @@ enforce_sequence = true
 # Number of maps to attempt to load
 num_of_maps = 282
 
+# Client version
+min_version = "0.0.28"
+max_version = "0.3.29"
+
 [database]
 host = "127.0.0.1"
 port = "3306"

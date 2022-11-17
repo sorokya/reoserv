@@ -3,6 +3,9 @@ use reqwest::Url;
 use crate::{SETTINGS, VERSION};
 
 pub async fn ping_sln() {
+    let version_parts = SETTINGS.server.max_version.split('.').collect::<Vec<&str>>();
+    let client_major_version = version_parts[0];
+    let client_minor_version = version_parts[1];
     let url = match Url::parse_with_params(&format!("{}check", SETTINGS.sln.url),
         &[
             ("software", "REOSERV"),
@@ -13,6 +16,8 @@ pub async fn ping_sln() {
             ("name", &SETTINGS.sln.server_name),
             ("url", &SETTINGS.sln.site),
             ("zone", &SETTINGS.sln.zone),
+            ("clientmajorversion", &client_major_version),
+            ("clientminorversion", &client_minor_version),
         ],
     ) {
         Ok(url) => url,

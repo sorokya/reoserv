@@ -24,16 +24,24 @@ pub async fn ping_sln() {
 
     debug!("Pinging SLN: {}", url);
 
-    let response = match reqwest::get(url).await {
-        Ok(response) => response,
-        Err(e) => {
-            error!("Failed to ping SLN: {}", e);
-            return;
-        }
+    let client = reqwest::Client::new();
+    let response = match client.get(url)
+        .header("User-Agent", "EOSERV")
+        .send()
+        .await {
+            Ok(response) => response,
+            Err(e) => {
+                error!("Failed to ping SLN: {}", e);
+                return;
+            }
     };
+
+    debug!("SLN response: {:?}", response);
 
     if !response.status().is_success() {
         error!("Failed to ping SLN: {} {}", response.status(), response.text().await.unwrap());
         return;
     }
+
+    debug!("Pinged SLN successfully");
 }

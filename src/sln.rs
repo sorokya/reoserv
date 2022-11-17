@@ -41,11 +41,24 @@ pub async fn ping_sln() {
             }
     };
 
-    debug!("SLN response: {:?}", response);
-
     if !response.status().is_success() {
         error!("Failed to ping SLN: {} {}", response.status(), response.text().await.unwrap());
         return;
+    }
+
+    if let Ok(message) = response.text().await {
+        let lines = message.split('\n').collect::<Vec<&str>>();
+        for line in lines {
+            let code = match line.chars().nth(0) {
+                Some(code) => code as u32,
+                None => continue,
+            };
+
+            match code {
+                3 | 4 | 5 => warn!("SLN Error: {}", line),
+                _ => continue,
+            }
+        }
     }
 
     debug!("Pinged SLN successfully");

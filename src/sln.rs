@@ -7,7 +7,7 @@ pub async fn ping_sln() {
         &[
             ("software", "REOSERV"),
             ("v", &VERSION),
-            ("retry", &SETTINGS.sln.rate.to_string()),
+            ("retry", &(SETTINGS.sln.rate * 60).to_string()),
             ("host", &SETTINGS.sln.hostname),
             ("port", &SETTINGS.server.port),
             ("name", &SETTINGS.sln.server_name),

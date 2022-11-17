@@ -1,6 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family},
+    net::{Action, Family, ClientState},
     world::{TinyCoords, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -11,8 +11,6 @@ use crate::{
     map::MapHandle,
     PacketBuf,
 };
-
-use super::State;
 
 #[derive(Debug)]
 pub enum Command {
@@ -61,7 +59,7 @@ pub enum Command {
         respond_to: oneshot::Sender<EOInt>,
     },
     GetState {
-        respond_to: oneshot::Sender<State>,
+        respond_to: oneshot::Sender<ClientState>,
     },
     GenSequence {
         respond_to: oneshot::Sender<EOInt>,
@@ -82,7 +80,7 @@ pub enum Command {
     SetBusy(bool),
     SetCharacter(Box<Character>),
     SetMap(MapHandle),
-    SetState(State),
+    SetState(ClientState),
     TakeCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },

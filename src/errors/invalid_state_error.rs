@@ -1,13 +1,13 @@
-use crate::player::State;
+use eo::net::ClientState;
 
 #[derive(Debug)]
 pub struct InvalidStateError {
-    pub expected: State,
-    pub actual: State,
+    pub expected: ClientState,
+    pub actual: ClientState,
 }
 
 impl InvalidStateError {
-    pub fn new(expected: State, actual: State) -> Self {
+    pub fn new(expected: ClientState, actual: ClientState) -> Self {
         Self { expected, actual }
     }
 }

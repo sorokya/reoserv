@@ -1,6 +1,6 @@
 use eo::{
     data::{EOInt, StreamReader, MAX1},
-    net::{Action, Family},
+    net::{Action, Family, ClientState},
 };
 use num_traits::FromPrimitive;
 
@@ -17,26 +17,28 @@ pub async fn handle_packet(
     let family = Family::from_u8(packet[1]).unwrap();
     let reader = StreamReader::new(&packet[2..]);
 
-    if family != Family::Init {
-        if family == Family::Connection && action == Action::Ping {
-            player.pong_new_sequence().await;
-        }
+    if player.get_state().await != ClientState::Uninitialized {
+        if family != Family::Init {
+            if family == Family::Connection && action == Action::Ping {
+                player.pong_new_sequence().await;
+            }
 
-        let server_sequence = player.gen_sequence().await;
-        let client_sequence = if server_sequence >= MAX1 {
-            reader.get_short() as EOInt
+            let server_sequence = player.gen_sequence().await;
+            let client_sequence = if server_sequence >= MAX1 {
+                reader.get_short() as EOInt
+            } else {
+                reader.get_char() as EOInt
+            };
+
+            if SETTINGS.server.enforce_sequence && server_sequence.abs_diff(client_sequence) > 1 {
+                player.close(format!(
+                    "sending invalid sequence: Got {}, expected {}.",
+                    client_sequence, server_sequence
+                ));
+            }
         } else {
-            reader.get_char() as EOInt
-        };
-
-        if SETTINGS.server.enforce_sequence && server_sequence.abs_diff(client_sequence) > 1 {
-            player.close(format!(
-                "sending invalid sequence: Got {}, expected {}.",
-                client_sequence, server_sequence
-            ));
+            let _ = player.gen_sequence().await;
         }
-    } else {
-        let _ = player.gen_sequence().await;
     }
 
     let buf = reader.get_vec(reader.remaining());
@@ -135,7 +137,7 @@ pub async fn handle_packet(
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         Family::Players => match action {
-            Action::List => {
+            Action::List | Action::Request => {
                 handlers::players::list(buf, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),

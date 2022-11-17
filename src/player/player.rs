@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
-    net::{packets::server::warp, Action, Family, PacketProcessor},
+    net::{packets::server::warp, Action, Family, PacketProcessor, ClientState},
 };
 use mysql_async::Pool;
 use rand::Rng;
@@ -16,7 +16,7 @@ use crate::{
     PacketBuf,
 };
 
-use super::{packet_bus::PacketBus, Command, State, WarpSession};
+use super::{packet_bus::PacketBus, Command, WarpSession};
 
 pub struct Player {
     pub id: EOShort,
@@ -29,7 +29,7 @@ pub struct Player {
     pub busy: bool,
     account_id: EOInt,
     pool: Pool,
-    state: State,
+    state: ClientState,
     ip: String,
     character: Option<Character>,
     session_id: Option<EOShort>,
@@ -55,7 +55,7 @@ impl Player {
             map: None,
             busy: false,
             account_id: 0,
-            state: State::Uninitialized,
+            state: ClientState::Uninitialized,
             ip,
             character: None,
             warp_session: None,
@@ -158,11 +158,11 @@ impl Player {
                 let _ = respond_to.send(id);
             }
             Command::GetAccountId { respond_to } => {
-                if let State::LoggedIn | State::Playing = self.state {
+                if let ClientState::LoggedIn | ClientState::Playing = self.state {
                     let _ = respond_to.send(Ok(self.account_id));
                 } else {
                     let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::LoggedIn, self.state)));
+                        respond_to.send(Err(InvalidStateError::new(ClientState::LoggedIn, self.state)));
                 }
             }
             Command::GetCharacter { respond_to } => {
@@ -174,7 +174,7 @@ impl Player {
                     }
                 } else {
                     let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
                 }
             }
             Command::GenEncodingMultiples { respond_to } => {
@@ -202,7 +202,7 @@ impl Player {
                     let _ = respond_to.send(Ok(map.to_owned()));
                 } else {
                     let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
                 }
             }
             Command::GetMapId { respond_to } => {
@@ -212,7 +212,7 @@ impl Player {
                     let _ = respond_to.send(Ok(warp_session.map_id));
                 } else {
                     let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
                 }
             }
             Command::GetPlayerId { respond_to } => {
@@ -241,7 +241,7 @@ impl Player {
                 let _ = respond_to.send(sequence);
             }
             Command::Ping => {
-                if self.state == State::Uninitialized {
+                if self.state == ClientState::Uninitialized {
                     return true;
                 }
 
@@ -337,7 +337,7 @@ impl Player {
                     self.character = None;
                 } else {
                     let _ =
-                        respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
+                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
                 }
             }
             Command::TakeSessionId { respond_to } => {

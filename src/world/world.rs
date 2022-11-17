@@ -30,7 +30,7 @@ use eo::{
             welcome::{self, SelectCharacter},
         },
         replies::{InitReply, WelcomeReply},
-        FileType, ServerSettings,
+        FileType, ServerSettings, OnlineEntry,
     },
 };
 use mysql_async::Pool;
@@ -304,12 +304,15 @@ impl World {
                     }
                 }
             }
+            Command::GetOnlineList { respond_to } => {
+                let _ = respond_to.send(self.get_online_list().await);
+            }
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
             }
             Command::GetTalkRecord {
-                npc_id, 
-                respond_to 
+                npc_id,
+                respond_to,
             } => {
                 let talks= self.talk_file.as_ref().expect("talks not loaded");
                 match talks.records.iter().find(|t| t.npc_id == npc_id) {
@@ -690,6 +693,22 @@ impl World {
         } else {
             Err(Box::new(MissingSessionIdError))
         }
+    }
+
+    async fn get_online_list(&self) -> Vec<OnlineEntry> {
+        let mut online_list = Vec::new();
+        for player in self.players.values() {
+            if let Ok(character) = player.get_character().await {
+                let mut entry = OnlineEntry::new();
+                entry.name = character.name.to_string();
+                entry.class_id = character.class;
+                entry.guild_tag = character.guild_tag.clone().unwrap_or_default();
+                entry.title = character.title.clone().unwrap_or_default();
+                entry.icon = character.get_icon();
+                online_list.push(entry);
+            }
+        }
+        online_list
     }
 }
 

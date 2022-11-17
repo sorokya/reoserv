@@ -9,6 +9,7 @@ pub mod face;
 pub mod init;
 pub mod login;
 pub mod map_info;
+pub mod players;
 pub mod refresh;
 pub mod talk;
 pub mod walk;

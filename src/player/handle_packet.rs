@@ -134,6 +134,12 @@ pub async fn handle_packet(
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
+        Family::Players => match action {
+            Action::List => {
+                handlers::players::list(buf, player.clone(), world.clone()).await;
+            }
+            _ => error!("Unhandled packet {:?}_{:?}", action, family),
+        },
         Family::Welcome => match action {
             Action::Request => {
                 handlers::welcome::request(buf, player.clone(), world.clone()).await;

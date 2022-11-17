@@ -8,7 +8,7 @@ use eo::{
             client,
             server::{account, character, init, login, welcome},
         },
-        FileType,
+        FileType, OnlineEntry,
     },
 };
 use mysql_async::Pool;
@@ -249,6 +249,14 @@ impl WorldHandle {
             npc_id,
             respond_to: tx,
         });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_online_list(
+        &self,
+    ) -> Vec<OnlineEntry> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetOnlineList { respond_to: tx });
         rx.await.unwrap()
     }
 

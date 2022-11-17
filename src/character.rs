@@ -1,5 +1,5 @@
 use eo::{
-    character::{AdminLevel, Gender, Race, SitState},
+    character::{AdminLevel, Gender, Race, SitState, PaperdollIcon},
     data::{EOChar, EOInt, EOShort},
     net::{
         packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
@@ -89,6 +89,18 @@ impl Character {
             race: create.race,
             name: create.name.clone(),
             ..Default::default()
+        }
+    }
+
+    pub fn get_icon(&self) -> PaperdollIcon {
+        // TODO: group stuff
+
+        match self.admin_level {
+            AdminLevel::Player | AdminLevel::LightGuide | AdminLevel::Guide | AdminLevel::Guardian => {
+                PaperdollIcon::Normal
+            },
+            AdminLevel::GameMaster => PaperdollIcon::GameMaster,
+            AdminLevel::HighGameMaster => PaperdollIcon::HighGameMaster,
         }
     }
 

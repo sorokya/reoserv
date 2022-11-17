@@ -5,7 +5,7 @@ use eo::{
     },
     net::{
         packets::server::{account, character, init, login, welcome},
-        FileType,
+        FileType, OnlineEntry,
     },
 };
 use tokio::sync::oneshot;
@@ -102,6 +102,9 @@ pub enum Command {
     GetNpc {
         npc_id: EOShort,
         respond_to: oneshot::Sender<Result<NPCRecord, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    GetOnlineList {
+        respond_to: oneshot::Sender<Vec<OnlineEntry>>,
     },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,

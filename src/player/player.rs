@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
-    net::{packets::server::warp, Action, Family},
+    net::{packets::server::warp, Action, Family, PacketProcessor},
 };
 use mysql_async::Pool;
 use rand::Rng;
@@ -176,6 +176,15 @@ impl Player {
                     let _ =
                         respond_to.send(Err(InvalidStateError::new(State::Playing, self.state)));
                 }
+            }
+            Command::GenEncodingMultiples { respond_to } => {
+                self.bus.packet_processor = PacketProcessor::new();
+                respond_to
+                    .send([
+                        self.bus.packet_processor.encode_multiple,
+                        self.bus.packet_processor.decode_multiple,
+                    ])
+                    .unwrap();
             }
             Command::GetEncodingMultiples { respond_to } => {
                 respond_to

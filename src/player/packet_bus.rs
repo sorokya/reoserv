@@ -24,7 +24,7 @@ impl PacketBus {
             socket,
             need_pong: false,
             sequencer,
-            packet_processor: PacketProcessor::new(),
+            packet_processor: PacketProcessor::default(),
         }
     }
 

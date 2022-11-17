@@ -33,6 +33,9 @@ pub enum Command {
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
+    GenEncodingMultiples {
+        respond_to: oneshot::Sender<[EOByte; 2]>,
+    },
     GetEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
     },

@@ -31,7 +31,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
 
     let sequence_bytes = player.get_sequence_bytes().await;
     init_ok.sequence_bytes = [sequence_bytes.0 as EOByte, sequence_bytes.1];
-    init_ok.encoding_multiples = player.get_encoding_multiples().await;
+    init_ok.encoding_multiples = player.gen_encoding_multiples().await;
 
     debug!("Reply code: {:?}, data: {:?}", reply.reply_code, init_ok);
 

@@ -73,6 +73,14 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
+    pub async fn gen_encoding_multiples(&self) -> [EOByte; 2] {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .tx
+            .send(Command::GenEncodingMultiples { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn get_encoding_multiples(&self) -> [EOByte; 2] {
         let (tx, rx) = oneshot::channel();
         let _ = self

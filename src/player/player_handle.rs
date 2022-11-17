@@ -1,6 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family},
+    net::{Action, Family, ClientState},
     world::{TinyCoords, WarpAnimation},
 };
 use mysql_async::Pool;
@@ -17,7 +17,7 @@ use crate::{
     PacketBuf,
 };
 
-use super::{handle_packet::handle_packet, player::Player, Command, State};
+use super::{handle_packet::handle_packet, player::Player, Command};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -137,7 +137,7 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_state(&self) -> State {
+    pub async fn get_state(&self) -> ClientState {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetState { respond_to: tx });
         rx.await.unwrap()
@@ -192,7 +192,7 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetMap(map));
     }
 
-    pub fn set_state(&self, state: State) {
+    pub fn set_state(&self, state: ClientState) {
         let _ = self.tx.send(Command::SetState(state));
     }
 

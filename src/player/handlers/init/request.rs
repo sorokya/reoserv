@@ -1,5 +1,5 @@
 use crate::{
-    player::{PlayerHandle, State},
+    player::PlayerHandle,
     PacketBuf,
 };
 use eo::{
@@ -10,7 +10,7 @@ use eo::{
             server::init::{Reply, ReplyOk},
         },
         replies::InitReply,
-        stupid_hash, Action, Family,
+        stupid_hash, Action, Family, ClientState,
     },
 };
 pub async fn request(buf: PacketBuf, player: PlayerHandle) {
@@ -37,6 +37,6 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
 
     reply.reply = Box::new(init_ok);
 
-    player.set_state(State::Initialized);
+    player.set_state(ClientState::Initialized);
     player.send(Action::Init, Family::Init, reply.serialize());
 }

@@ -5,13 +5,13 @@ use eo::{
     net::{
         packets::server::welcome::{EnterGame, Reply},
         replies::WelcomeReply,
-        Weight,
+        Weight, ClientState,
     },
 };
 
 use crate::{
     map::MapHandle,
-    player::{PlayerHandle, State},
+    player::PlayerHandle,
 };
 
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
@@ -22,7 +22,7 @@ pub async fn enter_game(
 ) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
-    player.set_state(State::Playing);
+    player.set_state(ClientState::Playing);
     let character = player.take_character().await?;
 
     let weight = Weight {

@@ -4,7 +4,7 @@ use crate::{
         CharacterNotFoundError, DataNotFoundError, MissingSessionIdError, WrongSessionIdError,
     },
     map::MapHandle,
-    player::{PlayerHandle, State},
+    player::PlayerHandle,
     SETTINGS,
 };
 
@@ -30,7 +30,7 @@ use eo::{
             welcome::{self, SelectCharacter},
         },
         replies::{InitReply, WelcomeReply},
-        FileType, ServerSettings, OnlineEntry,
+        FileType, ServerSettings, OnlineEntry, ClientState,
     },
 };
 use mysql_async::Pool;
@@ -384,7 +384,7 @@ impl World {
                         }
                     };
                 player.set_account_id(account_id);
-                player.set_state(State::LoggedIn);
+                player.set_state(ClientState::LoggedIn);
                 let _ = respond_to.send(Ok(reply));
             }
             Command::PingPlayers => {

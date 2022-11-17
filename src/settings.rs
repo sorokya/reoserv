@@ -58,6 +58,17 @@ pub struct NPCs {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct SLN {
+    pub enabled: bool,
+    pub url: String,
+    pub site: String,
+    pub hostname: String,
+    pub server_name: String,
+    pub rate: u32,
+    pub zone: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -65,6 +76,7 @@ pub struct Settings {
     pub jail: Jail,
     pub world: World,
     pub npcs: NPCs,
+    pub sln: SLN,
 }
 
 impl Settings {

@@ -19,6 +19,8 @@ mod map;
 mod player;
 mod settings;
 use settings::Settings;
+mod sln;
+use sln::ping_sln;
 mod utils;
 mod world;
 
@@ -102,7 +104,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
-    ping_interval.tick().await;
     let ping_timer_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -112,7 +113,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let mut npc_spawn_interval = time::interval(Duration::from_secs(SETTINGS.npcs.respawn_rate.into()));
-    npc_spawn_interval.tick().await;
     let npc_spawn_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -122,7 +122,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let mut npc_act_interval = time::interval(Duration::from_millis(SETTINGS.npcs.act_rate.into()));
-    npc_act_interval.tick().await;
     let npc_act_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -130,6 +129,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             npc_act_world.act_npcs();
         }
     });
+
+    if SETTINGS.sln.enabled {
+        let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.sln.rate as u64 * 60));
+        tokio::spawn(async move {
+            loop {
+                sln_interval.tick().await;
+                ping_sln().await;
+            }
+        });
+    }
 
     let tcp_listener =
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))

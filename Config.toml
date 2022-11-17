@@ -25,6 +25,22 @@ enforce_sequence = true
 # Number of maps to attempt to load
 num_of_maps = 282
 
+[database]
+host = "127.0.0.1"
+port = "3306"
+name = "reoserv"
+username = "reoserv"
+password = "reoserv"
+
+[sln]
+enabled = false
+url = "http://www.apollo-games.com/SLN/sln.php/"
+site = ""
+hostname = ""
+server_name = "Untitled Server"
+rate = 5
+zone = ""
+
 # Initial location and home for new characters
 [new_character]
 spawn_map = 192
@@ -69,10 +85,3 @@ speed_6 = 9600
 
 # Speed that NPCs talk at in miliseconds
 talk_rate = 4800
-
-[database]
-host = "127.0.0.1"
-port = "3306"
-name = "reoserv"
-username = "reoserv"
-password = "reoserv"

@@ -11,6 +11,8 @@ use crate::{
     PacketBuf,
 };
 
+use super::ClientState;
+
 #[derive(Debug)]
 pub enum Command {
     AcceptWarp {

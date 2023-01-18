@@ -3,7 +3,7 @@ use eo::{
     protocol::{
         client::character::Create, AdminLevel, BigCoords, CharacterBaseStats2, CharacterMapInfo,
         CharacterSecondaryStats, CharacterStats2, Coords, Direction, Gender, Item, PaperdollFull,
-        SitState, Skin, Spell,
+        SitState, Skin, Spell, PaperdollIcon,
     },
 };
 
@@ -98,11 +98,11 @@ impl Character {
         // TODO: group stuff
 
         match self.admin_level {
-            AdminLevel::Player | AdminLevel::LightGuide | AdminLevel::Guide | AdminLevel::Guardian => {
-                PaperdollIcon::Normal
+            AdminLevel::Player | AdminLevel::Guide | AdminLevel::Guardian => {
+                PaperdollIcon::Player
             },
-            AdminLevel::GameMaster => PaperdollIcon::GameMaster,
-            AdminLevel::HighGameMaster => PaperdollIcon::HighGameMaster,
+            AdminLevel::Gm => PaperdollIcon::Gm,
+            AdminLevel::Hgm => PaperdollIcon::Hgm,
         }
     }
 

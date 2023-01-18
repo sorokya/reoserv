@@ -1,6 +1,6 @@
 use eo::{
     data::Serializeable,
-    net::{Action, Family, packets::server::init::{Reply, ReplyPlayers}, replies::InitReply},
+    protocol::{server::init::{InitData, InitPlayers, Init}, InitReply, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, PacketBuf, world::WorldHandle};
@@ -8,15 +8,14 @@ use crate::{player::PlayerHandle, PacketBuf, world::WorldHandle};
 pub async fn list(_buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     let players = world.get_online_list().await;
 
-    let players_reply = ReplyPlayers {
-        players,
-    };
-
-    let reply = Reply {
+    let reply = Init {
         reply_code: InitReply::Players,
-        reply: Box::new(players_reply),
+        data: InitData::Players(InitPlayers {
+            num_online: players.len() as u16,
+            list: players,
+        })
     };
 
     debug!("Reply: {:?}", reply);
-    player.send(Action::Init, Family::Init, reply.serialize());
+    player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
 }

@@ -1,4 +1,4 @@
-use super::{handlers, PlayerHandle};
+use super::{handlers, PlayerHandle, ClientState};
 use eo::{
     data::{EOInt, StreamReader, MAX1},
     protocol::{PacketAction, PacketFamily},

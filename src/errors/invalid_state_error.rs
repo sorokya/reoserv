@@ -1,4 +1,4 @@
-use eo::net::ClientState;
+use crate::player::ClientState;
 
 #[derive(Debug)]
 pub struct InvalidStateError {

@@ -3,7 +3,7 @@ use eo::{
     protocol::{
         client,
         server::{account, character, init, login, welcome},
-        FileType,
+        FileType, OnlinePlayers,
     },
     pubs::{DropNpc, EcfClass, EifItem, EnfNpc, TalkNpc},
 };
@@ -247,7 +247,7 @@ impl WorldHandle {
 
     pub async fn get_online_list(
         &self,
-    ) -> Vec<OnlineEntry> {
+    ) -> Vec<OnlinePlayers> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetOnlineList { respond_to: tx });
         rx.await.unwrap()

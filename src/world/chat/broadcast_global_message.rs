@@ -5,7 +5,7 @@ use eo::{
     protocol::{server::talk, PacketAction, PacketFamily},
 };
 
-use crate::player::PlayerHandle;
+use crate::player::{PlayerHandle, ClientState};
 
 pub async fn broadcast_global_message(
     target_player_id: EOShort,
@@ -21,7 +21,7 @@ pub async fn broadcast_global_message(
     for player in players.values() {
         let state = player.get_state().await;
         let player_id = player.get_player_id().await;
-        if state == State::Playing && player_id != target_player_id {
+        if state == ClientState::Playing && player_id != target_player_id {
             player.send(PacketAction::Msg, PacketFamily::Talk, buf.clone());
         }
     }

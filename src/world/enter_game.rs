@@ -7,7 +7,7 @@ use eo::{
 
 use crate::{
     map::MapHandle,
-    player::PlayerHandle,
+    player::{PlayerHandle, ClientState},
 };
 
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};

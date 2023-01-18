@@ -1,5 +1,5 @@
 use crate::{
-    player::PlayerHandle,
+    player::{PlayerHandle, ClientState},
     PacketBuf,
 };
 use eo::{
@@ -38,6 +38,6 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
 
     debug!("Reply {:?}", reply);
 
-    player.set_state(State::Initialized);
+    player.set_state(ClientState::Initialized);
     player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
 }

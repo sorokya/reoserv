@@ -4,7 +4,7 @@ use crate::{
         CharacterNotFoundError, DataNotFoundError, MissingSessionIdError, WrongSessionIdError,
     },
     map::MapHandle,
-    player::PlayerHandle,
+    player::{PlayerHandle, ClientState},
     SETTINGS,
 };
 
@@ -23,7 +23,7 @@ use eo::{
             init,
             welcome::{self, ReplySelectCharacter},
         },
-        FileType, InitReply, ServerSettings, WelcomeReply,
+        FileType, InitReply, ServerSettings, WelcomeReply, OnlinePlayers,
     },
     pubs::{
         DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
@@ -688,11 +688,11 @@ impl World {
         }
     }
 
-    async fn get_online_list(&self) -> Vec<OnlineEntry> {
+    async fn get_online_list(&self) -> Vec<OnlinePlayers> {
         let mut online_list = Vec::new();
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
-                let mut entry = OnlineEntry::new();
+                let mut entry = OnlinePlayers::new();
                 entry.name = character.name.to_string();
                 entry.class_id = character.class;
                 entry.guild_tag = character.guild_tag.clone().unwrap_or_default();

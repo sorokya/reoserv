@@ -16,7 +16,7 @@ use crate::{
     PacketBuf,
 };
 
-use super::{handle_packet::handle_packet, player::Player, Command};
+use super::{handle_packet::handle_packet, player::Player, Command, ClientState};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {

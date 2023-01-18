@@ -3,7 +3,7 @@ use eo::{
     protocol::{
         client,
         server::{account, character, init, login, welcome},
-        FileType,
+        FileType, OnlinePlayers,
     },
     pubs::{DropNpc, EcfClass, EifItem, EnfNpc, TalkNpc},
 };
@@ -103,7 +103,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<EnfNpc, Box<dyn std::error::Error + Send + Sync>>>,
     },
     GetOnlineList {
-        respond_to: oneshot::Sender<Vec<OnlineEntry>>,
+        respond_to: oneshot::Sender<Vec<OnlinePlayers>>,
     },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,

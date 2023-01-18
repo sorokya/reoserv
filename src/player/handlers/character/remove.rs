@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::character::Remove, Action, Family},
+    protocol::{client::character::Remove, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -18,7 +18,11 @@ pub async fn remove(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     {
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
-            player.send(Action::Reply, Family::Character, reply.serialize());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                reply.serialize(),
+            );
         }
         Err(e) => {
             error!("Delete character failed: {}", e);

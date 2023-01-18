@@ -1,4 +1,4 @@
-use eo::{data::EOInt, net::packets::server::character::Player};
+use eo::{data::EOInt, protocol::server::character::Player};
 use mysql_async::Conn;
 
 use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};

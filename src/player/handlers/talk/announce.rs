@@ -1,7 +1,6 @@
 use eo::{
-    character::AdminLevel,
     data::{EOChar, Serializeable, StreamReader},
-    net::packets::client::talk::Announce,
+    protocol::{client::talk::Announce, AdminLevel},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};

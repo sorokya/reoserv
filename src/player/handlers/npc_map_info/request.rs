@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::{client::npc_map_info::Request, server::npc_map_info::Reply}, Action, Family},
+    protocol::{client::npcrange::Request, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, PacketBuf};
@@ -13,15 +13,10 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
     debug!("Recv: {:?}", request);
 
     if let Ok(map) = player.get_map().await {
-        let map_info = map
-            .get_map_info(None, Some(request.npc_indexes))
-            .await;
-        if map_info.npcs.is_some() {
-            let reply = Reply {
-                npcs: map_info.npcs.unwrap(),
-            };
+        let reply = map.get_map_info(Vec::default(), request.npc_indexes).await;
+        if reply.nearby.npcs.len() > 0 {
             debug!("Reply: {:?}", reply);
-            player.send(Action::Agree, Family::Npc, reply.serialize());
+            player.send(PacketAction::Agree, PacketFamily::Npc, reply.serialize());
         }
     }
 }

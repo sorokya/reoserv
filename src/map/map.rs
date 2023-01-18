@@ -1,22 +1,15 @@
-use std::{
-    cmp,
-    collections::{HashMap, HashSet},
-};
+use std::{cmp, collections::HashMap};
 
 use chrono::{Duration, Utc};
 use eo::{
-    character::Emote,
-    data::{
-        map::{MapFile, NPCSpeed},
-        EOChar, EOShort, EOThree, Serializeable, pubs::NPCRecord,
+    data::{EOChar, EOInt, EOShort, EOThree, Serializeable},
+    protocol::{
+        server::{avatar, door, emote, face, npc, players, range, talk, walk},
+        CharacterMapInfo, Coords, Direction, Emote, NPCUpdateChat, NPCUpdatePos, NearbyInfo,
+        PacketAction, PacketFamily, WarpAnimation,
     },
-    net::{
-        packets::server::{avatar, door, emote, face, map_info, npc, players, talk, walk},
-        Action, CharacterMapInfo, Family, NPCChat, NPCPosition, NearbyInfo, NpcMapInfo,
-    },
-    world::{Direction, TinyCoords, WarpAnimation},
+    pubs::{EmfFile, EnfNpc},
 };
-use num_traits::FromPrimitive;
 use rand::Rng;
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
 
@@ -31,7 +24,9 @@ use super::{
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     world: WorldHandle,
-    file: MapFile,
+    file: EmfFile,
+    file_size: EOInt,
+    id: EOShort,
     items: Vec<Item>,
     npcs: HashMap<EOChar, Npc>,
     npc_data: HashMap<EOShort, NpcData>,
@@ -39,8 +34,16 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(file: MapFile, rx: UnboundedReceiver<Command>, world: WorldHandle) -> Self {
+    pub fn new(
+        id: EOShort,
+        file_size: EOInt,
+        file: EmfFile,
+        rx: UnboundedReceiver<Command>,
+        world: WorldHandle,
+    ) -> Self {
         Self {
+            id,
+            file_size,
             file,
             rx,
             world,
@@ -53,7 +56,10 @@ impl Map {
 
     async fn emote(&self, target_player_id: EOShort, emote: Emote) {
         if let Some(target) = self.characters.get(&target_player_id) {
-            let packet = emote::Player::new(target_player_id, emote);
+            let packet = emote::Player {
+                player_id: target_player_id,
+                emote,
+            };
             let buf = packet.serialize();
             for character in self.characters.values() {
                 if character.player_id.unwrap() != target_player_id
@@ -61,8 +67,8 @@ impl Map {
                 {
                     debug!("Send: {:?}", packet);
                     character.player.as_ref().unwrap().send(
-                        Action::Player,
-                        Family::Emote,
+                        PacketAction::Player,
+                        PacketFamily::Emote,
                         buf.clone(),
                     );
                 }
@@ -77,15 +83,19 @@ impl Map {
         respond_to: oneshot::Sender<()>,
     ) {
         let mut character_map_info = new_character.to_map_info();
-        character_map_info.warp_animation = warp_animation;
-        let packet = players::Agree::new(character_map_info);
+        character_map_info.animation = warp_animation;
+
+        // TODO: Look into queueing this packet? (e.g multiple people entering the map at once)
+        let mut packet = players::Agree::default();
+        packet.nearby.num_characters = 1;
+        packet.nearby.characters.push(character_map_info);
         let buf = packet.serialize();
         for character in self.characters.values() {
             if new_character.is_in_range(character.coords) {
                 debug!("Send: {:?}", packet);
                 character.player.as_ref().unwrap().send(
-                    Action::Agree,
-                    Family::Players,
+                    PacketAction::Agree,
+                    PacketFamily::Players,
                     buf.clone(),
                 );
             }
@@ -101,7 +111,10 @@ impl Map {
             target.direction = direction;
         }
 
-        let packet = face::Player::new(target_player_id, direction);
+        let packet = face::Player {
+            player_id: target_player_id,
+            direction,
+        };
         let buf = packet.serialize();
         let target = self.characters.get(&target_player_id).unwrap();
         for character in self.characters.values() {
@@ -109,68 +122,63 @@ impl Map {
                 && target.is_in_range(character.coords)
             {
                 debug!("Send: {:?}", packet);
-                character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .send(Action::Player, Family::Face, buf.clone());
+                character.player.as_ref().unwrap().send(
+                    PacketAction::Player,
+                    PacketFamily::Face,
+                    buf.clone(),
+                );
             }
         }
     }
 
     async fn get_map_info(
         &self,
-        player_ids: Option<Vec<EOShort>>,
-        npc_indexes: Option<Vec<EOChar>>,
-        respond_to: oneshot::Sender<map_info::Reply>,
+        player_ids: Vec<EOShort>,
+        npc_indexes: Vec<EOChar>,
+        respond_to: oneshot::Sender<range::Reply>,
     ) {
-        let characters = {
-            if let Some(player_ids) = player_ids {
-                let mut character_infos = Vec::with_capacity(player_ids.len());
-                for player_id in player_ids {
-                    if let Some(character) = self.characters.get(&player_id) {
-                        if !character_infos
-                            .iter()
-                            .any(|c: &CharacterMapInfo| c.id == player_id)
-                        {
-                            character_infos.push(character.to_map_info());
-                        }
+        let mut reply = range::Reply::default();
+        if player_ids.len() > 0 {
+            for player_id in player_ids {
+                if let Some(character) = self.characters.get(&player_id) {
+                    if !reply
+                        .nearby
+                        .characters
+                        .iter()
+                        .any(|c: &CharacterMapInfo| c.id == player_id)
+                    {
+                        reply.nearby.num_characters += 1;
+                        reply.nearby.characters.push(character.to_map_info());
                     }
                 }
-                Some(character_infos)
-            } else {
-                None
             }
-        };
-        let npcs: Option<Vec<NpcMapInfo>> = {
-            if let Some(npc_indexes) = npc_indexes {
-                let mut npc_infos = Vec::with_capacity(npc_indexes.len());
-                for npc_index in npc_indexes {
-                    if let Some(npc) = self.npcs.get(&npc_index) {
-                        if npc.alive {
-                            npc_infos.push(npc.to_map_info(&npc_index));
-                        }
+        }
+
+        if npc_indexes.len() > 0 {
+            for npc_index in npc_indexes {
+                if let Some(npc) = self.npcs.get(&npc_index) {
+                    if npc.alive {
+                        reply.nearby.npcs.push(npc.to_map_info(&npc_index));
                     }
                 }
-                Some(npc_infos)
-            } else {
-                None
             }
-        };
-        let reply = map_info::Reply { characters, npcs };
+        }
+
         let _ = respond_to.send(reply);
     }
 
-    async fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
+    async fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
         let target = self.characters.get(&target_player_id).unwrap();
         if target.is_in_range(door_coords) {
-            let packet = door::Open::new(door_coords.x, door_coords.y);
+            let packet = door::Open {
+                coords: door_coords,
+            };
             let buf = packet.serialize();
             for character in self.characters.values() {
                 if character.is_in_range(door_coords) {
                     character.player.as_ref().unwrap().send(
-                        Action::Open,
-                        Family::Door,
+                        PacketAction::Open,
+                        PacketFamily::Door,
                         buf.clone(),
                     );
                 }
@@ -182,7 +190,7 @@ impl Map {
         &mut self,
         target_player_id: EOShort,
         _timestamp: EOThree,
-        _coords: TinyCoords,
+        _coords: Coords,
         direction: Direction,
     ) {
         if let Some((target_previous_coords, target_coords, target_player)) = {
@@ -198,7 +206,7 @@ impl Map {
                 target.direction = direction;
 
                 let is_tile_walkable = target.admin_level as EOChar >= 1
-                    || is_tile_walkable(coords, &self.file.tile_rows);
+                    || is_tile_walkable(coords, &self.file.spec_rows);
                 if is_in_bounds(coords, self.file.width, self.file.height) && is_tile_walkable {
                     target.coords = coords;
                 }
@@ -213,12 +221,9 @@ impl Map {
                 // TODO: verify warp requirements
                 if let Some(target) = self.characters.get_mut(&target_player_id) {
                     target.player.as_ref().unwrap().request_warp(
-                        warp.warp_map,
-                        TinyCoords {
-                            x: warp.warp_x,
-                            y: warp.warp_y,
-                        },
-                        target.map_id == warp.warp_map,
+                        warp.map,
+                        warp.coords,
+                        target.map_id == warp.map,
                         None,
                     );
                 }
@@ -261,8 +266,8 @@ impl Map {
 
                 debug!("Send: {:?}", packet);
                 target_player.as_ref().unwrap().send(
-                    Action::Reply,
-                    Family::Walk,
+                    PacketAction::Reply,
+                    PacketFamily::Walk,
                     packet.serialize(),
                 );
             }
@@ -277,8 +282,8 @@ impl Map {
                 if target_player_id != *player_id && character.is_in_range(target_coords) {
                     debug!("Send: {:?}", walk_packet);
                     character.player.as_ref().unwrap().send(
-                        Action::Player,
-                        Family::Walk,
+                        PacketAction::Player,
+                        PacketFamily::Walk,
                         walk_packet_buf.clone(),
                     );
                 }
@@ -298,8 +303,8 @@ impl Map {
                     && target.is_in_range(character.coords)
                 {
                     character.player.as_ref().unwrap().send(
-                        Action::Player,
-                        Family::Talk,
+                        PacketAction::Player,
+                        PacketFamily::Talk,
                         buf.clone(),
                     );
                 }
@@ -311,7 +316,7 @@ impl Map {
         // TODO: test if this is actually how GameServer.exe works
         let now = chrono::Utc::now();
 
-        if !self.file.npc_spawns.is_empty() {
+        if !self.file.npcs.is_empty() {
             if self.npcs.is_empty() {
                 let mut npc_index: EOChar = 0;
 
@@ -321,11 +326,12 @@ impl Map {
                     now
                 };
 
-                for (spawn_index, spawn) in self.file.npc_spawns.iter().enumerate() {
-
+                for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
                     // Only 20% of npcs in a group will speak
-                    let num_of_chatters = cmp::max(1, (spawn.amount as f64 * 0.2).floor() as EOChar);
-                    let mut chatter_indexes: Vec<usize> = Vec::with_capacity(num_of_chatters as usize);
+                    let num_of_chatters =
+                        cmp::max(1, (spawn.amount as f64 * 0.2).floor() as EOChar);
+                    let mut chatter_indexes: Vec<usize> =
+                        Vec::with_capacity(num_of_chatters as usize);
                     let chatter_distribution = spawn.amount / num_of_chatters;
                     for i in 0..num_of_chatters {
                         chatter_indexes.push(((i * chatter_distribution) + npc_index) as usize);
@@ -336,8 +342,8 @@ impl Map {
                         self.npcs.insert(
                             npc_index,
                             Npc::new(
-                                spawn.npc_id,
-                                TinyCoords::new(0, 0),
+                                spawn.id,
+                                Coords::default(),
                                 Direction::Down,
                                 spawn_index,
                                 dead_since,
@@ -349,8 +355,8 @@ impl Map {
                         npc_index += 1;
                     }
 
-                    self.npc_data.entry(spawn.npc_id).or_insert({
-                        let data_record = match self.world.get_npc(spawn.npc_id).await {
+                    self.npc_data.entry(spawn.id).or_insert({
+                        let data_record = match self.world.get_npc(spawn.id).await {
                             Ok(npc) => Some(npc),
                             Err(e) => {
                                 error!("Failed to load NPC {}", e);
@@ -359,40 +365,49 @@ impl Map {
                         };
 
                         if data_record.is_some() {
-                            let drop_record = self.world.get_drop_record(spawn.npc_id).await;
-                            let talk_record = self.world.get_talk_record(spawn.npc_id).await;
+                            let drop_record = self.world.get_drop_record(spawn.id).await;
+                            let talk_record = self.world.get_talk_record(spawn.id).await;
                             NpcData {
                                 npc_record: data_record.unwrap(),
                                 drop_record,
                                 talk_record,
                             }
                         } else {
+                            warn!("Map {} has NPC {} but no NPC record", self.id, spawn.id);
                             NpcData {
-                                npc_record: NPCRecord::default(),
+                                npc_record: EnfNpc::default(),
                                 drop_record: None,
-                                talk_record: None
+                                talk_record: None,
                             }
                         }
                     });
                 }
             }
 
-            let mut rng = rand::thread_rng();
+            // let mut rng = rand::thread_rng();
             for npc in self.npcs.values_mut() {
-                let spawn = &self.file.npc_spawns[npc.spawn_index];
+                let spawn = &self.file.npcs[npc.spawn_index];
                 if !npc.alive
-                    && now.timestamp() - npc.dead_since.timestamp() > spawn.respawn_time.into()
+                    && now.timestamp() - npc.dead_since.timestamp() > spawn.spawn_time.into()
                 {
                     npc.alive = true;
-                    npc.coords = TinyCoords::new(spawn.x, spawn.y);
+                    npc.coords = Coords {
+                        x: spawn.x,
+                        y: spawn.y,
+                    };
 
-                    while !is_tile_walkable_for_npc(npc.coords, &self.file.tile_rows, &self.file.warp_rows) {
-                        npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
-                        npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
-                    }
+                    // TODO: bounds check
+                    // while !is_tile_walkable_for_npc(
+                    //     npc.coords,
+                    //     &self.file.spec_rows,
+                    //     &self.file.warp_rows,
+                    // ) {
+                    //     npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                    //     npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                    // }
 
-                    npc.direction = if spawn.speed == NPCSpeed::Frozen {
-                        Direction::from_u16(spawn.respawn_time & 0x03).unwrap()
+                    npc.direction = if spawn.spawn_type == 7 {
+                        Direction::from_char(spawn.spawn_type & 0x03).unwrap()
                     } else {
                         match rand::random::<u8>() % 4 {
                             0 => Direction::Down,
@@ -419,28 +434,29 @@ impl Map {
         // TODO: attacks
 
         // get occupied tiles of all characters and npcs
-        let mut occupied_tiles = HashSet::new();
+        let mut occupied_tiles = Vec::new();
         for character in self.characters.values() {
-            occupied_tiles.insert(character.coords);
+            occupied_tiles.push(character.coords);
         }
         for npc in self.npcs.values() {
-            occupied_tiles.insert(npc.coords);
+            occupied_tiles.push(npc.coords);
         }
 
-        let mut position_updates: Vec<NPCPosition> = Vec::with_capacity(self.npcs.len());
-        let mut talk_updates: Vec<NPCChat> = Vec::with_capacity(self.npcs.len());
+        let mut position_updates: Vec<NPCUpdatePos> = Vec::with_capacity(self.npcs.len());
+        let mut talk_updates: Vec<NPCUpdateChat> = Vec::with_capacity(self.npcs.len());
 
         for (index, npc) in &mut self.npcs {
-            let spawn = &self.file.npc_spawns[npc.spawn_index];
-            let act_rate = match spawn.speed {
-                NPCSpeed::Speed1 => SETTINGS.npcs.speed_0,
-                NPCSpeed::Speed2 => SETTINGS.npcs.speed_1,
-                NPCSpeed::Speed3 => SETTINGS.npcs.speed_2,
-                NPCSpeed::Speed4 => SETTINGS.npcs.speed_3,
-                NPCSpeed::Speed5 => SETTINGS.npcs.speed_4,
-                NPCSpeed::Speed6 => SETTINGS.npcs.speed_5,
-                NPCSpeed::Speed7 => SETTINGS.npcs.speed_6,
-                NPCSpeed::Frozen => 0,
+            let spawn = &self.file.npcs[npc.spawn_index];
+            let act_rate = match spawn.spawn_type {
+                0 => SETTINGS.npcs.speed_0,
+                1 => SETTINGS.npcs.speed_1,
+                2 => SETTINGS.npcs.speed_2,
+                3 => SETTINGS.npcs.speed_3,
+                4 => SETTINGS.npcs.speed_4,
+                5 => SETTINGS.npcs.speed_5,
+                6 => SETTINGS.npcs.speed_6,
+                7 => 0,
+                _ => unreachable!("Invalid spawn type {} for NPC {}", spawn.spawn_type, npc.id),
             };
 
             let act_delta = now - npc.last_act;
@@ -457,7 +473,7 @@ impl Map {
 
                 let action = rng.gen_range(1..=10);
                 if (7..=9).contains(&action) {
-                    npc.direction = Direction::from_u8(rng.gen_range(0..=3)).unwrap();
+                    npc.direction = Direction::from_char(rng.gen_range(0..=3)).unwrap();
                 }
 
                 if action != 10 {
@@ -466,7 +482,7 @@ impl Map {
                             if npc.coords.y >= self.file.height {
                                 npc.coords
                             } else {
-                                TinyCoords {
+                                Coords {
                                     x: npc.coords.x,
                                     y: npc.coords.y + 1,
                                 }
@@ -476,7 +492,7 @@ impl Map {
                             if npc.coords.x == 0 {
                                 npc.coords
                             } else {
-                                TinyCoords {
+                                Coords {
                                     x: npc.coords.x - 1,
                                     y: npc.coords.y,
                                 }
@@ -486,7 +502,7 @@ impl Map {
                             if npc.coords.y == 0 {
                                 npc.coords
                             } else {
-                                TinyCoords {
+                                Coords {
                                     x: npc.coords.x,
                                     y: npc.coords.y - 1,
                                 }
@@ -496,7 +512,7 @@ impl Map {
                             if npc.coords.x >= self.file.width {
                                 npc.coords
                             } else {
-                                TinyCoords {
+                                Coords {
                                     x: npc.coords.x + 1,
                                     y: npc.coords.y,
                                 }
@@ -507,18 +523,19 @@ impl Map {
                     if !is_occupied(new_coords, &occupied_tiles)
                         && is_tile_walkable_for_npc(
                             new_coords,
-                            &self.file.tile_rows,
+                            &self.file.spec_rows,
                             &self.file.warp_rows,
                         )
                     {
-                        occupied_tiles.remove(&npc.coords);
+                        // TODO: Fix if multiple npcs or players are on the same tile
+                        occupied_tiles.retain(|coords| *coords != npc.coords);
                         npc.coords = new_coords;
-                        position_updates.push(NPCPosition {
-                            index: *index,
+                        position_updates.push(NPCUpdatePos {
+                            npc_index: *index,
                             coords: npc.coords,
                             direction: npc.direction,
                         });
-                        occupied_tiles.insert(new_coords);
+                        occupied_tiles.push(new_coords);
                     }
 
                     npc.last_act = Utc::now();
@@ -531,14 +548,16 @@ impl Map {
             if let Some(npc_data) = self.npc_data.get(&npc.id) {
                 if let Some(talk_record) = &npc_data.talk_record {
                     let talk_delta = now - npc.last_talk;
-                    if npc.alive && npc.does_talk
+                    if npc.alive
+                        && npc.does_talk
                         && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
                     {
                         let roll = rng.gen_range(0..=100);
                         if roll <= talk_record.rate {
                             let message_index = rng.gen_range(0..talk_record.messages.len());
-                            talk_updates.push(NPCChat {
-                                index: *index,
+                            talk_updates.push(NPCUpdateChat {
+                                npc_index: *index,
+                                message_length: talk_record.messages[message_index].len() as EOChar,
                                 message: talk_record.messages[message_index].to_string(),
                             })
                         }
@@ -548,7 +567,7 @@ impl Map {
             }
         }
 
-        if !position_updates.is_empty() || !talk_updates.is_empty()  {
+        if !position_updates.is_empty() || !talk_updates.is_empty() {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
 
@@ -560,29 +579,29 @@ impl Map {
                     .cloned()
                     .collect();
 
-                let position_updates_in_rage: Vec<NPCPosition> = position_updates
+                let position_updates_in_rage: Vec<NPCUpdatePos> = position_updates
                     .iter()
-                    .filter(|update| in_range_npc_indexes.contains(&update.index))
+                    .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
                     .collect();
 
-                let talk_updates_in_range: Vec<NPCChat> = talk_updates
+                let talk_updates_in_range: Vec<NPCUpdateChat> = talk_updates
                     .iter()
-                    .filter(|update| in_range_npc_indexes.contains(&update.index))
+                    .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
                     .collect();
 
                 if !position_updates_in_rage.is_empty() || !talk_updates_in_range.is_empty() {
                     let packet = npc::Player {
-                        positions: position_updates_in_rage,
-                        attacks: Vec::new(),
-                        chats: talk_updates_in_range,
+                        pos: position_updates_in_rage,
+                        attack: Vec::new(),
+                        chat: talk_updates_in_range,
                     };
 
                     debug!("Send: {:?}", packet);
                     character.player.as_ref().unwrap().send(
-                        Action::Player,
-                        Family::Npc,
+                        PacketAction::Player,
+                        PacketFamily::Npc,
                         packet.serialize(),
                     );
                 }
@@ -649,13 +668,14 @@ impl Map {
                     }
                 }
                 let _ = respond_to.send(NearbyInfo {
+                    num_characters: nearby_characters.len() as EOChar,
                     items: nearby_items,
                     npcs: nearby_npcs,
                     characters: nearby_characters,
                 });
             }
             Command::GetRidAndSize { respond_to } => {
-                let _ = respond_to.send((self.file.rid, self.file.size));
+                let _ = respond_to.send((self.file.rid, self.file_size));
             }
             Command::Leave {
                 target_player_id,
@@ -665,15 +685,15 @@ impl Map {
                 let target = self.characters.remove(&target_player_id).unwrap();
                 let packet = avatar::Remove {
                     player_id: target_player_id,
-                    warp_animation,
+                    animation: warp_animation,
                 };
                 let buf = packet.serialize();
                 for character in self.characters.values() {
                     if target.is_in_range(character.coords) {
                         debug!("Send: {:?}", packet);
                         character.player.as_ref().unwrap().send(
-                            Action::Remove,
-                            Family::Avatar,
+                            PacketAction::Remove,
+                            PacketFamily::Avatar,
                             buf.clone(),
                         );
                     }

@@ -1,8 +1,6 @@
 use eo::{
-    character::Emote,
     data::{EOChar, EOInt, EOShort, EOThree},
-    net::{packets::server::map_info, NearbyInfo},
-    world::{Direction, TinyCoords, WarpAnimation},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
@@ -31,9 +29,9 @@ pub enum Command {
         respond_to: oneshot::Sender<(EOChar, EOChar)>,
     },
     GetMapInfo {
-        player_ids: Option<Vec<EOShort>>,
-        npc_indexes: Option<Vec<EOChar>>,
-        respond_to: oneshot::Sender<map_info::Reply>,
+        player_ids: Vec<EOShort>,
+        npc_indexes: Vec<EOChar>,
+        respond_to: oneshot::Sender<range::Reply>,
     },
     GetNearbyInfo {
         target_player_id: EOShort,
@@ -49,7 +47,7 @@ pub enum Command {
     },
     OpenDoor {
         target_player_id: EOShort,
-        door_coords: TinyCoords,
+        door_coords: Coords,
     },
     SendChatMessage {
         target_player_id: EOShort,
@@ -61,7 +59,7 @@ pub enum Command {
     Walk {
         target_player_id: EOShort,
         timestamp: EOThree,
-        coords: TinyCoords,
+        coords: Coords,
         direction: Direction,
     },
     SpawnNpcs,

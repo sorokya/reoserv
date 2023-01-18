@@ -1,12 +1,12 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::client::talk::Message,
+    protocol::client::talk::Msg,
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
 pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
-    let mut message = Message::default();
+    let mut message = Msg::default();
     let reader = StreamReader::new(&buf);
     message.deserialize(&reader);
 

@@ -1,9 +1,9 @@
 use eo::{
     data::EOChar,
-    net::{
-        packets::{client::character::Create, server::character::Reply},
-        replies::CharacterReply,
-        CharacterList,
+    protocol::{
+        client::character::Create,
+        server::character::{Reply, ReplyData, ReplyExists, ReplyOk},
+        CharacterList, CharacterReply,
     },
 };
 use mysql_async::Conn;
@@ -28,7 +28,12 @@ pub async fn create_character(
             // TODO: validate name
 
             if character_exists(conn, &details.name).await? {
-                return Ok(Reply::no(CharacterReply::Exists));
+                return Ok(Reply {
+                    reply_code: CharacterReply::Exists,
+                    data: ReplyData::Exists(ReplyExists {
+                        no: "NO".to_string(),
+                    }),
+                });
             }
 
             let account_id = match player.get_account_id().await {
@@ -51,11 +56,16 @@ pub async fn create_character(
             info!("New character: {}", details.name);
 
             let characters = get_character_list(conn, account_id).await?;
-            Ok(Reply::created(CharacterList {
-                length: characters.len() as EOChar,
-                unknown: 1,
-                characters,
-            }))
+
+            Ok(Reply {
+                reply_code: CharacterReply::Ok,
+                data: ReplyData::Ok(ReplyOk {
+                    character_list: CharacterList {
+                        num_characters: characters.len() as EOChar,
+                        characters,
+                    },
+                }),
+            })
         }
         Err(e) => Err(Box::new(e)),
     }

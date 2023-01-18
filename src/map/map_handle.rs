@@ -1,15 +1,14 @@
 use eo::{
-    character::Emote,
-    data::{map::MapFile, EOChar, EOInt, EOShort, EOThree},
-    net::{packets::server::map_info, NearbyInfo},
-    world::{Direction, TinyCoords, WarpAnimation},
+    data::{EOChar, EOInt, EOShort, EOThree},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
+    pubs::EmfFile,
 };
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     oneshot,
 };
 
-use crate::{character::Character, PacketBuf, world::WorldHandle};
+use crate::{character::Character, world::WorldHandle, PacketBuf};
 
 use super::{Command, Map};
 
@@ -19,9 +18,9 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(id: EOShort, file: MapFile, world_handle: WorldHandle) -> Self {
+    pub fn new(id: EOShort, file_size: EOInt, file: EmfFile, world_handle: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(file, rx, world_handle);
+        let map = Map::new(id, file_size, file, rx, world_handle);
         let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));
@@ -62,6 +61,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    // TODO: use coords!
     pub async fn get_dimensions(&self) -> (EOChar, EOChar) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
@@ -70,9 +70,9 @@ impl MapHandle {
 
     pub async fn get_map_info(
         &self,
-        player_ids: Option<Vec<EOShort>>,
-        npc_indexes: Option<Vec<EOChar>>,
-    ) -> map_info::Reply {
+        player_ids: Vec<EOShort>,
+        npc_indexes: Vec<EOChar>,
+    ) -> range::Reply {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapInfo {
             player_ids,
@@ -111,7 +111,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub fn open_door(&self, target_player_id: EOShort, door_coords: TinyCoords) {
+    pub fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
         let _ = self.tx.send(Command::OpenDoor {
             target_player_id,
             door_coords,
@@ -143,7 +143,7 @@ impl MapHandle {
         &self,
         target_player_id: EOShort,
         timestamp: EOThree,
-        coords: TinyCoords,
+        coords: Coords,
         direction: Direction,
     ) {
         let _ = self.tx.send(Command::Walk {

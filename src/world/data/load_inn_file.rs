@@ -1,6 +1,15 @@
-use std::path::Path;
+use std::{
+    io::{
+        prelude::{Read, Seek},
+        SeekFrom,
+    },
+    path::Path,
+};
 
-use eo::data::pubs::InnFile;
+use eo::{
+    data::{EOByte, Serializeable, StreamReader},
+    pubs::InnFile,
+};
 
 pub async fn load_inn_file(
     path: String,
@@ -8,9 +17,17 @@ pub async fn load_inn_file(
     let path = Path::new(&path);
     if Path::exists(path) {
         let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
-        let mut inn_file = InnFile::new();
-        inn_file.read(&mut raw_file)?;
-        info!("{} inns loaded", inn_file.records.len());
+        let mut inn_file = InnFile::default();
+
+        let mut data_buf: Vec<EOByte> = Vec::new();
+        raw_file.seek(SeekFrom::Start(0))?;
+        raw_file.read_to_end(&mut data_buf)?;
+
+        let reader = StreamReader::new(&data_buf);
+
+        inn_file.deserialize(&reader);
+
+        info!("{} inns loaded", inn_file.inns.len());
         Ok(inn_file)
     } else {
         warn!("Inn file not found: {}", path.display());

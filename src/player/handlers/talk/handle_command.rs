@@ -1,7 +1,6 @@
 use eo::data::{EOChar, EOShort, Serializeable};
-use eo::net::packets::server::talk;
-use eo::net::{Action, Family};
-use eo::world::{TinyCoords, WarpAnimation};
+use eo::protocol::server::talk;
+use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
 
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
@@ -12,13 +11,16 @@ async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
     let map_id = args[0].parse::<EOShort>().unwrap();
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
-            TinyCoords::new(
-                args[1].parse::<EOChar>().unwrap(),
-                args[2].parse::<EOChar>().unwrap(),
-            )
+            Coords {
+                x: args[1].parse::<EOChar>().unwrap(),
+                y: args[2].parse::<EOChar>().unwrap(),
+            }
         } else {
             let map_size = map.get_dimensions().await;
-            TinyCoords::new(map_size.0 / 2, map_size.1 / 2)
+            Coords {
+                x: map_size.0 / 2,
+                y: map_size.1 / 2,
+            }
         };
 
         character.player.as_ref().unwrap().request_warp(
@@ -29,8 +31,8 @@ async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
         )
     } else {
         character.player.as_ref().unwrap().send(
-            Action::Server,
-            Family::Talk,
+            PacketAction::Server,
+            PacketFamily::Talk,
             talk::Server {
                 message: format!("Map {} does not exist.", map_id),
             }
@@ -73,22 +75,28 @@ async fn set(args: &[&str], _character: &Character, world: &WorldHandle) {
 fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
-        send_error_message(player, format!(
-            "Wrong number of args. Got {}, expected: {}. (usage: \"{}\")",
-            args.len(),
-            required_args_length,
-            command.usage
-        ));
+        send_error_message(
+            player,
+            format!(
+                "Wrong number of args. Got {}, expected: {}. (usage: \"{}\")",
+                args.len(),
+                required_args_length,
+                command.usage
+            ),
+        );
         return false;
     }
 
     if args.len() > command.args.len() {
-        send_error_message(player, format!(
-            "Too many args. Got {}, expected: {}. (usage: \"{}\")",
-            args.len(),
-            command.args.len(),
-            command.usage
-        ));
+        send_error_message(
+            player,
+            format!(
+                "Too many args. Got {}, expected: {}. (usage: \"{}\")",
+                args.len(),
+                command.args.len(),
+                command.usage
+            ),
+        );
         return false;
     }
 
@@ -106,7 +114,7 @@ fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> boo
                     raw_arg, arg.r#type, command.usage
                 ),
             };
-            player.send(Action::Server, Family::Talk, packet.serialize());
+            player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
             return false;
         }
     }
@@ -114,10 +122,8 @@ fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> boo
 }
 
 fn send_error_message(player: &PlayerHandle, message: String) {
-    let packet = talk::Server {
-        message,
-    };
-    player.send(Action::Server, Family::Talk, packet.serialize());
+    let packet = talk::Server { message };
+    player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
 }
 
 pub async fn handle_command(
@@ -146,7 +152,7 @@ pub async fn handle_command(
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),
                         };
-                        player.send(Action::Server, Family::Talk, packet.serialize());
+                        player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
                     }
                 }
             }
@@ -155,7 +161,7 @@ pub async fn handle_command(
             let packet = talk::Server {
                 message: format!("Unknown command: {}", command),
             };
-            player.send(Action::Server, Family::Talk, packet.serialize());
+            player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
         }
     }
 }

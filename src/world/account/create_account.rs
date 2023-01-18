@@ -1,4 +1,8 @@
-use eo::net::{packets::server::account::Reply, replies::AccountReply};
+use eo::protocol::{
+    client::account::Create,
+    server::account::{Reply, ReplyCreated, ReplyData, ReplyExists},
+    AccountReply,
+};
 use mysql_async::{prelude::*, Conn};
 use sha2::{Digest, Sha256};
 
@@ -9,7 +13,7 @@ use super::account_exists;
 pub async fn create_account(
     conn: &mut Conn,
     player: PlayerHandle,
-    details: eo::net::packets::client::account::Create,
+    details: Create,
 ) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
     match player.take_session_id().await {
         Ok(session_id) => {
@@ -21,14 +25,19 @@ pub async fn create_account(
             }
             // TODO: validate name
 
-            let exists = account_exists(conn, &details.name).await?;
+            let exists = account_exists(conn, &details.username).await?;
             if exists {
-                return Ok(Reply::no(AccountReply::Exists));
+                return Ok(Reply {
+                    reply_code: AccountReply::Exists,
+                    data: ReplyData::Exists(ReplyExists {
+                        no: "NO".to_string(),
+                    }),
+                });
             }
 
             let hash_input = format!(
                 "{}{}{}",
-                SETTINGS.server.password_salt, details.name, details.password
+                SETTINGS.server.password_salt, details.username, details.password
             );
             let hash = Sha256::digest(hash_input.as_bytes());
             let hash_str = format!("{:x}", hash);
@@ -38,7 +47,7 @@ pub async fn create_account(
             conn.exec_drop(
                 include_str!("../../sql/create_account.sql"),
                 params! {
-                    "name" => &details.name,
+                    "name" => &details.username,
                     "password_hash" => &hash_str,
                     "real_name" => &details.fullname,
                     "location" => &details.location,
@@ -49,8 +58,13 @@ pub async fn create_account(
                 },
             )
             .await?;
-            info!("New account: {}", details.name);
-            Ok(Reply::ok(AccountReply::Created))
+            info!("New account: {}", details.username);
+            Ok(Reply {
+                reply_code: AccountReply::Created,
+                data: ReplyData::Created(ReplyCreated {
+                    go: "GO".to_string(),
+                }),
+            })
         }
         Err(e) => Err(Box::new(e)),
     }

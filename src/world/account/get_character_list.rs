@@ -1,7 +1,6 @@
 use eo::{
-    character::{AdminLevel, Gender, Race},
     data::EOInt,
-    net::{CharacterInfo, PaperdollBAHSW},
+    protocol::{AdminLevel, CharacterInfo, Gender, PaperdollBahsw, Skin},
 };
 use mysql_async::{prelude::*, Conn, Row};
 
@@ -19,12 +18,12 @@ pub async fn get_character_list(
                 id: row.get(0).unwrap(),
                 name: row.get(1).unwrap(),
                 level: row.get(2).unwrap(),
-                gender: Gender::from_char(row.get(3).unwrap()),
-                hair_style: row.get(4).unwrap(),
-                hair_color: row.get(5).unwrap(),
-                race: Race::from_char(row.get(6).unwrap()),
-                admin_level: AdminLevel::from_char(row.get(7).unwrap()),
-                paperdoll: PaperdollBAHSW {
+                gender: Gender::from_char(row.get(3).unwrap()).unwrap(),
+                hairstyle: row.get(4).unwrap(),
+                haircolor: row.get(5).unwrap(),
+                skin: Skin::from_char(row.get(6).unwrap()).unwrap(),
+                admin: AdminLevel::from_char(row.get(7).unwrap()).unwrap(),
+                paperdoll: PaperdollBahsw {
                     boots: row.get(8).unwrap(),
                     armor: row.get(9).unwrap(),
                     hat: row.get(10).unwrap(),

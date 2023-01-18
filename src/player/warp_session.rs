@@ -1,11 +1,11 @@
 use eo::{
     data::EOShort,
-    world::{TinyCoords, WarpAnimation},
+    protocol::{Coords, WarpAnimation},
 };
 
 pub struct WarpSession {
     pub map_id: EOShort,
-    pub coords: TinyCoords,
+    pub coords: Coords,
     pub local: bool,
     pub animation: Option<WarpAnimation>,
 }

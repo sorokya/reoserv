@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::character::Create, Action, Family},
+    protocol::{client::character::Create, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -15,7 +15,11 @@ pub async fn create(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     match world.create_character(create, player.clone()).await {
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
-            player.send(Action::Reply, Family::Character, reply.serialize());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                reply.serialize(),
+            );
         }
         Err(e) => {
             error!("Create character failed: {}", e);

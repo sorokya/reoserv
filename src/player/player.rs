@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
-    net::{packets::server::warp, Action, Family, PacketProcessor, ClientState},
+    protocol::{server::warp, PacketAction, PacketFamily, WarpType},
 };
 use mysql_async::Pool;
 use rand::Rng;
@@ -80,24 +80,37 @@ impl Player {
                             let agree = if warp_session.local {
                                 let mut character =
                                     current_map.leave(self.id, warp_session.animation).await;
-                                character.coords = warp_session.coords;
+                                character.coords = warp_session.coords.clone();
                                 current_map
                                     .enter(Box::new(character), warp_session.animation)
                                     .await;
                                 let nearby_info = current_map.get_nearby_info(self.id).await;
-                                warp::Agree::local(nearby_info)
+                                warp::Agree {
+                                    warp_type: WarpType::Local,
+                                    data: warp::AgreeData::None,
+                                    nearby: nearby_info,
+                                }
                             } else if let Ok(new_map) = self.world.get_map(map_id).await {
                                 let mut character =
                                     current_map.leave(self.id, warp_session.animation).await;
                                 character.map_id = warp_session.map_id;
-                                character.coords = warp_session.coords;
+                                character.coords = warp_session.coords.clone();
                                 new_map
                                     .enter(Box::new(character), warp_session.animation)
                                     .await;
                                 let nearby_info = new_map.get_nearby_info(self.id).await;
                                 self.map = Some(new_map);
 
-                                warp::Agree::remote(map_id, warp_session.animation, nearby_info)
+                                warp::Agree {
+                                    warp_type: WarpType::MapSwitch,
+                                    data: warp::AgreeData::MapSwitch(warp::AgreeMapSwitch {
+                                        map_id,
+                                        warp_anim: warp_session
+                                            .animation
+                                            .unwrap_or(eo::protocol::WarpAnimation::None),
+                                    }),
+                                    nearby: nearby_info,
+                                }
                             } else {
                                 warn!("Map not found: {}", map_id);
                                 return true;
@@ -106,7 +119,7 @@ impl Player {
                             debug!("Send: {:?}", agree);
                             let _ = self
                                 .bus
-                                .send(Action::Agree, Family::Warp, agree.serialize())
+                                .send(PacketAction::Agree, PacketFamily::Warp, agree.serialize())
                                 .await;
                         }
                     } else {
@@ -257,8 +270,8 @@ impl Player {
                     self.bus.need_pong = true;
                     self.bus
                         .send(
-                            eo::net::Action::Player,
-                            eo::net::Family::Connection,
+                            PacketAction::Player,
+                            PacketFamily::Connection,
                             builder.get(),
                         )
                         .await
@@ -292,12 +305,25 @@ impl Player {
                 };
 
                 let request = if local {
-                    warp::Request::local(map_id, session_id)
+                    warp::Request {
+                        warp_type: WarpType::Local,
+                        map_id,
+                        session_id,
+                        data: warp::RequestData::None,
+                    }
                 } else {
                     match self.world.get_map(map_id).await {
                         Ok(map) => {
                             let (map_rid, map_filesize) = map.get_rid_and_size().await;
-                            warp::Request::remote(map_id, session_id, map_rid, map_filesize)
+                            warp::Request {
+                                warp_type: WarpType::MapSwitch,
+                                map_id,
+                                session_id,
+                                data: warp::RequestData::MapSwitch(warp::RequestMapSwitch {
+                                    map_rid,
+                                    map_filesize,
+                                }),
+                            }
                         }
                         Err(err) => {
                             warn!("{:?}", err);
@@ -310,7 +336,11 @@ impl Player {
                 debug!("Send: {:?}", request);
                 let _ = self
                     .bus
-                    .send(Action::Request, Family::Warp, request.serialize())
+                    .send(
+                        PacketAction::Request,
+                        PacketFamily::Warp,
+                        request.serialize(),
+                    )
                     .await;
             }
             Command::Send(action, family, data) => {

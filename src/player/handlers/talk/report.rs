@@ -1,7 +1,6 @@
 use eo::{
-    character::AdminLevel,
     data::{Serializeable, StreamReader},
-    net::packets::client::talk::Report,
+    protocol::{client::talk::Report, AdminLevel},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};

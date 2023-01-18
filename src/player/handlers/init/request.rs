@@ -4,39 +4,40 @@ use crate::{
 };
 use eo::{
     data::{EOByte, Serializeable, StreamReader},
-    net::{
-        packets::{
-            client::init::Request,
-            server::init::{Reply, ReplyOk},
+    net::stupid_hash,
+    protocol::{
+        client,
+        server::{
+            self,
+            init::{InitData, InitOk},
         },
-        replies::InitReply,
-        stupid_hash, Action, Family, ClientState,
+        InitReply, PacketAction, PacketFamily,
     },
 };
 pub async fn request(buf: PacketBuf, player: PlayerHandle) {
-    let mut packet = Request::default();
+    let mut packet = client::init::Init::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
 
-    let mut reply = Reply::new();
-    reply.reply_code = InitReply::OK;
-
-    let mut init_ok = ReplyOk::new();
-    init_ok.challenge_response = stupid_hash(packet.challenge);
-
-    let player_id = player.get_player_id().await;
-    init_ok.player_id = player_id;
-
     let sequence_bytes = player.get_sequence_bytes().await;
-    init_ok.sequence_bytes = [sequence_bytes.0 as EOByte, sequence_bytes.1];
-    init_ok.encoding_multiples = player.gen_encoding_multiples().await;
+    let response = stupid_hash(packet.challenge);
+    let player_id = player.get_player_id().await;
+    let encoding_multiples = player.get_encoding_multiples().await;
 
-    debug!("Reply code: {:?}, data: {:?}", reply.reply_code, init_ok);
+    let mut reply = server::init::Init::new();
+    reply.reply_code = InitReply::Ok;
+    reply.data = InitData::Ok(InitOk {
+        response,
+        player_id,
+        seq_bytes: [sequence_bytes.0 as EOByte, sequence_bytes.1],
+        encode_multiple: encoding_multiples[0],
+        decode_multiple: encoding_multiples[1],
+    });
 
-    reply.reply = Box::new(init_ok);
+    debug!("Reply {:?}", reply);
 
-    player.set_state(ClientState::Initialized);
-    player.send(Action::Init, Family::Init, reply.serialize());
+    player.set_state(State::Initialized);
+    player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
 }

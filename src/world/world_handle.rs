@@ -1,15 +1,11 @@
 use eo::{
-    data::{
-        pubs::{ClassRecord, ItemRecord, NPCRecord, TalkRecord, DropNPCRecord},
-        EOChar, EOInt, EOShort,
+    data::{EOChar, EOInt, EOShort},
+    protocol::{
+        client,
+        server::{account, character, init, login, welcome},
+        FileType,
     },
-    net::{
-        packets::{
-            client,
-            server::{account, character, init, login, welcome},
-        },
-        FileType, OnlineEntry,
-    },
+    pubs::{DropNpc, EcfClass, EifItem, EnfNpc, TalkNpc},
 };
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
@@ -169,7 +165,7 @@ impl WorldHandle {
     pub async fn _get_class(
         &self,
         class_id: EOChar,
-    ) -> Result<ClassRecord, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<EcfClass, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::_GetClass {
             class_id,
@@ -178,10 +174,7 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_drop_record(
-        &self,
-        npc_id: EOShort,
-    ) -> Option<DropNPCRecord> {
+    pub async fn get_drop_record(&self, npc_id: EOShort) -> Option<DropNpc> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDropRecord {
             npc_id,
@@ -193,7 +186,7 @@ impl WorldHandle {
     pub async fn _get_item(
         &self,
         item_id: EOShort,
-    ) -> Result<ItemRecord, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<EifItem, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::_GetItem {
             item_id,
@@ -208,7 +201,7 @@ impl WorldHandle {
         session_id: EOShort,
         file_id: Option<EOChar>,
         player: PlayerHandle,
-    ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<init::Init, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetFile {
             file_type,
@@ -243,7 +236,7 @@ impl WorldHandle {
     pub async fn get_npc(
         &self,
         npc_id: EOShort,
-    ) -> Result<NPCRecord, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<EnfNpc, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNpc {
             npc_id,
@@ -268,10 +261,7 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_talk_record(
-        &self,
-        npc_id: EOShort,
-    ) -> Option<TalkRecord> {
+    pub async fn get_talk_record(&self, npc_id: EOShort) -> Option<TalkNpc> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetTalkRecord {
             npc_id,
@@ -376,9 +366,11 @@ impl WorldHandle {
     }
 
     pub fn set_character_stat(&self, target_name: String, stat_name: String, value: EOShort) {
-        let _ = self
-            .tx
-            .send(Command::SetCharacterStat { target_name, stat_name, value });
+        let _ = self.tx.send(Command::SetCharacterStat {
+            target_name,
+            stat_name,
+            value,
+        });
     }
 
     pub fn spawn_npcs(&self) {

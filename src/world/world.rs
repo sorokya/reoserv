@@ -17,20 +17,16 @@ use super::{
     data, enter_game, Command,
 };
 use eo::{
-    data::{
-        pubs::{
-            ClassFile, DropFile, InnFile, ItemFile, MasterFile, NPCFile, ShopFile, SpellFile,
-            TalkFile,
-        },
-        EOChar, EOInt, EOShort, Serializeable,
-    },
-    net::{
-        packets::server::{
+    data::{EOChar, EOInt, EOShort, Serializeable},
+    protocol::{
+        server::{
             init,
-            welcome::{self, SelectCharacter},
+            welcome::{self, ReplySelectCharacter},
         },
-        replies::{InitReply, WelcomeReply},
-        FileType, ServerSettings, OnlineEntry, ClientState,
+        FileType, InitReply, ServerSettings, WelcomeReply,
+    },
+    pubs::{
+        DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
     },
 };
 use mysql_async::Pool;
@@ -45,14 +41,14 @@ pub struct World {
     characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
-    class_file: Option<ClassFile>,
+    class_file: Option<EcfFile>,
     drop_file: Option<DropFile>,
     inn_file: Option<InnFile>,
-    item_file: Option<ItemFile>,
-    master_file: Option<MasterFile>,
-    npc_file: Option<NPCFile>,
+    item_file: Option<EifFile>,
+    master_file: Option<SkillMasterFile>,
+    npc_file: Option<EnfFile>,
     shop_file: Option<ShopFile>,
-    spell_file: Option<SpellFile>,
+    spell_file: Option<EsfFile>,
     talk_file: Option<TalkFile>,
 }
 
@@ -180,12 +176,12 @@ impl World {
                             if let Some(map) = maps.get(&map_id) {
                                 let player = player.to_owned();
                                 let map = map.to_owned();
-                                let _ = tokio::task::Builder::new()
-                                    .name("enter_game")
-                                    .spawn(async move {
+                                let _ = tokio::task::Builder::new().name("enter_game").spawn(
+                                    async move {
                                         let result = enter_game(map, player).await;
                                         let _ = respond_to.send(result);
-                                    });
+                                    },
+                                );
                             } else {
                                 // TODO: Move character to safe map
                                 let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
@@ -212,8 +208,8 @@ impl World {
                 class_id,
                 respond_to,
             } => {
-                let classes = self.class_file.as_ref().expect("classes not loaded");
-                match classes.records.iter().find(|c| c.id == class_id as EOInt) {
+                let class_file = self.class_file.as_ref().expect("classes not loaded");
+                match class_file.classes.get(class_id as usize - 1) {
                     Some(class) => {
                         let _ = respond_to.send(Ok(class.clone()));
                     }
@@ -226,12 +222,9 @@ impl World {
                     }
                 }
             }
-            Command::GetDropRecord {
-                npc_id, 
-                respond_to 
-            } => {
-                let drops= self.drop_file.as_ref().expect("drops not loaded");
-                match drops.records.iter().find(|d| d.npc_id == npc_id) {
+            Command::GetDropRecord { npc_id, respond_to } => {
+                let drops = self.drop_file.as_ref().expect("drops not loaded");
+                match drops.npcs.iter().find(|d| d.npc_id == npc_id) {
                     Some(drop) => {
                         let _ = respond_to.send(Some(drop.clone()));
                     }
@@ -245,7 +238,7 @@ impl World {
                 respond_to,
             } => {
                 let item_file = self.item_file.as_ref().expect("classes not loaded");
-                match item_file.records.iter().find(|i| i.id == item_id as EOInt) {
+                match item_file.items.get(item_id as usize - 1) {
                     Some(item) => {
                         let _ = respond_to.send(Ok(item.clone()));
                     }
@@ -286,12 +279,9 @@ impl World {
             Command::GetNextPlayerId { respond_to } => {
                 let _ = respond_to.send(get_next_player_id(&self.players, 300));
             }
-            Command::GetNpc {
-                npc_id,
-                respond_to,
-            } => {
+            Command::GetNpc { npc_id, respond_to } => {
                 let npcs = self.npc_file.as_ref().expect("npcs not loaded");
-                match npcs.records.iter().find(|n| n.id == npc_id as EOInt) {
+                match npcs.npcs.get(npc_id as usize - 1) {
                     Some(npc) => {
                         let _ = respond_to.send(Ok(npc.clone()));
                     }
@@ -310,12 +300,9 @@ impl World {
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
             }
-            Command::GetTalkRecord {
-                npc_id,
-                respond_to,
-            } => {
-                let talks= self.talk_file.as_ref().expect("talks not loaded");
-                match talks.records.iter().find(|t| t.npc_id == npc_id) {
+            Command::GetTalkRecord { npc_id, respond_to } => {
+                let talks = self.talk_file.as_ref().expect("talks not loaded");
+                match talks.npcs.iter().find(|t| t.npc_id == npc_id) {
                     Some(talk) => {
                         let _ = respond_to.send(Some(talk.clone()));
                     }
@@ -324,7 +311,10 @@ impl World {
                     }
                 }
             }
-            Command::LoadMapFiles { world_handle, respond_to } => match data::load_maps(world_handle).await {
+            Command::LoadMapFiles {
+                world_handle,
+                respond_to,
+            } => match data::load_maps(world_handle).await {
                 Ok(maps) => {
                     self.maps = Some(maps);
                     let _ = respond_to.send(());
@@ -457,9 +447,8 @@ impl World {
                 player.set_character(Box::new(character));
 
                 let _ = respond_to.send(Ok(welcome::Reply {
-                    reply: WelcomeReply::SelectCharacter,
-                    select_character: Some(select_character),
-                    enter_game: None,
+                    reply_code: WelcomeReply::SelectCharacter,
+                    data: welcome::ReplyData::SelectCharacter(select_character),
                 }));
             }
             Command::SendPrivateMessage { from, to, message } => {
@@ -474,7 +463,11 @@ impl World {
                     }
                 }
             }
-            Command::SetCharacterStat { target_name, stat_name, value } => {
+            Command::SetCharacterStat {
+                target_name,
+                stat_name,
+                value,
+            } => {
                 if let Ok(mut character) = self.get_character_by_name(&target_name).await {
                     set_character_stat(&mut character, stat_name, value);
 
@@ -522,7 +515,7 @@ impl World {
         &self,
         player: PlayerHandle,
         character: &Character,
-    ) -> Result<SelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<ReplySelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
         let (map_rid, map_filesize) = {
             let maps = self.maps.as_ref().expect("Maps not loaded");
             let map = match maps.get(&character.map_id) {
@@ -540,38 +533,38 @@ impl World {
 
         let (eif_rid, eif_length) = {
             let item_file = self.item_file.as_ref().expect("Item file not loaded");
-            (item_file.rid, item_file.len())
+            (item_file.rid, item_file.num_items)
         };
 
         let (ecf_rid, ecf_length) = {
             let class_file = self.class_file.as_ref().expect("Class file not loaded");
-            (class_file.rid, class_file.len())
+            (class_file.rid, class_file.num_classes)
         };
 
         let (enf_rid, enf_length) = {
             let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-            (npc_file.rid, npc_file.len())
+            (npc_file.rid, npc_file.num_npcs)
         };
 
         let (esf_rid, esf_length) = {
             let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-            (spell_file.rid, spell_file.len())
+            (spell_file.rid, spell_file.num_spells)
         };
 
         let settings = ServerSettings {
-            jail_map_id: SETTINGS.jail.map.try_into().expect("Invalid map id"),
-            recover_map: 4,
-            recover_x: 24,
-            recover_y: 24,
+            jail_map: SETTINGS.jail.map.try_into().expect("Invalid map id"),
+            rescue_map: 4,
+            rescue_x: 24,
+            rescue_y: 24,
             light_guide_flood_rate: 10,
             guardian_flood_rate: 10,
-            game_master_flood_rate: 10,
-            high_game_master_flood_rate: 0,
+            gm_flood_rate: 10,
+            hgm_flood_rate: 0,
         };
 
         let session_id = player.generate_session_id().await;
 
-        Ok(SelectCharacter {
+        Ok(ReplySelectCharacter {
             session_id,
             character_id: character.id,
             map_id: character.map_id,
@@ -591,12 +584,12 @@ impl World {
             guild_rank_name: character.guild_rank_string.clone().unwrap_or_default(),
             class_id: character.class,
             guild_tag: character.guild_tag.clone().unwrap_or_default(),
-            admin_level: character.admin_level,
+            admin: character.admin_level,
             level: character.level,
             experience: character.experience,
             usage: character.usage,
             stats: character.get_character_stats_2(),
-            paperdoll: character.paperdoll,
+            paperdoll: character.paperdoll.to_owned(),
             guild_rank: character.guild_rank_id.unwrap_or_default(),
             settings,
             login_message: match character.usage {
@@ -612,7 +605,7 @@ impl World {
         session_id: EOShort,
         _file_id: Option<EOChar>,
         player: PlayerHandle,
-    ) -> Result<init::Reply, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<init::Init, Box<dyn std::error::Error + Send + Sync>> {
         if let Ok(actual_session_id) = player.get_session_id().await {
             if actual_session_id != session_id {
                 return Err(Box::new(WrongSessionIdError::new(
@@ -631,7 +624,7 @@ impl World {
                         }
                     };
 
-                    let mut reply = init::ReplyFileMap::new();
+                    let mut reply = init::Init::default();
                     let maps = self.maps.as_ref().expect("Maps not loaded");
                     let map = match maps.get(&map_id) {
                         Some(map) => map,
@@ -643,51 +636,51 @@ impl World {
                             )));
                         }
                     };
-                    reply.data = map.serialize().await;
-                    Ok(init::Reply {
-                        reply_code: InitReply::FileMap,
-                        reply: Box::new(reply),
-                    })
+                    reply.reply_code = InitReply::FileEmf;
+                    reply.data = init::InitData::FileEmf(init::InitFileEmf {
+                        content: map.serialize().await,
+                    });
+                    Ok(reply)
                 }
                 FileType::Item => {
-                    let mut reply = init::ReplyFileItem::new();
+                    let mut reply = init::Init::default();
                     let item_file = self.item_file.as_ref().expect("Item file not loaded");
-                    reply.id = 1;
-                    reply.data = item_file.serialize();
-                    Ok(init::Reply {
-                        reply_code: InitReply::FileItem,
-                        reply: Box::new(reply),
-                    })
+                    reply.reply_code = InitReply::FileEif;
+                    reply.data = init::InitData::FileEif(init::InitFileEif {
+                        file_id: 1, // TODO: Pub splitting
+                        content: item_file.serialize(),
+                    });
+                    Ok(reply)
                 }
-                FileType::NPC => {
-                    let mut reply = init::ReplyFileNPC::new();
+                FileType::Npc => {
+                    let mut reply = init::Init::default();
                     let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-                    reply.id = 1;
-                    reply.data = npc_file.serialize();
-                    Ok(init::Reply {
-                        reply_code: InitReply::FileNPC,
-                        reply: Box::new(reply),
-                    })
+                    reply.reply_code = InitReply::FileEnf;
+                    reply.data = init::InitData::FileEnf(init::InitFileEnf {
+                        file_id: 1, // TODO: Pub splitting
+                        content: npc_file.serialize(),
+                    });
+                    Ok(reply)
                 }
                 FileType::Spell => {
-                    let mut reply = init::ReplyFileSpell::new();
+                    let mut reply = init::Init::default();
                     let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-                    reply.id = 1;
-                    reply.data = spell_file.serialize();
-                    Ok(init::Reply {
-                        reply_code: InitReply::FileSpell,
-                        reply: Box::new(reply),
-                    })
+                    reply.reply_code = InitReply::FileEsf;
+                    reply.data = init::InitData::FileEsf(init::InitFileEsf {
+                        file_id: 1, // TODO: Pub splitting
+                        content: spell_file.serialize(),
+                    });
+                    Ok(reply)
                 }
                 FileType::Class => {
-                    let mut reply = init::ReplyFileClass::new();
+                    let mut reply = init::Init::default();
                     let class_file = self.class_file.as_ref().expect("Class file not loaded");
-                    reply.id = 1;
-                    reply.data = class_file.serialize();
-                    Ok(init::Reply {
-                        reply_code: InitReply::FileClass,
-                        reply: Box::new(reply),
-                    })
+                    reply.reply_code = InitReply::FileEcf;
+                    reply.data = init::InitData::FileEcf(init::InitFileEcf {
+                        file_id: 1, // TODO: Pub splitting
+                        content: class_file.serialize(),
+                    });
+                    Ok(reply)
                 }
             }
         } else {

@@ -1,6 +1,9 @@
 use eo::{
     data::{EOChar, EOInt},
-    net::{packets::server::login::Reply, replies::LoginReply, CharacterList},
+    protocol::{
+        server::login::{self, Reply},
+        CharacterList, LoginReply,
+    },
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
 use sha2::{Digest, Sha256};
@@ -19,8 +22,10 @@ pub async fn login(
     if !exists {
         return Ok((
             Reply {
-                reply: LoginReply::WrongUsername,
-                character_list: None,
+                reply_code: LoginReply::WrongUser,
+                data: login::ReplyData::WrongUser(login::ReplyWrongUser {
+                    no: "NO".to_string(),
+                }),
             },
             0,
         ));
@@ -44,8 +49,10 @@ pub async fn login(
         None => {
             return Ok((
                 Reply {
-                    reply: LoginReply::WrongPassword,
-                    character_list: None,
+                    reply_code: LoginReply::WrongUserPass,
+                    data: login::ReplyData::WrongUserPass(login::ReplyWrongUserPass {
+                        no: "NO".to_string(),
+                    }),
                 },
                 0,
             ))
@@ -56,8 +63,10 @@ pub async fn login(
     if accounts.contains(&account_id) {
         return Ok((
             Reply {
-                reply: LoginReply::LoggedIn,
-                character_list: None,
+                reply_code: LoginReply::LoggedIn,
+                data: login::ReplyData::LoggedIn(login::ReplyLoggedIn {
+                    no: "NO".to_string(),
+                }),
             },
             0,
         ));
@@ -67,11 +76,12 @@ pub async fn login(
     accounts.push(account_id);
     Ok((
         Reply {
-            reply: LoginReply::OK,
-            character_list: Some(CharacterList {
-                length: characters.len() as EOChar,
-                unknown: 1,
-                characters,
+            reply_code: LoginReply::Ok,
+            data: login::ReplyData::Ok(login::ReplyOk {
+                character_list: CharacterList {
+                    num_characters: characters.len() as EOChar,
+                    characters,
+                },
             }),
         },
         account_id,

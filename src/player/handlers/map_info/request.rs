@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::map_info::Request, Action, Family},
+    protocol::{client::range::Request, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, PacketBuf};
@@ -16,9 +16,9 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
         let reply = map
             .get_map_info(request.player_ids, request.npc_indexes)
             .await;
-        if reply.characters.is_some() || reply.npcs.is_some() {
+        if reply.nearby.characters.len() > 0 || reply.nearby.npcs.len() > 0 {
             debug!("Reply: {:?}", reply);
-            player.send(Action::Reply, Family::MapInfo, reply.serialize());
+            player.send(PacketAction::Reply, PacketFamily::Range, reply.serialize());
         }
     }
 }

@@ -1,17 +1,20 @@
-use eo::data::{pubs::{ItemFile, ClassFile}, EOInt, EOShort};
+use eo::{
+    data::{EOInt, EOShort},
+    pubs::{EcfFile, EifFile},
+};
 use evalexpr::{context_map, eval_float_with_context};
 
 use crate::{character::Character, FORMULAS};
 
-pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_file: &ClassFile) {
-    let class = &class_file.records[(character.class - 1) as usize];
+pub fn calculate_stats(character: &mut Character, item_file: &EifFile, class_file: &EcfFile) {
+    let class = &class_file.classes[(character.class - 1) as usize];
 
-    character.adj_strength = character.base_strength + class.strength;
-    character.adj_intelligence = character.base_intelligence + class.intelligence;
-    character.adj_wisdom = character.base_wisdom + class.wisdom;
-    character.adj_agility = character.base_agility + class.agility;
-    character.adj_constitution = character.base_constitution + class.constitution;
-    character.adj_charisma = character.base_charisma + class.charisma;
+    character.adj_strength = character.base_strength + class.str;
+    character.adj_intelligence = character.base_intelligence + class.intl;
+    character.adj_wisdom = character.base_wisdom + class.wis;
+    character.adj_agility = character.base_agility + class.agi;
+    character.adj_constitution = character.base_constitution + class.con;
+    character.adj_charisma = character.base_charisma + class.cha;
 
     character.weight = 0;
     character.max_hp = 0;
@@ -28,19 +31,37 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
             continue;
         }
 
-        let record = &item_file.records[item.id as usize];
+        let record = &item_file.items[(item.id - 1) as usize];
         character.weight += record.weight as EOInt * item.amount;
         if character.weight >= 250 {
             break;
         }
     }
 
-    for item_id in character.paperdoll {
+    let paperdoll_items = vec![
+        character.paperdoll.boots,
+        character.paperdoll.accessory,
+        character.paperdoll.gloves,
+        character.paperdoll.belt,
+        character.paperdoll.armor,
+        character.paperdoll.necklace,
+        character.paperdoll.hat,
+        character.paperdoll.shield,
+        character.paperdoll.weapon,
+        character.paperdoll.ring[0],
+        character.paperdoll.ring[1],
+        character.paperdoll.armlet[0],
+        character.paperdoll.armlet[1],
+        character.paperdoll.bracer[0],
+        character.paperdoll.bracer[1],
+    ];
+
+    for item_id in paperdoll_items {
         if item_id == 0 {
             continue;
         }
 
-        let item = &item_file.records[item_id as usize];
+        let item = &item_file.items[(item_id - 1) as usize];
         character.weight += item.weight as EOInt;
         character.max_hp += item.hp;
         character.max_tp += item.tp;
@@ -49,12 +70,12 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         character.accuracy += item.accuracy;
         character.evasion += item.evade;
         character.armor += item.armor;
-        character.adj_strength += item.strength as EOShort;
-        character.adj_intelligence += item.intelligence as EOShort;
-        character.adj_wisdom += item.wisdom as EOShort;
-        character.adj_agility += item.agility as EOShort;
-        character.adj_constitution += item.constitution as EOShort;
-        character.adj_charisma += item.charisma as EOShort;
+        character.adj_strength += item.str as EOShort;
+        character.adj_intelligence += item.intl as EOShort;
+        character.adj_wisdom += item.wis as EOShort;
+        character.adj_agility += item.agi as EOShort;
+        character.adj_constitution += item.con as EOShort;
+        character.adj_charisma += item.cha as EOShort;
     }
 
     if character.weight > 250 {
@@ -80,7 +101,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to generate formula context: {}", e);
             return;
-        },
+        }
     };
 
     character.max_hp += match eval_float_with_context(&FORMULAS.hp, &context) {
@@ -88,7 +109,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate max_hp: {}", e);
             10
-        },
+        }
     };
 
     character.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
@@ -96,7 +117,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate max_tp: {}", e);
             10
-        },
+        }
     };
 
     character.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
@@ -104,7 +125,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate max_sp: {}", e);
             20
-        },
+        }
     };
 
     character.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
@@ -112,16 +133,16 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate max_weight: {}", e);
             70
-        },
+        }
     };
 
-    let class_formulas = &FORMULAS.classes[class.class_type as usize];
+    let class_formulas = &FORMULAS.classes[class.r#type as usize];
     let damage = match eval_float_with_context(&class_formulas.damage, &context) {
         Ok(damage) => damage.floor() as EOShort,
         Err(e) => {
             error!("Failed to calculate damage: {}", e);
             1
-        },
+        }
     };
 
     character.min_damage += damage;
@@ -132,7 +153,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate accuracy: {}", e);
             0
-        },
+        }
     };
 
     character.armor += match eval_float_with_context(&class_formulas.defense, &context) {
@@ -140,7 +161,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate armor: {}", e);
             0
-        },
+        }
     };
 
     character.evasion += match eval_float_with_context(&class_formulas.evade, &context) {
@@ -148,7 +169,7 @@ pub fn calculate_stats (character: &mut Character, item_file: &ItemFile, class_f
         Err(e) => {
             error!("Failed to calculate evasion: {}", e);
             0
-        },
+        }
     };
 
     if character.min_damage == 0 {

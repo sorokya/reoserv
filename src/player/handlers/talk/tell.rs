@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::client::talk::Tell,
+    protocol::client::talk::Tell,
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};

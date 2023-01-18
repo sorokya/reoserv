@@ -1,9 +1,19 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    io::{
+        prelude::{Read, Seek},
+        SeekFrom,
+    },
+    path::Path,
+};
 
-use eo::data::{map::MapFile, EOShort};
+use eo::{
+    data::{EOByte, EOInt, EOShort, Serializeable, StreamReader},
+    pubs::EmfFile,
+};
 use futures::{stream, StreamExt};
 
-use crate::{map::MapHandle, SETTINGS, world::WorldHandle};
+use crate::{map::MapHandle, world::WorldHandle, SETTINGS};
 
 pub async fn load_maps(
     world_handle: WorldHandle,
@@ -37,10 +47,19 @@ async fn load_map(
 ) -> Result<(EOShort, MapHandle), Box<dyn std::error::Error + Send + Sync>> {
     let raw_path = format!("maps/{:0>5}.emf", id);
     let path = Path::new(&raw_path);
-    let mut file = MapFile::new();
+    let mut file = EmfFile::default();
+    let mut file_size = 0;
     if Path::exists(path) {
         let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
-        file.read(&mut raw_file)?;
+        file_size = raw_file.metadata()?.len();
+
+        let mut data_buf: Vec<EOByte> = Vec::new();
+        raw_file.seek(SeekFrom::Start(0))?;
+        raw_file.read_to_end(&mut data_buf)?;
+
+        let reader = StreamReader::new(&data_buf);
+
+        file.deserialize(&reader);
     } else {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
@@ -48,5 +67,8 @@ async fn load_map(
         )));
     }
 
-    Ok((id, MapHandle::new(id, file, world_handle)))
+    Ok((
+        id,
+        MapHandle::new(id, file_size as EOInt, file, world_handle),
+    ))
 }

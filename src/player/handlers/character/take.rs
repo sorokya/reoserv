@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::character::Take, Action, Family},
+    protocol::{client::character::Take, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -18,6 +18,10 @@ pub async fn take(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     {
         debug!("Reply: {:?}", reply);
 
-        player.send(Action::Player, Family::Character, reply.serialize());
+        player.send(
+            PacketAction::Player,
+            PacketFamily::Character,
+            reply.serialize(),
+        );
     }
 }

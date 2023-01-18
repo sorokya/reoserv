@@ -1,7 +1,10 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::server::login::Reply,
-    net::{packets::client::login::Request, replies::LoginReply, Action, Family},
+    protocol::{
+        client::login::Request,
+        server::login::{Reply, ReplyBusy, ReplyData},
+        LoginReply, PacketAction, PacketFamily,
+    },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -17,13 +20,13 @@ pub async fn request(
 
     debug!(
         "Recv: Request {{ name: {}, password: ******** }}",
-        request.name
+        request.username
     );
 
     let reply = match world
         .login(
             player.clone(),
-            request.name.clone(),
+            request.username.clone(),
             request.password.clone(),
         )
         .await
@@ -32,15 +35,17 @@ pub async fn request(
         Err(e) => {
             error!("Login error: {}", e);
             Reply {
-                reply: LoginReply::Busy,
-                character_list: None,
+                reply_code: LoginReply::Busy,
+                data: ReplyData::Busy(ReplyBusy {
+                    no: "NO".to_string(),
+                }),
             }
         }
     };
 
     debug!("Reply: {:?}", reply);
 
-    player.send(Action::Reply, Family::Login, reply.serialize());
+    player.send(PacketAction::Reply, PacketFamily::Login, reply.serialize());
 
     Ok(())
 }

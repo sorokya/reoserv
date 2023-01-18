@@ -1,12 +1,12 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::client::door,
+    protocol::client::door::Open,
 };
 
 use crate::{player::PlayerHandle, PacketBuf};
 
 pub async fn open(buf: PacketBuf, player: PlayerHandle) {
-    let mut open = door::Open::default();
+    let mut open = Open::default();
     let reader = StreamReader::new(&buf);
     open.deserialize(&reader);
 

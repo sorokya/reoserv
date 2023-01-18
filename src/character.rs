@@ -1,18 +1,20 @@
 use eo::{
-    character::{AdminLevel, Gender, Race, SitState, PaperdollIcon},
     data::{EOChar, EOInt, EOShort},
-    net::{
-        packets::client::character::Create, CharacterBaseStats, CharacterMapInfo,
-        CharacterSecondaryStats, CharacterStats2, Item, PaperdollFull, Spell,
+    protocol::{
+        client::character::Create, AdminLevel, BigCoords, CharacterBaseStats2, CharacterMapInfo,
+        CharacterSecondaryStats, CharacterStats2, Coords, Direction, Gender, Item, PaperdollFull,
+        SitState, Skin, Spell,
     },
-    world::{Direction, TinyCoords},
 };
 
 use chrono::prelude::*;
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
-use num_traits::FromPrimitive;
 
-use crate::{player::PlayerHandle, utils, SETTINGS};
+use crate::{
+    player::PlayerHandle,
+    utils::{self, full_to_b000a0hsw},
+    SETTINGS,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
@@ -28,7 +30,7 @@ pub struct Character {
     pub admin_level: AdminLevel,
     pub class: EOChar,
     pub gender: Gender,
-    pub race: Race,
+    pub skin: Skin,
     pub hair_style: EOShort,
     pub hair_color: EOShort,
     pub bank_max: EOInt,
@@ -69,7 +71,7 @@ pub struct Character {
     pub evasion: EOShort,
     pub armor: EOShort,
     pub map_id: EOShort,
-    pub coords: TinyCoords,
+    pub coords: Coords,
     pub direction: Direction,
     pub sit_state: SitState,
     pub hidden: bool,
@@ -84,9 +86,9 @@ impl Character {
         Character {
             account_id,
             gender: create.gender,
-            hair_style: create.hair_style,
-            hair_color: create.hair_color,
-            race: create.race,
+            hair_style: create.hairstyle,
+            hair_color: create.haircolor,
+            skin: create.skin,
             name: create.name.clone(),
             ..Default::default()
         }
@@ -104,7 +106,7 @@ impl Character {
         }
     }
 
-    pub fn is_in_range(&self, coords: TinyCoords) -> bool {
+    pub fn is_in_range(&self, coords: Coords) -> bool {
         utils::in_range(
             self.coords.x.into(),
             self.coords.y.into(),
@@ -113,7 +115,7 @@ impl Character {
         )
     }
 
-    pub fn is_in_range_distance(&self, coords: TinyCoords, distance: f64) -> bool {
+    pub fn is_in_range_distance(&self, coords: Coords, distance: f64) -> bool {
         utils::in_range_distance(
             self.coords.x.into(),
             self.coords.y.into(),
@@ -128,7 +130,10 @@ impl Character {
             name: self.name.clone(),
             id: self.player_id.expect("Character has no player id"),
             map_id: self.map_id,
-            coords: self.coords.to_coords(),
+            coords: BigCoords {
+                x: self.coords.x.into(),
+                y: self.coords.y.into(),
+            },
             direction: self.direction,
             class_id: self.class,
             guild_tag: match self.guild_tag {
@@ -137,17 +142,17 @@ impl Character {
             },
             level: self.level,
             gender: self.gender,
-            hair_style: self.hair_style as EOChar,
-            hair_color: self.hair_color as EOChar,
-            race: self.race,
+            hairstyle: self.hair_style as EOChar,
+            haircolor: self.hair_color as EOChar,
+            skin_id: self.skin,
             max_hp: self.max_hp,
             hp: self.hp,
             max_tp: self.max_tp,
             tp: self.tp,
-            paperdoll: self.paperdoll.to_paperdoll_b000a0hsw(),
+            paperdoll: full_to_b000a0hsw(&self.paperdoll),
             sit_state: self.sit_state,
-            invisible: self.hidden,
-            warp_animation: None,
+            invisible: if self.hidden { 1 } else { 0 },
+            animation: None,
         }
     }
 
@@ -181,10 +186,10 @@ impl Character {
         character.home = row.take("home").unwrap();
         character.fiance = row.take("fiance").unwrap();
         character.partner = row.take("partner").unwrap();
-        character.admin_level = AdminLevel::from_i32(row.take("admin_level").unwrap()).unwrap();
+        character.admin_level = AdminLevel::from_char(row.take("admin_level").unwrap()).unwrap();
         character.class = row.take("class").unwrap();
-        character.gender = Gender::from_i32(row.take("gender").unwrap()).unwrap();
-        character.race = Race::from_i32(row.take("race").unwrap()).unwrap();
+        character.gender = Gender::from_char(row.take("gender").unwrap()).unwrap();
+        character.skin = Skin::from_char(row.take("race").unwrap()).unwrap();
         character.hair_style = row.take("hair_style").unwrap();
         character.hair_color = row.take("hair_color").unwrap();
         character.bank_max = row.take("bank_max").unwrap();
@@ -199,12 +204,12 @@ impl Character {
         character.paperdoll.hat = row.take("hat").unwrap();
         character.paperdoll.shield = row.take("shield").unwrap();
         character.paperdoll.weapon = row.take("weapon").unwrap();
-        character.paperdoll.rings[0] = row.take("ring").unwrap();
-        character.paperdoll.rings[1] = row.take("ring2").unwrap();
-        character.paperdoll.armlets[0] = row.take("armlet").unwrap();
-        character.paperdoll.armlets[1] = row.take("armlet2").unwrap();
-        character.paperdoll.bracers[0] = row.take("bracer").unwrap();
-        character.paperdoll.bracers[1] = row.take("bracer2").unwrap();
+        character.paperdoll.ring[0] = row.take("ring").unwrap();
+        character.paperdoll.ring[1] = row.take("ring2").unwrap();
+        character.paperdoll.armlet[0] = row.take("armlet").unwrap();
+        character.paperdoll.armlet[1] = row.take("armlet2").unwrap();
+        character.paperdoll.bracer[0] = row.take("bracer").unwrap();
+        character.paperdoll.bracer[1] = row.take("bracer2").unwrap();
         character.level = row.take("level").unwrap();
         character.experience = row.take("experience").unwrap();
         character.hp = row.take("hp").unwrap();
@@ -222,8 +227,8 @@ impl Character {
         character.map_id = row.take("map").unwrap();
         character.coords.x = row.take("x").unwrap();
         character.coords.y = row.take("y").unwrap();
-        character.direction = Direction::from_i32(row.take("direction").unwrap()).unwrap();
-        character.sit_state = SitState::from_i32(row.take("sitting").unwrap()).unwrap();
+        character.direction = Direction::from_char(row.take("direction").unwrap()).unwrap();
+        character.sit_state = SitState::from_char(row.take("sitting").unwrap()).unwrap();
         character.hidden = row.take::<u32, &str>("hidden").unwrap() == 1;
         character.guild_name = row.take("guild_name").unwrap();
         character.guild_tag = row.take("tag").unwrap();
@@ -294,7 +299,7 @@ impl Character {
                 "name" => &self.name,
                 "home" => &SETTINGS.new_character.home,
                 "gender" => &(self.gender as u32),
-                "race" => &(self.race as u32),
+                "race" => &(self.skin as u32),
                 "hair_style" => &(self.hair_style as u32),
                 "hair_color" => &(self.hair_color as u32),
                 "bank_max" => &0_u32, // TODO: figure out bank max
@@ -369,7 +374,7 @@ impl Character {
                 "admin_level" => self.admin_level as u32,
                 "class" => self.class as u32,
                 "gender" => self.gender as u32,
-                "race" => self.race as u32,
+                "race" => self.skin as u32,
                 "hair_style" => self.hair_style as u32,
                 "hair_color" => self.hair_color as u32,
                 "bank_max" => self.bank_max as u32,
@@ -391,12 +396,12 @@ impl Character {
                 "hat" => self.paperdoll.hat as u32,
                 "shield" => self.paperdoll.shield as u32,
                 "weapon" => self.paperdoll.weapon as u32,
-                "ring" => self.paperdoll.rings[0] as u32,
-                "ring2" => self.paperdoll.rings[1] as u32,
-                "armlet" => self.paperdoll.armlets[0] as u32,
-                "armlet2" => self.paperdoll.armlets[1] as u32,
-                "bracer" => self.paperdoll.bracers[0] as u32,
-                "bracer2" => self.paperdoll.bracers[1] as u32,
+                "ring" => self.paperdoll.ring[0] as u32,
+                "ring2" => self.paperdoll.ring[1] as u32,
+                "armlet" => self.paperdoll.armlet[0] as u32,
+                "armlet2" => self.paperdoll.armlet[1] as u32,
+                "bracer" => self.paperdoll.bracer[0] as u32,
+                "bracer2" => self.paperdoll.bracer[1] as u32,
             },
         )
         .await?;
@@ -521,19 +526,19 @@ impl Character {
             skill_points: self.skill_points,
             karma: self.karma,
             secondary: CharacterSecondaryStats {
-                min_damage: self.min_damage,
-                max_damage: self.max_damage,
+                mindam: self.min_damage,
+                maxdam: self.max_damage,
                 accuracy: self.accuracy,
-                evasion: self.evasion,
+                evade: self.evasion,
                 armor: self.armor,
             },
-            base: CharacterBaseStats {
-                strength: self.adj_strength,
-                intelligence: self.adj_intelligence,
-                wisdom: self.adj_wisdom,
-                agility: self.adj_agility,
-                constitution: self.adj_constitution,
-                charisma: self.adj_charisma,
+            base: CharacterBaseStats2 {
+                str: self.adj_strength,
+                intl: self.adj_intelligence,
+                wis: self.adj_wisdom,
+                agi: self.adj_agility,
+                con: self.adj_constitution,
+                cha: self.adj_charisma,
             },
         }
     }

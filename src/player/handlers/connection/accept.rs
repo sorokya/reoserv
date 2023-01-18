@@ -1,6 +1,6 @@
 use eo::{
-    data::{Serializeable, StreamReader},
-    net::packets::client::connection::Accept,
+    data::{EOShort, Serializeable, StreamReader},
+    protocol::client::connection::Accept,
 };
 
 use crate::{player::PlayerHandle, PacketBuf};
@@ -22,10 +22,13 @@ pub async fn accept(buf: PacketBuf, player: PlayerHandle) {
 
     let mut expected_multiples = player.get_encoding_multiples().await;
     expected_multiples.reverse();
-    if expected_multiples != packet.encoding_multiples {
+    if expected_multiples[0] as EOShort != packet.decode_multiple
+        || expected_multiples[1] as EOShort != packet.encode_multiple
+    {
         player.close(format!(
             "sending invalid encoding multiples: Got {:?}, expected {:?}.",
-            packet.encoding_multiples, expected_multiples
+            [packet.decode_multiple, packet.encode_multiple],
+            expected_multiples
         ));
     }
 }

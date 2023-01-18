@@ -1,9 +1,9 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{
-        packets::{client::character::Request, server::character::Reply},
-        replies::CharacterReply,
-        Action, Family,
+    protocol::{
+        client::character::Request,
+        server::character::{Reply, ReplyData, ReplyFull3},
+        CharacterReply, PacketAction, PacketFamily,
     },
 };
 
@@ -16,16 +16,30 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Recv: {:?}", request);
 
-    let reply = if request.message != "NEW" {
-        Reply::no(CharacterReply::InvalidRequest)
+    let reply = if request.new != "NEW" {
+        Reply {
+            reply_code: CharacterReply::Full3,
+            data: ReplyData::Full3(ReplyFull3 {
+                no: "NO".to_string(),
+            }),
+        }
     } else {
         match world.request_character_creation(player.clone()).await {
             Ok(reply) => reply,
-            Err(_) => Reply::no(CharacterReply::InvalidRequest),
+            Err(_) => Reply {
+                reply_code: CharacterReply::Full3,
+                data: ReplyData::Full3(ReplyFull3 {
+                    no: "NO".to_string(),
+                }),
+            },
         }
     };
 
     debug!("Reply: {:?}", reply);
 
-    player.send(Action::Reply, Family::Character, reply.serialize());
+    player.send(
+        PacketAction::Reply,
+        PacketFamily::Character,
+        reply.serialize(),
+    );
 }

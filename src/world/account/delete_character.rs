@@ -1,6 +1,9 @@
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    net::{packets::server::character::Reply, CharacterList},
+    protocol::{
+        server::character::{self, Reply},
+        CharacterList, CharacterReply,
+    },
 };
 use mysql_async::Conn;
 
@@ -61,11 +64,16 @@ pub async fn delete_character(
 
             character.delete(conn).await?;
             let characters = get_character_list(conn, account_id).await?;
-            Ok(Reply::deleted(CharacterList {
-                length: characters.len() as EOChar,
-                unknown: 1,
-                characters,
-            }))
+
+            Ok(Reply {
+                reply_code: CharacterReply::Deleted,
+                data: character::ReplyData::Deleted(character::ReplyDeleted {
+                    character_list: CharacterList {
+                        num_characters: characters.len() as EOChar,
+                        characters,
+                    },
+                }),
+            })
         }
         Err(e) => Err(Box::new(e)),
     }

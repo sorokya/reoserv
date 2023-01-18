@@ -1,4 +1,7 @@
-use eo::net::{packets::server::character::Reply, replies::CharacterReply};
+use eo::protocol::{
+    server::character::{self, Reply},
+    CharacterReply,
+};
 use mysql_async::Conn;
 
 use crate::player::PlayerHandle;
@@ -20,9 +23,19 @@ pub async fn request_character_creation(
     let num_of_characters = get_num_of_characters(conn, account_id).await?;
     // TODO: configurable max number of characters?
     if num_of_characters >= 3 {
-        Ok(Reply::no(CharacterReply::Full))
+        Ok(Reply {
+            reply_code: CharacterReply::Full,
+            data: character::ReplyData::Full(character::ReplyFull {
+                no: "NO".to_string(),
+            }),
+        })
     } else {
         let session_id = player.generate_session_id().await;
-        Ok(Reply::r#continue(session_id))
+        Ok(Reply {
+            reply_code: CharacterReply::SessionId(session_id),
+            data: character::ReplyData::SessionId(character::ReplySessionId {
+                ok: "OK".to_string(),
+            }),
+        })
     }
 }

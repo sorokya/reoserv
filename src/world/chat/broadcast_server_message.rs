@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eo::{
     data::{EOShort, Serializeable},
-    net::{packets::server::talk, Action, Family, ClientState},
+    protocol::{server::talk, PacketAction, PacketFamily},
 };
 
 use crate::player::PlayerHandle;
@@ -14,8 +14,8 @@ pub async fn broadcast_server_message(message: &str, players: &HashMap<EOShort, 
     let buf = packet.serialize();
     for player in players.values() {
         let state = player.get_state().await;
-        if state == ClientState::Playing {
-            player.send(Action::Server, Family::Talk, buf.clone());
+        if state == State::Playing {
+            player.send(PacketAction::Server, PacketFamily::Talk, buf.clone());
         }
     }
 }

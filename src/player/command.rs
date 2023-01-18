@@ -1,7 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family, ClientState},
-    world::{TinyCoords, WarpAnimation},
+    protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
@@ -72,10 +71,10 @@ pub enum Command {
     RequestWarp {
         local: bool,
         map_id: EOShort,
-        coords: TinyCoords,
+        coords: Coords,
         animation: Option<WarpAnimation>,
     },
-    Send(Action, Family, PacketBuf),
+    Send(PacketAction, PacketFamily, PacketBuf),
     SetAccountId(EOInt),
     SetBusy(bool),
     SetCharacter(Box<Character>),

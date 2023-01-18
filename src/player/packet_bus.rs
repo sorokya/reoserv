@@ -1,9 +1,7 @@
 use eo::{
     data::{encode_number, EOByte, StreamBuilder},
-    net::{
-        packets::server::Sequencer, Action, Family, PacketProcessor, PACKET_HEADER_SIZE,
-        PACKET_LENGTH_SIZE,
-    },
+    net::{PacketProcessor, ServerSequencer},
+    protocol::{PacketAction, PacketFamily},
 };
 use tokio::net::TcpStream;
 
@@ -12,13 +10,13 @@ use crate::PacketBuf;
 pub struct PacketBus {
     socket: TcpStream,
     pub need_pong: bool,
-    pub sequencer: Sequencer,
+    pub sequencer: ServerSequencer,
     pub packet_processor: PacketProcessor,
 }
 
 impl PacketBus {
     pub fn new(socket: TcpStream) -> Self {
-        let mut sequencer = Sequencer::default();
+        let mut sequencer = ServerSequencer::default();
         sequencer.init_new_sequence();
         Self {
             socket,
@@ -30,12 +28,12 @@ impl PacketBus {
 
     pub async fn send(
         &mut self,
-        action: Action,
-        family: Family,
+        action: PacketAction,
+        family: PacketFamily,
         mut data: PacketBuf,
     ) -> std::io::Result<()> {
-        let packet_size = PACKET_HEADER_SIZE + data.len();
-        let mut builder = StreamBuilder::with_capacity(PACKET_LENGTH_SIZE + packet_size);
+        let packet_size = 2 + data.len();
+        let mut builder = StreamBuilder::with_capacity(2 + packet_size);
 
         builder.add_byte(action as EOByte);
         builder.add_byte(family as EOByte);
@@ -51,7 +49,7 @@ impl PacketBus {
 
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
-                if num_of_bytes_written != packet_size + PACKET_LENGTH_SIZE {
+                if num_of_bytes_written != packet_size + 2 {
                     error!(
                         "Written bytes ({}) doesn't match packet size ({})",
                         num_of_bytes_written, packet_size

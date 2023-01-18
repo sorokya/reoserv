@@ -1,7 +1,6 @@
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
-    net::{Action, Family, ClientState},
-    world::{TinyCoords, WarpAnimation},
+    protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use mysql_async::Pool;
 use tokio::{
@@ -160,7 +159,7 @@ impl PlayerHandle {
     pub fn request_warp(
         &self,
         map_id: EOShort,
-        coords: TinyCoords,
+        coords: Coords,
         local: bool,
         animation: Option<WarpAnimation>,
     ) {
@@ -172,7 +171,7 @@ impl PlayerHandle {
         });
     }
 
-    pub fn send(&self, action: Action, family: Family, buf: PacketBuf) {
+    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: PacketBuf) {
         let _ = self.tx.send(Command::Send(action, family, buf));
     }
 

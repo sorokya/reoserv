@@ -1,6 +1,6 @@
 use eo::{
     data::Serializeable,
-    net::{packets::server::talk, Action, Family},
+    protocol::{server::talk, PacketAction, PacketFamily},
 };
 
 use crate::player::PlayerHandle;
@@ -8,8 +8,8 @@ use crate::player::PlayerHandle;
 pub fn send_private_message(from: &str, to: &PlayerHandle, message: &str) {
     let packet = talk::Tell {
         message: message.to_string(),
-        name: from.to_string(),
+        player_name: from.to_string(),
     };
     let buf = packet.serialize();
-    to.send(Action::Tell, Family::Talk, buf);
+    to.send(PacketAction::Tell, PacketFamily::Talk, buf);
 }

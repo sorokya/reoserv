@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::client::emote::Report,
+    protocol::client::emote::Report,
 };
 
 use crate::{player::PlayerHandle, PacketBuf};

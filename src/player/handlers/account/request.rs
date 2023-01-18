@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::account::Request, Action, Family},
+    protocol::{client::account::Request, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -13,11 +13,15 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     debug!("Recv: {:?}", request);
 
     if let Ok(reply) = world
-        .request_account_creation(request.name, player.clone())
+        .request_account_creation(request.username, player.clone())
         .await
     {
         debug!("Reply: {:?}", reply);
 
-        player.send(Action::Reply, Family::Account, reply.serialize());
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Account,
+            reply.serialize(),
+        );
     }
 }

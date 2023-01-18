@@ -2,11 +2,7 @@ use std::{io::Cursor, path::Path};
 
 use eo::{
     data::EOChar,
-    net::{
-        packets::server::welcome::{EnterGame, Reply},
-        replies::WelcomeReply,
-        Weight, ClientState,
-    },
+    protocol::{server::welcome, Weight, WelcomeReply},
 };
 
 use crate::{
@@ -19,7 +15,7 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 pub async fn enter_game(
     map: MapHandle,
     player: PlayerHandle,
-) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
     let player_id = player.get_player_id().await;
     player.set_map(map.clone());
     player.set_state(ClientState::Playing);
@@ -34,15 +30,14 @@ pub async fn enter_game(
 
     map.enter(character, None).await;
     let nearby_info = map.get_nearby_info(player_id).await;
-    Ok(Reply {
-        reply: WelcomeReply::EnterGame,
-        select_character: None,
-        enter_game: Some(EnterGame {
+    Ok(welcome::Reply {
+        reply_code: WelcomeReply::EnterGame,
+        data: welcome::ReplyData::EnterGame(welcome::ReplyEnterGame {
             news: get_news().await,
             weight,
             items,
             spells,
-            nearby_info,
+            nearby: nearby_info,
         }),
     })
 }

@@ -1,6 +1,9 @@
 use eo::{
     data::EOChar,
-    net::{packets::server::account::Reply, replies::AccountReply},
+    protocol::{
+        server::account::{self, Reply},
+        AccountReply,
+    },
 };
 use mysql_async::Conn;
 
@@ -17,11 +20,22 @@ pub async fn request_account_creation(
 
     let exists = account_exists(conn, &name).await?;
     if exists {
-        Ok(Reply::no(AccountReply::Exists))
+        Ok(Reply {
+            reply_code: AccountReply::Exists,
+            data: account::ReplyData::Exists(account::ReplyExists {
+                no: "NO".to_string(),
+            }),
+        })
     } else {
         let session_id = player.generate_session_id().await;
         player.ensure_valid_sequence_for_account_creation().await;
         let sequence_start = player.get_sequence_start().await;
-        Ok(Reply::r#continue(session_id, sequence_start as EOChar))
+        Ok(Reply {
+            reply_code: AccountReply::SessionId(session_id),
+            data: account::ReplyData::SessionId(account::ReplySessionId {
+                ok: "OK".to_string(),
+                sequence_start: sequence_start as EOChar,
+            }),
+        })
     }
 }

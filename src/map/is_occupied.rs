@@ -1,13 +1,6 @@
-use std::collections::HashSet;
+use eo::protocol::Coords;
 
-use eo::{
-    world::TinyCoords,
-};
-
-
-pub fn is_occupied(
-    coords: TinyCoords,
-    occupied_tiles: &HashSet<TinyCoords>,
-) -> bool {
+pub fn is_occupied(coords: Coords, occupied_tiles: &Vec<Coords>) -> bool {
+    // idk if this is ref check or val check
     occupied_tiles.contains(&coords)
 }

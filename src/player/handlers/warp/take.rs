@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::{packets::client::warp::Take, replies::InitReply, Action, Family, FileType},
+    protocol::{client::warp::Take, FileType, InitReply, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
@@ -16,8 +16,8 @@ pub async fn take(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
         .get_file(FileType::Map, take.session_id, None, player.clone())
         .await
     {
-        reply.reply_code = InitReply::WarpMap;
+        reply.reply_code = InitReply::WarpFileEmf;
         debug!("Reply: {:?}", reply);
-        player.send(Action::Init, Family::Init, reply.serialize());
+        player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
     }
 }

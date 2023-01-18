@@ -1,15 +1,14 @@
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use eo::{
     data::{EOChar, EOShort},
-    net::NpcMapInfo,
-    world::{Direction, TinyCoords},
+    protocol::{Coords, Direction, NPCMapInfo},
 };
 
 use crate::utils;
 
 pub struct Npc {
     pub id: EOShort,
-    pub coords: TinyCoords,
+    pub coords: Coords,
     pub direction: Direction,
     pub spawn_index: usize,
     pub alive: bool,
@@ -22,7 +21,16 @@ pub struct Npc {
 
 impl Npc {
     // TODO: builder pattern?
-    pub fn new(id: EOShort, coords: TinyCoords, direction: Direction, spawn_index: usize, dead_since: DateTime<Utc>, last_act: DateTime<Utc>, does_talk: bool, last_talk: DateTime<Utc>) -> Self {
+    pub fn new(
+        id: EOShort,
+        coords: Coords,
+        direction: Direction,
+        spawn_index: usize,
+        dead_since: DateTime<Utc>,
+        last_act: DateTime<Utc>,
+        does_talk: bool,
+        last_talk: DateTime<Utc>,
+    ) -> Self {
         Self {
             id,
             coords,
@@ -37,7 +45,7 @@ impl Npc {
         }
     }
 
-    pub fn is_in_range(&self, coords: TinyCoords) -> bool {
+    pub fn is_in_range(&self, coords: Coords) -> bool {
         utils::in_range(
             self.coords.x.into(),
             self.coords.y.into(),
@@ -46,7 +54,7 @@ impl Npc {
         )
     }
 
-    pub fn is_in_range_distance(&self, coords: TinyCoords, distance: f64) -> bool {
+    pub fn is_in_range_distance(&self, coords: Coords, distance: f64) -> bool {
         utils::in_range_distance(
             self.coords.x.into(),
             self.coords.y.into(),
@@ -56,8 +64,8 @@ impl Npc {
         )
     }
 
-    pub fn to_map_info(&self, index: &EOChar) -> NpcMapInfo {
-        NpcMapInfo {
+    pub fn to_map_info(&self, index: &EOChar) -> NPCMapInfo {
+        NPCMapInfo {
             index: *index,
             id: self.id,
             coords: self.coords,

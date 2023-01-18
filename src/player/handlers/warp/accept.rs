@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    net::packets::client::warp::Accept,
+    protocol::client::warp::Accept,
 };
 
 use crate::{player::PlayerHandle, PacketBuf};

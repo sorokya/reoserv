@@ -9,15 +9,15 @@ pub async fn ping_sln() {
     let url = match Url::parse_with_params(&format!("{}check", SETTINGS.sln.url),
         &[
             ("software", "REOSERV"),
-            ("v", &VERSION),
+            ("v", VERSION),
             ("retry", &(SETTINGS.sln.rate * 60).to_string()),
             ("host", &SETTINGS.sln.hostname),
             ("port", &SETTINGS.server.port),
             ("name", &SETTINGS.sln.server_name),
             ("url", &SETTINGS.sln.site),
             ("zone", &SETTINGS.sln.zone),
-            ("clientmajorversion", &client_major_version),
-            ("clientminorversion", &client_minor_version),
+            ("clientmajorversion", client_major_version),
+            ("clientminorversion", client_minor_version),
         ],
     ) {
         Ok(url) => url,
@@ -49,7 +49,7 @@ pub async fn ping_sln() {
     if let Ok(message) = response.text().await {
         let lines = message.split('\n').collect::<Vec<&str>>();
         for line in lines {
-            let code = match line.chars().nth(0) {
+            let code = match line.chars().next() {
                 Some(code) => code as u32,
                 None => continue,
             };

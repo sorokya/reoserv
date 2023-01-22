@@ -48,7 +48,7 @@ async fn load_map(
     let raw_path = format!("maps/{:0>5}.emf", id);
     let path = Path::new(&raw_path);
     let mut file = EmfFile::default();
-    let mut file_size = 0;
+    let file_size: u64;
     if Path::exists(path) {
         let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
         file_size = raw_file.metadata()?.len();

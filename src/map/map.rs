@@ -384,7 +384,7 @@ impl Map {
                 }
             }
 
-            // let mut rng = rand::thread_rng();
+            let mut rng = rand::thread_rng();
             for npc in self.npcs.values_mut() {
                 let spawn = &self.file.npcs[npc.spawn_index];
                 if !npc.alive
@@ -396,15 +396,14 @@ impl Map {
                         y: spawn.y,
                     };
 
-                    // TODO: bounds check
-                    // while !is_tile_walkable_for_npc(
-                    //     npc.coords,
-                    //     &self.file.spec_rows,
-                    //     &self.file.warp_rows,
-                    // ) {
-                    //     npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
-                    //     npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
-                    // }
+                    while !is_tile_walkable_for_npc(
+                        npc.coords,
+                        &self.file.spec_rows,
+                        &self.file.warp_rows,
+                    ) {
+                        npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                        npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                    }
 
                     npc.direction = if spawn.spawn_type == 7 {
                         Direction::from_char(spawn.spawn_type & 0x03).unwrap()

@@ -24,7 +24,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
     let sequence_bytes = player.get_sequence_bytes().await;
     let response = stupid_hash(packet.challenge);
     let player_id = player.get_player_id().await;
-    let encoding_multiples = player.get_encoding_multiples().await;
+    let encoding_multiples = player.gen_encoding_multiples().await;
 
     let mut reply = server::init::Init::new();
     reply.reply_code = InitReply::Ok;

@@ -14,7 +14,7 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
 
     if let Ok(map) = player.get_map().await {
         let reply = map.get_map_info(request.player_ids, Vec::default()).await;
-        if reply.nearby.characters.len() > 0 {
+        if !reply.nearby.characters.is_empty() {
             debug!("Reply: {:?}", reply);
             player.send(PacketAction::Reply, PacketFamily::Range, reply.serialize());
         }

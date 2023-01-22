@@ -98,7 +98,7 @@
             alias: "set",
             description: "Set stats for a player",
             usage: "$set level player 10",
-            admin_level: "GameMaster",
+            admin_level: "Gm",
             args: [
                 (
                     name: "stat",

@@ -102,7 +102,7 @@ impl Character {
                 PaperdollIcon::Player
             },
             AdminLevel::Gm => PaperdollIcon::Gm,
-            AdminLevel::Hgm => PaperdollIcon::Hgm,
+            AdminLevel::Hgm | AdminLevel::Reserved5 => PaperdollIcon::Hgm,
         }
     }
 
@@ -151,7 +151,7 @@ impl Character {
             tp: self.tp,
             paperdoll: full_to_b000a0hsw(&self.paperdoll),
             sit_state: self.sit_state,
-            invisible: if self.hidden { 1 } else { 0 },
+            invisible: EOChar::from(self.hidden),
             animation: None,
         }
     }
@@ -295,7 +295,7 @@ impl Character {
         tx.exec_drop(
             include_str!("./sql/create_character.sql"),
             params! {
-                "account_id" => &(self.account_id as u32),
+                "account_id" => &self.account_id,
                 "name" => &self.name,
                 "home" => &SETTINGS.new_character.home,
                 "gender" => &(self.gender as u32),
@@ -377,8 +377,8 @@ impl Character {
                 "race" => self.skin as u32,
                 "hair_style" => self.hair_style as u32,
                 "hair_color" => self.hair_color as u32,
-                "bank_max" => self.bank_max as u32,
-                "gold_bank" => self.gold_bank as u32,
+                "bank_max" => self.bank_max,
+                "gold_bank" => self.gold_bank,
             },
         )
         .await?;
@@ -415,7 +415,7 @@ impl Character {
                 "y" => self.coords.y as u32,
                 "direction" => self.direction as u32,
                 "sitting" => self.sit_state as u32,
-                "hidden" => if self.hidden { 1 } else { 0 },
+                "hidden" => EOInt::from(self.hidden),
             },
         )
         .await?;
@@ -425,7 +425,7 @@ impl Character {
             params! {
                 "character_id" => self.id,
                 "level" => self.level as u32,
-                "experience" => self.experience as u32,
+                "experience" => self.experience,
                 "hp" => self.hp as u32,
                 "tp" => self.tp as u32,
                 "strength" => self.base_strength as u32,

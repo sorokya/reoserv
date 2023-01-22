@@ -35,8 +35,8 @@ impl PacketBus {
         let packet_size = 2 + data.len();
         let mut builder = StreamBuilder::with_capacity(2 + packet_size);
 
-        builder.add_byte(action as EOByte);
-        builder.add_byte(family as EOByte);
+        builder.add_byte(action.to_byte());
+        builder.add_byte(family.to_byte());
         builder.append(&mut data);
 
         let mut buf = builder.get();

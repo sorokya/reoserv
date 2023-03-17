@@ -79,13 +79,13 @@ respawn_rate = 1
 act_rate = 50
 
 # Speed in miliseconds for each npc spawn speed
-speed_0 = 400
-speed_1 = 400
-speed_2 = 800
-speed_3 = 1200
-speed_4 = 2400
-speed_5 = 4800
-speed_6 = 9600
+speed_0 = 625
+speed_1 = 625
+speed_2 = 1250
+speed_3 = 1875
+speed_4 = 3750
+speed_5 = 7500
+speed_6 = 15000
 
 # Speed that NPCs talk at in miliseconds
-talk_rate = 4800
+talk_rate = 7500

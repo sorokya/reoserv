@@ -102,7 +102,7 @@ impl Character {
                 PaperdollIcon::Player
             },
             AdminLevel::Gm => PaperdollIcon::Gm,
-            AdminLevel::Hgm | AdminLevel::Reserved5 => PaperdollIcon::Hgm,
+            AdminLevel::Hgm | AdminLevel::God => PaperdollIcon::Hgm,
         }
     }
 

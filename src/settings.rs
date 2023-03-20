@@ -60,7 +60,7 @@ pub struct NPCs {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SLN {
+pub struct Sln {
     pub enabled: bool,
     pub url: String,
     pub site: String,
@@ -78,7 +78,7 @@ pub struct Settings {
     pub jail: Jail,
     pub world: World,
     pub npcs: NPCs,
-    pub sln: SLN,
+    pub sln: Sln,
 }
 
 impl Settings {

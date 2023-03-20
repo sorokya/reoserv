@@ -10,7 +10,7 @@ pub async fn get_character_list(
 ) -> Result<Vec<CharacterInfo>, Box<dyn std::error::Error + Send + Sync>> {
     let characters = conn
         .exec_map(
-            include_str!("../../sql/get_character_list.sql"),
+            include_str!("../../../sql/get_character_list.sql"),
             params! {
                 "account_id" => &account_id,
             },

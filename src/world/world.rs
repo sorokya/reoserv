@@ -1,36 +1,19 @@
 use crate::{
-    character::Character,
-    errors::{
-        CharacterNotFoundError, DataNotFoundError, MissingSessionIdError, WrongSessionIdError,
-    },
+    errors::{DataNotFoundError, MissingSessionIdError, WrongSessionIdError},
     map::MapHandle,
-    player::{PlayerHandle, ClientState},
-    SETTINGS,
+    player::PlayerHandle,
 };
 
-use super::{
-    account::{self, calculate_stats},
-    chat::{
-        broadcast_admin_message, broadcast_announcement, broadcast_global_message,
-        broadcast_server_message, send_player_not_found, send_private_message,
-    },
-    data, enter_game, Command,
-};
+use super::{data, Command};
 use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable},
-    protocol::{
-        server::{
-            init,
-            welcome::{self, ReplySelectCharacter},
-        },
-        FileType, InitReply, ServerSettings, WelcomeReply, OnlinePlayers,
-    },
+    protocol::{server::init, FileType, InitReply, OnlinePlayers},
     pubs::{
         DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
     },
 };
 use mysql_async::Pool;
-use std::{collections::HashMap, convert::TryInto};
+use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 #[derive(Debug)]
@@ -51,6 +34,14 @@ pub struct World {
     spell_file: Option<EsfFile>,
     talk_file: Option<TalkFile>,
 }
+
+mod account;
+mod add_player;
+mod chat;
+mod drop_player;
+mod enter_game;
+mod get_character_by_name;
+mod get_welcome_request_data;
 
 impl World {
     pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
@@ -79,128 +70,54 @@ impl World {
                 respond_to,
                 player_id,
                 player,
-            } => {
-                self.players.insert(player_id, player);
-                let _ = respond_to.send(());
-            }
+            } => self.add_player(player_id, player, respond_to),
             Command::BroadcastAdminMessage { name, message } => {
-                broadcast_admin_message(&name, &message, &self.players).await;
+                self.broadcast_admin_message(&name, &message).await
             }
             Command::BroadcastAnnouncement { name, message } => {
-                broadcast_announcement(&name, &message, &self.players).await;
+                self.broadcast_announcement(&name, &message).await
             }
             Command::BroadcastGlobalMessage {
                 target_player_id,
                 name,
                 message,
             } => {
-                broadcast_global_message(target_player_id, &name, &message, &self.players).await;
+                self.broadcast_global_message(target_player_id, &name, &message)
+                    .await
             }
             Command::_BroadcastServerMessage { message } => {
-                broadcast_server_message(&message, &self.players).await;
+                self.broadcast_server_message(&message).await
             }
             Command::CreateAccount {
                 player,
                 details,
                 respond_to,
-            } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::create_account(&mut conn, player, details).await;
-                let _ = respond_to.send(result);
-            }
+            } => self.create_account(player, details, respond_to).await,
             Command::CreateCharacter {
                 details,
                 player,
                 respond_to,
-            } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::create_character(&mut conn, details, player).await;
-                let _ = respond_to.send(result);
-            }
+            } => self.create_character(player, details, respond_to).await,
             Command::DeleteCharacter {
-                player_id,
+                session_id,
                 character_id,
                 player,
                 respond_to,
             } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result =
-                    account::delete_character(&mut conn, player_id, character_id, player).await;
-                let _ = respond_to.send(result);
+                self.delete_character(player, session_id, character_id, respond_to)
+                    .await
             }
             Command::DropPlayer {
                 player_id,
                 account_id,
                 character_name,
                 respond_to,
-            } => {
-                debug!(
-                    "Dropping player! id: {}, account_id: {}, character_name: {}",
-                    player_id, account_id, character_name
-                );
-                self.players.remove(&player_id).unwrap();
-
-                if account_id > 0 {
-                    self.accounts.retain(|id| *id != account_id);
-                }
-
-                if self.characters.contains_key(&character_name) {
-                    self.characters.remove(&character_name);
-                }
-
-                let _ = respond_to.send(());
-            }
+            } => self.drop_player(player_id, account_id, &character_name, respond_to),
             Command::EnterGame {
                 session_id,
                 player,
                 respond_to,
-            } => {
-                match player.take_session_id().await {
-                    Ok(actual_session_id) => {
-                        if actual_session_id != session_id {
-                            let _ = respond_to.send(Err(Box::new(WrongSessionIdError::new(
-                                actual_session_id,
-                                session_id,
-                            ))));
-                            return;
-                        }
-                        let map_id = match player.get_map_id().await {
-                            Ok(map_id) => map_id,
-                            Err(e) => {
-                                let _ = respond_to.send(Err(Box::new(e)));
-                                return;
-                            }
-                        };
-
-                        if let Some(maps) = self.maps.as_ref() {
-                            if let Some(map) = maps.get(&map_id) {
-                                let player = player.to_owned();
-                                let map = map.to_owned();
-                                let _ = tokio::task::Builder::new().name("enter_game").spawn(
-                                    async move {
-                                        let result = enter_game(map, player).await;
-                                        let _ = respond_to.send(result);
-                                    },
-                                );
-                            } else {
-                                // TODO: Move character to safe map
-                                let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                                    "Map".to_string(),
-                                    map_id,
-                                ))));
-                            }
-                        } else {
-                            let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                                "Map".to_string(),
-                                map_id,
-                            ))));
-                        }
-                    }
-                    Err(e) => {
-                        let _ = respond_to.send(Err(Box::new(e)));
-                    }
-                }
-            }
+            } => self.enter_game(player, session_id, respond_to).await,
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
             }
@@ -363,20 +280,7 @@ impl World {
                 password,
                 player,
                 respond_to,
-            } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let (reply, account_id) =
-                    match account::login(&mut conn, &name, &password, &mut self.accounts).await {
-                        Ok((reply, account_id)) => (reply, account_id),
-                        Err(err) => {
-                            let _ = respond_to.send(Err(err));
-                            return;
-                        }
-                    };
-                player.set_account_id(account_id);
-                player.set_state(ClientState::LoggedIn);
-                let _ = respond_to.send(Ok(reply));
-            }
+            } => self.login(player, &name, &password, respond_to).await,
             Command::PingPlayers => {
                 for player in self.players.values() {
                     player.ping();
@@ -387,81 +291,30 @@ impl World {
                 player,
                 respond_to,
             } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::request_account_creation(&mut conn, name, player).await;
-                let _ = respond_to.send(result);
+                self.request_account_creation(player, name, respond_to)
+                    .await
             }
             Command::RequestCharacterCreation { player, respond_to } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result = account::request_character_creation(&mut conn, player).await;
-                let _ = respond_to.send(result);
+                self.request_character_creation(player, respond_to).await
             }
             Command::RequestCharacterDeletion {
                 character_id,
                 player,
                 respond_to,
             } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let result =
-                    account::request_character_deletion(&mut conn, character_id, player).await;
-                let _ = respond_to.send(result);
+                self.request_character_deletion(player, character_id, respond_to)
+                    .await
             }
             Command::SelectCharacter {
                 character_id,
                 player,
                 respond_to,
             } => {
-                let mut conn = self.pool.get_conn().await.unwrap();
-                let mut character = match account::select_character(
-                    &mut conn,
-                    character_id,
-                    player.clone(),
-                )
-                .await
-                {
-                    Ok(character) => character,
-                    Err(err) => {
-                        let _ = respond_to.send(Err(err));
-                        return;
-                    }
-                };
-
-                let item_file = self.item_file.as_ref().expect("Item file not found");
-                let class_file = self.class_file.as_ref().expect("Class file not found");
-                calculate_stats(&mut character, item_file, class_file);
-
-                let select_character = match self
-                    .get_welcome_request_data(player.clone(), &character)
+                self.select_character(player, character_id, respond_to)
                     .await
-                {
-                    Ok(select_character) => select_character,
-                    Err(err) => {
-                        let _ = respond_to.send(Err(err));
-                        return;
-                    }
-                };
-
-                let player_id = player.get_player_id().await;
-                self.characters
-                    .insert(character.name.to_string(), player_id);
-                player.set_character(Box::new(character));
-
-                let _ = respond_to.send(Ok(welcome::Reply {
-                    reply_code: WelcomeReply::SelectCharacter,
-                    data: welcome::ReplyData::SelectCharacter(select_character),
-                }));
             }
             Command::SendPrivateMessage { from, to, message } => {
-                if let Ok(from_character) = from.get_character().await {
-                    match self.get_character_by_name(&to).await {
-                        Ok(character) => send_private_message(
-                            &from_character.name,
-                            character.player.as_ref().unwrap(),
-                            &message,
-                        ),
-                        Err(_) => send_player_not_found(from, &to),
-                    }
-                }
+                self.send_private_message(&from, &to, &message).await
             }
             Command::SpawnNpcs => {
                 for map in self.maps.as_ref().unwrap().values() {
@@ -474,114 +327,6 @@ impl World {
                 }
             }
         }
-    }
-
-    async fn get_character_by_name(
-        &self,
-        name: &str,
-    ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
-        if let Some(player_id) = self.characters.get(name) {
-            if let Some(player) = self.players.get(player_id) {
-                // Safe to assume this will work if we got this far
-                let character = player.get_character().await.unwrap();
-                Ok(character)
-            } else {
-                Err(Box::new(DataNotFoundError::new(
-                    "Player".to_string(),
-                    *player_id,
-                )))
-            }
-        } else {
-            Err(Box::new(CharacterNotFoundError::new(name.to_string())))
-        }
-    }
-
-    async fn get_welcome_request_data(
-        &self,
-        player: PlayerHandle,
-        character: &Character,
-    ) -> Result<ReplySelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
-        let (map_rid, map_filesize) = {
-            let maps = self.maps.as_ref().expect("Maps not loaded");
-            let map = match maps.get(&character.map_id) {
-                Some(map) => map,
-                None => {
-                    error!("Map not found: {}", character.map_id);
-                    return Err(Box::new(DataNotFoundError::new(
-                        "Map".to_string(),
-                        character.map_id,
-                    )));
-                }
-            };
-            map.get_rid_and_size().await
-        };
-
-        let (eif_rid, eif_length) = {
-            let item_file = self.item_file.as_ref().expect("Item file not loaded");
-            (item_file.rid, item_file.num_items)
-        };
-
-        let (ecf_rid, ecf_length) = {
-            let class_file = self.class_file.as_ref().expect("Class file not loaded");
-            (class_file.rid, class_file.num_classes)
-        };
-
-        let (enf_rid, enf_length) = {
-            let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-            (npc_file.rid, npc_file.num_npcs)
-        };
-
-        let (esf_rid, esf_length) = {
-            let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-            (spell_file.rid, spell_file.num_spells)
-        };
-
-        let settings = ServerSettings {
-            jail_map: SETTINGS.jail.map.try_into().expect("Invalid map id"),
-            rescue_map: 4,
-            rescue_x: 24,
-            rescue_y: 24,
-            light_guide_flood_rate: 10,
-            guardian_flood_rate: 10,
-            gm_flood_rate: 10,
-            hgm_flood_rate: 0,
-        };
-
-        let session_id = player.generate_session_id().await;
-
-        Ok(ReplySelectCharacter {
-            session_id,
-            character_id: character.id,
-            map_id: character.map_id,
-            map_rid,
-            map_filesize,
-            eif_rid,
-            eif_length,
-            enf_rid,
-            enf_length,
-            esf_rid,
-            esf_length,
-            ecf_rid,
-            ecf_length,
-            name: character.name.to_string(),
-            title: character.title.clone().unwrap_or_default(),
-            guild_name: character.guild_name.clone().unwrap_or_default(),
-            guild_rank_name: character.guild_rank_string.clone().unwrap_or_default(),
-            class_id: character.class,
-            guild_tag: character.guild_tag.clone().unwrap_or_default(),
-            admin: character.admin_level,
-            level: character.level,
-            experience: character.experience,
-            usage: character.usage,
-            stats: character.get_character_stats_2(),
-            paperdoll: character.paperdoll.to_owned(),
-            guild_rank: character.guild_rank_id.unwrap_or_default(),
-            settings,
-            login_message: match character.usage {
-                0 => 2,
-                _ => 0,
-            },
-        })
     }
 
     async fn get_file(

@@ -1,4 +1,4 @@
-use mysql_async::{prelude::*, Conn, Params, Row};
+use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 pub async fn account_exists(
     conn: &mut Conn,

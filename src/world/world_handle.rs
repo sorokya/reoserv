@@ -105,13 +105,13 @@ impl WorldHandle {
 
     pub async fn delete_character(
         &self,
-        player_id: EOShort,
+        session_id: EOShort,
         character_id: EOInt,
         player: PlayerHandle,
     ) -> Result<character::Reply, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DeleteCharacter {
-            player_id,
+            session_id,
             character_id,
             player,
             respond_to: tx,

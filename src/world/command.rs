@@ -49,7 +49,7 @@ pub enum Command {
             oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     DeleteCharacter {
-        player_id: EOShort,
+        session_id: EOShort,
         character_id: EOInt,
         player: PlayerHandle,
         respond_to:

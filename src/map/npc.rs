@@ -1,6 +1,6 @@
 use chrono::{DateTime, Duration, Utc};
 use eo::{
-    data::{EOChar, EOShort},
+    data::{EOChar, EOShort, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
 };
 
@@ -17,6 +17,9 @@ pub struct Npc {
     pub does_talk: bool,
     pub last_talk: DateTime<Utc>,
     pub walk_idle_for: Option<Duration>,
+    pub hp: EOThree,
+    pub max_hp: EOThree,
+    pub target_player_id: Option<EOShort>,
 }
 
 impl Npc {
@@ -30,6 +33,7 @@ impl Npc {
         last_act: DateTime<Utc>,
         does_talk: bool,
         last_talk: DateTime<Utc>,
+        hp: EOThree,
     ) -> Self {
         Self {
             id,
@@ -42,6 +46,9 @@ impl Npc {
             does_talk,
             last_talk,
             walk_idle_for: None,
+            hp,
+            max_hp: hp,
+            target_player_id: None,
         }
     }
 

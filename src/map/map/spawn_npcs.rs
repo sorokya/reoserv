@@ -1,10 +1,17 @@
 use std::cmp;
 
 use chrono::Duration;
-use eo::{data::EOChar, protocol::{Coords, Direction}, pubs::EnfNpc};
+use eo::{
+    data::EOChar,
+    protocol::{Coords, Direction},
+    pubs::EnfNpc,
+};
 use rand::Rng;
 
-use crate::{SETTINGS, map::{Npc, NpcData, is_tile_walkable::is_tile_walkable_for_npc}};
+use crate::{
+    map::{is_tile_walkable::is_tile_walkable_for_npc, NPCBuilder, NpcData},
+    SETTINGS,
+};
 
 use super::Map;
 
@@ -35,28 +42,30 @@ impl Map {
                     }
 
                     let data_record = match self.world.get_npc(spawn.id).await {
-                            Ok(npc) =>  npc,
-                            Err(e) => {
-                                error!("Failed to load NPC {}", e);
-                                continue;
-                            }
+                        Ok(npc) => npc,
+                        Err(e) => {
+                            error!("Failed to load NPC {}", e);
+                            continue;
+                        }
                     };
 
                     // TODO: bounds check
                     for _ in 0..spawn.amount {
                         self.npcs.insert(
                             npc_index,
-                            Npc::new(
-                                spawn.id,
-                                Coords::default(),
-                                Direction::Down,
-                                spawn_index,
-                                dead_since,
-                                dead_since,
-                                chatter_indexes.contains(&(npc_index as usize)),
-                                now,
-                                data_record.hp,
-                            ),
+                            NPCBuilder::new()
+                                .id(spawn.id)
+                                .coords(Coords::default())
+                                .direction(Direction::Down)
+                                .spawn_index(spawn_index)
+                                .alive(false)
+                                .dead_since(dead_since)
+                                .last_act(dead_since)
+                                .does_talk(chatter_indexes.contains(&(npc_index as usize)))
+                                .last_talk(now)
+                                .hp(data_record.hp)
+                                .max_hp(data_record.hp)
+                                .build(),
                         );
                         npc_index += 1;
                     }

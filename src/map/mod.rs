@@ -6,7 +6,7 @@ pub use item::Item;
 mod map;
 pub use map::Map;
 mod npc;
-pub use npc::Npc;
+pub use npc::{Npc, NPCBuilder};
 mod npc_data;
 pub use npc_data::NpcData;
 mod map_handle;

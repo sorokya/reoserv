@@ -154,11 +154,6 @@ pub enum Command {
         to: String,
         message: String,
     },
-    SetCharacterStat {
-        target_name: String,
-        stat_name: String,
-        value: EOShort,
-    },
     SpawnNpcs,
     ActNpcs,
 }

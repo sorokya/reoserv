@@ -93,29 +93,5 @@
                 ),
             ],
         ),
-        (
-            name: "set",
-            alias: "set",
-            description: "Set stats for a player",
-            usage: "$set level player 10",
-            admin_level: "Gm",
-            args: [
-                (
-                    name: "stat",
-                    type: "String",
-                    required: true,
-                ),
-                (
-                    name: "player",
-                    type: "String",
-                    required: true,
-                ),
-                (
-                    name: "amount",
-                    type: "UInt",
-                    required: true,
-                ),
-            ],   
-        ),
     ]
 )

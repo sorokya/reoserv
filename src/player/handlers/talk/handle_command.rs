@@ -65,13 +65,6 @@ async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
     }
 }
 
-async fn set(args: &[&str], _character: &Character, world: &WorldHandle) {
-    let stat_name = args[0].to_string();
-    let target_name = args[1].to_string();
-    let value = args[2].parse::<EOShort>().unwrap();
-    world.set_character_stat(target_name, stat_name, value);
-}
-
 fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
@@ -147,7 +140,6 @@ pub async fn handle_command(
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
-                    "set" => set(&args, character, &world).await,
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

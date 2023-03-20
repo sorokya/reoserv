@@ -34,3 +34,4 @@ Cargo.lock
 # Secrets
 .env
 Config.local.toml
+Commands.local.ron

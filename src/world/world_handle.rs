@@ -365,14 +365,6 @@ impl WorldHandle {
             .send(Command::SendPrivateMessage { from, to, message });
     }
 
-    pub fn set_character_stat(&self, target_name: String, stat_name: String, value: EOShort) {
-        let _ = self.tx.send(Command::SetCharacterStat {
-            target_name,
-            stat_name,
-            value,
-        });
-    }
-
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
     }

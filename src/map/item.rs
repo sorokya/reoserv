@@ -34,16 +34,6 @@ impl Item {
         )
     }
 
-    pub fn is_in_range_distance(&self, coords: Coords, distance: f64) -> bool {
-        utils::in_range_distance(
-            self.coords.x.into(),
-            self.coords.y.into(),
-            coords.x.into(),
-            coords.y.into(),
-            distance,
-        )
-    }
-
     // TODO: Implement as a trait
     pub fn to_item_map_info(&self) -> ItemMapInfo {
         ItemMapInfo {

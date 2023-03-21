@@ -1,12 +1,21 @@
-use std::{path::Path, io::Cursor};
+use std::{io::Cursor, path::Path};
 
 use eo::{
-    data::{EOShort, EOChar},
-    protocol::{server::welcome::{Reply, ReplyData, ReplyEnterGame}, Weight, WelcomeReply},
+    data::{EOChar, EOShort},
+    protocol::{
+        server::welcome::{Reply, ReplyData, ReplyEnterGame},
+        Weight, WelcomeReply,
+    },
 };
-use tokio::{sync::oneshot, io::{AsyncReadExt, AsyncBufReadExt}};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncReadExt},
+    sync::oneshot,
+};
 
-use crate::{errors::{WrongSessionIdError, DataNotFoundError}, player::{PlayerHandle, ClientState}, map::MapHandle};
+use crate::{
+    errors::{DataNotFoundError, WrongSessionIdError},
+    player::{ClientState, PlayerHandle},
+};
 
 use super::World;
 
@@ -31,7 +40,7 @@ impl World {
             ))));
             return;
         }
-        
+
         let map_id = match player.get_map_id().await {
             Ok(map_id) => map_id,
             Err(e) => {
@@ -44,12 +53,39 @@ impl World {
             if let Some(map) = maps.get(&map_id) {
                 let player = player.to_owned();
                 let map = map.to_owned();
-                let _ = tokio::task::Builder::new()
-                    .name("enter_game")
-                    .spawn(async move {
-                        let result = enter_game(map, player).await;
-                        let _ = respond_to.send(result);
-                    });
+
+                let player_id = player.get_player_id().await;
+                player.set_map(map.clone());
+                player.set_state(ClientState::Playing);
+                let character = player.take_character().await;
+
+                if let Err(e) = character {
+                    error!("Error getting character from player: {:?}", e);
+                    let _ = respond_to.send(Err(Box::new(e)));
+                    return;
+                }
+
+                let character = character.unwrap();
+
+                let weight = Weight {
+                    current: character.weight as EOChar,
+                    max: character.max_weight as EOChar,
+                };
+                let items = character.items.clone();
+                let spells = character.spells.clone();
+
+                map.enter(character, None).await;
+                let nearby_info = map.get_nearby_info(player_id).await;
+                let _ = respond_to.send(Ok(Reply {
+                    reply_code: WelcomeReply::EnterGame,
+                    data: ReplyData::EnterGame(ReplyEnterGame {
+                        news: get_news().await,
+                        weight,
+                        items,
+                        spells,
+                        nearby: nearby_info,
+                    }),
+                }));
             } else {
                 // TODO: Move character to safe map
                 let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
@@ -64,36 +100,6 @@ impl World {
             ))));
         }
     }
-}
-
-pub async fn enter_game(
-    map: MapHandle,
-    player: PlayerHandle,
-) -> Result<Reply, Box<dyn std::error::Error + Send + Sync>> {
-    let player_id = player.get_player_id().await;
-    player.set_map(map.clone());
-    player.set_state(ClientState::Playing);
-    let character = player.take_character().await?;
-
-    let weight = Weight {
-        current: character.weight as EOChar,
-        max: character.max_weight as EOChar,
-    };
-    let items = character.items.clone();
-    let spells = character.spells.clone();
-
-    map.enter(character, None).await;
-    let nearby_info = map.get_nearby_info(player_id).await;
-    Ok(Reply {
-        reply_code: WelcomeReply::EnterGame,
-        data: ReplyData::EnterGame(ReplyEnterGame {
-            news: get_news().await,
-            weight,
-            items,
-            spells,
-            nearby: nearby_info,
-        }),
-    })
 }
 
 async fn get_news() -> [String; 9] {

@@ -4,13 +4,12 @@ use chrono::Duration;
 use eo::{
     data::EOChar,
     protocol::{Coords, Direction},
-    pubs::EnfNpc,
 };
 use rand::Rng;
 
 use crate::{
-    map::{is_tile_walkable::is_tile_walkable_for_npc, NPCBuilder, NpcData},
-    SETTINGS,
+    map::{is_tile_walkable::is_tile_walkable_for_npc, NPCBuilder},
+    NPC_DB, SETTINGS,
 };
 
 use super::Map;
@@ -41,10 +40,10 @@ impl Map {
                         chatter_indexes.push(((i * chatter_distribution) + npc_index) as usize);
                     }
 
-                    let data_record = match self.world.get_npc(spawn.id).await {
-                        Ok(npc) => npc,
-                        Err(e) => {
-                            error!("Failed to load NPC {}", e);
+                    let data_record = match NPC_DB.npcs.get(spawn.id as usize) {
+                        Some(npc) => npc,
+                        None => {
+                            error!("Failed to load NPC {}", spawn.id);
                             continue;
                         }
                     };
@@ -69,33 +68,6 @@ impl Map {
                         );
                         npc_index += 1;
                     }
-
-                    self.npc_data.entry(spawn.id).or_insert({
-                        let data_record = match self.world.get_npc(spawn.id).await {
-                            Ok(npc) => Some(npc),
-                            Err(e) => {
-                                error!("Failed to load NPC {}", e);
-                                None
-                            }
-                        };
-
-                        if data_record.is_some() {
-                            let drop_record = self.world.get_drop_record(spawn.id).await;
-                            let talk_record = self.world.get_talk_record(spawn.id).await;
-                            NpcData {
-                                npc_record: data_record.unwrap(),
-                                drop_record,
-                                talk_record,
-                            }
-                        } else {
-                            warn!("Map {} has NPC {} but no NPC record", self.id, spawn.id);
-                            NpcData {
-                                npc_record: EnfNpc::default(),
-                                drop_record: None,
-                                talk_record: None,
-                            }
-                        }
-                    });
                 }
             }
 

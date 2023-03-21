@@ -67,11 +67,8 @@ impl World {
         character.player = Some(player.clone());
         character.logged_in_at = Some(chrono::Utc::now());
 
-        let item_file = self.item_file.as_ref().expect("Item file not found");
-        let class_file = self.class_file.as_ref().expect("Class file not found");
-
         // TODO: move this to Character::calculate_stats
-        calculate_stats(&mut character, item_file, class_file);
+        calculate_stats(&mut character);
 
         let select_character = match self
             .get_welcome_request_data(player.clone(), &character)

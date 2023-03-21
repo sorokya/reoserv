@@ -5,7 +5,6 @@ use eo::{
         server::{account, character, init, login, welcome},
         FileType, OnlinePlayers,
     },
-    pubs::{DropNpc, EcfClass, EifItem, EnfNpc, TalkNpc},
 };
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
@@ -162,39 +161,6 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn _get_class(
-        &self,
-        class_id: EOChar,
-    ) -> Result<EcfClass, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::_GetClass {
-            class_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
-    pub async fn get_drop_record(&self, npc_id: EOShort) -> Option<DropNpc> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetDropRecord {
-            npc_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
-    pub async fn _get_item(
-        &self,
-        item_id: EOShort,
-    ) -> Result<EifItem, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::_GetItem {
-            item_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
     pub async fn get_file(
         &self,
         file_type: FileType,
@@ -233,18 +199,6 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_npc(
-        &self,
-        npc_id: EOShort,
-    ) -> Result<EnfNpc, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetNpc {
-            npc_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
     pub async fn get_online_list(
         &self,
     ) -> Vec<OnlinePlayers> {
@@ -261,27 +215,11 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_talk_record(&self, npc_id: EOShort) -> Option<TalkNpc> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetTalkRecord {
-            npc_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::LoadMapFiles {
-            world_handle: self.clone(),
             respond_to: tx,
         });
-        rx.await.unwrap();
-    }
-
-    pub async fn load_pubs(&self) {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::LoadPubFiles { respond_to: tx });
         rx.await.unwrap();
     }
 

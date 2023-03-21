@@ -8,7 +8,7 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::{character::Character, world::WorldHandle, PacketBuf};
+use crate::{character::Character, PacketBuf};
 
 use super::{Command, Map};
 
@@ -18,9 +18,9 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(id: EOShort, file_size: EOInt, file: EmfFile, world_handle: WorldHandle) -> Self {
+    pub fn new(id: EOShort, file_size: EOInt, file: EmfFile) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(id, file_size, file, rx, world_handle);
+        let map = Map::new(file_size, file, rx);
         let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));

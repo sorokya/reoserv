@@ -1,13 +1,12 @@
 use eo::{
     data::{EOInt, EOShort},
-    pubs::{EcfFile, EifFile},
 };
 use evalexpr::{context_map, eval_float_with_context};
 
-use crate::{character::Character, FORMULAS};
+use crate::{character::Character, FORMULAS, CLASS_DB, ITEM_DB};
 
-pub fn calculate_stats(character: &mut Character, item_file: &EifFile, class_file: &EcfFile) {
-    let class = &class_file.classes[(character.class - 1) as usize];
+pub fn calculate_stats(character: &mut Character) {
+    let class = &CLASS_DB.classes[(character.class - 1) as usize];
 
     character.adj_strength = character.base_strength + class.str;
     character.adj_intelligence = character.base_intelligence + class.intl;
@@ -31,7 +30,7 @@ pub fn calculate_stats(character: &mut Character, item_file: &EifFile, class_fil
             continue;
         }
 
-        let record = &item_file.items[(item.id - 1) as usize];
+        let record = &ITEM_DB.items[(item.id - 1) as usize];
         character.weight += record.weight as EOInt * item.amount;
         if character.weight >= 250 {
             break;
@@ -61,7 +60,7 @@ pub fn calculate_stats(character: &mut Character, item_file: &EifFile, class_fil
             continue;
         }
 
-        let item = &item_file.items[(item_id - 1) as usize];
+        let item = &ITEM_DB.items[(item_id - 1) as usize];
         character.weight += item.weight as EOInt;
         character.max_hp += item.hp;
         character.max_tp += item.tp;

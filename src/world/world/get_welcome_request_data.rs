@@ -2,7 +2,10 @@ use std::convert::TryInto;
 
 use eo::protocol::{server::welcome::ReplySelectCharacter, ServerSettings};
 
-use crate::{errors::DataNotFoundError, player::PlayerHandle, character::Character, SETTINGS};
+use crate::{
+    character::Character, errors::DataNotFoundError, player::PlayerHandle, CLASS_DB, ITEM_DB,
+    NPC_DB, SETTINGS, SPELL_DB,
+};
 
 use super::World;
 
@@ -27,25 +30,13 @@ impl World {
             map.get_rid_and_size().await
         };
 
-        let (eif_rid, eif_length) = {
-            let item_file = self.item_file.as_ref().expect("Item file not loaded");
-            (item_file.rid, item_file.num_items)
-        };
+        let (eif_rid, eif_length) = { (ITEM_DB.rid, ITEM_DB.num_items) };
 
-        let (ecf_rid, ecf_length) = {
-            let class_file = self.class_file.as_ref().expect("Class file not loaded");
-            (class_file.rid, class_file.num_classes)
-        };
+        let (ecf_rid, ecf_length) = { (CLASS_DB.rid, CLASS_DB.num_classes) };
 
-        let (enf_rid, enf_length) = {
-            let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-            (npc_file.rid, npc_file.num_npcs)
-        };
+        let (enf_rid, enf_length) = { (NPC_DB.rid, NPC_DB.num_npcs) };
 
-        let (esf_rid, esf_length) = {
-            let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-            (spell_file.rid, spell_file.num_spells)
-        };
+        let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.num_spells) };
 
         let settings = ServerSettings {
             jail_map: SETTINGS.jail.map.try_into().expect("Invalid map id"),

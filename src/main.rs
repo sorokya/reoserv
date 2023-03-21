@@ -5,7 +5,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::time::Duration;
+use std::{time::Duration, fs::File, io::Read};
 
 use lazy_static::lazy_static;
 
@@ -24,7 +24,7 @@ use sln::ping_sln;
 mod utils;
 mod world;
 
-use eo::data::EOByte;
+use eo::{data::{EOByte, StreamReader, Serializeable, EOInt}, pubs::{EifFile, EnfFile, DropFile, TalkFile, ShopFile, SkillMasterFile, EcfFile, InnFile, EsfFile}};
 use mysql_async::prelude::*;
 
 use tokio::{net::TcpListener, time};
@@ -38,6 +38,15 @@ lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
+    static ref CLASS_DB: EcfFile = load_class_file().expect("Failed to load ECF file!");
+    static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
+    static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");
+    static ref ITEM_DB: EifFile = load_item_file().expect("Failed to load EIF file!");
+    static ref NPC_DB: EnfFile = load_npc_file().expect("Failed to load ENF file!");
+    static ref SHOP_DB: ShopFile = load_shop_file().expect("Failed to load Shop file!");
+    static ref SKILL_MASTER_DB: SkillMasterFile = load_skill_master_file().expect("Failed to load Skill Master file!");
+    static ref SPELL_DB: EsfFile = load_spell_file().expect("Failed to load ESF file!");
+    static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
 }
 
 #[tokio::main]
@@ -97,10 +106,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
+    info!("Classes: {}", CLASS_DB.num_classes);
+    info!("Drops: {}", DROP_DB.npcs.iter().map(|npc| npc.num_of_drops as EOInt).sum::<EOInt>());
+    info!("Inns: {}", INN_DB.inns.len());
+    info!("Items: {}", ITEM_DB.num_items);
+    info!("NPCs: {}", NPC_DB.num_npcs);
+    info!("Shops: {}", SHOP_DB.shops.len());
+    info!("Skill Masters: {}", SKILL_MASTER_DB.skill_masters.len());
+    info!("Spells: {}", SPELL_DB.num_spells);
+    info!("Noisy NPCs: {}", TALK_DB.npcs.len());
+
     let mut world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
-        let _ = tokio::join!(world.load_pubs(), world.load_maps());
+        world.load_maps().await;
     }
 
     let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
@@ -174,4 +193,112 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn load_class_file() -> Result<EcfFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dat001.ecf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut ecf_file = EcfFile::default();
+    ecf_file.deserialize(&reader);
+    Ok(ecf_file)
+}
+
+fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dtd001.edf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut drop_file = DropFile::default();
+    drop_file.deserialize(&reader);
+    Ok(drop_file)
+}
+
+fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/din001.eid")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut inn_file = InnFile::default();
+    inn_file.deserialize(&reader);
+    Ok(inn_file)
+}
+
+fn load_item_file() -> Result<EifFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dat001.eif")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut item_file = EifFile::default();
+    item_file.deserialize(&reader);
+    Ok(item_file)
+}
+
+fn load_npc_file() -> Result<EnfFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dtn001.enf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut npc_file = EnfFile::default();
+    npc_file.deserialize(&reader);
+    Ok(npc_file)
+}
+
+fn load_shop_file() -> Result<ShopFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dts001.esf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut shop_file = ShopFile::default();
+    shop_file.deserialize(&reader);
+    Ok(shop_file)
+}
+
+fn load_skill_master_file() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dsm001.emf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut skill_master_file = SkillMasterFile::default();
+    skill_master_file.deserialize(&reader);
+    Ok(skill_master_file)
+}
+
+fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/dsl001.esf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut spell_file = EsfFile::default();
+    spell_file.deserialize(&reader);
+    Ok(spell_file)
+}
+
+fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
+    let mut file = File::open("pub/ttd001.etf")?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+
+    let reader = StreamReader::new(&buf);
+
+    let mut talk_file = TalkFile::default();
+    talk_file.deserialize(&reader);
+    Ok(talk_file)
 }

@@ -4,18 +4,16 @@ use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable},
     pubs::EmfFile,
 };
-use tokio::sync::{mpsc::UnboundedReceiver};
+use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, world::WorldHandle};
+use crate::character::Character;
 
 use super::{Command, Item, Npc, NpcData};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
-    world: WorldHandle,
     file: EmfFile,
     file_size: EOInt,
-    id: EOShort,
     items: Vec<Item>,
     npcs: HashMap<EOChar, Npc>,
     npc_data: HashMap<EOShort, NpcData>,
@@ -35,19 +33,11 @@ mod spawn_npcs;
 mod walk;
 
 impl Map {
-    pub fn new(
-        id: EOShort,
-        file_size: EOInt,
-        file: EmfFile,
-        rx: UnboundedReceiver<Command>,
-        world: WorldHandle,
-    ) -> Self {
+    pub fn new(file_size: EOInt, file: EmfFile, rx: UnboundedReceiver<Command>) -> Self {
         Self {
-            id,
             file_size,
             file,
             rx,
-            world,
             items: Vec::new(),
             npcs: HashMap::new(),
             npc_data: HashMap::new(),

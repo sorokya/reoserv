@@ -5,13 +5,10 @@ use eo::{
         server::{account, character, init, login, welcome},
         FileType, OnlinePlayers,
     },
-    pubs::{DropNpc, EcfClass, EifItem, EnfNpc, TalkNpc},
 };
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
-
-use super::WorldHandle;
 
 #[derive(Debug)]
 pub enum Command {
@@ -72,18 +69,6 @@ pub enum Command {
         respond_to:
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
-    _GetClass {
-        class_id: EOChar,
-        respond_to: oneshot::Sender<Result<EcfClass, Box<dyn std::error::Error + Send + Sync>>>,
-    },
-    GetDropRecord {
-        npc_id: EOShort,
-        respond_to: oneshot::Sender<Option<DropNpc>>,
-    },
-    _GetItem {
-        item_id: EOShort,
-        respond_to: oneshot::Sender<Result<EifItem, Box<dyn std::error::Error + Send + Sync>>>,
-    },
     GetFile {
         file_type: FileType,
         session_id: EOShort,
@@ -98,25 +83,13 @@ pub enum Command {
     GetNextPlayerId {
         respond_to: oneshot::Sender<EOShort>,
     },
-    GetNpc {
-        npc_id: EOShort,
-        respond_to: oneshot::Sender<Result<EnfNpc, Box<dyn std::error::Error + Send + Sync>>>,
-    },
     GetOnlineList {
         respond_to: oneshot::Sender<Vec<OnlinePlayers>>,
     },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
-    GetTalkRecord {
-        npc_id: EOShort,
-        respond_to: oneshot::Sender<Option<TalkNpc>>,
-    },
     LoadMapFiles {
-        world_handle: WorldHandle,
-        respond_to: oneshot::Sender<()>,
-    },
-    LoadPubFiles {
         respond_to: oneshot::Sender<()>,
     },
     Login {

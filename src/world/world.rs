@@ -2,15 +2,13 @@ use crate::{
     errors::{DataNotFoundError, MissingSessionIdError, WrongSessionIdError},
     map::MapHandle,
     player::PlayerHandle,
+    CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB,
 };
 
-use super::{data, Command};
+use super::{load_maps::load_maps, Command};
 use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable},
     protocol::{server::init, FileType, InitReply, OnlinePlayers},
-    pubs::{
-        DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
-    },
 };
 use mysql_async::Pool;
 use std::collections::HashMap;
@@ -24,15 +22,6 @@ pub struct World {
     characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
-    class_file: Option<EcfFile>,
-    drop_file: Option<DropFile>,
-    inn_file: Option<InnFile>,
-    item_file: Option<EifFile>,
-    master_file: Option<SkillMasterFile>,
-    npc_file: Option<EnfFile>,
-    shop_file: Option<ShopFile>,
-    spell_file: Option<EsfFile>,
-    talk_file: Option<TalkFile>,
 }
 
 mod account;
@@ -52,15 +41,6 @@ impl World {
             accounts: Vec::new(),
             characters: HashMap::new(),
             maps: None,
-            class_file: None,
-            drop_file: None,
-            inn_file: None,
-            item_file: None,
-            master_file: None,
-            npc_file: None,
-            shop_file: None,
-            spell_file: None,
-            talk_file: None,
         }
     }
 
@@ -121,53 +101,6 @@ impl World {
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
             }
-            Command::_GetClass {
-                class_id,
-                respond_to,
-            } => {
-                let class_file = self.class_file.as_ref().expect("classes not loaded");
-                match class_file.classes.get(class_id as usize - 1) {
-                    Some(class) => {
-                        let _ = respond_to.send(Ok(class.clone()));
-                    }
-                    None => {
-                        warn!("Class not found: {}", class_id);
-                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                            "Class".to_string(),
-                            class_id as EOShort,
-                        ))));
-                    }
-                }
-            }
-            Command::GetDropRecord { npc_id, respond_to } => {
-                let drops = self.drop_file.as_ref().expect("drops not loaded");
-                match drops.npcs.iter().find(|d| d.npc_id == npc_id) {
-                    Some(drop) => {
-                        let _ = respond_to.send(Some(drop.clone()));
-                    }
-                    None => {
-                        let _ = respond_to.send(None);
-                    }
-                }
-            }
-            Command::_GetItem {
-                item_id,
-                respond_to,
-            } => {
-                let item_file = self.item_file.as_ref().expect("classes not loaded");
-                match item_file.items.get(item_id as usize - 1) {
-                    Some(item) => {
-                        let _ = respond_to.send(Ok(item.clone()));
-                    }
-                    None => {
-                        warn!("Item not found: {}", item_id);
-                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                            "Item".to_string(),
-                            item_id,
-                        ))));
-                    }
-                }
-            }
             Command::GetFile {
                 file_type,
                 session_id,
@@ -196,42 +129,13 @@ impl World {
             Command::GetNextPlayerId { respond_to } => {
                 let _ = respond_to.send(get_next_player_id(&self.players, 300));
             }
-            Command::GetNpc { npc_id, respond_to } => {
-                let npcs = self.npc_file.as_ref().expect("npcs not loaded");
-                match npcs.npcs.get(npc_id as usize - 1) {
-                    Some(npc) => {
-                        let _ = respond_to.send(Ok(npc.clone()));
-                    }
-                    None => {
-                        warn!("NPC not found: {}", npc_id);
-                        let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                            "NPC".to_string(),
-                            npc_id,
-                        ))));
-                    }
-                }
-            }
             Command::GetOnlineList { respond_to } => {
                 let _ = respond_to.send(self.get_online_list().await);
             }
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
             }
-            Command::GetTalkRecord { npc_id, respond_to } => {
-                let talks = self.talk_file.as_ref().expect("talks not loaded");
-                match talks.npcs.iter().find(|t| t.npc_id == npc_id) {
-                    Some(talk) => {
-                        let _ = respond_to.send(Some(talk.clone()));
-                    }
-                    None => {
-                        let _ = respond_to.send(None);
-                    }
-                }
-            }
-            Command::LoadMapFiles {
-                world_handle,
-                respond_to,
-            } => match data::load_maps(world_handle).await {
+            Command::LoadMapFiles { respond_to } => match load_maps().await {
                 Ok(maps) => {
                     self.maps = Some(maps);
                     let _ = respond_to.send(());
@@ -241,40 +145,6 @@ impl World {
                     let _ = respond_to.send(());
                 }
             },
-            Command::LoadPubFiles { respond_to } => {
-                let (
-                    class_file,
-                    drop_file,
-                    inn_file,
-                    item_file,
-                    master_file,
-                    npc_file,
-                    shop_file,
-                    spell_file,
-                    talk_file,
-                ) = tokio::join!(
-                    data::load_class_file("pub/dat001.ecf".to_string()),
-                    data::load_drop_file("pub/dtd001.edf".to_string()),
-                    data::load_inn_file("pub/din001.eid".to_string()),
-                    data::load_item_file("pub/dat001.eif".to_string()),
-                    data::load_master_file("pub/dsm001.emf".to_string()),
-                    data::load_npc_file("pub/dtn001.enf".to_string()),
-                    data::load_shop_file("pub/dts001.esf".to_string()),
-                    data::load_spell_file("pub/dsl001.esf".to_string()),
-                    data::load_talk_file("pub/ttd001.etf".to_string()),
-                );
-                // TODO: allow not having all of these
-                self.class_file = Some(class_file.unwrap());
-                self.drop_file = Some(drop_file.unwrap());
-                self.inn_file = Some(inn_file.unwrap());
-                self.item_file = Some(item_file.unwrap());
-                self.master_file = Some(master_file.unwrap());
-                self.npc_file = Some(npc_file.unwrap());
-                self.shop_file = Some(shop_file.unwrap());
-                self.spell_file = Some(spell_file.unwrap());
-                self.talk_file = Some(talk_file.unwrap());
-                let _ = respond_to.send(());
-            }
             Command::Login {
                 name,
                 password,
@@ -373,44 +243,40 @@ impl World {
                     Ok(reply)
                 }
                 FileType::Item => {
-                    let mut reply = init::Init::default();
-                    let item_file = self.item_file.as_ref().expect("Item file not loaded");
-                    reply.reply_code = InitReply::FileEif;
-                    reply.data = init::InitData::FileEif(init::InitFileEif {
-                        file_id: 1, // TODO: Pub splitting
-                        content: item_file.serialize(),
-                    });
-                    Ok(reply)
+                    Ok(init::Init {
+                        reply_code: InitReply::FileEif,
+                        data: init::InitData::FileEif(init::InitFileEif {
+                            file_id: 1, // TODO: Pub splitting
+                            content: ITEM_DB.serialize(),
+                        }),
+                    })
                 }
                 FileType::Npc => {
-                    let mut reply = init::Init::default();
-                    let npc_file = self.npc_file.as_ref().expect("NPC file not loaded");
-                    reply.reply_code = InitReply::FileEnf;
-                    reply.data = init::InitData::FileEnf(init::InitFileEnf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: npc_file.serialize(),
-                    });
-                    Ok(reply)
+                    Ok(init::Init {
+                        reply_code: InitReply::FileEnf,
+                        data: init::InitData::FileEnf(init::InitFileEnf {
+                            file_id: 1, // TODO: Pub splitting
+                            content: NPC_DB.serialize(),
+                        }),
+                    })
                 }
                 FileType::Spell => {
-                    let mut reply = init::Init::default();
-                    let spell_file = self.spell_file.as_ref().expect("Spell file not loaded");
-                    reply.reply_code = InitReply::FileEsf;
-                    reply.data = init::InitData::FileEsf(init::InitFileEsf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: spell_file.serialize(),
-                    });
-                    Ok(reply)
+                    Ok(init::Init {
+                        reply_code: InitReply::FileEsf,
+                        data: init::InitData::FileEsf(init::InitFileEsf {
+                            file_id: 1, // TODO: Pub splitting
+                            content: SPELL_DB.serialize(),
+                        }),
+                    })
                 }
                 FileType::Class => {
-                    let mut reply = init::Init::default();
-                    let class_file = self.class_file.as_ref().expect("Class file not loaded");
-                    reply.reply_code = InitReply::FileEcf;
-                    reply.data = init::InitData::FileEcf(init::InitFileEcf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: class_file.serialize(),
-                    });
-                    Ok(reply)
+                    Ok(init::Init {
+                        reply_code: InitReply::FileEcf,
+                        data: init::InitData::FileEcf(init::InitFileEcf {
+                            file_id: 1, // TODO: Pub splitting
+                            content: CLASS_DB.serialize(),
+                        }),
+                    })
                 }
             }
         } else {

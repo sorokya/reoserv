@@ -26,6 +26,7 @@ mod get_file;
 mod get_next_player_id;
 mod get_online_list;
 mod get_welcome_request_data;
+mod shutdown;
 
 impl World {
     pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
@@ -146,7 +147,7 @@ impl World {
                 let _ = respond_to.send(self.players.len());
             }
 
-            Command::LoadMapFiles { respond_to } => match load_maps().await {
+            Command::LoadMapFiles { respond_to } => match load_maps(self.pool.to_owned()).await {
                 Ok(maps) => {
                     self.maps = Some(maps);
                     let _ = respond_to.send(());
@@ -204,6 +205,8 @@ impl World {
             Command::SendPrivateMessage { from, to, message } => {
                 self.send_private_message(&from, &to, &message).await
             }
+
+            Command::Shutdown { respond_to } => self.shutdown(respond_to).await,
 
             Command::SpawnNpcs => {
                 for map in self.maps.as_ref().unwrap().values() {

@@ -27,7 +27,7 @@ mod world;
 use eo::{data::{EOByte, StreamReader, Serializeable, EOInt}, pubs::{EifFile, EnfFile, DropFile, TalkFile, ShopFile, SkillMasterFile, EcfFile, InnFile, EsfFile}};
 use mysql_async::prelude::*;
 
-use tokio::{net::TcpListener, time};
+use tokio::{net::TcpListener, time, signal};
 use world::WorldHandle;
 
 use crate::player::PlayerHandle;
@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Spells: {}", SPELL_DB.num_spells);
     info!("Noisy NPCs: {}", TALK_DB.npcs.len());
 
-    let mut world = WorldHandle::new(pool.clone());
+    let world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
         world.load_maps().await;
@@ -170,27 +170,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SETTINGS.server.host, SETTINGS.server.port
     );
 
-    while world.is_alive {
-        let (socket, addr) = tcp_listener.accept().await.unwrap();
-
-        let player_count = world.get_player_count().await.unwrap();
-        if player_count >= SETTINGS.server.max_connections as usize {
-            warn!("{} has been disconnected because the server is full", addr);
-            continue;
+    let mut server_world = world.clone();
+    tokio::spawn(async move {
+        while server_world.is_alive {
+            let (socket, addr) = tcp_listener.accept().await.unwrap();
+    
+            let player_count = server_world.get_player_count().await.unwrap();
+            if player_count >= SETTINGS.server.max_connections as usize {
+                warn!("{} has been disconnected because the server is full", addr);
+                continue;
+            }
+    
+            let player_id = server_world.get_next_player_id().await.unwrap();
+    
+            let player = PlayerHandle::new(player_id, socket, server_world.clone(), pool.clone());
+            server_world.add_player(player_id, player).await.unwrap();
+    
+            info!(
+                "connection accepted ({}) {}/{}",
+                addr,
+                player_count + 1,
+                SETTINGS.server.max_connections
+            );
         }
+    });
 
-        let player_id = world.get_next_player_id().await.unwrap();
-
-        let player = PlayerHandle::new(player_id, socket, world.clone(), pool.clone());
-        world.add_player(player_id, player).await.unwrap();
-
-        info!(
-            "connection accepted ({}) {}/{}",
-            addr,
-            player_count + 1,
-            SETTINGS.server.max_connections
-        );
+    match signal::ctrl_c().await {
+        Ok(()) => {},
+        Err(err) => {
+            eprintln!("Unable to listen for shutdown signal: {}", err);
+        },
     }
+
+    info!("Shutting down server...");
+    world.shutdown().await;
 
     Ok(())
 }

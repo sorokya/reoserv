@@ -4,6 +4,7 @@ use eo::{
     data::{EOChar, EOInt, EOShort},
     pubs::EmfFile,
 };
+use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::character::Character;
@@ -18,6 +19,7 @@ pub struct Map {
     npcs: HashMap<EOChar, Npc>,
     npc_data: HashMap<EOShort, NpcData>,
     characters: HashMap<EOShort, Character>,
+    pool: Pool,
 }
 
 mod act_npcs;
@@ -31,13 +33,14 @@ mod get_nearby_info;
 mod get_rid_and_size;
 mod leave;
 mod open_door;
+mod save;
 mod send_chat_message;
 mod serialize;
 mod spawn_npcs;
 mod walk;
 
 impl Map {
-    pub fn new(file_size: EOInt, file: EmfFile, rx: UnboundedReceiver<Command>) -> Self {
+    pub fn new(file_size: EOInt, file: EmfFile, pool: Pool, rx: UnboundedReceiver<Command>) -> Self {
         Self {
             file_size,
             file,
@@ -46,6 +49,7 @@ impl Map {
             npcs: HashMap::new(),
             npc_data: HashMap::new(),
             characters: HashMap::new(),
+            pool,
         }
     }
 
@@ -101,6 +105,8 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::Save { respond_to } => self.save(respond_to).await,
 
             Command::SendChatMessage {
                 target_player_id,

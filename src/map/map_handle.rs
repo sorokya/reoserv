@@ -3,6 +3,7 @@ use eo::{
     protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
     pubs::EmfFile,
 };
+use mysql_async::Pool;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     oneshot,
@@ -18,9 +19,9 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(id: EOShort, file_size: EOInt, file: EmfFile) -> Self {
+    pub fn new(id: EOShort, file_size: EOInt, pool: Pool, file: EmfFile) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(file_size, file, rx);
+        let map = Map::new(file_size, file, pool, rx);
         let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));
@@ -116,6 +117,12 @@ impl MapHandle {
             target_player_id,
             door_coords,
         });
+    }
+
+    pub async fn save(&self) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Save { respond_to: tx });
+        rx.await.unwrap();
     }
 
     pub fn send_chat_message(&self, target_player_id: EOShort, message: String) {

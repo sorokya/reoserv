@@ -127,6 +127,9 @@ pub enum Command {
         to: String,
         message: String,
     },
+    Shutdown {
+        respond_to: oneshot::Sender<()>,
+    },
     SpawnNpcs,
     ActNpcs,
 }

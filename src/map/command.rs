@@ -49,6 +49,9 @@ pub enum Command {
         target_player_id: EOShort,
         door_coords: Coords,
     },
+    Save {
+        respond_to: oneshot::Sender<()>,
+    },
     SendChatMessage {
         target_player_id: EOShort,
         message: String,

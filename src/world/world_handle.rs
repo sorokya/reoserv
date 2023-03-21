@@ -303,6 +303,14 @@ impl WorldHandle {
             .send(Command::SendPrivateMessage { from, to, message });
     }
 
+    pub async fn shutdown(&self) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Shutdown {
+            respond_to: tx,
+        });
+        rx.await.unwrap();
+    }
+
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
     }

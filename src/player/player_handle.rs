@@ -46,14 +46,6 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
-    pub async fn ensure_valid_sequence_for_account_creation(&self) {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .tx
-            .send(Command::EnsureValidSequenceForAccountCreation { respond_to: tx });
-        rx.await.unwrap();
-    }
-
     pub async fn generate_session_id(&self) -> EOShort {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });

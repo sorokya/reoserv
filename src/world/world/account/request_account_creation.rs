@@ -52,7 +52,6 @@ impl World {
         }
 
         let session_id = player.generate_session_id().await;
-        player.ensure_valid_sequence_for_account_creation().await;
         let sequence_start = player.get_sequence_start().await;
         let _ = respond_to.send(Ok(Reply {
             reply_code: AccountReply::SessionId(session_id),

@@ -158,12 +158,6 @@ impl Player {
                 info!("player {} connection closed: {:?}", self.id, reason);
                 return false;
             }
-            Command::EnsureValidSequenceForAccountCreation { respond_to } => {
-                if self.bus.sequencer.too_big_for_account_reply() {
-                    self.bus.sequencer.account_reply_new_sequence();
-                }
-                let _ = respond_to.send(());
-            }
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();
                 let id = rng.gen_range(1..MAX2) as EOShort;

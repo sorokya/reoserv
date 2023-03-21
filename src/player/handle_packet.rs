@@ -1,6 +1,6 @@
 use super::{handlers, PlayerHandle, ClientState};
 use eo::{
-    data::{EOInt, StreamReader, MAX1},
+    data::{EOInt, StreamReader},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -22,13 +22,9 @@ pub async fn handle_packet(
             }
 
             let server_sequence = player.gen_sequence().await;
-            let client_sequence = if server_sequence >= MAX1 {
-                reader.get_short() as EOInt
-            } else {
-                reader.get_char() as EOInt
-            };
+            let client_sequence = reader.get_char() as EOInt;
 
-            if SETTINGS.server.enforce_sequence && server_sequence.abs_diff(client_sequence) > 1 {
+            if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
                 player.close(format!(
                     "sending invalid sequence: Got {}, expected {}.",
                     client_sequence, server_sequence

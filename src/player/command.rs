@@ -20,9 +20,6 @@ pub enum Command {
         session_id: EOShort,
     },
     Close(String),
-    EnsureValidSequenceForAccountCreation {
-        respond_to: oneshot::Sender<()>,
-    },
     GenerateSessionId {
         respond_to: oneshot::Sender<EOShort>,
     },

@@ -49,7 +49,7 @@ impl World {
             hgm_flood_rate: 0,
         };
 
-        let session_id = player.generate_session_id().await;
+        let session_id = player.generate_session_id().await?;
 
         Ok(ReplySelectCharacter {
             session_id,

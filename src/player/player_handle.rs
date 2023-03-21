@@ -46,92 +46,139 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
-    pub async fn generate_session_id(&self) -> EOShort {
+    pub async fn generate_session_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(session_id) => Ok(session_id),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_account_id(&self) -> Result<EOInt, InvalidStateError> {
+    pub async fn get_account_id(&self) -> Result<EOInt, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(Ok(account_id)) => Ok(account_id),
+            Ok(Err(e)) => Err(Box::new(e)),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_character(&self) -> Result<Box<Character>, InvalidStateError> {
+    pub async fn get_character(&self) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(Ok(character)) => Ok(character),
+            Ok(Err(e)) => Err(Box::new(e)),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn gen_encoding_multiples(&self) -> [EOByte; 2] {
+    pub async fn gen_encoding_multiples(&self) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
             .send(Command::GenEncodingMultiples { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(multiples) => Ok(multiples),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_encoding_multiples(&self) -> [EOByte; 2] {
+    pub async fn get_encoding_multiples(&self) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
             .send(Command::GetEncodingMultiples { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(multiples) => Ok(multiples),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_ip_addr(&self) -> String {
+    pub async fn get_ip_addr(&self) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetIpAddr { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(ip_addr) => Ok(ip_addr),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_map(&self) -> Result<MapHandle, InvalidStateError> {
+    pub async fn get_map(&self) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMap { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(Ok(map)) => Ok(map),
+            Ok(Err(e)) => Err(Box::new(e)),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_map_id(&self) -> Result<EOShort, InvalidStateError> {
+    pub async fn get_map_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapId { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(Ok(map_id)) => Ok(map_id),
+            Ok(Err(e)) => Err(Box::new(e)),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_player_id(&self) -> EOShort {
+    pub async fn get_player_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerId { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(player_id) => Ok(player_id),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_session_id(&self) -> Result<EOShort, MissingSessionIdError> {
+    pub async fn get_session_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSessionId { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(Ok(session_id)) => Ok(session_id),
+            Ok(Err(e)) => Err(Box::new(e)),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_sequence_bytes(&self) -> (EOShort, EOChar) {
+    pub async fn get_sequence_bytes(&self) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceBytes { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(bytes) => Ok(bytes),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_sequence_start(&self) -> EOInt {
+    pub async fn get_sequence_start(&self) -> Result<EOInt, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceStart { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(sequence) => Ok(sequence),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn gen_sequence(&self) -> EOInt {
+    pub async fn gen_sequence(&self) -> Result<EOInt, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenSequence { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(sequence) => Ok(sequence),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
-    pub async fn get_state(&self) -> ClientState {
+    pub async fn get_state(&self) -> Result<ClientState, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetState { respond_to: tx });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(state) => Ok(state),
+            Err(_) => Err("Player disconnected".into()),
+        }
     }
 
     pub fn ping(&self) {
@@ -145,7 +192,7 @@ impl PlayerHandle {
     pub async fn pong_new_sequence(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
-        rx.await.unwrap();
+        let _ = rx.await;
     }
 
     pub fn request_warp(
@@ -205,7 +252,7 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    trace!("Recv: {:?}", packet);
+                    trace!("Recv: {:?}", &packet[..4]);
                     player.queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {
@@ -234,6 +281,7 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
         }
 
         if let Some(packet) = player.queue.get_mut().pop_front() {
+            player.busy = true;
             let _ = tokio::task::Builder::new()
                 .name("handle_packet")
                 .spawn(handle_packet(

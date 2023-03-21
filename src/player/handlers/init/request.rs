@@ -14,17 +14,17 @@ use eo::{
         InitReply, PacketAction, PacketFamily,
     },
 };
-pub async fn request(buf: PacketBuf, player: PlayerHandle) {
+pub async fn request(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = client::init::Init::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
 
-    let sequence_bytes = player.get_sequence_bytes().await;
+    let sequence_bytes = player.get_sequence_bytes().await?;
     let response = stupid_hash(packet.challenge);
-    let player_id = player.get_player_id().await;
-    let encoding_multiples = player.gen_encoding_multiples().await;
+    let player_id = player.get_player_id().await?;
+    let encoding_multiples = player.gen_encoding_multiples().await?;
 
     let mut reply = server::init::Init::new();
     reply.reply_code = InitReply::Ok;
@@ -40,4 +40,6 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
 
     player.set_state(ClientState::Initialized);
     player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
+
+    Ok(())
 }

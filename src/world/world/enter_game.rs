@@ -44,7 +44,7 @@ impl World {
         let map_id = match player.get_map_id().await {
             Ok(map_id) => map_id,
             Err(e) => {
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };
@@ -55,6 +55,13 @@ impl World {
                 let map = map.to_owned();
 
                 let player_id = player.get_player_id().await;
+
+                if player_id.is_err() {
+                    return;
+                }
+
+                let player_id = player_id.unwrap();
+
                 player.set_map(map.clone());
                 player.set_state(ClientState::Playing);
                 let character = player.take_character().await;

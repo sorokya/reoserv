@@ -130,6 +130,7 @@ impl Player {
                 }
             }
             Command::Close(reason) => {
+                self.queue.borrow_mut().clear();
                 if let Some(map) = self.map.as_ref() {
                     let mut character = map.leave(self.id, None).await;
                     let pool = self.pool.clone();

@@ -71,7 +71,7 @@ impl World {
             Ok(account_id) => account_id,
             Err(e) => {
                 error!("Error getting account_id: {}", e);
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };

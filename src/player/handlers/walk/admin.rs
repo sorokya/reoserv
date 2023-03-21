@@ -5,7 +5,7 @@ use eo::{
 
 use crate::{player::PlayerHandle, PacketBuf};
 
-pub async fn admin(buf: PacketBuf, player: PlayerHandle) {
+pub async fn admin(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = Admin::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
@@ -13,7 +13,7 @@ pub async fn admin(buf: PacketBuf, player: PlayerHandle) {
     debug!("Recv: {:?}", packet);
 
     if let Ok(map) = player.get_map().await {
-        let player_id = player.get_player_id().await;
+        let player_id = player.get_player_id().await?;
         map.walk(
             player_id,
             packet.walk.timestamp,
@@ -21,4 +21,6 @@ pub async fn admin(buf: PacketBuf, player: PlayerHandle) {
             packet.walk.direction,
         );
     }
+
+    Ok(())
 }

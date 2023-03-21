@@ -5,14 +5,14 @@ use eo::{
 
 use crate::{player::PlayerHandle, PacketBuf};
 
-pub async fn accept(buf: PacketBuf, player: PlayerHandle) {
+pub async fn accept(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = Accept::default();
     let reader = StreamReader::new(&buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
 
-    let player_id = player.get_player_id().await;
+    let player_id = player.get_player_id().await?;
     if player_id != packet.player_id {
         player.close(format!(
             "sending invalid connection id: Got {}, expected {}.",
@@ -20,7 +20,7 @@ pub async fn accept(buf: PacketBuf, player: PlayerHandle) {
         ));
     }
 
-    let mut expected_multiples = player.get_encoding_multiples().await;
+    let mut expected_multiples = player.get_encoding_multiples().await?;
     expected_multiples.reverse();
     if expected_multiples[0] as EOShort != packet.decode_multiple
         || expected_multiples[1] as EOShort != packet.encode_multiple
@@ -31,4 +31,6 @@ pub async fn accept(buf: PacketBuf, player: PlayerHandle) {
             expected_multiples
         ));
     }
+
+    Ok(())
 }

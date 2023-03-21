@@ -220,7 +220,7 @@ impl World {
                         Ok(map_id) => map_id,
                         Err(e) => {
                             warn!("Player requested map with no character selected");
-                            return Err(Box::new(e));
+                            return Err(e);
                         }
                     };
 

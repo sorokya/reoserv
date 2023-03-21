@@ -15,6 +15,13 @@ impl World {
         let buf = packet.serialize();
         for player in self.players.values() {
             let state = player.get_state().await;
+
+            if state.is_err() {
+                continue;
+            }
+
+            let state = state.unwrap();
+
             if state == ClientState::Playing {
                 player.send(PacketAction::Server, PacketFamily::Talk, buf.clone());
             }

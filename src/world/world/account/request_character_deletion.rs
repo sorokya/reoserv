@@ -15,11 +15,11 @@ impl World {
         let account_id = match player.get_account_id().await {
             Ok(account_id) => account_id,
             Err(e) => {
-                warn!(
-                    "Tried to request character deletion with invalid state: {:?}",
-                    e.actual
+                error!(
+                    "Error getting account id: {}",
+                    e
                 );
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };
@@ -59,6 +59,13 @@ impl World {
         }
 
         let session_id = player.generate_session_id().await;
+
+        if let Err(e) = session_id {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let session_id = session_id.unwrap();
 
         let _ = respond_to.send(Ok(Player {
             session_id,

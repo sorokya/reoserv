@@ -52,7 +52,23 @@ impl World {
         }
 
         let session_id = player.generate_session_id().await;
+
+        if let Err(e) = session_id {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let session_id = session_id.unwrap();
+
         let sequence_start = player.get_sequence_start().await;
+
+        if let Err(e) = sequence_start {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let sequence_start = sequence_start.unwrap();
+
         let _ = respond_to.send(Ok(Reply {
             reply_code: AccountReply::SessionId(session_id),
             data: account::ReplyData::SessionId(account::ReplySessionId {

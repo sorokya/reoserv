@@ -19,11 +19,11 @@ impl World {
         let account_id = match player.get_account_id().await {
             Ok(account_id) => account_id,
             Err(e) => {
-                warn!(
-                    "Tried to select character with invalid state: {:?}",
-                    e.actual
+                error!(
+                    "Error getting account id: {}",
+                    e
                 );
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };
@@ -63,6 +63,14 @@ impl World {
         }
 
         let player_id = player.get_player_id().await;
+
+        if let Err(e) = player_id {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let player_id = player_id.unwrap();
+
         character.player_id = Some(player_id);
         character.player = Some(player.clone());
         character.logged_in_at = Some(chrono::Utc::now());
@@ -81,7 +89,6 @@ impl World {
             }
         };
 
-        let player_id = player.get_player_id().await;
         self.characters
             .insert(character.name.to_string(), player_id);
         player.set_character(Box::new(character));

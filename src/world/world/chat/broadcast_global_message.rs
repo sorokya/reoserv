@@ -21,7 +21,21 @@ impl World {
         let buf = packet.serialize();
         for player in self.players.values() {
             let state = player.get_state().await;
+
+            if state.is_err() {
+                continue;
+            }
+
+            let state = state.unwrap();
+
             let player_id = player.get_player_id().await;
+
+            if player_id.is_err() {
+                continue;
+            }
+
+            let player_id = player_id.unwrap();
+
             if state == ClientState::Playing && player_id != target_player_id {
                 player.send(PacketAction::Msg, PacketFamily::Talk, buf.clone());
             }

@@ -44,10 +44,10 @@ impl World {
             Ok(account_id) => account_id,
             Err(e) => {
                 warn!(
-                    "Tried to request character deletion with invalid state: {:?}",
-                    e.actual
+                    "Failed to get account id: {}",
+                    e
                 );
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };

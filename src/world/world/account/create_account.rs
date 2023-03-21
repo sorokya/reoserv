@@ -69,6 +69,12 @@ impl World {
         let password_hash = get_password_hash(&details.username, &details.password);
 
         let player_ip = player.get_ip_addr().await;
+        if let Err(e) = player_ip {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let player_ip = player_ip.unwrap();
 
         match conn
             .exec_drop(

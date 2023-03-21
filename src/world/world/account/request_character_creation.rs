@@ -20,7 +20,7 @@ impl World {
             Ok(account_id) => account_id,
             Err(e) => {
                 error!("Error getting account_id: {}", e);
-                let _ = respond_to.send(Err(Box::new(e)));
+                let _ = respond_to.send(Err(e));
                 return;
             }
         };
@@ -57,6 +57,14 @@ impl World {
         }
 
         let session_id = player.generate_session_id().await;
+
+        if let Err(e) = session_id {
+            let _ = respond_to.send(Err(e));
+            return;
+        }
+
+        let session_id = session_id.unwrap();
+
         let _ = respond_to.send(Ok(Reply {
             reply_code: CharacterReply::SessionId(session_id),
             data: character::ReplyData::SessionId(character::ReplySessionId {

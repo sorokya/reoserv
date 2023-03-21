@@ -7,7 +7,7 @@ use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
 
 use super::handle_command::handle_command;
 
-pub async fn report(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn report(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut report = Report::default();
     let reader = StreamReader::new(&buf);
     report.deserialize(&reader);
@@ -19,8 +19,10 @@ pub async fn report(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
             let args: Vec<&str> = report.message[1..].split_whitespace().collect();
             handle_command(args.as_slice(), &character, player, world).await;
         } else if let Ok(map) = player.get_map().await {
-            let player_id = player.get_player_id().await;
+            let player_id = player.get_player_id().await?;
             map.send_chat_message(player_id, report.message);
         }
     }
+
+    Ok(())
 }

@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque};
 
+use bytes::Bytes;
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
     protocol::{server::warp, PacketAction, PacketFamily, WarpType}, net::PacketProcessor,
@@ -13,7 +14,6 @@ use crate::{
     errors::{InvalidStateError, MissingSessionIdError, WrongSessionIdError},
     map::MapHandle,
     world::WorldHandle,
-    PacketBuf,
 };
 
 use super::{packet_bus::PacketBus, Command, WarpSession, ClientState};
@@ -21,7 +21,7 @@ use super::{packet_bus::PacketBus, Command, WarpSession, ClientState};
 pub struct Player {
     pub id: EOShort,
     pub rx: UnboundedReceiver<Command>,
-    pub queue: RefCell<VecDeque<PacketBuf>>,
+    pub queue: RefCell<VecDeque<Bytes>>,
     pub bus: PacketBus,
     pub world: WorldHandle,
     // TODO: just use character's map?
@@ -117,9 +117,13 @@ impl Player {
                             };
 
                             debug!("Send: {:?}", agree);
+
+                            let mut builder = StreamBuilder::new();
+                            agree.serialize(&mut builder);
+
                             let _ = self
                                 .bus
-                                .send(PacketAction::Agree, PacketFamily::Warp, agree.serialize())
+                                .send(PacketAction::Agree, PacketFamily::Warp, builder.get())
                                 .await;
                         }
                     } else {
@@ -329,12 +333,16 @@ impl Player {
 
                 self.warp_session = Some(warp_session);
                 debug!("Send: {:?}", request);
+
+                let mut builder = StreamBuilder::new();
+                request.serialize(&mut builder);
+
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Request,
                         PacketFamily::Warp,
-                        request.serialize(),
+                        builder.get(),
                     )
                     .await;
             }

@@ -1,9 +1,9 @@
 use crate::{
     player::{PlayerHandle, ClientState},
-    PacketBuf,
+    Bytes,
 };
 use eo::{
-    data::{EOByte, Serializeable, StreamReader},
+    data::{EOByte, Serializeable, StreamReader, StreamBuilder},
     net::stupid_hash,
     protocol::{
         client,
@@ -14,9 +14,9 @@ use eo::{
         InitReply, PacketAction, PacketFamily,
     },
 };
-pub async fn request(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn request(buf: Bytes, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = client::init::Init::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);
@@ -39,7 +39,10 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn
     debug!("Reply {:?}", reply);
 
     player.set_state(ClientState::Initialized);
-    player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
+
+    let mut builder = StreamBuilder::new();
+    reply.serialize(&mut builder);
+    player.send(PacketAction::Init, PacketFamily::Init, builder.get());
 
     Ok(())
 }

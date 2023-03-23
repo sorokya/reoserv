@@ -1,19 +1,20 @@
 use super::{handlers, PlayerHandle, ClientState};
+use bytes::Bytes;
 use eo::{
     data::{EOInt, StreamReader},
     protocol::{PacketAction, PacketFamily},
 };
 
-use crate::{world::WorldHandle, PacketBuf, SETTINGS};
+use crate::{world::WorldHandle, SETTINGS};
 
 pub async fn handle_packet(
-    packet: PacketBuf,
+    packet: Bytes,
     player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let action = PacketAction::from_byte(packet[0]).unwrap();
-    let family = PacketFamily::from_byte(packet[1]).unwrap();
-    let reader = StreamReader::new(&packet[2..]);
+    let reader = StreamReader::new(packet);
+    let action = PacketAction::from_byte(reader.get_byte()).unwrap();
+    let family = PacketFamily::from_byte(reader.get_byte()).unwrap();
 
     if player.get_state().await? != ClientState::Uninitialized {
         if family != PacketFamily::Init {

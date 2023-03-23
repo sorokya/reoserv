@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, EOThree, Serializeable},
+    data::{EOChar, EOShort, EOThree, Serializeable, StreamBuilder},
     protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
 };
 
@@ -79,10 +79,12 @@ impl Map {
                 };
 
                 debug!("Send: {:?}", packet);
+                let mut builder = StreamBuilder::new();
+                packet.serialize(&mut builder);
                 target_player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Walk,
-                    packet.serialize(),
+                    builder.get(),
                 );
             }
 
@@ -91,10 +93,12 @@ impl Map {
                 direction,
                 coords: target_coords,
             };
-            let walk_packet_buf = walk_packet.serialize();
+            debug!("Send: {:?}", walk_packet);
+            let mut builder = StreamBuilder::new();
+            walk_packet.serialize(&mut builder);
+            let walk_packet_buf = builder.get();
             for (player_id, character) in self.characters.iter() {
                 if target_player_id != *player_id && character.is_in_range(target_coords) {
-                    debug!("Send: {:?}", walk_packet);
                     character.player.as_ref().unwrap().send(
                         PacketAction::Player,
                         PacketFamily::Walk,

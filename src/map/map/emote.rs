@@ -1,4 +1,4 @@
-use eo::{data::{EOShort, Serializeable}, protocol::{Emote, server::emote, PacketAction, PacketFamily}};
+use eo::{data::{EOShort, Serializeable, StreamBuilder}, protocol::{Emote, server::emote, PacketAction, PacketFamily}};
 
 use super::Map;
 
@@ -9,7 +9,9 @@ impl Map {
                 player_id: target_player_id,
                 emote,
             };
-            let buf = packet.serialize();
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            let buf = builder.get();
             for character in self.characters.values() {
                 if character.player_id.unwrap() != target_player_id
                     && character.is_in_range(target.coords)

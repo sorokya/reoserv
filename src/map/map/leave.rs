@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable},
+    data::{EOShort, Serializeable, StreamBuilder},
     protocol::{server::avatar, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -20,7 +20,9 @@ impl Map {
             player_id: target_player_id,
             animation: warp_animation,
         };
-        let buf = packet.serialize();
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
+        let buf = builder.get();
         for character in self.characters.values() {
             if target.is_in_range(character.coords) {
                 debug!("Send: {:?}", packet);

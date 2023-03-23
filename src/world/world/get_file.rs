@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable},
+    data::{EOChar, EOShort, Serializeable, StreamBuilder},
     protocol::{server::init, FileType, InitReply},
 };
 
@@ -51,43 +51,51 @@ impl World {
                     };
                     reply.reply_code = InitReply::FileEmf;
                     reply.data = init::InitData::FileEmf(init::InitFileEmf {
-                        content: map.serialize().await,
+                        content: map.serialize().await.to_vec(),
                     });
                     Ok(reply)
                 }
                 FileType::Item => {
+                    let mut builder = StreamBuilder::new();
+                    ITEM_DB.serialize(&mut builder);
                     Ok(init::Init {
                         reply_code: InitReply::FileEif,
                         data: init::InitData::FileEif(init::InitFileEif {
                             file_id: 1, // TODO: Pub splitting
-                            content: ITEM_DB.serialize(),
+                            content: builder.get().to_vec(),
                         }),
                     })
                 }
                 FileType::Npc => {
+                    let mut builder = StreamBuilder::new();
+                    NPC_DB.serialize(&mut builder);
                     Ok(init::Init {
                         reply_code: InitReply::FileEnf,
                         data: init::InitData::FileEnf(init::InitFileEnf {
                             file_id: 1, // TODO: Pub splitting
-                            content: NPC_DB.serialize(),
+                            content: builder.get().to_vec(),
                         }),
                     })
                 }
                 FileType::Spell => {
+                    let mut builder = StreamBuilder::new();
+                    SPELL_DB.serialize(&mut builder);
                     Ok(init::Init {
                         reply_code: InitReply::FileEsf,
                         data: init::InitData::FileEsf(init::InitFileEsf {
                             file_id: 1, // TODO: Pub splitting
-                            content: SPELL_DB.serialize(),
+                            content: builder.get().to_vec(),
                         }),
                     })
                 }
                 FileType::Class => {
+                    let mut builder = StreamBuilder::new();
+                    CLASS_DB.serialize(&mut builder);
                     Ok(init::Init {
                         reply_code: InitReply::FileEcf,
                         data: init::InitData::FileEcf(init::InitFileEcf {
                             file_id: 1, // TODO: Pub splitting
-                            content: CLASS_DB.serialize(),
+                            content: builder.get().to_vec(),
                         }),
                     })
                 }

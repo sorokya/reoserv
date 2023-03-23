@@ -1,13 +1,13 @@
 use eo::{
-    data::{Serializeable, StreamReader},
+    data::{Serializeable, StreamReader, StreamBuilder},
     protocol::{client::npcrange::Request, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, PacketBuf};
+use crate::{player::PlayerHandle, Bytes};
 
-pub async fn request(buf: PacketBuf, player: PlayerHandle) {
+pub async fn request(buf: Bytes, player: PlayerHandle) {
     let mut request = Request::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
 
     debug!("Recv: {:?}", request);
@@ -16,7 +16,9 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle) {
         let reply = map.get_map_info(Vec::default(), request.npc_indexes).await;
         if !reply.nearby.npcs.is_empty() {
             debug!("Reply: {:?}", reply);
-            player.send(PacketAction::Agree, PacketFamily::Npc, reply.serialize());
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
+            player.send(PacketAction::Agree, PacketFamily::Npc, builder.get());
         }
     }
 }

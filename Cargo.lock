@@ -503,6 +503,7 @@ dependencies = [
 name = "eo"
 version = "0.0.3"
 dependencies = [
+ "bytes",
  "log",
  "npm_rs",
  "rand 0.7.3",
@@ -1779,6 +1780,7 @@ dependencies = [
 name = "reoserv"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "chrono",
  "config",
  "console-subscriber",

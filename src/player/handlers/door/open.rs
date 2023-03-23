@@ -3,11 +3,11 @@ use eo::{
     protocol::client::door::Open,
 };
 
-use crate::{player::PlayerHandle, PacketBuf};
+use crate::{player::PlayerHandle, Bytes};
 
-pub async fn open(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn open(buf: Bytes, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut open = Open::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     open.deserialize(&reader);
 
     if let Ok(map) = player.get_map().await {

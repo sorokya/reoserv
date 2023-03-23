@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
 use eo::{
-    data::{EOChar, Serializeable},
+    data::{EOChar, Serializeable, StreamBuilder},
     protocol::{
         server::npc, Coords, Direction, NPCUpdateChat, NPCUpdatePos, PacketAction, PacketFamily,
     },
@@ -193,10 +193,14 @@ impl Map {
                     };
 
                     debug!("Send: {:?}", packet);
+
+                    let mut builder = StreamBuilder::new();
+                    packet.serialize(&mut builder);
+
                     character.player.as_ref().unwrap().send(
                         PacketAction::Player,
                         PacketFamily::Npc,
-                        packet.serialize(),
+                        builder.get(),
                     );
                 }
             }

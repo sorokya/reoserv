@@ -1,10 +1,11 @@
+use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
-use crate::{character::Character, PacketBuf};
+use crate::{character::Character};
 
 #[derive(Debug)]
 pub enum Command {
@@ -57,7 +58,7 @@ pub enum Command {
         message: String,
     },
     Serialize {
-        respond_to: oneshot::Sender<PacketBuf>,
+        respond_to: oneshot::Sender<Bytes>,
     },
     Walk {
         target_player_id: EOShort,

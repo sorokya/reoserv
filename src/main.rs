@@ -7,6 +7,7 @@ extern crate serde_derive;
 
 use std::{time::Duration, fs::File, io::Read};
 
+use bytes::Bytes;
 use lazy_static::lazy_static;
 
 mod character;
@@ -24,15 +25,13 @@ use sln::ping_sln;
 mod utils;
 mod world;
 
-use eo::{data::{EOByte, StreamReader, Serializeable, EOInt}, pubs::{EifFile, EnfFile, DropFile, TalkFile, ShopFile, SkillMasterFile, EcfFile, InnFile, EsfFile}};
+use eo::{data::{StreamReader, Serializeable, EOInt}, pubs::{EifFile, EnfFile, DropFile, TalkFile, ShopFile, SkillMasterFile, EcfFile, InnFile, EsfFile}};
 use mysql_async::prelude::*;
 
 use tokio::{net::TcpListener, time, signal};
 use world::WorldHandle;
 
 use crate::player::PlayerHandle;
-
-pub type PacketBuf = Vec<EOByte>;
 
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
@@ -213,7 +212,9 @@ fn load_class_file() -> Result<EcfFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+
+    let reader = StreamReader::new(bytes);
 
     let mut ecf_file = EcfFile::default();
     ecf_file.deserialize(&reader);
@@ -225,7 +226,8 @@ fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut drop_file = DropFile::default();
     drop_file.deserialize(&reader);
@@ -236,8 +238,9 @@ fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
     let mut file = File::open("pub/din001.eid")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
-
-    let reader = StreamReader::new(&buf);
+    
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut inn_file = InnFile::default();
     inn_file.deserialize(&reader);
@@ -249,7 +252,8 @@ fn load_item_file() -> Result<EifFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut item_file = EifFile::default();
     item_file.deserialize(&reader);
@@ -261,7 +265,8 @@ fn load_npc_file() -> Result<EnfFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut npc_file = EnfFile::default();
     npc_file.deserialize(&reader);
@@ -273,7 +278,8 @@ fn load_shop_file() -> Result<ShopFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut shop_file = ShopFile::default();
     shop_file.deserialize(&reader);
@@ -285,7 +291,8 @@ fn load_skill_master_file() -> Result<SkillMasterFile, Box<dyn std::error::Error
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut skill_master_file = SkillMasterFile::default();
     skill_master_file.deserialize(&reader);
@@ -297,7 +304,8 @@ fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut spell_file = EsfFile::default();
     spell_file.deserialize(&reader);
@@ -309,7 +317,8 @@ fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
-    let reader = StreamReader::new(&buf);
+    let bytes = Bytes::from(buf);
+    let reader = StreamReader::new(bytes);
 
     let mut talk_file = TalkFile::default();
     talk_file.deserialize(&reader);

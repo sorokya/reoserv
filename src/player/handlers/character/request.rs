@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader},
+    data::{Serializeable, StreamReader, StreamBuilder},
     protocol::{
         client::character::Request,
         server::character::{Reply, ReplyData, ReplyFull3},
@@ -7,11 +7,11 @@ use eo::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
+use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
-pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn request(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let mut request = Request::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
 
     debug!("Recv: {:?}", request);
@@ -37,9 +37,12 @@ pub async fn request(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
 
     debug!("Reply: {:?}", reply);
 
+    let mut builder = StreamBuilder::new();
+    reply.serialize(&mut builder);
+
     player.send(
         PacketAction::Reply,
         PacketFamily::Character,
-        reply.serialize(),
+        builder.get(),
     );
 }

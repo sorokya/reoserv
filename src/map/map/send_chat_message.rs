@@ -1,4 +1,4 @@
-use eo::{data::{EOShort, Serializeable}, protocol::{server::talk, PacketAction, PacketFamily}};
+use eo::{data::{EOShort, Serializeable, StreamBuilder}, protocol::{server::talk, PacketAction, PacketFamily}};
 
 use super::Map;
 
@@ -9,7 +9,9 @@ impl Map {
                 player_id: target_player_id,
                 message,
             };
-            let buf = packet.serialize();
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            let buf = builder.get();
             for character in self.characters.values() {
                 if target_player_id != character.player_id.unwrap()
                     && target.is_in_range(character.coords)

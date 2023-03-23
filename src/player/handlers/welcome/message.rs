@@ -1,13 +1,13 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{EOShort, Serializeable, StreamReader, StreamBuilder},
     protocol::{client::welcome::Msg, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
+use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
-pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn message(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let mut message = Msg::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     message.deserialize(&reader);
 
     debug!("Recv: {:?}", message);
@@ -18,10 +18,12 @@ pub async fn message(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     {
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Welcome,
-                reply.serialize(),
+                builder.get(),
             );
         }
         Err(e) => {

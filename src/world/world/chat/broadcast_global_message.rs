@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable},
+    data::{EOShort, Serializeable, StreamBuilder},
     protocol::{server::talk, PacketAction, PacketFamily},
 };
 
@@ -18,7 +18,9 @@ impl World {
             player_name: name.to_string(),
             message: message.to_string(),
         };
-        let buf = packet.serialize();
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
+        let buf = builder.get();
         for player in self.players.values() {
             let state = player.get_state().await;
 

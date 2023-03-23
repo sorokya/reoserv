@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable},
+    data::{EOShort, Serializeable, StreamBuilder},
     protocol::{server::door, Coords, PacketAction, PacketFamily},
 };
 
@@ -12,7 +12,9 @@ impl Map {
             let packet = door::Open {
                 coords: door_coords,
             };
-            let buf = packet.serialize();
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            let buf = builder.get();
             for character in self.characters.values() {
                 if character.is_in_range(door_coords) {
                     character.player.as_ref().unwrap().send(

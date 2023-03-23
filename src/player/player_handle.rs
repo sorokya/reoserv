@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
@@ -13,7 +14,6 @@ use crate::{
     errors::{InvalidStateError, MissingSessionIdError},
     map::MapHandle,
     world::WorldHandle,
-    PacketBuf,
 };
 
 use super::{handle_packet::handle_packet, player::Player, Command, ClientState};
@@ -210,7 +210,7 @@ impl PlayerHandle {
         });
     }
 
-    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: PacketBuf) {
+    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
         let _ = self.tx.send(Command::Send(action, family, buf));
     }
 

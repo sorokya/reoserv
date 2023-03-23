@@ -1,13 +1,13 @@
 use eo::{
-    data::{Serializeable, StreamReader},
+    data::{Serializeable, StreamReader, StreamBuilder},
     protocol::{client::character::Remove, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
+use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
-pub async fn remove(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn remove(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let mut remove = Remove::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     remove.deserialize(&reader);
 
     debug!("Recv: {:?}", remove);
@@ -18,10 +18,14 @@ pub async fn remove(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     {
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
+
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
+
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Character,
-                reply.serialize(),
+                builder.get(),
             );
         }
         Err(e) => {

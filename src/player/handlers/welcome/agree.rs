@@ -1,16 +1,16 @@
 use eo::{
-    data::{Serializeable, StreamReader},
+    data::{Serializeable, StreamReader, StreamBuilder},
     protocol::{
         client::welcome::{Agree, AgreeData},
         PacketAction, PacketFamily,
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
+use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
-pub async fn agree(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn agree(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let mut agree = Agree::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     agree.deserialize(&reader);
 
     debug!("Recv: {:?}", agree);
@@ -33,7 +33,9 @@ pub async fn agree(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     {
         Ok(reply) => {
             debug!("Reply: {:?}", reply);
-            player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
+            player.send(PacketAction::Init, PacketFamily::Init, builder.get());
         }
         Err(e) => {
             error!("Error getting file: {}", e);

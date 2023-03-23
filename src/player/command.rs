@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eo::{
     data::{EOByte, EOChar, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
@@ -8,7 +9,6 @@ use crate::{
     character::Character,
     errors::{InvalidStateError, MissingSessionIdError},
     map::MapHandle,
-    PacketBuf,
 };
 
 use super::ClientState;
@@ -73,7 +73,7 @@ pub enum Command {
         coords: Coords,
         animation: Option<WarpAnimation>,
     },
-    Send(PacketAction, PacketFamily, PacketBuf),
+    Send(PacketAction, PacketFamily, Bytes),
     SetAccountId(EOInt),
     SetBusy(bool),
     SetCharacter(Box<Character>),

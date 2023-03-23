@@ -1,11 +1,11 @@
 use eo::{
-    data::Serializeable,
+    data::{Serializeable, StreamBuilder},
     protocol::{server::init::{InitData, InitPlayers, Init}, InitReply, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, PacketBuf, world::WorldHandle};
+use crate::{player::PlayerHandle, Bytes, world::WorldHandle};
 
-pub async fn list(_buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn list(_buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let players = world.get_online_list().await;
 
     let reply = Init {
@@ -17,5 +17,7 @@ pub async fn list(_buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
     };
 
     debug!("Reply: {:?}", reply);
-    player.send(PacketAction::Init, PacketFamily::Init, reply.serialize());
+    let mut builder = StreamBuilder::new();
+    reply.serialize(&mut builder);
+    player.send(PacketAction::Init, PacketFamily::Init, builder.get());
 }

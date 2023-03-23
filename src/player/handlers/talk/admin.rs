@@ -3,11 +3,11 @@ use eo::{
     protocol::{client::talk::Admin, AdminLevel},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, PacketBuf};
+use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
-pub async fn admin(buf: PacketBuf, player: PlayerHandle, world: WorldHandle) {
+pub async fn admin(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
     let mut admin = Admin::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     admin.deserialize(&reader);
 
     debug!("Recv: {:?}", admin);

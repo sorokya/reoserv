@@ -1,4 +1,4 @@
-use eo::{protocol::{server::message, PacketAction, PacketFamily}, data::Serializeable};
+use eo::{protocol::{server::message, PacketAction, PacketFamily}, data::{Serializeable, StreamBuilder}};
 use tokio::sync::oneshot;
 
 use super::World;
@@ -11,9 +11,12 @@ impl World {
             }
         }
 
-        let packet = message::Close::new().serialize();
+        let packet = message::Close::new();
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
+        let buf = builder.get();
         for player in self.players.values() {
-            player.send(PacketAction::Close, PacketFamily::Message, packet.to_owned());
+            player.send(PacketAction::Close, PacketFamily::Message, buf.clone());
         }
 
         // wait a bit for the packets to be sent

@@ -7,6 +7,7 @@ use std::{
     path::Path,
 };
 
+use bytes::Bytes;
 use eo::{
     data::{EOByte, EOInt, EOShort, Serializeable, StreamReader},
     pubs::EmfFile,
@@ -58,7 +59,9 @@ async fn load_map(
         raw_file.seek(SeekFrom::Start(0))?;
         raw_file.read_to_end(&mut data_buf)?;
 
-        let reader = StreamReader::new(&data_buf);
+        let data_buf = Bytes::from(data_buf);
+
+        let reader = StreamReader::new(data_buf);
 
         file.deserialize(&reader);
     } else {

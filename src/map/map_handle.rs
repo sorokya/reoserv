@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
@@ -9,7 +10,7 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::{character::Character, PacketBuf};
+use crate::{character::Character};
 
 use super::{Command, Map};
 
@@ -132,7 +133,7 @@ impl MapHandle {
         });
     }
 
-    pub async fn serialize(&self) -> PacketBuf {
+    pub async fn serialize(&self) -> Bytes {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });
         rx.await.unwrap()

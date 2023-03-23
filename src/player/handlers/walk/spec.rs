@@ -3,11 +3,11 @@ use eo::{
     protocol::client::walk::Spec,
 };
 
-use crate::{player::PlayerHandle, PacketBuf};
+use crate::{player::PlayerHandle, Bytes};
 
-pub async fn spec(buf: PacketBuf, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn spec(buf: Bytes, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = Spec::default();
-    let reader = StreamReader::new(&buf);
+    let reader = StreamReader::new(buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);

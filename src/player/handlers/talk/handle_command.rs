@@ -1,4 +1,4 @@
-use eo::data::{EOChar, EOShort, Serializeable};
+use eo::data::{EOChar, EOShort, Serializeable, StreamBuilder};
 use eo::protocol::server::talk;
 use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
 
@@ -30,13 +30,15 @@ async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
             Some(WarpAnimation::Admin),
         )
     } else {
+        let packet = talk::Server {
+            message: format!("Map {} does not exist.", map_id),
+        };
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
         character.player.as_ref().unwrap().send(
             PacketAction::Server,
             PacketFamily::Talk,
-            talk::Server {
-                message: format!("Map {} does not exist.", map_id),
-            }
-            .serialize(),
+            builder.get(),
         );
     }
 }
@@ -107,7 +109,9 @@ fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> boo
                     raw_arg, arg.r#type, command.usage
                 ),
             };
-            player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
             return false;
         }
     }
@@ -116,7 +120,9 @@ fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> boo
 
 fn send_error_message(player: &PlayerHandle, message: String) {
     let packet = talk::Server { message };
-    player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
+    let mut builder = StreamBuilder::new();
+    packet.serialize(&mut builder);
+    player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
 }
 
 pub async fn handle_command(
@@ -144,7 +150,9 @@ pub async fn handle_command(
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),
                         };
-                        player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
+                        let mut builder = StreamBuilder::new();
+                        packet.serialize(&mut builder);
+                        player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
                     }
                 }
             }
@@ -153,7 +161,9 @@ pub async fn handle_command(
             let packet = talk::Server {
                 message: format!("Unknown command: {}", command),
             };
-            player.send(PacketAction::Server, PacketFamily::Talk, packet.serialize());
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
         }
     }
 }

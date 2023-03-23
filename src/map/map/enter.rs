@@ -1,5 +1,5 @@
 use eo::{
-    data::Serializeable,
+    data::{Serializeable, StreamBuilder},
     protocol::{server::players, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -22,7 +22,9 @@ impl Map {
         let mut packet = players::Agree::default();
         packet.nearby.num_characters = 1;
         packet.nearby.characters.push(character_map_info);
-        let buf = packet.serialize();
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
+        let buf = builder.get();
         for character in self.characters.values() {
             if new_character.is_in_range(character.coords) {
                 debug!("Send: {:?}", packet);

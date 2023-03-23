@@ -1,5 +1,5 @@
 use eo::{
-    data::Serializeable,
+    data::{Serializeable, StreamBuilder},
     protocol::{server::talk, PacketAction, PacketFamily, TalkReply},
 };
 
@@ -27,8 +27,9 @@ fn send_private_message(from: &str, to: &PlayerHandle, message: &str) {
         message: message.to_string(),
         player_name: from.to_string(),
     };
-    let buf = packet.serialize();
-    to.send(PacketAction::Tell, PacketFamily::Talk, buf);
+    let mut builder = StreamBuilder::new();
+    packet.serialize(&mut builder);
+    to.send(PacketAction::Tell, PacketFamily::Talk, builder.get());
 }
 
 fn send_player_not_found(player: &PlayerHandle, to: &str) {
@@ -36,6 +37,7 @@ fn send_player_not_found(player: &PlayerHandle, to: &str) {
         reply_code: TalkReply::NotFound,
         name: to.to_string(),
     };
-    let buf = packet.serialize();
-    player.send(PacketAction::Reply, PacketFamily::Talk, buf);
+    let mut builder = StreamBuilder::new();
+    packet.serialize(&mut builder);
+    player.send(PacketAction::Reply, PacketFamily::Talk, builder.get());
 }

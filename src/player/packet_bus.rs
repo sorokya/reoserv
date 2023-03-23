@@ -1,11 +1,10 @@
+use bytes::{Bytes, BytesMut, BufMut};
 use eo::{
-    data::{encode_number, EOByte, StreamBuilder},
+    data::{encode_number, EOByte},
     net::{PacketProcessor, ServerSequencer},
     protocol::{PacketAction, PacketFamily},
 };
 use tokio::net::TcpStream;
-
-use crate::PacketBuf;
 
 pub struct PacketBus {
     socket: TcpStream,
@@ -30,23 +29,23 @@ impl PacketBus {
         &mut self,
         action: PacketAction,
         family: PacketFamily,
-        mut data: PacketBuf,
+        data: Bytes,
     ) -> std::io::Result<()> {
         let packet_size = 2 + data.len();
-        let mut builder = StreamBuilder::with_capacity(2 + packet_size);
-
-        builder.add_byte(action.to_byte());
-        builder.add_byte(family.to_byte());
-        builder.append(&mut data);
-
-        let mut buf = builder.get();
-        trace!("Send: {:?}", buf);
-        self.packet_processor.encode(&mut buf);
-
         let length_bytes = encode_number(packet_size as u32);
-        buf.insert(0, length_bytes[1]);
-        buf.insert(0, length_bytes[0]);
 
+        let mut buf = BytesMut::with_capacity(2 + packet_size);
+        buf.put_slice(length_bytes[0..2].as_ref());
+        buf.put_u8(action.to_byte());
+        buf.put_u8(family.to_byte());
+        buf.put(data);
+
+        trace!("Send: {:?}", &buf[..]);
+
+        let mut data_buf = buf.split_off(2);
+        self.packet_processor.encode(&mut data_buf);
+        buf.unsplit(data_buf);
+        
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
                 if num_of_bytes_written != packet_size + 2 {
@@ -64,7 +63,7 @@ impl PacketBus {
         Ok(())
     }
 
-    pub async fn recv(&mut self) -> Option<std::io::Result<PacketBuf>> {
+    pub async fn recv(&mut self) -> Option<std::io::Result<Bytes>> {
         match self.get_packet_length().await {
             Some(Ok(packet_length)) => {
                 if packet_length > 0 {
@@ -72,6 +71,8 @@ impl PacketBus {
                         Some(Ok(buf)) => {
                             let mut data_buf = buf;
                             self.packet_processor.decode(&mut data_buf);
+
+                            let data_buf = Bytes::from(data_buf);
                             Some(Ok(data_buf))
                         }
                         Some(Err(e)) => Some(Err(e)),

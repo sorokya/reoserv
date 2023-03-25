@@ -1,4 +1,5 @@
 pub mod account;
+pub mod attack;
 pub mod character;
 pub mod character_map_info;
 pub mod connection;

@@ -12,12 +12,12 @@ pub async fn player(buf: Bytes, player: PlayerHandle) -> Result<(), Box<dyn std:
 
     debug!("Recv: {:?}", packet);
 
+    // TODO: handle anti-speed
+
     if let Ok(map) = player.get_map().await {
         let player_id = player.get_player_id().await?;
         map.walk(
             player_id,
-            packet.walk.timestamp,
-            packet.walk.coords,
             packet.walk.direction,
         );
     }

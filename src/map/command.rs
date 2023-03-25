@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
+    data::{EOChar, EOInt, EOShort},
     protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -9,6 +9,10 @@ use crate::{character::Character};
 
 #[derive(Debug)]
 pub enum Command {
+    Attack {
+        target_player_id: EOShort,
+        direction: Direction,
+    },
     Emote {
         target_player_id: EOShort,
         emote: Emote,
@@ -62,8 +66,6 @@ pub enum Command {
     },
     Walk {
         target_player_id: EOShort,
-        timestamp: EOThree,
-        coords: Coords,
         direction: Direction,
     },
     SpawnNpcs,

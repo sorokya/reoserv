@@ -23,6 +23,7 @@ pub struct Map {
 }
 
 mod act_npcs;
+mod attack;
 mod emote;
 mod enter;
 mod face;
@@ -30,6 +31,7 @@ mod get_character;
 mod get_dimensions;
 mod get_map_info;
 mod get_nearby_info;
+mod get_next_item_index;
 mod get_rid_and_size;
 mod leave;
 mod open_door;
@@ -55,6 +57,11 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::Attack {
+                target_player_id,
+                direction,
+            } => self.attack(target_player_id, direction),
+
             Command::Emote {
                 target_player_id,
                 emote,
@@ -123,10 +130,8 @@ impl Map {
 
             Command::Walk {
                 target_player_id,
-                timestamp,
-                coords,
                 direction,
-            } => self.walk(target_player_id, timestamp, coords, direction),
+            } => self.walk(target_player_id, direction),
         }
     }
 }

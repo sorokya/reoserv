@@ -5,8 +5,9 @@ use eo::{
 
 use crate::utils;
 
+#[derive(Debug, Default)]
 pub struct Item {
-    pub uid: EOShort,
+    pub index: EOShort,
     pub id: EOShort,
     pub amount: EOInt,
     pub coords: Coords,
@@ -15,16 +16,6 @@ pub struct Item {
 }
 
 impl Item {
-    pub fn _new(uid: EOShort, id: EOShort, amount: EOInt, coords: Coords, owner: EOShort) -> Self {
-        Self {
-            uid,
-            id,
-            amount,
-            coords,
-            owner,
-        }
-    }
-
     pub fn is_in_range(&self, coords: Coords) -> bool {
         utils::in_range(
             self.coords.x.into(),
@@ -37,7 +28,7 @@ impl Item {
     // TODO: Implement as a trait
     pub fn to_item_map_info(&self) -> ItemMapInfo {
         ItemMapInfo {
-            uid: self.uid,
+            uid: self.index,
             id: self.id,
             amount: self.amount,
             coords: self.coords,

@@ -1,6 +1,6 @@
 use eo::{
-    data::{EOChar, EOShort, EOThree, Serializeable, StreamBuilder},
-    protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
+    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    protocol::{server::walk, Direction, PacketAction, PacketFamily},
 };
 
 use crate::map::{get_warp_at, is_in_bounds, is_tile_walkable};
@@ -11,8 +11,6 @@ impl Map {
     pub fn walk(
         &mut self,
         target_player_id: EOShort,
-        _timestamp: EOThree,
-        _coords: Coords,
         direction: Direction,
     ) {
         if let Some((target_previous_coords, target_coords, target_player)) = {

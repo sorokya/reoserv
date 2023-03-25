@@ -70,6 +70,10 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn get_item(&self, target_player_id: EOShort, item_index: EOShort) {
+        let _ = self.tx.send(Command::GetItem { item_index, target_player_id });
+    }
+
     pub async fn get_map_info(
         &self,
         player_ids: Vec<EOShort>,

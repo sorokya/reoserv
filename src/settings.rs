@@ -1,14 +1,15 @@
 use config::{Config, ConfigError, File};
+use eo::data::{EOShort, EOChar, EOInt};
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub host: String,
     pub port: String,
-    pub max_connections: u32,
+    pub max_connections: EOInt,
     pub password_salt: String,
-    pub ping_rate: u32,
+    pub ping_rate: EOInt,
     pub enforce_sequence: bool,
-    pub num_of_maps: u32,
+    pub num_of_maps: EOInt,
     pub min_version: String,
     pub max_version: String,
 }
@@ -24,39 +25,40 @@ pub struct Database {
 
 #[derive(Debug, Deserialize)]
 pub struct NewCharacter {
-    pub spawn_map: u32,
-    pub spawn_x: u32,
-    pub spawn_y: u32,
-    pub spawn_direction: u32,
+    pub spawn_map: EOShort,
+    pub spawn_x: EOChar,
+    pub spawn_y: EOChar,
+    pub spawn_direction: EOChar,
     pub home: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Jail {
-    pub map: u32,
-    pub x: u32,
-    pub y: u32,
+    pub map: EOShort,
+    pub x: EOChar,
+    pub y: EOChar,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct World {
-    pub see_distance: u32,
+    pub see_distance: EOChar,
+    pub drop_distance: EOChar,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct NPCs {
     pub instant_spawn: bool,
     pub freeze_on_empty_map: bool,
-    pub respawn_rate: u32,
-    pub act_rate: u32,
-    pub speed_0: u32,
-    pub speed_1: u32,
-    pub speed_2: u32,
-    pub speed_3: u32,
-    pub speed_4: u32,
-    pub speed_5: u32,
-    pub speed_6: u32,
-    pub talk_rate: u32,
+    pub respawn_rate: EOInt,
+    pub act_rate: EOInt,
+    pub speed_0: EOInt,
+    pub speed_1: EOInt,
+    pub speed_2: EOInt,
+    pub speed_3: EOInt,
+    pub speed_4: EOInt,
+    pub speed_5: EOInt,
+    pub speed_6: EOInt,
+    pub talk_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]
@@ -66,7 +68,7 @@ pub struct Sln {
     pub site: String,
     pub hostname: String,
     pub server_name: String,
-    pub rate: u32,
+    pub rate: EOInt,
     pub zone: String,
 }
 

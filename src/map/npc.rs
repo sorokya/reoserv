@@ -24,12 +24,10 @@ pub struct Npc {
 }
 
 impl Npc {
-    pub fn is_in_range(&self, coords: Coords) -> bool {
+    pub fn is_in_range(&self, coords: &Coords) -> bool {
         utils::in_range(
-            self.coords.x.into(),
-            self.coords.y.into(),
-            coords.x.into(),
-            coords.y.into(),
+            &self.coords,
+            coords,
         )
     }
 

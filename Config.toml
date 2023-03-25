@@ -63,6 +63,9 @@ y = 1
 # Size of the characters view port
 see_distance = 11
 
+# Max distance a player can drop/pick up an item
+drop_distance = 2
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

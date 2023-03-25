@@ -14,7 +14,7 @@ impl Map {
             let buf = builder.get();
             for character in self.characters.values() {
                 if character.player_id.unwrap() != target_player_id
-                    && character.is_in_range(target.coords)
+                    && character.is_in_range(&target.coords)
                 {
                     debug!("Send: {:?}", packet);
                     character.player.as_ref().unwrap().send(

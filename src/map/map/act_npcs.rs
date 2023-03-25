@@ -168,7 +168,7 @@ impl Map {
                 let in_range_npc_indexes: Vec<EOChar> = self
                     .npcs
                     .iter()
-                    .filter(|(_, n)| n.is_in_range(character.coords))
+                    .filter(|(_, n)| n.is_in_range(&character.coords))
                     .map(|(i, _)| i)
                     .cloned()
                     .collect();

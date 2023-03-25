@@ -7,6 +7,7 @@ pub mod door;
 pub mod emote;
 pub mod face;
 pub mod init;
+pub mod item;
 pub mod login;
 pub mod map_info;
 pub mod players;

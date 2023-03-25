@@ -22,7 +22,7 @@ impl Map {
         let target = self.characters.get(&target_player_id).unwrap();
         for character in self.characters.values() {
             if target_player_id != character.player_id.unwrap()
-                && target.is_in_range(character.coords)
+                && target.is_in_range(&character.coords)
             {
                 debug!("Send: {:?}", packet);
                 character.player.as_ref().unwrap().send(

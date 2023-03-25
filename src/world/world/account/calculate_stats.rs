@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, EOShort, EOChar},
 };
 use evalexpr::{context_map, eval_float_with_context};
 
@@ -31,7 +31,7 @@ pub fn calculate_stats(character: &mut Character) {
         }
 
         let record = &ITEM_DB.items[(item.id - 1) as usize];
-        character.weight += record.weight as EOInt * item.amount;
+        character.weight += (record.weight as EOInt * item.amount) as EOChar;
         if character.weight >= 250 {
             break;
         }
@@ -61,7 +61,7 @@ pub fn calculate_stats(character: &mut Character) {
         }
 
         let item = &ITEM_DB.items[(item_id - 1) as usize];
-        character.weight += item.weight as EOInt;
+        character.weight += item.weight;
         character.max_hp += item.hp;
         character.max_tp += item.tp;
         character.min_damage += item.min_damage;
@@ -128,7 +128,7 @@ pub fn calculate_stats(character: &mut Character) {
     };
 
     character.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
-        Ok(max_weight) => max_weight.floor() as EOInt,
+        Ok(max_weight) => max_weight.floor() as EOChar,
         Err(e) => {
             error!("Failed to calculate max_weight: {}", e);
             70

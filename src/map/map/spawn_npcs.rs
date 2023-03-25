@@ -40,7 +40,7 @@ impl Map {
                         chatter_indexes.push(((i * chatter_distribution) + npc_index) as usize);
                     }
 
-                    let data_record = match NPC_DB.npcs.get(spawn.id as usize) {
+                    let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
                         Some(npc) => npc,
                         None => {
                             error!("Failed to load NPC {}", spawn.id);

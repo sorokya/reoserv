@@ -1,16 +1,19 @@
-use crate::SETTINGS;
+use eo::{protocol::Coords, data::EOChar};
 
-pub fn in_range(x1: f64, y1: f64, x2: f64, y2: f64) -> bool {
-    in_range_distance(x1, y1, x2, y2, SETTINGS.world.see_distance as f64)
+pub fn get_distance(a: &Coords, b: &Coords) -> EOChar {
+    let dx = (a.x as f64 - b.x as f64).abs();
+    let dy = (a.y as f64 - b.y as f64).abs();
+
+    (dx + dy) as EOChar
 }
 
-pub fn in_range_distance(x1: f64, y1: f64, x2: f64, y2: f64, _distance: f64) -> bool {
-    let dx = (x1 - x2).abs();
-    let dy = (y1 - y2).abs();
+pub fn in_range(a: &Coords, b: &Coords) -> bool {
+    let distance = get_distance(a, b);
 
-    if x1 > x2 || y1 > y2 {
-        dx + dy <= 12.0
+    // TODO: move hard coded values to config
+    if a.x > b.x || a.y > b.y {
+        distance <= 12
     } else {
-        dx + dy <= 15.0
+        distance <= 15
     }
 }

@@ -53,13 +53,13 @@ impl Map {
                     ..Default::default()
                 };
 
-                if let Some(mut drop) = drop {
-                    drop.index = self.get_next_item_index(0);
-                    packet.drop_index = drop.index;
+                if let Some(drop) = drop {
+                    let index = self.get_next_item_index(1);
+                    packet.drop_index = index;
                     packet.drop_id = drop.id;
                     packet.drop_coords = target_attack_coords;
                     packet.drop_amount = drop.amount;
-                    self.items.push(drop);
+                    self.items.insert(index, drop);
                 }
 
                 debug!("{:?}", packet);
@@ -69,7 +69,7 @@ impl Map {
                 let buf = builder.get();
 
                 for (_, character) in self.characters.iter() {
-                    if character.is_in_range(target_attack_coords) {
+                    if character.is_in_range(&target_attack_coords) {
                         character.player.as_ref().unwrap().send(
                             PacketAction::Spec,
                             PacketFamily::Npc,
@@ -85,20 +85,20 @@ impl Map {
 fn get_drop(target_player_id: EOShort, target_attack_coords: Coords, npc: &Npc) -> Option<Item> {
     if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc.id) {
         let mut rng = rand::thread_rng();
-        let roll = rng.gen_range(0..=64000);
-        let drop = drop_npc
-            .drops
-            .get(rng.gen_range(0..drop_npc.drops.len()))
-            .unwrap();
-        if roll <= drop.rate {
-            let amount = rng.gen_range(drop.min..=drop.max);
-            return Some(Item {
-                id: drop.item_id,
-                amount,
-                coords: target_attack_coords,
-                owner: target_player_id,
-                ..Default::default()
-        });
+        let mut drops = drop_npc.drops.clone();
+        drops.sort_by(|a, b| a.rate.cmp(&b.rate));
+
+        for drop in drops {
+            let roll = rng.gen_range(0..=64000);
+            if roll <= drop.rate {
+                let amount = rng.gen_range(drop.min..=drop.max);
+                return Some(Item {
+                    id: drop.item_id,
+                    amount,
+                    coords: target_attack_coords,
+                    owner: target_player_id,
+                });
+            }
         }
     }
 

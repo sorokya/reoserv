@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use eo::protocol::{server::welcome::ReplySelectCharacter, ServerSettings};
 
 use crate::{
@@ -39,7 +37,7 @@ impl World {
         let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.num_spells) };
 
         let settings = ServerSettings {
-            jail_map: SETTINGS.jail.map.try_into().expect("Invalid map id"),
+            jail_map: SETTINGS.jail.map,
             rescue_map: 4,
             rescue_x: 24,
             rescue_y: 24,

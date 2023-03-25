@@ -15,9 +15,9 @@ pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     file: EmfFile,
     file_size: EOInt,
-    items: Vec<Item>,
+    items: HashMap<EOShort, Item>,
     npcs: HashMap<EOChar, Npc>,
-    npc_data: HashMap<EOShort, NpcData>,
+    npc_data: HashMap<EOShort, NpcData>, // TODO: get rid of this
     characters: HashMap<EOShort, Character>,
     pool: Pool,
 }
@@ -29,6 +29,7 @@ mod enter;
 mod face;
 mod get_character;
 mod get_dimensions;
+mod get_item;
 mod get_map_info;
 mod get_nearby_info;
 mod get_next_item_index;
@@ -47,7 +48,7 @@ impl Map {
             file_size,
             file,
             rx,
-            items: Vec::new(),
+            items: HashMap::new(),
             npcs: HashMap::new(),
             npc_data: HashMap::new(),
             characters: HashMap::new(),
@@ -85,6 +86,10 @@ impl Map {
 
             Command::GetDimensions { respond_to } => {
                 self.get_dimensions(respond_to);
+            }
+
+            Command::GetItem { target_player_id, item_index } => {
+                self.get_item(target_player_id, item_index);
             }
 
             Command::GetMapInfo {

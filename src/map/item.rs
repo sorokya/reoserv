@@ -7,7 +7,6 @@ use crate::utils;
 
 #[derive(Debug, Default)]
 pub struct Item {
-    pub index: EOShort,
     pub id: EOShort,
     pub amount: EOInt,
     pub coords: Coords,
@@ -16,19 +15,17 @@ pub struct Item {
 }
 
 impl Item {
-    pub fn is_in_range(&self, coords: Coords) -> bool {
+    pub fn is_in_range(&self, coords: &Coords) -> bool {
         utils::in_range(
-            self.coords.x.into(),
-            self.coords.y.into(),
-            coords.x.into(),
-            coords.y.into(),
+            &self.coords,
+            coords,
         )
     }
 
     // TODO: Implement as a trait
-    pub fn to_item_map_info(&self) -> ItemMapInfo {
+    pub fn to_item_map_info(&self, uid: EOShort) -> ItemMapInfo {
         ItemMapInfo {
-            uid: self.index,
+            uid,
             id: self.id,
             amount: self.amount,
             coords: self.coords,

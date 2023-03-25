@@ -26,7 +26,7 @@ impl Map {
         packet.serialize(&mut builder);
         let buf = builder.get();
         for character in self.characters.values() {
-            if new_character.is_in_range(character.coords) {
+            if new_character.is_in_range(&character.coords) {
                 debug!("Send: {:?}", packet);
                 character.player.as_ref().unwrap().send(
                     PacketAction::Agree,

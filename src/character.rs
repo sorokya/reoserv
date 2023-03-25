@@ -1,3 +1,5 @@
+use std::cmp;
+
 use eo::{
     data::{EOChar, EOInt, EOShort},
     protocol::{
@@ -13,7 +15,7 @@ use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use crate::{
     player::PlayerHandle,
     utils::{self, full_to_b000a0hsw},
-    SETTINGS,
+    SETTINGS, ITEM_DB,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -47,8 +49,8 @@ pub struct Character {
     pub tp: EOShort,
     pub max_tp: EOShort,
     pub max_sp: EOShort,
-    pub weight: EOInt,
-    pub max_weight: EOInt,
+    pub weight: EOChar,
+    pub max_weight: EOChar,
     pub base_strength: EOShort,
     pub base_intelligence: EOShort,
     pub base_wisdom: EOShort,
@@ -106,13 +108,43 @@ impl Character {
         }
     }
 
-    pub fn is_in_range(&self, coords: Coords) -> bool {
+    pub fn is_in_range(&self, coords: &Coords) -> bool {
         utils::in_range(
-            self.coords.x.into(),
-            self.coords.y.into(),
-            coords.x.into(),
-            coords.y.into(),
+            &self.coords,
+            coords,
         )
+    }
+
+    pub fn can_hold(&self, item_id: EOShort, max_amount: EOInt) -> EOInt {
+        let item = ITEM_DB.items.get(item_id as usize);
+
+        if item.is_none() {
+            return max_amount;
+        }
+
+        let item = item.unwrap();
+
+        let remaining_weight = self.max_weight - self.weight;
+        let max_items = (remaining_weight as f64 / item.weight as f64).floor();
+        cmp::min(max_items as EOInt, max_amount)
+    }
+
+    pub fn add_item(&mut self, item_id: EOShort, amount: EOInt) {
+        let index = self.items.iter().position(|item| item.id == item_id);
+        let item = ITEM_DB.items.get(item_id as usize - 1);
+
+        if let Some(index) = index {
+            self.items[index].amount += amount;
+        } else {
+            self.items.push(Item {
+                id: item_id,
+                amount,
+            });
+        }
+
+        if let Some(item) = item {
+            self.weight += (item.weight as EOInt * amount) as EOChar;
+        }
     }
 
     pub fn to_map_info(&self) -> CharacterMapInfo {
@@ -351,6 +383,19 @@ impl Character {
         &self,
         conn: &mut Conn,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let old_items = conn
+            .exec_map(
+                include_str!("sql/get_character_inventory.sql"),
+                params! {
+                    "character_id" => self.id,
+                },
+                |mut row: Row| Item {
+                    id: row.take(0).unwrap(),
+                    amount: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
         let mut tx = conn.start_transaction(TxOpts::default()).await?;
 
         tx.exec_drop(
@@ -433,6 +478,43 @@ impl Character {
         .await?;
 
         // TODO: save inventory/bank/spells
+
+        for item in &old_items {
+            if !self.items.contains(item) {
+                tx.exec_drop(
+                    include_str!("./sql/delete_inventory_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for item in &self.items {
+            if !old_items.contains(item) {
+                tx.exec_drop(
+                    include_str!("./sql/create_inventory_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                        "quantity" => item.amount,
+                    },
+                )
+                .await?;
+            } else {
+                tx.exec_drop(
+                    include_str!("./sql/update_inventory_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                        "quantity" => item.amount,
+                    },
+                )
+                .await?;
+            }
+        }
 
         tx.commit().await?;
 

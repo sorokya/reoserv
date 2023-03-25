@@ -33,6 +33,10 @@ pub enum Command {
     GetDimensions {
         respond_to: oneshot::Sender<(EOChar, EOChar)>,
     },
+    GetItem {
+        target_player_id: EOShort,
+        item_index: EOShort,
+    },
     GetMapInfo {
         player_ids: Vec<EOShort>,
         npc_indexes: Vec<EOChar>,

@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation, ShortItem},
 };
 use tokio::sync::oneshot;
 
@@ -12,6 +12,11 @@ pub enum Command {
     Attack {
         target_player_id: EOShort,
         direction: Direction,
+    },
+    DropItem {
+        target_player_id: EOShort,
+        item: ShortItem,
+        coords: Coords,
     },
     Emote {
         target_player_id: EOShort,

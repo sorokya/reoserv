@@ -23,6 +23,7 @@ pub struct Map {
 
 mod act_npcs;
 mod attack;
+mod drop_item;
 mod emote;
 mod enter;
 mod face;
@@ -60,6 +61,12 @@ impl Map {
                 target_player_id,
                 direction,
             } => self.attack(target_player_id, direction),
+
+            Command::DropItem {
+                target_player_id,
+                item,
+                coords,
+            } => self.drop_item(target_player_id, item, coords),
 
             Command::Emote {
                 target_player_id,

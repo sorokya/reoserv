@@ -5,7 +5,7 @@ use eo::{
     protocol::{
         client::character::Create, AdminLevel, BigCoords, CharacterBaseStats2, CharacterMapInfo,
         CharacterSecondaryStats, CharacterStats2, Coords, Direction, Gender, Item, PaperdollFull,
-        SitState, Skin, Spell, PaperdollIcon,
+        PaperdollIcon, SitState, Skin, Spell,
     },
 };
 
@@ -15,7 +15,7 @@ use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 use crate::{
     player::PlayerHandle,
     utils::{self, full_to_b000a0hsw},
-    SETTINGS, ITEM_DB,
+    ITEM_DB, SETTINGS,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -100,23 +100,18 @@ impl Character {
         // TODO: group stuff
 
         match self.admin_level {
-            AdminLevel::Player | AdminLevel::Guide | AdminLevel::Guardian => {
-                PaperdollIcon::Player
-            },
+            AdminLevel::Player | AdminLevel::Guide | AdminLevel::Guardian => PaperdollIcon::Player,
             AdminLevel::Gm => PaperdollIcon::Gm,
             AdminLevel::Hgm | AdminLevel::God => PaperdollIcon::Hgm,
         }
     }
 
     pub fn is_in_range(&self, coords: &Coords) -> bool {
-        utils::in_range(
-            &self.coords,
-            coords,
-        )
+        utils::in_range(&self.coords, coords)
     }
 
     pub fn can_hold(&self, item_id: EOShort, max_amount: EOInt) -> EOInt {
-        let item = ITEM_DB.items.get(item_id as usize);
+        let item = ITEM_DB.items.get(item_id as usize - 1);
 
         if item.is_none() {
             return max_amount;
@@ -124,17 +119,21 @@ impl Character {
 
         let item = item.unwrap();
 
+        if item.weight == 0 {
+            return max_amount;
+        }
+
         let remaining_weight = self.max_weight - self.weight;
         let max_items = (remaining_weight as f64 / item.weight as f64).floor();
         cmp::min(max_items as EOInt, max_amount)
     }
 
     pub fn add_item(&mut self, item_id: EOShort, amount: EOInt) {
-        let index = self.items.iter().position(|item| item.id == item_id);
+        let existing_item = self.items.iter_mut().find(|item| item.id == item_id);
         let item = ITEM_DB.items.get(item_id as usize - 1);
 
-        if let Some(index) = index {
-            self.items[index].amount += amount;
+        if let Some(existing_item) = existing_item {
+            existing_item.amount += amount;
         } else {
             self.items.push(Item {
                 id: item_id,
@@ -144,6 +143,19 @@ impl Character {
 
         if let Some(item) = item {
             self.weight += (item.weight as EOInt * amount) as EOChar;
+        }
+    }
+
+    pub fn remove_item(&mut self, item_id: EOShort, amount: EOInt) {
+        let existing_item = match self.items.iter_mut().find(|item| item.id == item_id) {
+            Some(item) => item,
+            None => return,
+        };
+
+        if existing_item.amount <= amount {
+            self.items.retain(|item| item.id != item_id);
+        } else {
+            existing_item.amount -= amount;
         }
     }
 

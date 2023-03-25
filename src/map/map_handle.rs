@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation, ShortItem},
     pubs::EmfFile,
 };
 use mysql_async::Pool;
@@ -28,6 +28,14 @@ impl MapHandle {
             .spawn(run_map(map));
 
         Self { tx }
+    }
+
+    pub fn drop_item(&self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
+        let _ = self.tx.send(Command::DropItem {
+            target_player_id,
+            item,
+            coords,
+        });
     }
 
     pub fn emote(&self, target_player_id: u16, emote: Emote) {

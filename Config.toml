@@ -91,4 +91,4 @@ speed_5 = 7500
 speed_6 = 15000
 
 # Speed that NPCs talk at in miliseconds
-talk_rate = 7500
+talk_rate = 37500

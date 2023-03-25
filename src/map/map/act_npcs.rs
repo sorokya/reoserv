@@ -9,7 +9,7 @@ use rand::Rng;
 
 use crate::{
     map::{is_occupied, is_tile_walkable::is_tile_walkable_for_npc},
-    SETTINGS,
+    SETTINGS, TALK_DB,
 };
 
 use super::Map;
@@ -139,25 +139,25 @@ impl Map {
                 }
             }
 
-            if let Some(npc_data) = self.npc_data.get(&npc.id) {
-                if let Some(talk_record) = &npc_data.talk_record {
-                    let talk_delta = now - npc.last_talk;
-                    if npc.alive
-                        && npc.does_talk
-                        && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
-                    {
-                        let roll = rng.gen_range(0..=100);
-                        if roll <= talk_record.rate {
-                            let message_index = rng.gen_range(0..talk_record.messages.len());
-                            talk_updates.push(NPCUpdateChat {
-                                npc_index: *index,
-                                message_length: talk_record.messages[message_index].len() as EOChar,
-                                message: talk_record.messages[message_index].to_string(),
-                            })
-                        }
-                        npc.last_talk = now;
-                    }
+            let talk_record = match TALK_DB.npcs.iter().find(|record| record.npc_id == npc.id) {
+                Some(record) => record,
+                None => continue,
+            };
+     
+            let talk_delta = now - npc.last_talk;
+            if npc.alive
+                && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
+            {
+                let roll = rng.gen_range(0..=100);
+                if roll <= talk_record.rate {
+                    let message_index = rng.gen_range(0..talk_record.messages.len());
+                    talk_updates.push(NPCUpdateChat {
+                        npc_index: *index,
+                        message_length: talk_record.messages[message_index].len() as EOChar,
+                        message: talk_record.messages[message_index].to_string(),
+                    })
                 }
+                npc.last_talk = now;
             }
         }
 

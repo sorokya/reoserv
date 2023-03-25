@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::character::Character;
 
-use super::{Command, Item, Npc, NpcData};
+use super::{Command, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -17,7 +17,6 @@ pub struct Map {
     file_size: EOInt,
     items: HashMap<EOShort, Item>,
     npcs: HashMap<EOChar, Npc>,
-    npc_data: HashMap<EOShort, NpcData>, // TODO: get rid of this
     characters: HashMap<EOShort, Character>,
     pool: Pool,
 }
@@ -50,7 +49,6 @@ impl Map {
             rx,
             items: HashMap::new(),
             npcs: HashMap::new(),
-            npc_data: HashMap::new(),
             characters: HashMap::new(),
             pool,
         }

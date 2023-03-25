@@ -15,7 +15,6 @@ pub struct Npc {
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
     pub last_act: DateTime<Utc>,
-    pub does_talk: bool,
     pub last_talk: DateTime<Utc>,
     pub walk_idle_for: Option<Duration>,
     pub hp: EOThree,
@@ -50,7 +49,6 @@ pub struct NPCBuilder {
     alive: bool,
     dead_since: DateTime<Utc>,
     last_act: DateTime<Utc>,
-    does_talk: bool,
     last_talk: DateTime<Utc>,
     walk_idle_for: Option<Duration>,
     hp: EOThree,
@@ -98,11 +96,6 @@ impl NPCBuilder {
         self
     }
 
-    pub fn does_talk(mut self, does_talk: bool) -> Self {
-        self.does_talk = does_talk;
-        self
-    }
-
     pub fn last_talk(mut self, last_talk: DateTime<Utc>) -> Self {
         self.last_talk = last_talk;
         self
@@ -127,7 +120,6 @@ impl NPCBuilder {
             alive: self.alive,
             dead_since: self.dead_since,
             last_act: self.last_act,
-            does_talk: self.does_talk,
             last_talk: self.last_talk,
             walk_idle_for: self.walk_idle_for,
             hp: self.hp,

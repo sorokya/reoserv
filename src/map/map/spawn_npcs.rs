@@ -30,16 +30,6 @@ impl Map {
                 };
 
                 for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
-                    // Only 20% of npcs in a group will speak
-                    let num_of_chatters =
-                        cmp::max(1, (spawn.amount as f64 * 0.2).floor() as EOChar);
-                    let mut chatter_indexes: Vec<usize> =
-                        Vec::with_capacity(num_of_chatters as usize);
-                    let chatter_distribution = spawn.amount / num_of_chatters;
-                    for i in 0..num_of_chatters {
-                        chatter_indexes.push(((i * chatter_distribution) + npc_index) as usize);
-                    }
-
                     let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
                         Some(npc) => npc,
                         None => {
@@ -48,8 +38,7 @@ impl Map {
                         }
                     };
 
-                    // TODO: bounds check
-                    for _ in 0..spawn.amount {
+                    for i in 0..spawn.amount as i64 {
                         self.npcs.insert(
                             npc_index,
                             NPCBuilder::new()
@@ -60,8 +49,7 @@ impl Map {
                                 .alive(false)
                                 .dead_since(dead_since)
                                 .last_act(dead_since)
-                                .does_talk(chatter_indexes.contains(&(npc_index as usize)))
-                                .last_talk(now)
+                                .last_talk(now + Duration::milliseconds(7500 * i))
                                 .hp(data_record.hp)
                                 .max_hp(data_record.hp)
                                 .build(),

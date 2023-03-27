@@ -16,11 +16,27 @@ use super::Map;
 
 impl Map {
     pub fn act_npcs(&mut self) {
-        if SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
+        if self.npcs.is_empty() || SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
             return;
         }
 
         let now = Utc::now();
+
+        if self.npcs.get(&1).unwrap().last_act.is_none() {
+            for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
+                let npcs = {
+                    self.npcs.iter().filter(|(_, npc)| {
+                        npc.spawn_index == spawn_index && npc.id == spawn.id
+                    }).map(|(index, _)| *index).collect::<Vec<EOChar>>().clone()
+                };
+
+                for index in npcs {
+                    let npc = self.npcs.get_mut(&index).unwrap();
+                    npc.last_act = Some(now);
+                    npc.last_talk = Some(now + Duration::milliseconds(7500 * index as i64));
+                }
+            }
+        }
 
         let mut rng = rand::thread_rng();
 
@@ -50,7 +66,7 @@ impl Map {
                 _ => unreachable!("Invalid spawn type {} for NPC {}", spawn.spawn_type, npc.id),
             };
 
-            let act_delta = now - npc.last_act;
+            let act_delta = now - npc.last_act.unwrap();
             let walk_idle_for_ms = if let Some(walk_idle_for) = npc.walk_idle_for {
                 walk_idle_for.num_milliseconds()
             } else {
@@ -132,7 +148,7 @@ impl Map {
                         occupied_tiles.push(new_coords);
                     }
 
-                    npc.last_act = Utc::now();
+                    npc.last_act = Some(Utc::now());
                     npc.walk_idle_for = None;
                 } else {
                     npc.walk_idle_for = Some(Duration::seconds(rng.gen_range(1..=4)));
@@ -144,7 +160,7 @@ impl Map {
                 None => continue,
             };
      
-            let talk_delta = now - npc.last_talk;
+            let talk_delta = now - npc.last_talk.unwrap();
             if npc.alive
                 && talk_delta >= Duration::milliseconds(SETTINGS.npcs.talk_rate as i64)
             {
@@ -157,7 +173,7 @@ impl Map {
                         message: talk_record.messages[message_index].to_string(),
                     })
                 }
-                npc.last_talk = now;
+                npc.last_talk = Some(now);
             }
         }
 

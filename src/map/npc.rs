@@ -14,8 +14,8 @@ pub struct Npc {
     pub spawn_index: usize,
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
-    pub last_act: DateTime<Utc>,
-    pub last_talk: DateTime<Utc>,
+    pub last_act: Option<DateTime<Utc>>,
+    pub last_talk: Option<DateTime<Utc>>,
     pub walk_idle_for: Option<Duration>,
     pub hp: EOThree,
     pub max_hp: EOThree,
@@ -48,8 +48,8 @@ pub struct NPCBuilder {
     spawn_index: usize,
     alive: bool,
     dead_since: DateTime<Utc>,
-    last_act: DateTime<Utc>,
-    last_talk: DateTime<Utc>,
+    last_act: Option<DateTime<Utc>>,
+    last_talk: Option<DateTime<Utc>>,
     walk_idle_for: Option<Duration>,
     hp: EOThree,
     max_hp: EOThree,
@@ -88,16 +88,6 @@ impl NPCBuilder {
 
     pub fn dead_since(mut self, dead_since: DateTime<Utc>) -> Self {
         self.dead_since = dead_since;
-        self
-    }
-
-    pub fn last_act(mut self, last_act: DateTime<Utc>) -> Self {
-        self.last_act = last_act;
-        self
-    }
-
-    pub fn last_talk(mut self, last_talk: DateTime<Utc>) -> Self {
-        self.last_talk = last_talk;
         self
     }
 

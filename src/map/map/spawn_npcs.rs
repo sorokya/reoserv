@@ -38,7 +38,7 @@ impl Map {
                         }
                     };
 
-                    for i in 0..spawn.amount as i64 {
+                    for _ in 0..spawn.amount as i64 {
                         self.npcs.insert(
                             npc_index,
                             NPCBuilder::new()
@@ -48,8 +48,6 @@ impl Map {
                                 .spawn_index(spawn_index)
                                 .alive(false)
                                 .dead_since(dead_since)
-                                .last_act(dead_since)
-                                .last_talk(now + Duration::milliseconds(7500 * i))
                                 .hp(data_record.hp)
                                 .max_hp(data_record.hp)
                                 .build(),

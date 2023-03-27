@@ -130,7 +130,6 @@ impl Character {
 
     pub fn add_item(&mut self, item_id: EOShort, amount: EOInt) {
         let existing_item = self.items.iter_mut().find(|item| item.id == item_id);
-        let item = ITEM_DB.items.get(item_id as usize - 1);
 
         if let Some(existing_item) = existing_item {
             existing_item.amount += amount;
@@ -141,7 +140,7 @@ impl Character {
             });
         }
 
-        if let Some(item) = item {
+        if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
             self.weight += (item.weight as EOInt * amount) as EOChar;
         }
     }
@@ -156,6 +155,10 @@ impl Character {
             self.items.retain(|item| item.id != item_id);
         } else {
             existing_item.amount -= amount;
+        }
+
+        if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
+            self.weight -= (item.weight as EOInt * amount) as EOChar;
         }
     }
 

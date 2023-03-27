@@ -39,6 +39,12 @@ pub async fn handle_packet(
 
     let buf = reader.get_vec(reader.remaining());
     match family {
+        PacketFamily::Paperdoll => match action {
+            PacketAction::Request => {
+                handlers::paperdoll::request(buf, player.clone()).await;
+            },
+            _ => error!("Unhandled packet {:?}_{:?}", action, family),
+        }
         PacketFamily::Item => match action {
             PacketAction::Drop => {
                 handlers::item::drop(buf, player.clone()).await;

@@ -148,6 +148,13 @@ impl MapHandle {
         });
     }
 
+    pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
+        let _ = self.tx.send(Command::RequestPaperdoll {
+            player_id,
+            target_player_id,
+        });
+    }
+
     pub async fn save(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Save { respond_to: tx });

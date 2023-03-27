@@ -73,6 +73,10 @@ pub enum Command {
         target_player_id: EOShort,
         door_coords: Coords,
     },
+    RequestPaperdoll {
+        player_id: EOShort,
+        target_player_id: EOShort,
+    },
     Save {
         respond_to: oneshot::Sender<()>,
     },

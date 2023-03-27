@@ -38,6 +38,7 @@ mod give_item;
 mod junk_item;
 mod leave;
 mod open_door;
+mod request_paperdoll;
 mod save;
 mod send_chat_message;
 mod serialize;
@@ -136,6 +137,11 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::RequestPaperdoll {
+                player_id,
+                target_player_id,
+            } => self.request_paperdoll(player_id, target_player_id),
 
             Command::Save { respond_to } => self.save(respond_to).await,
 

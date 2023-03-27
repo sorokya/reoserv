@@ -93,5 +93,24 @@
                 ),
             ],
         ),
+        (
+            name: "spawnitem",
+            alias: "si",
+            description: "Spawn an item into your inventory",
+            usage: "$si gold 100",
+            admin_level: "Gm",
+            args: [
+                (
+                    name: "item",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "amount",
+                    type: "UInt",
+                    required: false,
+                )
+            ]
+        )
     ]
 )

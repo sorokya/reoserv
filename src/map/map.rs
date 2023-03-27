@@ -34,6 +34,7 @@ mod get_map_info;
 mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
+mod give_item;
 mod leave;
 mod open_door;
 mod save;
@@ -111,6 +112,12 @@ impl Map {
             Command::GetRidAndSize { respond_to } => {
                 self.get_rid_and_size(respond_to);
             }
+
+            Command::GiveItem {
+                target_player_id,
+                item_id,
+                amount,
+            } => self.give_item(target_player_id, item_id, amount),
 
             Command::Leave {
                 target_player_id,

@@ -111,6 +111,14 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn give_item(&self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+        let _ = self.tx.send(Command::GiveItem {
+            target_player_id,
+            item_id,
+            amount,
+        });
+    }
+
     pub async fn leave(
         &self,
         target_player_id: EOShort,

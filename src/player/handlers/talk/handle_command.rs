@@ -5,9 +5,9 @@ use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 
-use crate::COMMANDS;
+use crate::{COMMANDS, ITEM_DB};
 
-async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
+async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
     let map_id = args[0].parse::<EOShort>().unwrap();
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
@@ -43,7 +43,7 @@ async fn warp(args: &[&str], character: &Character, world: &WorldHandle) {
     }
 }
 
-async fn warp_to_me(args: &[&str], character: &Character, world: &WorldHandle) {
+async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle) {
     let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
         target.player.as_ref().unwrap().request_warp(
@@ -55,7 +55,7 @@ async fn warp_to_me(args: &[&str], character: &Character, world: &WorldHandle) {
     }
 }
 
-async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
+async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle) {
     let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
         character.player.as_ref().unwrap().request_warp(
@@ -67,7 +67,55 @@ async fn warp_me_to(args: &[&str], character: &Character, world: &WorldHandle) {
     }
 }
 
-fn validate_args(args: &[&str], command: &Command, player: &PlayerHandle) -> bool {
+async fn spawn_item(args: &[String], character: &Character) {
+    let identifier = (*args[0]).to_string();
+
+    let item_id = match identifier.parse::<u32>() {
+        Ok(id) => id as EOShort,
+        Err(_) => {
+            // find matches from item db where name starts with identifier
+            match ITEM_DB
+                .items
+                .iter()
+                .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
+            {
+                Some(index) => index as EOShort + 1,
+                None => {
+                    let packet = talk::Server {
+                        message: format!("No item found with name \"{}\".", identifier),
+                    };
+                    let mut builder = StreamBuilder::new();
+                    packet.serialize(&mut builder);
+                    character.player.as_ref().unwrap().send(
+                        PacketAction::Server,
+                        PacketFamily::Talk,
+                        builder.get(),
+                    );
+                    return;
+                }
+            }
+        }
+    };
+
+    let amount = if args.len() >= 2 {
+        args[1].parse::<u32>().unwrap()
+    } else {
+        1
+    };
+
+    if let Ok(map) = character.player.as_ref().unwrap().get_map().await {
+        let target_player_id = character
+            .player
+            .as_ref()
+            .unwrap()
+            .get_player_id()
+            .await
+            .unwrap();
+        map.give_item(target_player_id, item_id, amount);
+    }
+}
+
+fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
         send_error_message(
@@ -132,13 +180,25 @@ pub async fn handle_command(
     world: WorldHandle,
 ) {
     let command = (*args[0]).to_string();
-    let args = args[1..].to_vec();
+    let mut args: Vec<String> = args[1..].iter().map(|s| s.to_string()).collect();
+
     match COMMANDS
         .commands
         .iter()
         .find(|c| c.name == command || c.alias == command)
     {
         Some(command) => {
+            if command.name.as_str() == "spawnitem" && args.len() > 1 {
+                if let Ok(amount) = args.last().unwrap().parse::<u32>() {
+                    // join all but the last arg into a single string
+                    let item_name = args[..args.len() - 1].join(" ");
+                    args = vec![item_name, amount.to_string()];
+                } else {
+                    let item_name = args[..args.len()].join(" ");
+                    args = vec![item_name];
+                }
+            }
+
             if character.admin_level as EOChar >= command.admin_level as EOChar
                 && validate_args(&args, command, &player)
             {
@@ -146,6 +206,7 @@ pub async fn handle_command(
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
+                    "spawnitem" => spawn_item(&args, character).await,
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

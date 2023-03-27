@@ -54,6 +54,11 @@ pub enum Command {
     GetRidAndSize {
         respond_to: oneshot::Sender<([EOShort; 2], EOInt)>,
     },
+    GiveItem {
+        target_player_id: EOShort,
+        item_id: EOShort,
+        amount: EOInt,
+    },
     Leave {
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,

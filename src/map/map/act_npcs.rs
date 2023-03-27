@@ -22,7 +22,7 @@ impl Map {
 
         let now = Utc::now();
 
-        if self.npcs.get(&1).unwrap().last_act.is_none() {
+        if self.npcs.get(&0).unwrap().last_act.is_none() {
             for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
                 let npcs = {
                     self.npcs.iter().filter(|(_, npc)| {

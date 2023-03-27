@@ -7,8 +7,6 @@ use crate::{character::Character, errors::WrongAccountError, player::PlayerHandl
 
 use super::super::World;
 
-use super::calculate_stats::calculate_stats;
-
 impl World {
     pub async fn select_character(
         &mut self,
@@ -75,8 +73,7 @@ impl World {
         character.player = Some(player.clone());
         character.logged_in_at = Some(chrono::Utc::now());
 
-        // TODO: move this to Character::calculate_stats
-        calculate_stats(&mut character);
+        character.calculate_stats();
 
         let select_character = match self
             .get_welcome_request_data(player.clone(), &character)

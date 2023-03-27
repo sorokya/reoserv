@@ -1,5 +1,4 @@
 mod account_exists;
-mod calculate_stats;
 mod create_account;
 mod create_character;
 mod delete_character;

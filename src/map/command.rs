@@ -27,6 +27,11 @@ pub enum Command {
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<()>,
     },
+    Equip {
+        player_id: EOShort,
+        item_id: EOShort,
+        sub_loc: EOChar,
+    },
     Face {
         target_player_id: EOShort,
         direction: Direction,
@@ -86,6 +91,11 @@ pub enum Command {
     },
     Serialize {
         respond_to: oneshot::Sender<Bytes>,
+    },
+    Unequip {
+        player_id: EOShort,
+        item_id: EOShort,
+        sub_loc: EOChar,
     },
     Walk {
         target_player_id: EOShort,

@@ -26,6 +26,7 @@ mod attack;
 mod drop_item;
 mod emote;
 mod enter;
+mod equip;
 mod face;
 mod get_character;
 mod get_dimensions;
@@ -43,6 +44,7 @@ mod save;
 mod send_chat_message;
 mod serialize;
 mod spawn_npcs;
+mod unequip;
 mod walk;
 
 impl Map {
@@ -81,6 +83,12 @@ impl Map {
                 warp_animation,
                 respond_to,
             } => self.enter(character, warp_animation, respond_to),
+
+            Command::Equip {
+                player_id,
+                item_id,
+                sub_loc,
+            } => self.equip(player_id, item_id, sub_loc),
 
             Command::Face {
                 target_player_id,
@@ -157,6 +165,12 @@ impl Map {
             Command::SpawnNpcs => self.spawn_npcs().await,
 
             Command::ActNpcs => self.act_npcs(),
+
+            Command::Unequip {
+                player_id,
+                item_id,
+                sub_loc,
+            } => self.unequip(player_id, item_id, sub_loc),
 
             Command::Walk {
                 target_player_id,

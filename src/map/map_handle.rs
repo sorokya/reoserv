@@ -55,6 +55,14 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
+    pub fn equip(&self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+        let _ = self.tx.send(Command::Equip {
+            player_id,
+            item_id,
+            sub_loc,
+        });
+    }
+
     pub fn face(&self, target_player_id: EOShort, direction: Direction) {
         let _ = self.tx.send(Command::Face {
             target_player_id,
@@ -180,6 +188,14 @@ impl MapHandle {
 
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
+    }
+
+    pub fn unequip(&self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+        let _ = self.tx.send(Command::Unequip {
+            player_id,
+            item_id,
+            sub_loc,
+        });
     }
 
     pub fn walk(

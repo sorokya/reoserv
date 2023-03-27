@@ -59,6 +59,11 @@ pub enum Command {
         item_id: EOShort,
         amount: EOInt,
     },
+    JunkItem {
+        target_player_id: EOShort,
+        item_id: EOShort,
+        amount: EOInt,
+    },
     Leave {
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,

@@ -46,6 +46,9 @@ pub async fn handle_packet(
             PacketAction::Get => {
                 handlers::item::get(buf, player.clone()).await;
             }
+            PacketAction::Junk => {
+                handlers::item::junk(buf, player.clone()).await;
+            }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         }
         PacketFamily::Attack => match action {

@@ -35,6 +35,7 @@ mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
 mod give_item;
+mod junk_item;
 mod leave;
 mod open_door;
 mod save;
@@ -118,6 +119,12 @@ impl Map {
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
+
+            Command::JunkItem {
+                target_player_id,
+                item_id,
+                amount,
+            } => self.junk_item(target_player_id, item_id, amount),
 
             Command::Leave {
                 target_player_id,

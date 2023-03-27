@@ -119,6 +119,14 @@ impl MapHandle {
         });
     }
 
+    pub fn junk_item(&self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+        let _ = self.tx.send(Command::JunkItem {
+            target_player_id,
+            item_id,
+            amount,
+        });
+    }
+
     pub async fn leave(
         &self,
         target_player_id: EOShort,

@@ -99,6 +99,18 @@ impl Character {
         }
     }
 
+    pub fn heal(&mut self, amount: EOShort) -> EOShort {
+        let amount = cmp::min(amount, self.max_hp - self.hp);
+        self.hp += amount;
+        amount
+    }
+
+    pub fn tp_heal(&mut self, amount: EOShort) -> EOShort {
+        let amount = cmp::min(amount, self.max_tp - self.tp);
+        self.tp += amount;
+        amount
+    }
+
     pub fn calculate_stats(&mut self) {
         let class = &CLASS_DB.classes[(self.class - 1) as usize];
 

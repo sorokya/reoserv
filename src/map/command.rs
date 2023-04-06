@@ -97,6 +97,10 @@ pub enum Command {
         item_id: EOShort,
         sub_loc: EOChar,
     },
+    UseItem {
+        player_id: EOShort,
+        item_id: EOShort,
+    },
     Walk {
         target_player_id: EOShort,
         direction: Direction,

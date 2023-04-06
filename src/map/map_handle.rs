@@ -198,6 +198,10 @@ impl MapHandle {
         });
     }
 
+    pub fn use_item(&self, player_id: EOShort, item_id: EOShort) {
+        let _ = self.tx.send(Command::UseItem { player_id, item_id });
+    }
+
     pub fn walk(
         &self,
         target_player_id: EOShort,

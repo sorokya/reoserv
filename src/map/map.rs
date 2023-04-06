@@ -39,12 +39,14 @@ mod give_item;
 mod junk_item;
 mod leave;
 mod open_door;
+mod play_effect;
 mod request_paperdoll;
 mod save;
 mod send_chat_message;
 mod serialize;
 mod spawn_npcs;
 mod unequip;
+mod use_item;
 mod walk;
 
 impl Map {
@@ -171,6 +173,11 @@ impl Map {
                 item_id,
                 sub_loc,
             } => self.unequip(player_id, item_id, sub_loc),
+
+            Command::UseItem {
+                player_id,
+                item_id,
+            } => self.use_item(player_id, item_id),
 
             Command::Walk {
                 target_player_id,

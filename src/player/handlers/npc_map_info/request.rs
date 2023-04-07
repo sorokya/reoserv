@@ -1,6 +1,6 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
-    protocol::{client::npcrange::Request, PacketAction, PacketFamily},
+    data::{Serializeable, StreamReader, StreamBuilder, EOChar},
+    protocol::{client::npcrange::Request, PacketAction, PacketFamily, server::npc},
 };
 
 use crate::{player::PlayerHandle, Bytes};
@@ -13,8 +13,12 @@ pub async fn request(buf: Bytes, player: PlayerHandle) {
     debug!("Recv: {:?}", request);
 
     if let Ok(map) = player.get_map().await {
-        let reply = map.get_map_info(Vec::default(), request.npc_indexes).await;
-        if !reply.nearby.npcs.is_empty() {
+        let map_info = map.get_map_info(Vec::default(), request.npc_indexes).await;
+        if !map_info.nearby.npcs.is_empty() {
+            let reply = npc::Agree {
+                num_npcs: map_info.nearby.npcs.len() as EOChar,
+                npcs: map_info.nearby.npcs,
+            };
             debug!("Reply: {:?}", reply);
             let mut builder = StreamBuilder::new();
             reply.serialize(&mut builder);

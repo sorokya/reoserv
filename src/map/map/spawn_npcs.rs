@@ -64,6 +64,7 @@ impl Map {
                     && now.timestamp() - npc.dead_since.timestamp() > spawn.spawn_time.into()
                 {
                     npc.alive = true;
+                    npc.hp = npc.max_hp;
                     npc.coords = Coords {
                         x: spawn.x,
                         y: spawn.y,

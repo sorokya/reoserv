@@ -3,7 +3,7 @@ use std::cmp;
 use chrono::Utc;
 use eo::{
     data::{EOInt, EOShort},
-    protocol::{server::npc, Coords, Direction, PacketAction, PacketFamily},
+    protocol::{server::npc, Coords, Direction, PacketAction, PacketFamily}, pubs::{EnfNpc, EnfNpcType},
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -17,9 +17,9 @@ use crate::{
 use super::Map;
 
 impl Map {
-    pub fn attack(&mut self, target_player_id: EOShort, direction: Direction) {
-        if let Some(target) = self.characters.get_mut(&target_player_id) {
-            let target_coords = target.coords;
+    pub fn attack(&mut self, player_id: EOShort, direction: Direction) {
+        if let Some(character) = self.characters.get_mut(&player_id) {
+            let target_coords = character.coords;
             let target_attack_coords = match direction {
                 Direction::Up => Coords {
                     x: target_coords.x,
@@ -44,7 +44,19 @@ impl Map {
                 .iter()
                 .find(|(_, npc)| npc.coords == target_attack_coords && npc.alive)
             {
-                (*index, get_damage_amount(target, npc))
+                let npc_data = match NPC_DB.npcs.get(npc.id as usize) {
+                    Some(npc_data) => npc_data,
+                    None => {
+                        error!("Failed to find npc data for npc id {}", npc.id);
+                        return;
+                    }
+                };
+
+                if !matches!(npc_data.r#type, EnfNpcType::Passive | EnfNpcType::Aggressive) {
+                    return;
+                }
+
+                (*index, get_damage_amount(character, npc, npc_data))
             } else {
                 return;
             };
@@ -64,11 +76,11 @@ impl Map {
 
                 let drop = {
                     let npc = self.npcs.get(&index).unwrap();
-                    get_drop(target_player_id, target_attack_coords, npc)
+                    get_drop(player_id, target_attack_coords, npc)
                 };
 
                 let mut packet = npc::Spec {
-                    killer_id: target_player_id,
+                    killer_id: player_id,
                     killer_direction: direction.to_char(),
                     npc_index: index as EOShort,
                     damage,
@@ -98,10 +110,10 @@ impl Map {
 
             let npc = self.npcs.get(&index).unwrap();
             let reply = npc::Reply {
-                player_id: target_player_id,
+                player_id,
                 npc_index: index as EOShort,
                 damage,
-                player_direction: target.direction.to_char(),
+                player_direction: character.direction.to_char(),
                 hp_percentage: npc.get_hp_percentage() as EOShort,
             };
 
@@ -117,7 +129,7 @@ impl Map {
     }
 }
 
-fn get_damage_amount(character: &Character, npc: &Npc) -> EOInt {
+fn get_damage_amount(character: &Character, npc: &Npc, npc_data: &EnfNpc) -> EOInt {
     let mut rng = rand::thread_rng();
     let rand = rng.gen_range(0.0..=1.0);
 
@@ -127,14 +139,6 @@ fn get_damage_amount(character: &Character, npc: &Npc) -> EOInt {
         ((npc.direction.to_char() as i32) - (character.direction.to_char() as i32)).abs() != 2;
 
     let critical = npc.hp == npc.max_hp || player_facing_npc;
-
-    let npc_data = match NPC_DB.npcs.get(npc.id as usize) {
-        Some(npc_data) => npc_data,
-        None => {
-            error!("Failed to find npc data for npc id {}", npc.id);
-            return 0;
-        }
-    };
 
     let context = match context_map! {
         "critical" => critical,

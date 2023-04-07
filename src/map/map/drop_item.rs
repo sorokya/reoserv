@@ -25,7 +25,7 @@ impl Map {
             return;
         }
 
-        let amount_to_drop = {
+        let (amount_to_drop, coords) = {
             let character = match self.characters.get(&target_player_id) {
                 Some(character) => character,
                 None => return,
@@ -36,7 +36,7 @@ impl Map {
             }
 
             let coords = match coords {
-                Coords { x: 0xFF, y: 0xFF } => character.coords,
+                Coords { x: 0xFE, y: 0xFE } => character.coords,
                 coords => coords,
             };
 
@@ -56,7 +56,7 @@ impl Map {
                 return;
             }
 
-            amount_to_drop
+            (amount_to_drop, coords)
         };
 
         {

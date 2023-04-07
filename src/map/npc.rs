@@ -30,6 +30,11 @@ impl Npc {
         )
     }
 
+    pub fn get_hp_percentage(&self) -> EOChar {
+        let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
+        percent.floor() as EOChar
+    }
+
     pub fn to_map_info(&self, index: &EOChar) -> NPCMapInfo {
         NPCMapInfo {
             index: *index,

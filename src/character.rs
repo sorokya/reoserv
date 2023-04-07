@@ -5,8 +5,8 @@ use eo::{
     protocol::{
         client::character::Create, server::paperdoll, AdminLevel, BigCoords, CharacterBaseStats,
         CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2, Coords,
-        Direction, Gender, Item, ItemCharacterStats, PacketAction, PacketFamily, PaperdollBahws,
-        PaperdollFull, PaperdollIcon, SitState, Skin, Spell, PaperdollB000a0hsw,
+        Direction, Gender, Item, ItemCharacterStats, PacketAction, PacketFamily,
+        PaperdollB000a0hsw, PaperdollBahws, PaperdollFull, PaperdollIcon, SitState, Skin, Spell,
     },
     pubs::EifItemType,
 };
@@ -15,11 +15,58 @@ use chrono::prelude::*;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 
-use crate::{
-    player::PlayerHandle,
-    utils,
-    CLASS_DB, FORMULAS, ITEM_DB, SETTINGS,
-};
+use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, ITEM_DB, SETTINGS};
+
+pub enum PaperdollSlot {
+    Boots,
+    Accessory,
+    Gloves,
+    Belt,
+    Armor,
+    Necklace,
+    Hat,
+    Shield,
+    Weapon,
+    Ring1,
+    Ring2,
+    Armlet1,
+    Armlet2,
+    Bracer1,
+    Bracer2,
+}
+
+impl PaperdollSlot {
+    pub fn from_index(index: usize) -> Option<Self> {
+        match index {
+            0 => Some(PaperdollSlot::Boots),
+            1 => Some(PaperdollSlot::Accessory),
+            2 => Some(PaperdollSlot::Gloves),
+            3 => Some(PaperdollSlot::Belt),
+            4 => Some(PaperdollSlot::Armor),
+            5 => Some(PaperdollSlot::Necklace),
+            6 => Some(PaperdollSlot::Hat),
+            7 => Some(PaperdollSlot::Shield),
+            8 => Some(PaperdollSlot::Weapon),
+            9 => Some(PaperdollSlot::Ring1),
+            10 => Some(PaperdollSlot::Ring2),
+            11 => Some(PaperdollSlot::Armlet1),
+            12 => Some(PaperdollSlot::Armlet2),
+            13 => Some(PaperdollSlot::Bracer1),
+            14 => Some(PaperdollSlot::Bracer2),
+            _ => None,
+        }
+    }
+    pub fn is_visible(&self) -> bool {
+        matches!(
+            self,
+            PaperdollSlot::Boots
+                | PaperdollSlot::Armor
+                | PaperdollSlot::Hat
+                | PaperdollSlot::Shield
+                | PaperdollSlot::Weapon
+        )
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
@@ -97,6 +144,51 @@ impl Character {
             name: create.name.clone(),
             ..Default::default()
         }
+    }
+
+    pub fn destroy_equipment(&mut self, slot: &PaperdollSlot) {
+        match slot {
+            PaperdollSlot::Boots => self.paperdoll.boots = 0,
+            PaperdollSlot::Accessory => self.paperdoll.accessory = 0,
+            PaperdollSlot::Gloves => self.paperdoll.gloves = 0,
+            PaperdollSlot::Belt => self.paperdoll.belt = 0,
+            PaperdollSlot::Armor => self.paperdoll.armor = 0,
+            PaperdollSlot::Necklace => self.paperdoll.necklace = 0,
+            PaperdollSlot::Hat => self.paperdoll.hat = 0,
+            PaperdollSlot::Shield => self.paperdoll.shield = 0,
+            PaperdollSlot::Weapon => self.paperdoll.weapon = 0,
+            PaperdollSlot::Ring1 => self.paperdoll.ring[0] = 0,
+            PaperdollSlot::Ring2 => self.paperdoll.ring[1] = 0,
+            PaperdollSlot::Armlet1 => self.paperdoll.armlet[0] = 0,
+            PaperdollSlot::Armlet2 => self.paperdoll.armlet[1] = 0,
+            PaperdollSlot::Bracer1 => self.paperdoll.bracer[0] = 0,
+            PaperdollSlot::Bracer2 => self.paperdoll.bracer[1] = 0,
+        }
+    }
+
+    pub fn get_paperdoll_array(&self) -> [EOShort; 15] {
+        [
+            self.paperdoll.boots,
+            self.paperdoll.accessory,
+            self.paperdoll.gloves,
+            self.paperdoll.belt,
+            self.paperdoll.armor,
+            self.paperdoll.necklace,
+            self.paperdoll.hat,
+            self.paperdoll.shield,
+            self.paperdoll.weapon,
+            self.paperdoll.ring[0],
+            self.paperdoll.ring[1],
+            self.paperdoll.armlet[0],
+            self.paperdoll.armlet[1],
+            self.paperdoll.bracer[0],
+            self.paperdoll.bracer[1],
+        ]
+    }
+
+    pub fn get_hp_percentage(&self) -> EOChar {
+        let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
+        percent.floor() as EOChar
     }
 
     pub fn heal(&mut self, amount: EOShort) -> EOShort {
@@ -497,35 +589,35 @@ impl Character {
                 _ => match ITEM_DB.items.get(self.paperdoll.boots as usize - 1) {
                     Some(item) => item.spec1 as EOShort,
                     None => 0,
-                }
+                },
             },
             armor: match self.paperdoll.armor {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.armor as usize - 1) {
                     Some(item) => item.spec1 as EOShort,
                     None => 0,
-                }
+                },
             },
             hat: match self.paperdoll.hat {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.hat as usize - 1) {
                     Some(item) => item.spec1 as EOShort,
                     None => 0,
-                }
+                },
             },
             weapon: match self.paperdoll.weapon {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.weapon as usize - 1) {
                     Some(item) => item.spec1 as EOShort,
                     None => 0,
-                }
+                },
             },
             shield: match self.paperdoll.shield {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.shield as usize - 1) {
                     Some(item) => item.spec1 as EOShort,
                     None => 0,
-                }
+                },
             },
         }
     }

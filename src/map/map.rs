@@ -43,6 +43,7 @@ mod play_effect;
 mod request_paperdoll;
 mod save;
 mod send_chat_message;
+mod send_packet_near;
 mod send_packet_near_player;
 mod serialize;
 mod spawn_npcs;

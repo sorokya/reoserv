@@ -51,6 +51,7 @@ mod send_packet_near_player;
 mod serialize;
 mod spawn_items;
 mod spawn_npcs;
+mod take_chest_item;
 mod unequip;
 mod use_item;
 mod walk;
@@ -186,6 +187,10 @@ impl Map {
             Command::SpawnItems => self.spawn_items().await,
 
             Command::SpawnNpcs => self.spawn_npcs().await,
+
+            Command::TakeChestItem { player_id, coords, item_id } => {
+                self.take_chest_item(player_id, coords, item_id);
+            }
 
             Command::ActNpcs => self.act_npcs(),
 

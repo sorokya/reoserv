@@ -194,6 +194,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::SpawnNpcs);
     }
 
+    pub fn take_chest_item(&self, player_id: EOShort, coords: Coords, item_id: EOShort) {
+        let _ = self.tx.send(Command::TakeChestItem {
+            player_id,
+            coords,
+            item_id,
+        });
+    }
+
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
     }

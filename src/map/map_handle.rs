@@ -22,7 +22,7 @@ pub struct MapHandle {
 impl MapHandle {
     pub fn new(id: EOShort, file_size: EOInt, pool: Pool, file: EmfFile) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(file_size, file, pool, rx);
+        let map = Map::new(id, file_size, file, pool, rx);
         let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));
@@ -149,6 +149,10 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
+        let _ = self.tx.send(Command::OpenChest { player_id, coords });
+    }
+
     pub fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
         let _ = self.tx.send(Command::OpenDoor {
             target_player_id,
@@ -180,6 +184,10 @@ impl MapHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });
         rx.await.unwrap()
+    }
+
+    pub fn spawn_items(&self) {
+        let _ = self.tx.send(Command::SpawnItems);
     }
 
     pub fn spawn_npcs(&self) {

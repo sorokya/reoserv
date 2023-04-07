@@ -1,3 +1,5 @@
+mod chest;
+pub use chest::Chest;
 mod command;
 pub use command::Command;
 mod item;

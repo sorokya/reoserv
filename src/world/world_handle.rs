@@ -311,6 +311,10 @@ impl WorldHandle {
         rx.await.unwrap();
     }
 
+    pub fn spawn_items(&self) {
+        let _ = self.tx.send(Command::SpawnItems);
+    }
+
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
     }

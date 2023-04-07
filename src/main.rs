@@ -150,6 +150,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    let mut item_spawn_interval = time::interval(Duration::from_secs(60));
+    let item_spawn_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            item_spawn_world.spawn_items();
+            item_spawn_interval.tick().await;
+        }
+    });
+
     if SETTINGS.sln.enabled {
         let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.sln.rate as u64 * 60));
         tokio::spawn(async move {

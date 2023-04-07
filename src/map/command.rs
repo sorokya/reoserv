@@ -74,9 +74,13 @@ pub enum Command {
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<Character>,
     },
+    OpenChest {
+        player_id: EOShort,
+        coords: Coords,
+    },
     OpenDoor {
-        target_player_id: EOShort,
-        door_coords: Coords,
+        target_player_id: EOShort, // TODO: rename to player_id
+        door_coords: Coords, // TODO: rename to coords
     },
     RequestPaperdoll {
         player_id: EOShort,
@@ -105,6 +109,7 @@ pub enum Command {
         target_player_id: EOShort,
         direction: Direction,
     },
+    SpawnItems,
     SpawnNpcs,
     ActNpcs,
 }

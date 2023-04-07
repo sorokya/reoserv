@@ -130,6 +130,7 @@ pub enum Command {
     Shutdown {
         respond_to: oneshot::Sender<()>,
     },
+    SpawnItems,
     SpawnNpcs,
     ActNpcs,
 }

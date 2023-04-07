@@ -208,6 +208,12 @@ impl World {
 
             Command::Shutdown { respond_to } => self.shutdown(respond_to).await,
 
+            Command::SpawnItems => {
+                for map in self.maps.as_ref().unwrap().values() {
+                    map.spawn_items();
+                }
+            }
+
             Command::SpawnNpcs => {
                 for map in self.maps.as_ref().unwrap().values() {
                     map.spawn_npcs();

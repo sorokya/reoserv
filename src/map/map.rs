@@ -9,12 +9,14 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::character::Character;
 
-use super::{Command, Item, Npc};
+use super::{Chest, Command, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
+    id: EOShort,
     file: EmfFile,
     file_size: EOInt,
+    chests: Vec<Chest>,
     items: HashMap<EOShort, Item>,
     npcs: HashMap<EOChar, Npc>,
     characters: HashMap<EOShort, Character>,
@@ -38,6 +40,7 @@ mod get_rid_and_size;
 mod give_item;
 mod junk_item;
 mod leave;
+mod open_chest;
 mod open_door;
 mod play_effect;
 mod request_paperdoll;
@@ -46,17 +49,26 @@ mod send_chat_message;
 mod send_packet_near;
 mod send_packet_near_player;
 mod serialize;
+mod spawn_items;
 mod spawn_npcs;
 mod unequip;
 mod use_item;
 mod walk;
 
 impl Map {
-    pub fn new(file_size: EOInt, file: EmfFile, pool: Pool, rx: UnboundedReceiver<Command>) -> Self {
+    pub fn new(
+        id: EOShort,
+        file_size: EOInt,
+        file: EmfFile,
+        pool: Pool,
+        rx: UnboundedReceiver<Command>,
+    ) -> Self {
         Self {
+            id,
             file_size,
             file,
             rx,
+            chests: Vec::new(),
             items: HashMap::new(),
             npcs: HashMap::new(),
             characters: HashMap::new(),
@@ -108,7 +120,10 @@ impl Map {
                 self.get_dimensions(respond_to);
             }
 
-            Command::GetItem { target_player_id, item_index } => {
+            Command::GetItem {
+                target_player_id,
+                item_index,
+            } => {
                 self.get_item(target_player_id, item_index);
             }
 
@@ -145,6 +160,8 @@ impl Map {
                 respond_to,
             } => self.leave(target_player_id, warp_animation, respond_to),
 
+            Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
+
             Command::OpenDoor {
                 target_player_id,
                 door_coords,
@@ -166,6 +183,8 @@ impl Map {
                 self.serialize(respond_to);
             }
 
+            Command::SpawnItems => self.spawn_items().await,
+
             Command::SpawnNpcs => self.spawn_npcs().await,
 
             Command::ActNpcs => self.act_npcs(),
@@ -176,10 +195,7 @@ impl Map {
                 sub_loc,
             } => self.unequip(player_id, item_id, sub_loc),
 
-            Command::UseItem {
-                player_id,
-                item_id,
-            } => self.use_item(player_id, item_id),
+            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
 
             Command::Walk {
                 target_player_id,

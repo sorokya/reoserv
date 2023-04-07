@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
     protocol::{
         client::character::Create, server::paperdoll, AdminLevel, BigCoords, CharacterBaseStats,
         CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2, Coords,
@@ -310,7 +310,7 @@ impl Character {
         };
 
         self.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
-            Ok(max_tp) => max_tp.floor() as EOShort,
+            Ok(max_tp) => cmp::min(max_tp.floor() as EOInt, MAX2 - 1) as EOShort,
             Err(e) => {
                 error!("Failed to calculate max_tp: {}", e);
                 10
@@ -318,7 +318,7 @@ impl Character {
         };
 
         self.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
-            Ok(max_sp) => max_sp.floor() as EOShort,
+            Ok(max_sp) => cmp::min(max_sp.floor() as EOInt, MAX2 - 1) as EOShort,
             Err(e) => {
                 error!("Failed to calculate max_sp: {}", e);
                 20
@@ -326,7 +326,7 @@ impl Character {
         };
 
         self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
-            Ok(max_weight) => max_weight.floor() as EOChar,
+            Ok(max_weight) => cmp::min(max_weight.floor() as EOInt, 250) as EOChar,
             Err(e) => {
                 error!("Failed to calculate max_weight: {}", e);
                 70

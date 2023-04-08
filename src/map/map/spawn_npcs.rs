@@ -66,8 +66,8 @@ impl Map {
                     npc.alive = true;
                     npc.hp = npc.max_hp;
                     npc.coords = Coords {
-                        x: spawn.x,
-                        y: spawn.y,
+                        x: cmp::min(spawn.x + rng.gen_range(0..=3), self.file.width),
+                        y: cmp::min(spawn.y + rng.gen_range(0..=3), self.file.height),
                     };
 
                     while !is_tile_walkable_for_npc(
@@ -75,8 +75,9 @@ impl Map {
                         &self.file.spec_rows,
                         &self.file.warp_rows,
                     ) {
-                        npc.coords.x += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
-                        npc.coords.y += cmp::max(rng.gen_range(-1..=1), 0) as EOChar;
+                        let x = cmp::max(cmp::min(spawn.x as i32 + rng.gen_range(-3..=3), self.file.width as i32), 0);
+                        let y = cmp::max(cmp::min(spawn.y as i32 + rng.gen_range(-3..=3), self.file.height as i32), 0);
+                        npc.coords = Coords { x: x as EOChar, y: y as EOChar };
                     }
 
                     npc.direction = if spawn.spawn_type == 7 {

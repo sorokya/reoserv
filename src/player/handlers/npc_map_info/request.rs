@@ -1,6 +1,6 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder, EOChar},
-    protocol::{client::npcrange::Request, PacketAction, PacketFamily, server::npc},
+    data::{EOChar, Serializeable, StreamBuilder, StreamReader},
+    protocol::{client::npcrange::Request, server::npc, PacketAction, PacketFamily},
 };
 
 use crate::{player::PlayerHandle, Bytes};

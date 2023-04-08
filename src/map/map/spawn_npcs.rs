@@ -77,9 +77,13 @@ impl Map {
                 };
 
                 if !alive && now.timestamp() - dead_since.timestamp() > spawn_time.into() {
-                    let mut spawn_coords = Coords {
-                        x: cmp::min(spawn_coords.x + rng.gen_range(0..=3), self.file.width),
-                        y: cmp::min(spawn_coords.y + rng.gen_range(0..=3), self.file.height),
+                    let mut spawn_coords = if spawn_type == 7 {
+                        spawn_coords
+                    } else {
+                        Coords {
+                            x: cmp::min(spawn_coords.x + rng.gen_range(0..=3), self.file.width),
+                            y: cmp::min(spawn_coords.y + rng.gen_range(0..=3), self.file.height),
+                        }
                     };
 
                     while !self.is_tile_walkable_npc(&spawn_coords) {

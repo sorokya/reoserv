@@ -1,4 +1,7 @@
-use eo::{data::{EOShort, StreamBuilder, Serializeable}, protocol::{server::paperdoll, PaperdollInfo, PacketAction, PacketFamily}};
+use eo::{
+    data::{EOShort, Serializeable, StreamBuilder},
+    protocol::{server::paperdoll, PacketAction, PacketFamily, PaperdollInfo},
+};
 
 use super::Map;
 
@@ -9,7 +12,7 @@ impl Map {
             None => {
                 error!("Failed to get player");
                 return;
-            },
+            }
         };
 
         let target = match self.characters.get(&target_player_id) {
@@ -17,7 +20,7 @@ impl Map {
             None => {
                 error!("Failed to get target");
                 return;
-            },
+            }
         };
 
         let reply = paperdoll::Reply {

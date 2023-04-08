@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{
         client::login::Request,
         server::login::{Reply, ReplyBusy, ReplyData},

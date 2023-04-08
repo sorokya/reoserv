@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::range::Request, PacketAction, PacketFamily},
 };
 

@@ -11,11 +11,7 @@ pub async fn request(player: PlayerHandle) -> Result<(), Box<dyn std::error::Err
         let nearby_info = map.get_nearby_info(player_id).await;
         let mut builder = StreamBuilder::new();
         nearby_info.serialize(&mut builder);
-        player.send(
-            PacketAction::Reply,
-            PacketFamily::Refresh,
-            builder.get(),
-        );
+        player.send(PacketAction::Reply, PacketFamily::Refresh, builder.get());
     }
 
     Ok(())

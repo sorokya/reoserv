@@ -1,5 +1,5 @@
 use config::{Config, ConfigError, File};
-use eo::data::{EOShort, EOChar, EOInt};
+use eo::data::{EOChar, EOInt, EOShort};
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
@@ -34,6 +34,13 @@ pub struct NewCharacter {
 
 #[derive(Debug, Deserialize)]
 pub struct Jail {
+    pub map: EOShort,
+    pub x: EOChar,
+    pub y: EOChar,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Rescue {
     pub map: EOShort,
     pub x: EOChar,
     pub y: EOChar,
@@ -78,6 +85,7 @@ pub struct Settings {
     pub database: Database,
     pub new_character: NewCharacter,
     pub jail: Jail,
+    pub rescue: Rescue,
     pub world: World,
     pub npcs: NPCs,
     pub sln: Sln,

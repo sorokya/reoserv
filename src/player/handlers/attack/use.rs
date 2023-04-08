@@ -1,11 +1,11 @@
-use bytes::Bytes;
-use eo::{protocol::client::attack::Use, data::{Serializeable, StreamReader}};
 use crate::player::PlayerHandle;
+use bytes::Bytes;
+use eo::{
+    data::{Serializeable, StreamReader},
+    protocol::client::attack::Use,
+};
 
-pub async fn r#use(
-    buf: Bytes,
-    player: PlayerHandle,
-) {
+pub async fn r#use(buf: Bytes, player: PlayerHandle) {
     let reader = StreamReader::new(buf);
     let mut packet = Use::default();
     packet.deserialize(&reader);
@@ -29,6 +29,6 @@ pub async fn r#use(
     }
 
     let map = map.unwrap();
-    
+
     map.attack(player_id, packet.direction);
 }

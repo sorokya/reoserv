@@ -18,7 +18,7 @@ pub async fn r#use(buf: Bytes, player: PlayerHandle) {
         Err(e) => {
             error!("Failed to get player id: {}", e);
             return;
-        },
+        }
     };
 
     let map = match player.get_map().await {
@@ -26,7 +26,7 @@ pub async fn r#use(buf: Bytes, player: PlayerHandle) {
         Err(e) => {
             error!("Failed to get map: {}", e);
             return;
-        },
+        }
     };
 
     map.use_item(player_id, packet.use_item_id);

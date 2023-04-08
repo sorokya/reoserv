@@ -1,8 +1,9 @@
 use eo::{
     data::{EOChar, EOShort, Serializeable, StreamBuilder},
     protocol::{
-        server::{paperdoll, avatar}, AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot,
-        PacketAction, PacketFamily,
+        server::{avatar, paperdoll},
+        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
+        PacketFamily,
     },
     pubs::EifItemType,
 };
@@ -51,16 +52,17 @@ impl Map {
             builder.get(),
         );
 
-        let is_visible_change = matches!(ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type, EifItemType::Armor
-            | EifItemType::Weapon
-            | EifItemType::Shield
-            | EifItemType::Hat
-            | EifItemType::Boots);
+        let is_visible_change = matches!(
+            ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
+            EifItemType::Armor
+                | EifItemType::Weapon
+                | EifItemType::Shield
+                | EifItemType::Hat
+                | EifItemType::Boots
+        );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = avatar::Agree {
-                change,
-            };
+            let reply = avatar::Agree { change };
 
             debug!("{:?}", reply);
 

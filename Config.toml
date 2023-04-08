@@ -59,6 +59,11 @@ map = 176
 x = 1
 y = 1
 
+[rescue]
+map = 4
+x = 24
+y = 24
+
 [world]
 # Size of the characters view port
 see_distance = 11

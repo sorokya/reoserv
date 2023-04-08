@@ -1,5 +1,5 @@
-use sha2::{Sha256, Digest};
 use crate::SETTINGS;
+use sha2::{Digest, Sha256};
 
 pub fn get_password_hash(username: &str, password: &str) -> String {
     let hash_input = format!("{}{}{}", SETTINGS.server.password_salt, username, password);

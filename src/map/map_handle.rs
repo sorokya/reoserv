@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation, ShortItem},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, ShortItem, WarpAnimation},
     pubs::EmfFile,
 };
 use mysql_async::Pool;
@@ -10,7 +10,7 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::{character::Character};
+use crate::character::Character;
 
 use super::{Command, Map};
 
@@ -87,7 +87,10 @@ impl MapHandle {
     }
 
     pub fn get_item(&self, target_player_id: EOShort, item_index: EOShort) {
-        let _ = self.tx.send(Command::GetItem { item_index, target_player_id });
+        let _ = self.tx.send(Command::GetItem {
+            item_index,
+            target_player_id,
+        });
     }
 
     pub async fn get_map_info(
@@ -218,11 +221,7 @@ impl MapHandle {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
     }
 
-    pub fn walk(
-        &self,
-        target_player_id: EOShort,
-        direction: Direction,
-    ) {
+    pub fn walk(&self, target_player_id: EOShort, direction: Direction) {
         let _ = self.tx.send(Command::Walk {
             target_player_id,
             direction,

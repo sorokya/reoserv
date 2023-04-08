@@ -1,4 +1,4 @@
-use eo::data::{EOShort, EOInt};
+use eo::data::{EOInt, EOShort};
 use tokio::sync::oneshot;
 
 use super::World;

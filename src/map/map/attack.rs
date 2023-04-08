@@ -3,7 +3,11 @@ use std::{cmp, collections::hash_map::Entry};
 use chrono::Utc;
 use eo::{
     data::{EOInt, EOShort},
-    protocol::{server::{npc, attack}, Coords, Direction, PacketAction, PacketFamily}, pubs::{EnfNpc, EnfNpcType},
+    protocol::{
+        server::{attack, npc},
+        Coords, Direction, PacketAction, PacketFamily,
+    },
+    pubs::{EnfNpc, EnfNpcType},
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -43,9 +47,9 @@ impl Map {
                 player_id,
                 direction,
             };
-    
+
             debug!("{:?}", reply);
-    
+
             self.send_packet_near_player(
                 player_id,
                 PacketAction::Player,
@@ -66,7 +70,10 @@ impl Map {
                     }
                 };
 
-                if !matches!(npc_data.r#type, EnfNpcType::Passive | EnfNpcType::Aggressive) {
+                if !matches!(
+                    npc_data.r#type,
+                    EnfNpcType::Passive | EnfNpcType::Aggressive
+                ) {
                     return;
                 }
 

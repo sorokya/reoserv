@@ -1,4 +1,7 @@
-use eo::{data::{EOShort, Serializeable, StreamBuilder}, protocol::{server::talk, PacketAction, PacketFamily}};
+use eo::{
+    data::{EOShort, Serializeable, StreamBuilder},
+    protocol::{server::talk, PacketAction, PacketFamily},
+};
 
 use super::Map;
 

@@ -1,4 +1,4 @@
-use eo::{protocol::Coords, data::EOChar};
+use eo::{data::EOChar, protocol::Coords};
 
 pub fn get_distance(a: &Coords, b: &Coords) -> EOChar {
     let dx = (a.x as f64 - b.x as f64).abs();

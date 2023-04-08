@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::welcome::Request, PacketAction, PacketFamily},
 };
 
@@ -19,10 +19,6 @@ pub async fn request(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
         debug!("Reply: {:?}", reply);
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
-        player.send(
-            PacketAction::Reply,
-            PacketFamily::Welcome,
-            builder.get(),
-        );
+        player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
     }
 }

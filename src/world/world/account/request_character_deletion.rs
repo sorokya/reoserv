@@ -15,10 +15,7 @@ impl World {
         let account_id = match player.get_account_id().await {
             Ok(account_id) => account_id,
             Err(e) => {
-                error!(
-                    "Error getting account id: {}",
-                    e
-                );
+                error!("Error getting account id: {}", e);
                 let _ = respond_to.send(Err(e));
                 return;
             }

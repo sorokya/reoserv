@@ -6,11 +6,7 @@ use eo::{
 use super::super::World;
 
 impl World {
-    pub async fn broadcast_admin_message(
-        &self,
-        name: &str,
-        message: &str,
-    ) {
+    pub async fn broadcast_admin_message(&self, name: &str, message: &str) {
         let packet = talk::Admin {
             player_name: name.to_string(),
             message: message.to_string(),
@@ -29,5 +25,3 @@ impl World {
         }
     }
 }
-
-

@@ -1,4 +1,4 @@
-use bytes::{Bytes, BytesMut, BufMut};
+use bytes::{BufMut, Bytes, BytesMut};
 use eo::{
     data::{encode_number, EOByte},
     net::{PacketProcessor, ServerSequencer},
@@ -45,7 +45,7 @@ impl PacketBus {
         let mut data_buf = buf.split_off(2);
         self.packet_processor.encode(&mut data_buf);
         buf.unsplit(data_buf);
-        
+
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
                 if num_of_bytes_written != packet_size + 2 {

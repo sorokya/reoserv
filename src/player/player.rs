@@ -2,8 +2,9 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
-    protocol::{server::warp, PacketAction, PacketFamily, WarpType}, net::PacketProcessor,
+    data::{EOInt, EOShort, StreamBuilder, MAX2},
+    net::PacketProcessor,
+    protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::Pool;
 use rand::Rng;
@@ -11,12 +12,12 @@ use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
 use crate::{
     character::Character,
-    errors::{InvalidStateError, MissingSessionIdError, WrongSessionIdError},
+    errors::{InvalidStateError, MissingSessionIdError},
     map::MapHandle,
     world::WorldHandle,
 };
 
-use super::{packet_bus::PacketBus, Command, WarpSession, ClientState};
+use super::{packet_bus::PacketBus, ClientState, Command, WarpSession};
 
 pub struct Player {
     pub id: EOShort,
@@ -35,6 +36,10 @@ pub struct Player {
     session_id: Option<EOShort>,
     warp_session: Option<WarpSession>,
 }
+
+mod accept_warp;
+mod die;
+mod request_warp;
 
 impl Player {
     pub fn new(
@@ -66,72 +71,7 @@ impl Player {
     pub async fn handle_command(&mut self, command: Command) -> bool {
         match command {
             Command::AcceptWarp { map_id, session_id } => {
-                if let Some(warp_session) = &self.warp_session {
-                    if let Some(actual_session_id) = self.session_id {
-                        if actual_session_id != session_id {
-                            error!(
-                                "Warp error: {}",
-                                WrongSessionIdError::new(actual_session_id, session_id,)
-                            );
-                            return true;
-                        }
-
-                        if let Some(current_map) = &self.map {
-                            let agree = if warp_session.local {
-                                let mut character =
-                                    current_map.leave(self.id, warp_session.animation).await;
-                                character.coords = warp_session.coords;
-                                current_map
-                                    .enter(Box::new(character), warp_session.animation)
-                                    .await;
-                                let nearby_info = current_map.get_nearby_info(self.id).await;
-                                warp::Agree {
-                                    warp_type: WarpType::Local,
-                                    data: warp::AgreeData::None,
-                                    nearby: nearby_info,
-                                }
-                            } else if let Ok(new_map) = self.world.get_map(map_id).await {
-                                let mut character =
-                                    current_map.leave(self.id, warp_session.animation).await;
-                                character.map_id = warp_session.map_id;
-                                character.coords = warp_session.coords;
-                                new_map
-                                    .enter(Box::new(character), warp_session.animation)
-                                    .await;
-                                let nearby_info = new_map.get_nearby_info(self.id).await;
-                                self.map = Some(new_map);
-
-                                warp::Agree {
-                                    warp_type: WarpType::MapSwitch,
-                                    data: warp::AgreeData::MapSwitch(warp::AgreeMapSwitch {
-                                        map_id,
-                                        warp_anim: warp_session
-                                            .animation
-                                            .unwrap_or(eo::protocol::WarpAnimation::None),
-                                    }),
-                                    nearby: nearby_info,
-                                }
-                            } else {
-                                warn!("Map not found: {}", map_id);
-                                return true;
-                            };
-
-                            debug!("Send: {:?}", agree);
-
-                            let mut builder = StreamBuilder::new();
-                            agree.serialize(&mut builder);
-
-                            let _ = self
-                                .bus
-                                .send(PacketAction::Agree, PacketFamily::Warp, builder.get())
-                                .await;
-                        }
-                    } else {
-                        error!("Warp error: {}", MissingSessionIdError);
-                    }
-                } else {
-                    error!("Warp error: {}", MissingSessionIdError);
-                }
+                self.accept_warp(map_id, session_id).await
             }
             Command::Close(reason) => {
                 self.queue.borrow_mut().clear();
@@ -163,6 +103,7 @@ impl Player {
                 info!("player {} connection closed: {:?}", self.id, reason);
                 return false;
             }
+            Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();
                 let id = rng.gen_range(1..MAX2) as EOShort;
@@ -173,8 +114,10 @@ impl Player {
                 if let ClientState::LoggedIn | ClientState::Playing = self.state {
                     let _ = respond_to.send(Ok(self.account_id));
                 } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(ClientState::LoggedIn, self.state)));
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        ClientState::LoggedIn,
+                        self.state,
+                    )));
                 }
             }
             Command::GetCharacter { respond_to } => {
@@ -185,8 +128,10 @@ impl Player {
                         let _ = respond_to.send(Ok(character));
                     }
                 } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        ClientState::Playing,
+                        self.state,
+                    )));
                 }
             }
             Command::GenEncodingMultiples { respond_to } => {
@@ -213,8 +158,10 @@ impl Player {
                 if let Some(map) = self.map.as_ref() {
                     let _ = respond_to.send(Ok(map.to_owned()));
                 } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        ClientState::Playing,
+                        self.state,
+                    )));
                 }
             }
             Command::GetMapId { respond_to } => {
@@ -223,8 +170,10 @@ impl Player {
                 } else if let Some(warp_session) = &self.warp_session {
                     let _ = respond_to.send(Ok(warp_session.map_id));
                 } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        ClientState::Playing,
+                        self.state,
+                    )));
                 }
             }
             Command::GetPlayerId { respond_to } => {
@@ -289,63 +238,7 @@ impl Player {
                 coords,
                 local,
                 animation,
-            } => {
-                let session_id = {
-                    let mut rng = rand::thread_rng();
-                    let session_id = rng.gen_range(10..MAX2) as EOShort;
-                    self.session_id = Some(session_id);
-                    session_id
-                };
-                let warp_session = WarpSession {
-                    map_id,
-                    coords,
-                    local,
-                    animation,
-                };
-
-                let request = if local {
-                    warp::Request {
-                        warp_type: WarpType::Local,
-                        map_id,
-                        session_id,
-                        data: warp::RequestData::None,
-                    }
-                } else {
-                    match self.world.get_map(map_id).await {
-                        Ok(map) => {
-                            let (map_rid, map_filesize) = map.get_rid_and_size().await;
-                            warp::Request {
-                                warp_type: WarpType::MapSwitch,
-                                map_id,
-                                session_id,
-                                data: warp::RequestData::MapSwitch(warp::RequestMapSwitch {
-                                    map_rid,
-                                    map_filesize,
-                                }),
-                            }
-                        }
-                        Err(err) => {
-                            warn!("{:?}", err);
-                            return true;
-                        }
-                    }
-                };
-
-                self.warp_session = Some(warp_session);
-                debug!("Send: {:?}", request);
-
-                let mut builder = StreamBuilder::new();
-                request.serialize(&mut builder);
-
-                let _ = self
-                    .bus
-                    .send(
-                        PacketAction::Request,
-                        PacketFamily::Warp,
-                        builder.get(),
-                    )
-                    .await;
-            }
+            } => self.request_warp(map_id, coords, local, animation).await,
             Command::Send(action, family, data) => {
                 let _ = self.bus.send(action, family, data).await;
             }
@@ -369,8 +262,10 @@ impl Player {
                     let _ = respond_to.send(Ok(Box::new(character.to_owned())));
                     self.character = None;
                 } else {
-                    let _ =
-                        respond_to.send(Err(InvalidStateError::new(ClientState::Playing, self.state)));
+                    let _ = respond_to.send(Err(InvalidStateError::new(
+                        ClientState::Playing,
+                        self.state,
+                    )));
                 }
             }
             Command::TakeSessionId { respond_to } => {

@@ -199,9 +199,7 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_online_list(
-        &self,
-    ) -> Vec<OnlinePlayers> {
+    pub async fn get_online_list(&self) -> Vec<OnlinePlayers> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetOnlineList { respond_to: tx });
         rx.await.unwrap()
@@ -217,9 +215,7 @@ impl WorldHandle {
 
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::LoadMapFiles {
-            respond_to: tx,
-        });
+        let _ = self.tx.send(Command::LoadMapFiles { respond_to: tx });
         rx.await.unwrap();
     }
 
@@ -305,9 +301,7 @@ impl WorldHandle {
 
     pub async fn shutdown(&self) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::Shutdown {
-            respond_to: tx,
-        });
+        let _ = self.tx.send(Command::Shutdown { respond_to: tx });
         rx.await.unwrap();
     }
 

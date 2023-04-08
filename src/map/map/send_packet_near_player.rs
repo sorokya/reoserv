@@ -12,7 +12,9 @@ impl Map {
         action: PacketAction,
         family: PacketFamily,
         packet: T,
-    ) where T : Serializeable {
+    ) where
+        T: Serializeable,
+    {
         if let Some(target) = self.characters.get(&player_id) {
             let mut builder = StreamBuilder::new();
             packet.serialize(&mut builder);

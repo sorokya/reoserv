@@ -1,4 +1,4 @@
-use super::{handlers, PlayerHandle, ClientState};
+use super::{handlers, ClientState, PlayerHandle};
 use bytes::Bytes;
 use eo::{
     data::{EOInt, StreamReader},
@@ -47,7 +47,7 @@ pub async fn handle_packet(
                 handlers::chest::take(buf, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
-        }
+        },
         PacketFamily::Paperdoll => match action {
             PacketAction::Add => {
                 handlers::paperdoll::add(buf, player.clone()).await;
@@ -59,7 +59,7 @@ pub async fn handle_packet(
                 handlers::paperdoll::request(buf, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
-        }
+        },
         PacketFamily::Item => match action {
             PacketAction::Drop => {
                 handlers::item::drop(buf, player.clone()).await;
@@ -74,13 +74,13 @@ pub async fn handle_packet(
                 handlers::item::r#use(buf, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
-        }
+        },
         PacketFamily::Attack => match action {
             PacketAction::Use => {
                 handlers::attack::r#use(buf, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
-        }
+        },
         PacketFamily::Talk => match action {
             PacketAction::Announce => {
                 handlers::talk::announce(buf, player.clone(), world.clone()).await;

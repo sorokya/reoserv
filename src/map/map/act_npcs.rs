@@ -1,15 +1,18 @@
+use std::cmp;
+
 use chrono::{Duration, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::npc, Coords, Direction, NPCUpdateAttack, NPCUpdateChat, NPCUpdatePos, PacketAction,
-        PacketFamily,
+        PacketFamily, PlayerKilledState,
     },
     pubs::{EnfNpc, EnfNpcType},
 };
+use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{NPC_DB, SETTINGS, TALK_DB};
+use crate::{character::Character, map::Npc, FORMULAS, NPC_DB, SETTINGS, TALK_DB};
 
 use super::Map;
 
@@ -165,13 +168,95 @@ impl Map {
         }
     }
 
-    fn act_npc_attack(
-        &mut self,
-        index: EOChar,
-        npc_id: EOShort,
-        npc_data: &EnfNpc,
-    ) -> Option<NPCUpdateAttack> {
-        None
+    fn act_npc_attack(&mut self, index: EOChar, npc_data: &EnfNpc) -> Option<NPCUpdateAttack> {
+        let (opponent_id, direction) = match self.npcs.get(&index) {
+            Some(npc) => {
+                if npc.oppenents.is_empty() {
+                    return None;
+                } else {
+                    let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
+                    let adjacent_opponents = npc
+                        .oppenents
+                        .iter()
+                        .filter(|(player_id, _)| match self.characters.get(player_id) {
+                            Some(character) => adjacent_tiles.contains(&character.coords),
+                            None => false,
+                        })
+                        .collect::<Vec<_>>();
+
+                    // get the adjacent component with the most damage dealt
+                    let opponent_id =
+                        match adjacent_opponents.iter().max_by_key(|(_, damage)| *damage) {
+                            Some((opponent_id, _)) => opponent_id,
+                            None => return None,
+                        };
+
+                    let opponent_coords = match self.characters.get(opponent_id) {
+                        Some(character) => character.coords,
+                        None => return None,
+                    };
+
+                    let xdiff = npc.coords.x as i32 - opponent_coords.x as i32;
+                    let ydiff = npc.coords.y as i32 - opponent_coords.y as i32;
+
+                    let direction = match (xdiff, ydiff) {
+                        (0, 1) => Direction::Up,
+                        (0, -1) => Direction::Down,
+                        (1, 0) => Direction::Left,
+                        (-1, 0) => Direction::Right,
+                        _ => return None,
+                    };
+
+                    (**opponent_id, direction)
+                }
+            }
+            None => return None,
+        };
+
+        let damage = {
+            let character = match self.characters.get(&opponent_id) {
+                Some(character) => character,
+                None => return None,
+            };
+
+            let npc = match self.npcs.get(&index) {
+                Some(npc) => npc,
+                None => return None,
+            };
+
+            get_damage_amount(npc, npc_data, character)
+        };
+
+        let (killed_state, hp_percentage) = {
+            let character = match self.characters.get_mut(&opponent_id) {
+                Some(character) => character,
+                None => return None,
+            };
+
+            character.hp -= damage as EOShort;
+
+            let killed_state = if character.hp == 0 {
+                PlayerKilledState::Dead
+            } else {
+                PlayerKilledState::Alive
+            };
+
+            (killed_state, character.get_hp_percentage())
+        };
+
+        if let Some(npc) = self.npcs.get_mut(&index) {
+            npc.direction = direction;
+            npc.last_act = Some(Utc::now());
+        }
+
+        Some(NPCUpdateAttack {
+            npc_index: index,
+            killed_state,
+            direction,
+            player_id: opponent_id,
+            damage,
+            hp_percentage,
+        })
     }
 
     fn act_npc(
@@ -215,11 +300,11 @@ impl Map {
 
         let now = Utc::now();
         let act_delta = now - last_act;
-        if act_delta < Duration::milliseconds(act_rate as i64) {
+        if act_rate == 0 || act_delta < Duration::milliseconds(act_rate as i64) {
             (None, talk_update, None)
         } else {
             let pos_update = self.act_npc_move(index, npc_id, npc_data, act_rate, &act_delta);
-            let attack_update = self.act_npc_attack(index, npc_id, npc_data);
+            let attack_update = self.act_npc_attack(index, npc_data);
             (pos_update, talk_update, attack_update)
         }
     }
@@ -292,10 +377,19 @@ impl Map {
                     .cloned()
                     .collect();
 
-                if !position_updates_in_rage.is_empty() || !talk_updates_in_range.is_empty() {
+                let attack_updates_in_range: Vec<NPCUpdateAttack> = attack_updates
+                    .iter()
+                    .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
+                    .cloned()
+                    .collect();
+
+                if !position_updates_in_rage.is_empty()
+                    || !talk_updates_in_range.is_empty()
+                    || !attack_updates_in_range.is_empty()
+                {
                     let packet = npc::Player {
                         pos: position_updates_in_rage,
-                        attack: Vec::new(),
+                        attack: attack_updates_in_range,
                         chat: talk_updates_in_range,
                     };
 
@@ -309,8 +403,87 @@ impl Map {
                         PacketFamily::Npc,
                         builder.get(),
                     );
+
+                    if let Some(player_id) = character.player_id {
+                        let player_died = packet.attack.iter().any(|update| {
+                            update.player_id == player_id
+                                && update.killed_state == PlayerKilledState::Dead
+                        });
+
+                        if player_died {
+                            character.player.as_ref().unwrap().die();
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    fn get_adjacent_tiles(&self, coords: &Coords) -> Vec<Coords> {
+        let mut adjacent_tiles = Vec::with_capacity(4);
+        adjacent_tiles.push(Coords {
+            x: coords.x,
+            y: cmp::max(coords.y as i32 - 1, 0) as EOChar,
+        });
+        adjacent_tiles.push(Coords {
+            x: coords.x,
+            y: cmp::min(coords.y as i32 + 1, self.file.height as i32) as EOChar,
+        });
+        adjacent_tiles.push(Coords {
+            x: cmp::max(coords.x as i32 - 1, 0) as EOChar,
+            y: coords.y,
+        });
+        adjacent_tiles.push(Coords {
+            x: cmp::min(coords.x as i32 + 1, self.file.width as i32) as EOChar,
+            y: coords.y,
+        });
+
+        adjacent_tiles.dedup();
+        adjacent_tiles
+    }
+}
+
+fn get_damage_amount(npc: &Npc, npc_data: &EnfNpc, character: &Character) -> EOInt {
+    let mut rng = rand::thread_rng();
+    let rand = rng.gen_range(0.0..=1.0);
+
+    let amount = rng.gen_range(npc_data.min_damage..=npc_data.max_damage);
+
+    let npc_facing_player_back_or_side =
+        ((character.direction.to_char() as i32) - (npc.direction.to_char() as i32)).abs() != 2;
+
+    let context = match context_map! {
+        "critical" => npc_facing_player_back_or_side,
+        "damage" => amount as f64,
+        "target_armor" => character.armor as f64,
+        "target_sitting" => false,
+        "accuracy" => npc_data.accuracy as f64,
+        "target_evade" => character.evasion as f64,
+    } {
+        Ok(context) => context,
+        Err(e) => {
+            error!("Failed to generate formula context: {}", e);
+            return 0;
+        }
+    };
+
+    let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+        Ok(hit_rate) => hit_rate,
+        Err(e) => {
+            error!("Failed to calculate hit rate: {}", e);
+            0.0
+        }
+    };
+
+    if hit_rate < rand {
+        return 0;
+    }
+
+    match eval_float_with_context(&FORMULAS.damage, &context) {
+        Ok(amount) => cmp::min(amount.floor() as EOInt, character.hp as EOInt),
+        Err(e) => {
+            error!("Failed to calculate damage: {}", e);
+            0
         }
     }
 }

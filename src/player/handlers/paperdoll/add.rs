@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eo::{data::{StreamReader, Serializeable}, protocol::client::paperdoll};
+use eo::{
+    data::{Serializeable, StreamReader},
+    protocol::client::paperdoll,
+};
 
 use crate::player::PlayerHandle;
 
@@ -15,7 +18,7 @@ pub async fn add(buf: Bytes, player: PlayerHandle) {
         Err(e) => {
             error!("Failed to get player id: {}", e);
             return;
-        },
+        }
     };
 
     let map = match player.get_map().await {
@@ -23,7 +26,7 @@ pub async fn add(buf: Bytes, player: PlayerHandle) {
         Err(e) => {
             error!("Failed to get map: {}", e);
             return;
-        },
+        }
     };
 
     map.equip(player_id, packet.item_id, packet.sub_loc);

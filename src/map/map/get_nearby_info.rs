@@ -1,4 +1,7 @@
-use eo::{data::{EOShort, EOChar}, protocol::NearbyInfo};
+use eo::{
+    data::{EOChar, EOShort},
+    protocol::NearbyInfo,
+};
 use tokio::sync::oneshot;
 
 use super::Map;

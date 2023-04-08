@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, Duration, Utc};
 use eo::{
-    data::{EOChar, EOShort, EOThree, EOInt},
+    data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
 };
 
@@ -26,10 +26,7 @@ pub struct Npc {
 
 impl Npc {
     pub fn is_in_range(&self, coords: &Coords) -> bool {
-        utils::in_range(
-            &self.coords,
-            coords,
-        )
+        utils::in_range(&self.coords, coords)
     }
 
     pub fn get_hp_percentage(&self) -> EOChar {

@@ -29,5 +29,6 @@ pub async fn drop(buf: Bytes, player: PlayerHandle) {
         return;
     }
 
-    map.unwrap().drop_item(player_id, packet.drop_item, packet.coords);
+    map.unwrap()
+        .drop_item(player_id, packet.drop_item, packet.coords);
 }

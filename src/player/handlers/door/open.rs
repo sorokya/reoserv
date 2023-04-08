@@ -5,7 +5,10 @@ use eo::{
 
 use crate::{player::PlayerHandle, Bytes};
 
-pub async fn open(buf: Bytes, player: PlayerHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn open(
+    buf: Bytes,
+    player: PlayerHandle,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut open = Open::default();
     let reader = StreamReader::new(buf);
     open.deserialize(&reader);

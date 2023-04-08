@@ -5,7 +5,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{time::Duration, fs::File, io::Read};
+use std::{fs::File, io::Read, time::Duration};
 
 use bytes::Bytes;
 use lazy_static::lazy_static;
@@ -25,10 +25,15 @@ use sln::ping_sln;
 mod utils;
 mod world;
 
-use eo::{data::{StreamReader, Serializeable, EOInt}, pubs::{EifFile, EnfFile, DropFile, TalkFile, ShopFile, SkillMasterFile, EcfFile, InnFile, EsfFile}};
+use eo::{
+    data::{EOInt, Serializeable, StreamReader},
+    pubs::{
+        DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
+    },
+};
 use mysql_async::prelude::*;
 
-use tokio::{net::TcpListener, time, signal};
+use tokio::{net::TcpListener, signal, time};
 use world::WorldHandle;
 
 use crate::player::PlayerHandle;
@@ -43,7 +48,8 @@ lazy_static! {
     static ref ITEM_DB: EifFile = load_item_file().expect("Failed to load EIF file!");
     static ref NPC_DB: EnfFile = load_npc_file().expect("Failed to load ENF file!");
     static ref SHOP_DB: ShopFile = load_shop_file().expect("Failed to load Shop file!");
-    static ref SKILL_MASTER_DB: SkillMasterFile = load_skill_master_file().expect("Failed to load Skill Master file!");
+    static ref SKILL_MASTER_DB: SkillMasterFile =
+        load_skill_master_file().expect("Failed to load Skill Master file!");
     static ref SPELL_DB: EsfFile = load_spell_file().expect("Failed to load ESF file!");
     static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
 }
@@ -106,7 +112,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     info!("Classes: {}", CLASS_DB.num_classes);
-    info!("Drops: {}", DROP_DB.npcs.iter().map(|npc| npc.num_of_drops as EOInt).sum::<EOInt>());
+    info!(
+        "Drops: {}",
+        DROP_DB
+            .npcs
+            .iter()
+            .map(|npc| npc.num_of_drops as EOInt)
+            .sum::<EOInt>()
+    );
     info!("Inns: {}", INN_DB.inns.len());
     info!("Items: {}", ITEM_DB.num_items);
     info!("NPCs: {}", NPC_DB.num_npcs);
@@ -182,18 +195,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
-    
+
             let player_count = server_world.get_player_count().await.unwrap();
             if player_count >= SETTINGS.server.max_connections as usize {
                 warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
-    
+
             let player_id = server_world.get_next_player_id().await.unwrap();
-    
+
             let player = PlayerHandle::new(player_id, socket, server_world.clone(), pool.clone());
             server_world.add_player(player_id, player).await.unwrap();
-    
+
             info!(
                 "connection accepted ({}) {}/{}",
                 addr,
@@ -204,10 +217,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     match signal::ctrl_c().await {
-        Ok(()) => {},
+        Ok(()) => {}
         Err(err) => {
             eprintln!("Unable to listen for shutdown signal: {}", err);
-        },
+        }
     }
 
     info!("Shutting down server...");
@@ -247,7 +260,7 @@ fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
     let mut file = File::open("pub/din001.eid")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
-    
+
     let bytes = Bytes::from(buf);
     let reader = StreamReader::new(bytes);
 

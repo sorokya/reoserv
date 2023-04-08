@@ -8,7 +8,7 @@ pub use item::Item;
 mod map;
 pub use map::Map;
 mod npc;
-pub use npc::{Npc, NPCBuilder};
+pub use npc::{NPCBuilder, Npc};
 mod map_handle;
 pub use map_handle::MapHandle;
 mod get_warp_at;

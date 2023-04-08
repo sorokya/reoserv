@@ -1,3 +1,4 @@
+use crate::{character::Character, errors::WrongSessionIdError, player::PlayerHandle};
 use eo::{
     data::EOChar,
     protocol::{
@@ -6,9 +7,8 @@ use eo::{
         CharacterList, CharacterReply,
     },
 };
-use mysql_async::{Conn, Row, Params, params, prelude::Queryable};
+use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 use tokio::sync::oneshot;
-use crate::{character::Character, errors::WrongSessionIdError, player::PlayerHandle};
 
 use super::super::World;
 

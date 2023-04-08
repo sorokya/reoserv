@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::warp::Take, FileType, InitReply, PacketAction, PacketFamily},
 };
 

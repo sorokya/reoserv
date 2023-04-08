@@ -7,7 +7,11 @@ use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
 
 use super::handle_command::handle_command;
 
-pub async fn report(buf: Bytes, player: PlayerHandle, world: WorldHandle) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn report(
+    buf: Bytes,
+    player: PlayerHandle,
+    world: WorldHandle,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut report = Report::default();
     let reader = StreamReader::new(buf);
     report.deserialize(&reader);

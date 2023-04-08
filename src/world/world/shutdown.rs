@@ -1,4 +1,7 @@
-use eo::{protocol::{server::message, PacketAction, PacketFamily}, data::{Serializeable, StreamBuilder}};
+use eo::{
+    data::{Serializeable, StreamBuilder},
+    protocol::{server::message, PacketAction, PacketFamily},
+};
 use tokio::sync::oneshot;
 
 use super::World;

@@ -20,6 +20,7 @@ pub enum Command {
         session_id: EOShort,
     },
     Close(String),
+    Die,
     GenerateSessionId {
         respond_to: oneshot::Sender<EOShort>,
     },

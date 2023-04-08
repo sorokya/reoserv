@@ -191,7 +191,11 @@ impl Map {
 
             Command::SpawnNpcs => self.spawn_npcs().await,
 
-            Command::TakeChestItem { player_id, coords, item_id } => {
+            Command::TakeChestItem {
+                player_id,
+                coords,
+                item_id,
+            } => {
                 self.take_chest_item(player_id, coords, item_id);
             }
 

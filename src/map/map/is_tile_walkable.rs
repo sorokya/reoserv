@@ -1,4 +1,4 @@
-use eo::{pubs::EmfTileSpec, protocol::Coords};
+use eo::{protocol::Coords, pubs::EmfTileSpec};
 
 use super::Map;
 

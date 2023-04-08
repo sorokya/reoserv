@@ -67,7 +67,7 @@ pub async fn get_character_list(
                                 Some(item) => item.spec1 as EOShort,
                                 None => 0,
                             },
-                        }
+                        },
                     },
                 }
             },

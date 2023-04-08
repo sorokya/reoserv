@@ -1,4 +1,7 @@
-use eo::{data::{EOShort, StreamBuilder, Serializeable}, protocol::{server::item, ShortItem, Weight, PacketAction, PacketFamily}};
+use eo::{
+    data::{EOShort, Serializeable, StreamBuilder},
+    protocol::{server::item, PacketAction, PacketFamily, ShortItem, Weight},
+};
 
 use crate::{utils::get_distance, SETTINGS};
 
@@ -49,20 +52,18 @@ impl Map {
         reply.serialize(&mut builder);
         let buf = builder.get();
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Get,
-            PacketFamily::Item,
-            buf,
-        );
+        character
+            .player
+            .as_ref()
+            .unwrap()
+            .send(PacketAction::Get, PacketFamily::Item, buf);
 
         if amount == item.amount {
             self.items.remove(&item_index);
             return;
         }
 
-        let reply = item::Remove {
-            item_index,
-        };
+        let reply = item::Remove { item_index };
 
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);

@@ -1,11 +1,18 @@
 use chrono::{Duration, Utc};
-use eo::{protocol::{Coords, server::chest, ShortItem, PacketAction, PacketFamily}, pubs::EmfTileSpec, data::{StreamBuilder, Serializeable}};
+use eo::{
+    data::{Serializeable, StreamBuilder},
+    protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
+    pubs::EmfTileSpec,
+};
 use rand::seq::SliceRandom;
 
-use crate::{map::{
-    chest::{ChestItem, ChestSpawn},
-    Chest,
-}, utils::get_distance};
+use crate::{
+    map::{
+        chest::{ChestItem, ChestSpawn},
+        Chest,
+    },
+    utils::get_distance,
+};
 
 use super::Map;
 
@@ -143,10 +150,14 @@ impl Map {
 
                 if spawned_item {
                     let packet = chest::Agree {
-                        items: chest.items.iter().map(|item| ShortItem {
-                            id: item.item_id,
-                            amount: item.amount,
-                        }).collect(),
+                        items: chest
+                            .items
+                            .iter()
+                            .map(|item| ShortItem {
+                                id: item.item_id,
+                                amount: item.amount,
+                            })
+                            .collect(),
                     };
 
                     let mut builder = StreamBuilder::new();
@@ -156,7 +167,11 @@ impl Map {
                     for character in self.characters.values() {
                         let distance = get_distance(&character.coords, &chest.coords);
                         if distance <= 1 {
-                            character.player.as_ref().unwrap().send(PacketAction::Agree, PacketFamily::Chest, buf.clone());
+                            character.player.as_ref().unwrap().send(
+                                PacketAction::Agree,
+                                PacketFamily::Chest,
+                                buf.clone(),
+                            );
                         }
                     }
                 }

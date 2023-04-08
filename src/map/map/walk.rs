@@ -9,14 +9,14 @@ use super::Map;
 
 // TODO: this function is sooooooooo ugly. Please refactor it
 impl Map {
-    pub fn walk(
-        &mut self,
-        target_player_id: EOShort,
-        direction: Direction,
-    ) {
+    pub fn walk(&mut self, target_player_id: EOShort, direction: Direction) {
         if let Some((target_previous_coords, target_coords, target_player)) = {
             let (coords, admin_level, player) = match self.characters.get(&target_player_id) {
-                Some(character) => (character.coords, character.admin_level, character.player.clone()),
+                Some(character) => (
+                    character.coords,
+                    character.admin_level,
+                    character.player.clone(),
+                ),
                 None => return,
             };
 
@@ -29,8 +29,7 @@ impl Map {
                 Direction::Right => coords.x += 1,
             }
 
-            let is_tile_walkable = admin_level as EOChar >= 1
-                || self.is_tile_walkable(&coords);
+            let is_tile_walkable = admin_level as EOChar >= 1 || self.is_tile_walkable(&coords);
             if !is_in_bounds(coords, self.file.width, self.file.height) || !is_tile_walkable {
                 return;
             }

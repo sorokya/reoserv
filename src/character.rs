@@ -15,7 +15,7 @@ use chrono::prelude::*;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 
-use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, ITEM_DB, SETTINGS};
+use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, INN_DB, ITEM_DB, SETTINGS};
 
 pub enum PaperdollSlot {
     Boots,
@@ -120,7 +120,7 @@ pub struct Character {
     pub min_damage: EOShort,
     pub max_damage: EOShort,
     pub accuracy: EOShort,
-    pub evasion: EOShort,
+    pub evasion: EOShort, // TODO: rename to evade?
     pub armor: EOShort,
     pub map_id: EOShort,
     pub coords: Coords,
@@ -143,6 +143,41 @@ impl Character {
             skin: create.skin,
             name: create.name.clone(),
             ..Default::default()
+        }
+    }
+
+    pub fn get_spawn_map(&self) -> EOShort {
+        match INN_DB.inns.iter().find(|inn| inn.name == self.home) {
+            Some(inn) => {
+                if inn.alt_spawn_enabled == 1 && self.level > 0 {
+                    inn.alt_spawn_map
+                } else {
+                    inn.spawn_map
+                }
+            }
+            None => SETTINGS.rescue.map,
+        }
+    }
+
+    pub fn get_spawn_coords(&self) -> Coords {
+        match INN_DB.inns.iter().find(|inn| inn.name == self.home) {
+            Some(inn) => {
+                if inn.alt_spawn_enabled == 1 && self.level > 0 {
+                    Coords {
+                        x: inn.alt_spawn_x,
+                        y: inn.alt_spawn_y,
+                    }
+                } else {
+                    Coords {
+                        x: inn.spawn_x,
+                        y: inn.spawn_y,
+                    }
+                }
+            }
+            None => Coords {
+                x: SETTINGS.rescue.x,
+                y: SETTINGS.rescue.y,
+            },
         }
     }
 
@@ -382,9 +417,9 @@ impl Character {
         // TODO: group stuff
 
         match self.admin_level {
-            AdminLevel::Player | AdminLevel::Guide | AdminLevel::Guardian => PaperdollIcon::Player,
-            AdminLevel::Gm => PaperdollIcon::Gm,
-            AdminLevel::Hgm | AdminLevel::God => PaperdollIcon::Hgm,
+            AdminLevel::Player | AdminLevel::Spy | AdminLevel::LightGuide => PaperdollIcon::Player,
+            AdminLevel::Guardian | AdminLevel::GameMaster => PaperdollIcon::Gm,
+            AdminLevel::HighGameMaster => PaperdollIcon::Hgm,
         }
     }
 

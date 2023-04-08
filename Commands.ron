@@ -98,7 +98,7 @@
             alias: "si",
             description: "Spawn an item into your inventory",
             usage: "$si gold 100",
-            admin_level: "Gm",
+            admin_level: "GameMaster",
             args: [
                 (
                     name: "item",

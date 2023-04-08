@@ -1,11 +1,11 @@
 use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, WarpAnimation, ShortItem},
+    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, ShortItem, WarpAnimation},
 };
 use tokio::sync::oneshot;
 
-use crate::{character::Character};
+use crate::character::Character;
 
 #[derive(Debug)]
 pub enum Command {
@@ -80,7 +80,7 @@ pub enum Command {
     },
     OpenDoor {
         target_player_id: EOShort, // TODO: rename to player_id
-        door_coords: Coords, // TODO: rename to coords
+        door_coords: Coords,       // TODO: rename to coords
     },
     RequestPaperdoll {
         player_id: EOShort,

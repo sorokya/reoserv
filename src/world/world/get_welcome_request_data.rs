@@ -41,10 +41,10 @@ impl World {
             rescue_map: 4,
             rescue_x: 24,
             rescue_y: 24,
-            light_guide_flood_rate: 10,
+            spy_and_light_guide_flood_rate: 10,
             guardian_flood_rate: 10,
-            gm_flood_rate: 10,
-            hgm_flood_rate: 0,
+            game_master_flood_rate: 10,
+            high_game_master_flood_rate: 0,
         };
 
         let session_id = player.generate_session_id().await?;

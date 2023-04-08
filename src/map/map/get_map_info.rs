@@ -1,4 +1,7 @@
-use eo::{data::{EOShort, EOChar}, protocol::{server::range, CharacterMapInfo}};
+use eo::{
+    data::{EOChar, EOShort},
+    protocol::{server::range, CharacterMapInfo},
+};
 use tokio::sync::oneshot;
 
 use super::Map;

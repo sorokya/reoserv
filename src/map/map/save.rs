@@ -9,8 +9,7 @@ impl Map {
 
         for character in self.characters.values_mut() {
             if let Some(logged_in_at) = character.logged_in_at {
-                character.usage +=
-                    (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
+                character.usage += (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
             }
             character.save(&mut conn).await.unwrap();
         }

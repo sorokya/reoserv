@@ -71,8 +71,5 @@ async fn load_map(
         )));
     }
 
-    Ok((
-        id,
-        MapHandle::new(id, file_size as EOInt, pool, file),
-    ))
+    Ok((id, MapHandle::new(id, file_size as EOInt, pool, file)))
 }

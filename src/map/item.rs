@@ -16,10 +16,7 @@ pub struct Item {
 
 impl Item {
     pub fn is_in_range(&self, coords: &Coords) -> bool {
-        utils::in_range(
-            &self.coords,
-            coords,
-        )
+        utils::in_range(&self.coords, coords)
     }
 
     // TODO: Implement as a trait

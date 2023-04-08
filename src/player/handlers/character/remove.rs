@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::character::Remove, PacketAction, PacketFamily},
 };
 
@@ -22,11 +22,7 @@ pub async fn remove(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
             let mut builder = StreamBuilder::new();
             reply.serialize(&mut builder);
 
-            player.send(
-                PacketAction::Reply,
-                PacketFamily::Character,
-                builder.get(),
-            );
+            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
         }
         Err(e) => {
             error!("Delete character failed: {}", e);

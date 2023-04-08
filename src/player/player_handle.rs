@@ -16,7 +16,7 @@ use crate::{
     world::WorldHandle,
 };
 
-use super::{handle_packet::handle_packet, player::Player, Command, ClientState};
+use super::{handle_packet::handle_packet, player::Player, ClientState, Command};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -46,7 +46,13 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
-    pub async fn generate_session_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn die(&self) {
+        let _ = self.tx.send(Command::Die);
+    }
+
+    pub async fn generate_session_id(
+        &self,
+    ) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
         match rx.await {
@@ -65,7 +71,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_character(&self) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_character(
+        &self,
+    ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
         match rx.await {
@@ -75,7 +83,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn gen_encoding_multiples(&self) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn gen_encoding_multiples(
+        &self,
+    ) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -86,7 +96,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_encoding_multiples(&self) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_encoding_multiples(
+        &self,
+    ) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -135,7 +147,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_session_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_session_id(
+        &self,
+    ) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSessionId { respond_to: tx });
         match rx.await {
@@ -145,7 +159,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_sequence_bytes(&self) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_sequence_bytes(
+        &self,
+    ) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceBytes { respond_to: tx });
         match rx.await {
@@ -154,7 +170,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_sequence_start(&self) -> Result<EOInt, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_sequence_start(
+        &self,
+    ) -> Result<EOInt, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceStart { respond_to: tx });
         match rx.await {

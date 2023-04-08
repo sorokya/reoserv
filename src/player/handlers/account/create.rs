@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{Serializeable, StreamReader, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::account::Create, PacketAction, PacketFamily},
 };
 
@@ -23,11 +23,7 @@ pub async fn create(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
             let mut builder = StreamBuilder::new();
             reply.serialize(&mut builder);
 
-            player.send(
-                PacketAction::Reply,
-                PacketFamily::Account,
-                builder.get(),
-            );
+            player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
         }
         Err(e) => {
             error!("Create account failed: {}", e);

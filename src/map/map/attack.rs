@@ -3,7 +3,7 @@ use std::cmp;
 use chrono::Utc;
 use eo::{
     data::{EOInt, EOShort},
-    protocol::{server::npc, Coords, Direction, PacketAction, PacketFamily}, pubs::{EnfNpc, EnfNpcType},
+    protocol::{server::{npc, attack}, Coords, Direction, PacketAction, PacketFamily}, pubs::{EnfNpc, EnfNpcType},
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -18,7 +18,7 @@ use super::Map;
 
 impl Map {
     pub fn attack(&mut self, player_id: EOShort, direction: Direction) {
-        if let Some(character) = self.characters.get_mut(&player_id) {
+        if let Some(character) = self.characters.get(&player_id) {
             let target_coords = character.coords;
             let target_attack_coords = match direction {
                 Direction::Up => Coords {
@@ -38,6 +38,20 @@ impl Map {
                     y: target_coords.y,
                 },
             };
+
+            let reply = attack::Player {
+                player_id,
+                direction,
+            };
+    
+            debug!("{:?}", reply);
+    
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Player,
+                PacketFamily::Attack,
+                reply,
+            );
 
             let (index, damage) = if let Some((index, npc)) = self
                 .npcs

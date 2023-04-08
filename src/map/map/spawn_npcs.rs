@@ -7,10 +7,7 @@ use eo::{
 };
 use rand::Rng;
 
-use crate::{
-    map::{is_tile_walkable::is_tile_walkable_for_npc, NPCBuilder},
-    NPC_DB, SETTINGS,
-};
+use crate::{map::NPCBuilder, NPC_DB, SETTINGS};
 
 use super::Map;
 
@@ -58,39 +55,70 @@ impl Map {
             }
 
             let mut rng = rand::thread_rng();
-            for npc in self.npcs.values_mut() {
-                let spawn = &self.file.npcs[npc.spawn_index];
-                if !npc.alive
-                    && now.timestamp() - npc.dead_since.timestamp() > spawn.spawn_time.into()
-                {
-                    npc.alive = true;
-                    npc.hp = npc.max_hp;
-                    npc.coords = Coords {
-                        x: cmp::min(spawn.x + rng.gen_range(0..=3), self.file.width),
-                        y: cmp::min(spawn.y + rng.gen_range(0..=3), self.file.height),
+            let indexes = self.npcs.keys().cloned().collect::<Vec<EOChar>>();
+            for index in indexes {
+                let (alive, spawn_time, dead_since, spawn_coords, spawn_type) = {
+                    match self.npcs.get(&index) {
+                        Some(npc) => {
+                            let spawn = &self.file.npcs[npc.spawn_index];
+                            (
+                                npc.alive,
+                                spawn.spawn_time,
+                                npc.dead_since,
+                                Coords {
+                                    x: spawn.x,
+                                    y: spawn.y,
+                                },
+                                spawn.spawn_type,
+                            )
+                        }
+                        None => continue,
+                    }
+                };
+
+                if !alive && now.timestamp() - dead_since.timestamp() > spawn_time.into() {
+                    let mut spawn_coords = Coords {
+                        x: cmp::min(spawn_coords.x + rng.gen_range(0..=3), self.file.width),
+                        y: cmp::min(spawn_coords.y + rng.gen_range(0..=3), self.file.height),
                     };
 
-                    while !is_tile_walkable_for_npc(
-                        npc.coords,
-                        &self.file.spec_rows,
-                        &self.file.warp_rows,
-                    ) {
-                        let x = cmp::max(cmp::min(spawn.x as i32 + rng.gen_range(-3..=3), self.file.width as i32), 0);
-                        let y = cmp::max(cmp::min(spawn.y as i32 + rng.gen_range(-3..=3), self.file.height as i32), 0);
-                        npc.coords = Coords { x: x as EOChar, y: y as EOChar };
+                    while !self.is_tile_walkable_npc(&spawn_coords) {
+                        let x = cmp::max(
+                            cmp::min(
+                                spawn_coords.x as i32 + rng.gen_range(-3..=3),
+                                self.file.width as i32,
+                            ),
+                            0,
+                        );
+                        let y = cmp::max(
+                            cmp::min(
+                                spawn_coords.y as i32 + rng.gen_range(-3..=3),
+                                self.file.height as i32,
+                            ),
+                            0,
+                        );
+                        spawn_coords = Coords {
+                            x: x as EOChar,
+                            y: y as EOChar,
+                        };
                     }
 
-                    npc.direction = if spawn.spawn_type == 7 {
-                        Direction::from_char(spawn.spawn_type & 0x03).unwrap()
-                    } else {
-                        match rand::random::<u8>() % 4 {
-                            0 => Direction::Down,
-                            1 => Direction::Left,
-                            2 => Direction::Up,
-                            3 => Direction::Right,
-                            _ => unreachable!(),
+                    if let Some(npc) = self.npcs.get_mut(&index) {
+                        npc.alive = true;
+                        npc.hp = npc.max_hp;
+                        npc.coords = spawn_coords;
+                        npc.direction = if spawn_type == 7 {
+                            Direction::from_char(spawn_type & 0x03).unwrap()
+                        } else {
+                            match rand::random::<u8>() % 4 {
+                                0 => Direction::Down,
+                                1 => Direction::Left,
+                                2 => Direction::Up,
+                                3 => Direction::Right,
+                                _ => unreachable!(),
+                            }
                         }
-                    };
+                    }
                 }
             }
         }

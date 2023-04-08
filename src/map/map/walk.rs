@@ -3,10 +3,11 @@ use eo::{
     protocol::{server::walk, Direction, PacketAction, PacketFamily},
 };
 
-use crate::map::{get_warp_at, is_in_bounds, is_tile_walkable};
+use crate::map::{get_warp_at, is_in_bounds};
 
 use super::Map;
 
+// TODO: this function is sooooooooo ugly. Please refactor it
 impl Map {
     pub fn walk(
         &mut self,
@@ -14,28 +15,33 @@ impl Map {
         direction: Direction,
     ) {
         if let Some((target_previous_coords, target_coords, target_player)) = {
-            if let Some(target) = self.characters.get_mut(&target_player_id) {
-                let previous_coords = target.coords;
-                let mut coords = target.coords;
-                match direction {
-                    Direction::Up => coords.y -= 1,
-                    Direction::Down => coords.y += 1,
-                    Direction::Left => coords.x -= 1,
-                    Direction::Right => coords.x += 1,
-                }
-                target.direction = direction;
+            let (coords, admin_level, player) = match self.characters.get(&target_player_id) {
+                Some(character) => (character.coords, character.admin_level, character.player.clone()),
+                None => return,
+            };
 
-                let is_tile_walkable = target.admin_level as EOChar >= 1
-                    || is_tile_walkable(coords, &self.file.spec_rows);
-                if is_in_bounds(coords, self.file.width, self.file.height) && is_tile_walkable {
-                    target.coords = coords;
-                }
-
-                Some((previous_coords, target.coords, target.player.clone()))
-            } else {
-                None
+            let previous_coords = coords;
+            let mut coords = coords;
+            match direction {
+                Direction::Up => coords.y -= 1,
+                Direction::Down => coords.y += 1,
+                Direction::Left => coords.x -= 1,
+                Direction::Right => coords.x += 1,
             }
+
+            let is_tile_walkable = admin_level as EOChar >= 1
+                || self.is_tile_walkable(&coords);
+            if !is_in_bounds(coords, self.file.width, self.file.height) || !is_tile_walkable {
+                return;
+            }
+
+            Some((previous_coords, coords, player))
         } {
+            if let Some(character) = self.characters.get_mut(&target_player_id) {
+                character.coords = target_coords;
+                character.direction = direction;
+            }
+
             // TODO: Ghost timer check
             if let Some(warp) = get_warp_at(target_coords, &self.file.warp_rows) {
                 // TODO: verify warp requirements

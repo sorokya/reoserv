@@ -6,7 +6,7 @@ use eo::{
     pubs::EifItemSpecial,
 };
 
-use crate::{map::is_tile_walkable, utils::get_distance, ITEM_DB, SETTINGS};
+use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 
 use super::Map;
 
@@ -52,7 +52,7 @@ impl Map {
 
             let amount_to_drop = cmp::min(item.amount, actual_item.amount);
 
-            if !is_tile_walkable(coords, &self.file.spec_rows) {
+            if !self.is_tile_walkable(&coords) {
                 return;
             }
 

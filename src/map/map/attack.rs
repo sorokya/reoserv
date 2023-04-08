@@ -1,4 +1,4 @@
-use std::cmp;
+use std::{cmp, collections::hash_map::Entry};
 
 use chrono::Utc;
 use eo::{
@@ -78,6 +78,14 @@ impl Map {
             let killed = {
                 let npc = self.npcs.get_mut(&index).unwrap();
                 npc.hp -= damage;
+                match npc.oppenents.entry(player_id) {
+                    Entry::Occupied(mut entry) => {
+                        *entry.get_mut() += damage;
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(damage);
+                    }
+                }
                 npc.hp == 0
             };
 
@@ -85,6 +93,7 @@ impl Map {
                 {
                     let npc = self.npcs.get_mut(&index).unwrap();
                     npc.alive = false;
+                    npc.oppenents.clear();
                     npc.dead_since = Utc::now();
                 }
 

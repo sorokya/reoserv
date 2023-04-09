@@ -54,6 +54,8 @@ mod send_chat_message;
 mod send_packet_near;
 mod send_packet_near_player;
 mod serialize;
+mod sit;
+mod stand;
 mod spawn_items;
 mod spawn_npcs;
 mod take_chest_item;
@@ -192,6 +194,14 @@ impl Map {
             Command::Serialize { respond_to } => {
                 self.serialize(respond_to);
             }
+
+            Command::Sit {
+                player_id
+            } => self.sit(player_id),
+
+            Command::Stand {
+                player_id
+            } => self.stand(player_id),
 
             Command::SpawnItems => self.spawn_items().await,
 

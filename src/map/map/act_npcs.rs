@@ -5,7 +5,7 @@ use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::npc, Coords, Direction, NPCUpdateAttack, NPCUpdateChat, NPCUpdatePos, PacketAction,
-        PacketFamily, PlayerKilledState,
+        PacketFamily, PlayerKilledState, SitState,
     },
     pubs::{EnfNpc, EnfNpcType},
 };
@@ -456,7 +456,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfNpc, character: &Character) -> EOI
         "critical" => npc_facing_player_back_or_side,
         "damage" => amount as f64,
         "target_armor" => character.armor as f64,
-        "target_sitting" => false,
+        "target_sitting" => character.sit_state != SitState::Stand,
         "accuracy" => npc_data.accuracy as f64,
         "target_evade" => character.evasion as f64,
     } {

@@ -178,6 +178,14 @@ impl MapHandle {
         });
     }
 
+    pub fn sit(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::Sit { player_id });
+    }
+
+    pub fn stand(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::Stand { player_id });
+    }
+
     pub async fn save(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Save { respond_to: tx });

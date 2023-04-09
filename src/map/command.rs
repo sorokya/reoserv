@@ -98,6 +98,12 @@ pub enum Command {
     Serialize {
         respond_to: oneshot::Sender<Bytes>,
     },
+    Sit {
+        player_id: EOShort,
+    },
+    Stand {
+        player_id: EOShort,
+    },
     TakeChestItem {
         player_id: EOShort,
         coords: Coords,

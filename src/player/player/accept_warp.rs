@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::warp, Coords, PacketAction, PacketFamily, WarpType},
+    protocol::{server::warp, Coords, PacketAction, PacketFamily, WarpType, SitState},
 };
 
 use crate::{
@@ -37,6 +37,7 @@ impl Player {
 
                 character.map_id = warp_session.map_id;
                 character.coords = warp_session.coords;
+                character.sit_state = SitState::Stand;
 
                 self.character = None;
 

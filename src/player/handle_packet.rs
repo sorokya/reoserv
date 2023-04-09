@@ -39,6 +39,12 @@ pub async fn handle_packet(
 
     let buf = reader.get_vec(reader.remaining());
     match family {
+        PacketFamily::Sit => match action {
+            PacketAction::Request => {
+                handlers::sit::request(buf, player.clone()).await;
+            }
+            _ => error!("Unhandled packet {:?}_{:?}", action, family),
+        }
         PacketFamily::Chest => match action {
             PacketAction::Open => {
                 handlers::chest::open(buf, player.clone()).await;

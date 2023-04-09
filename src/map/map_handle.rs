@@ -163,6 +163,14 @@ impl MapHandle {
         });
     }
 
+    pub fn recover_npcs(&self) {
+        let _ = self.tx.send(Command::RecoverNpcs);
+    }
+
+    pub fn recover_players(&self) {
+        let _ = self.tx.send(Command::RecoverPlayers);
+    }
+
     pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
         let _ = self.tx.send(Command::RequestPaperdoll {
             player_id,

@@ -82,6 +82,8 @@ pub enum Command {
         target_player_id: EOShort, // TODO: rename to player_id
         door_coords: Coords,       // TODO: rename to coords
     },
+    RecoverNpcs,
+    RecoverPlayers,
     RequestPaperdoll {
         player_id: EOShort,
         target_player_id: EOShort,

@@ -50,6 +50,8 @@ pub struct Rescue {
 pub struct World {
     pub see_distance: EOChar,
     pub drop_distance: EOChar,
+    pub recover_rate: EOInt,
+    pub npc_recover_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

@@ -411,6 +411,14 @@ impl Character {
         if self.max_damage == 0 {
             self.max_damage = 1;
         }
+
+        if self.hp > self.max_hp {
+            self.hp = self.max_hp;
+        }
+
+        if self.tp > self.max_tp {
+            self.tp = self.max_tp;
+        }
     }
 
     pub fn get_icon(&self) -> PaperdollIcon {

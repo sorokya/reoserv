@@ -71,6 +71,12 @@ see_distance = 11
 # Max distance a player can drop/pick up an item
 drop_distance = 2
 
+# How often players recover HP/TP in seconds
+recover_rate = 90
+
+# How often npcs recover HP/TP in seconds
+npc_recover_rate = 105
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

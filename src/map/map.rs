@@ -46,6 +46,8 @@ mod leave;
 mod open_chest;
 mod open_door;
 mod play_effect;
+mod recover_npcs;
+mod recover_players;
 mod request_paperdoll;
 mod save;
 mod send_chat_message;
@@ -170,6 +172,10 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::RecoverNpcs => self.recover_npcs().await,
+
+            Command::RecoverPlayers => self.recover_players().await,
 
             Command::RequestPaperdoll {
                 player_id,

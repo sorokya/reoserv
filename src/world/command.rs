@@ -99,6 +99,8 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     PingPlayers,
+    RecoverNpcs,
+    RecoverPlayers,
     RequestAccountCreation {
         name: String,
         player: PlayerHandle,

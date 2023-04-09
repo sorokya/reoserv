@@ -172,6 +172,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    let mut player_recover_interval =
+        time::interval(Duration::from_secs(SETTINGS.world.recover_rate.into()));
+    let recover_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            player_recover_interval.tick().await;
+            recover_world.recover_players();
+        }
+    });
+
+    let mut npc_recover_interval =
+        time::interval(Duration::from_secs(SETTINGS.world.npc_recover_rate.into()));
+    let npc_recover_world = world.clone();
+    tokio::spawn(async move {
+        loop {
+            npc_recover_interval.tick().await;
+            npc_recover_world.recover_npcs();
+        }
+    });
+
     if SETTINGS.sln.enabled {
         let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.sln.rate as u64 * 60));
         tokio::spawn(async move {

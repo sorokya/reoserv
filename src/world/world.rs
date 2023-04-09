@@ -171,6 +171,22 @@ impl World {
                 }
             }
 
+            Command::RecoverNpcs => {
+                if let Some(maps) = self.maps.as_ref() {
+                    for map in maps.values() {
+                        map.recover_npcs();
+                    }
+                }
+            }
+
+            Command::RecoverPlayers => {
+                if let Some(maps) = self.maps.as_ref() {
+                    for map in maps.values() {
+                        map.recover_players();
+                    }
+                }
+            }
+
             Command::RequestAccountCreation {
                 name,
                 player,

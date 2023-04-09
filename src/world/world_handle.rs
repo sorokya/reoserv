@@ -239,6 +239,14 @@ impl WorldHandle {
         let _ = self.tx.send(Command::PingPlayers);
     }
 
+    pub fn recover_npcs(&self) {
+        let _ = self.tx.send(Command::RecoverNpcs);
+    }
+
+    pub fn recover_players(&self) {
+        let _ = self.tx.send(Command::RecoverPlayers);
+    }
+
     pub async fn request_account_creation(
         &self,
         name: String,

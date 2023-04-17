@@ -7,6 +7,8 @@ impl Map {
         self.characters
             .values()
             .any(|character| character.coords == *coords)
-            || self.npcs.values().any(|npc| npc.coords == *coords)
+            || self.npcs.values()
+            .filter(|npc| npc.alive)
+            .any(|npc| npc.coords == *coords)
     }
 }

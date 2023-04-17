@@ -58,6 +58,8 @@ pub struct World {
 pub struct NPCs {
     pub instant_spawn: bool,
     pub freeze_on_empty_map: bool,
+    pub chase_distance: EOInt,
+    pub bored_timer: EOInt,
     pub respawn_rate: EOInt,
     pub act_rate: EOInt,
     pub speed_0: EOInt,

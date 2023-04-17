@@ -86,6 +86,12 @@ instant_spawn = false
 # if false they will always act even if there are no players
 freeze_on_empty_map = true
 
+# Range in which an aggroed NPC will chase a player
+chase_distance = 10
+
+# Seconds until an aggroed NPC will give up chasing/attacking a player
+bored_timer = 30
+
 # Respawn rate of NPCs in seconds
 respawn_rate = 1
 

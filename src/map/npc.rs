@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Duration, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
@@ -21,7 +19,14 @@ pub struct Npc {
     pub walk_idle_for: Option<Duration>,
     pub hp: EOThree,
     pub max_hp: EOThree,
-    pub oppenents: HashMap<EOShort, EOInt>,
+    pub oppenents: Vec<NpcOpponent>,
+}
+
+#[derive(Debug, Default)]
+pub struct NpcOpponent {
+    pub player_id: EOShort,
+    pub damage_dealt: EOInt,
+    pub last_hit: DateTime<Utc>,
 }
 
 impl Npc {
@@ -117,7 +122,7 @@ impl NPCBuilder {
             walk_idle_for: self.walk_idle_for,
             hp: self.hp,
             max_hp: self.max_hp,
-            oppenents: HashMap::new(),
+            oppenents: Vec::new(),
         }
     }
 }

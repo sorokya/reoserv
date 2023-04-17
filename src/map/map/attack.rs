@@ -1,4 +1,4 @@
-use std::{cmp, collections::hash_map::Entry};
+use std::cmp;
 
 use chrono::Utc;
 use eo::{
@@ -14,7 +14,7 @@ use rand::Rng;
 
 use crate::{
     character::Character,
-    map::{Item, Npc},
+    map::{npc::NpcOpponent, Item, Npc},
     DROP_DB, FORMULAS, NPC_DB,
 };
 
@@ -62,7 +62,7 @@ impl Map {
                 .iter()
                 .find(|(_, npc)| npc.coords == target_attack_coords && npc.alive)
             {
-                let npc_data = match NPC_DB.npcs.get(npc.id as usize) {
+                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
                     Some(npc_data) => npc_data,
                     None => {
                         error!("Failed to find npc data for npc id {}", npc.id);
@@ -85,14 +85,21 @@ impl Map {
             let killed = {
                 let npc = self.npcs.get_mut(&index).unwrap();
                 npc.hp -= damage;
-                match npc.oppenents.entry(player_id) {
-                    Entry::Occupied(mut entry) => {
-                        *entry.get_mut() += damage;
+                match npc.oppenents.iter().position(|o| o.player_id == player_id) {
+                    Some(index) => {
+                        let opponent = npc.oppenents.get_mut(index).unwrap();
+                        opponent.damage_dealt += damage;
+                        opponent.last_hit = Utc::now();
                     }
-                    Entry::Vacant(entry) => {
-                        entry.insert(damage);
+                    None => {
+                        npc.oppenents.push(NpcOpponent {
+                            player_id,
+                            damage_dealt: damage,
+                            last_hit: Utc::now(),
+                        });
                     }
                 }
+
                 npc.hp == 0
             };
 

@@ -10,9 +10,14 @@ use eo::{
     pubs::{EnfNpc, EnfNpcType},
 };
 use evalexpr::{context_map, eval_float_with_context};
-use rand::Rng;
+use rand::{seq::SliceRandom, Rng};
 
-use crate::{character::Character, map::Npc, FORMULAS, NPC_DB, SETTINGS, TALK_DB};
+use crate::{
+    character::Character,
+    map::Npc,
+    utils::{get_distance, get_next_coords},
+    FORMULAS, NPC_DB, SETTINGS, TALK_DB,
+};
 
 use super::Map;
 
@@ -51,7 +56,143 @@ impl Map {
     }
 
     fn act_npc_move_chase(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdatePos> {
-        None
+        let target_coords = match self.npc_get_chase_target_coords(index, npc_id) {
+            Some(target_coords) => target_coords,
+            None => return self.act_npc_move_idle(index),
+        };
+
+        let npc_coords = match self.npcs.get(&index) {
+            Some(npc) => npc.coords,
+            None => return None,
+        };
+
+        let x_delta = target_coords.x as i32 - npc_coords.x as i32;
+        let y_delta = target_coords.y as i32 - npc_coords.y as i32;
+
+        let direction = if x_delta.abs() > y_delta.abs() {
+            if x_delta > 0 {
+                Direction::Right
+            } else {
+                Direction::Left
+            }
+        } else if y_delta > 0 {
+            Direction::Down
+        } else {
+            Direction::Up
+        };
+
+        let new_coords = get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
+        if self.is_tile_walkable_npc(&new_coords) {
+            let mut npc = self.npcs.get_mut(&index).unwrap();
+            npc.coords = new_coords;
+            npc.last_act = Some(Utc::now());
+            Some(NPCUpdatePos {
+                npc_index: index,
+                coords: npc.coords,
+                direction,
+            })
+        } else {
+            self.act_npc_move_idle(index)
+        }
+    }
+
+    fn npc_get_chase_target_coords(&self, index: EOChar, npc_id: EOShort) -> Option<Coords> {
+        match self.npc_get_chase_target_player_id(index, npc_id) {
+            Some(player_id) => self
+                .characters
+                .get(&player_id)
+                .map(|character| character.coords),
+            None => None,
+        }
+    }
+
+    // TODO: Party stuff
+    fn npc_get_chase_target_player_id(&self, index: EOChar, npc_id: EOShort) -> Option<EOShort> {
+        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return None,
+        };
+
+        let npc = match self.npcs.get(&index) {
+            Some(npc) => npc,
+            None => return None,
+        };
+
+        if !npc.oppenents.is_empty() {
+            let opponents_in_range = npc.oppenents.iter().filter(|opponent| {
+                let opponent = match self.characters.get(&opponent.player_id) {
+                    Some(opponent) => opponent,
+                    None => return false,
+                };
+                let distance = get_distance(&npc.coords, &opponent.coords);
+                distance <= SETTINGS.npcs.chase_distance as EOChar
+            });
+
+            // get opponent with max damage dealt
+            opponents_in_range
+                .max_by(|a, b| a.damage_dealt.cmp(&b.damage_dealt))
+                .map(|opponent| opponent.player_id)
+        } else if npc_data.r#type == EnfNpcType::Aggressive && !self.characters.is_empty() {
+            // find closest player
+            self.characters
+                .iter()
+                .filter(|(_, character)| {
+                    let distance = get_distance(&npc.coords, &character.coords);
+                    distance <= SETTINGS.npcs.chase_distance as EOChar
+                })
+                .min_by(|(_, a), (_, b)| {
+                    let distance_a = get_distance(&npc.coords, &a.coords);
+                    let distance_b = get_distance(&npc.coords, &b.coords);
+                    distance_a.cmp(&distance_b)
+                })
+                .map(|(player_id, _)| *player_id)
+        } else {
+            None
+        }
+    }
+
+    fn npc_get_attack_target_player_id(&self, index: EOChar) -> Option<EOShort> {
+        let npc = match self.npcs.get(&index) {
+            Some(npc) => npc,
+            None => return None,
+        };
+
+        let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
+
+        let adjacent_player_ids = self
+            .characters
+            .iter()
+            .filter(|(_, character)| {
+                adjacent_tiles
+                    .iter()
+                    .any(|coords| coords == &character.coords)
+            })
+            .map(|(player_id, _)| *player_id)
+            .collect::<Vec<_>>();
+
+        let adjacent_opponent = npc
+            .oppenents
+            .iter()
+            .filter(|opponent| adjacent_player_ids.contains(&opponent.player_id))
+            .max_by_key(|opponent| opponent.damage_dealt);
+
+        match adjacent_opponent {
+            Some(opponent) => Some(opponent.player_id),
+            None => {
+                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                    Some(npc_data) => npc_data,
+                    None => return None,
+                };
+
+                // Choose a random player if npc is aggressive or blocked by non-opponents
+                if npc_data.r#type == EnfNpcType::Aggressive || !npc.oppenents.is_empty() {
+                    let mut rng = rand::thread_rng();
+                    adjacent_player_ids.choose(&mut rng).copied()
+                } else {
+                    None
+                }
+            }
+        }
     }
 
     fn act_npc_move_idle(&mut self, index: EOChar) -> Option<NPCUpdatePos> {
@@ -75,48 +216,7 @@ impl Map {
             direction
         };
 
-        let new_coords = match new_direction {
-            Direction::Down => {
-                if coords.y >= self.file.height {
-                    coords
-                } else {
-                    Coords {
-                        x: coords.x,
-                        y: coords.y + 1,
-                    }
-                }
-            }
-            Direction::Left => {
-                if coords.x == 0 {
-                    coords
-                } else {
-                    Coords {
-                        x: coords.x - 1,
-                        y: coords.y,
-                    }
-                }
-            }
-            Direction::Up => {
-                if coords.y == 0 {
-                    coords
-                } else {
-                    Coords {
-                        x: coords.x,
-                        y: coords.y - 1,
-                    }
-                }
-            }
-            Direction::Right => {
-                if coords.x >= self.file.width {
-                    coords
-                } else {
-                    Coords {
-                        x: coords.x + 1,
-                        y: coords.y,
-                    }
-                }
-            }
-        };
+        let new_coords = get_next_coords(&coords, new_direction, self.file.width, self.file.height);
 
         if let Some(npc) = self.npcs.get_mut(&index) {
             npc.direction = new_direction;
@@ -143,7 +243,6 @@ impl Map {
         &mut self,
         index: EOChar,
         npc_id: EOShort,
-        npc_data: &EnfNpc,
         act_rate: EOInt,
         act_delta: &Duration,
     ) -> Option<NPCUpdatePos> {
@@ -159,6 +258,11 @@ impl Map {
 
         let idle_rate = Duration::milliseconds(act_rate as i64) + walk_idle_for;
 
+        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return None,
+        };
+
         if npc_data.r#type == EnfNpcType::Aggressive || has_oppenents {
             self.act_npc_move_chase(index, npc_id)
         } else if act_delta >= &idle_rate {
@@ -168,53 +272,14 @@ impl Map {
         }
     }
 
-    fn act_npc_attack(&mut self, index: EOChar, npc_data: &EnfNpc) -> Option<NPCUpdateAttack> {
-        let (opponent_id, direction) = match self.npcs.get(&index) {
-            Some(npc) => {
-                if npc.oppenents.is_empty() {
-                    return None;
-                } else {
-                    let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
-                    let adjacent_opponents = npc
-                        .oppenents
-                        .iter()
-                        .filter(|(player_id, _)| match self.characters.get(player_id) {
-                            Some(character) => adjacent_tiles.contains(&character.coords),
-                            None => false,
-                        })
-                        .collect::<Vec<_>>();
-
-                    // get the adjacent component with the most damage dealt
-                    let opponent_id =
-                        match adjacent_opponents.iter().max_by_key(|(_, damage)| *damage) {
-                            Some((opponent_id, _)) => opponent_id,
-                            None => return None,
-                        };
-
-                    let opponent_coords = match self.characters.get(opponent_id) {
-                        Some(character) => character.coords,
-                        None => return None,
-                    };
-
-                    let xdiff = npc.coords.x as i32 - opponent_coords.x as i32;
-                    let ydiff = npc.coords.y as i32 - opponent_coords.y as i32;
-
-                    let direction = match (xdiff, ydiff) {
-                        (0, 1) => Direction::Up,
-                        (0, -1) => Direction::Down,
-                        (1, 0) => Direction::Left,
-                        (-1, 0) => Direction::Right,
-                        _ => return None,
-                    };
-
-                    (**opponent_id, direction)
-                }
-            }
+    fn act_npc_attack(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdateAttack> {
+        let target_player_id = match self.npc_get_attack_target_player_id(index) {
+            Some(player_id) => player_id,
             None => return None,
         };
 
-        let damage = {
-            let character = match self.characters.get(&opponent_id) {
+        let (damage, direction) = {
+            let character = match self.characters.get(&target_player_id) {
                 Some(character) => character,
                 None => return None,
             };
@@ -224,11 +289,27 @@ impl Map {
                 None => return None,
             };
 
-            get_damage_amount(npc, npc_data, character)
+            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return None,
+            };
+
+            let xdiff = npc.coords.x as i32 - character.coords.x as i32;
+            let ydiff = npc.coords.y as i32 - character.coords.y as i32;
+
+            let direction = match (xdiff, ydiff) {
+                (0, 1) => Direction::Up,
+                (0, -1) => Direction::Down,
+                (1, 0) => Direction::Left,
+                (-1, 0) => Direction::Right,
+                _ => return None,
+            };
+
+            (get_damage_amount(npc, npc_data, character), direction)
         };
 
         let (killed_state, hp_percentage) = {
-            let character = match self.characters.get_mut(&opponent_id) {
+            let character = match self.characters.get_mut(&target_player_id) {
                 Some(character) => character,
                 None => return None,
             };
@@ -253,7 +334,7 @@ impl Map {
             npc_index: index,
             killed_state,
             direction,
-            player_id: opponent_id,
+            player_id: target_player_id,
             damage,
             hp_percentage,
         })
@@ -278,11 +359,6 @@ impl Map {
             None => return (None, None, None),
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
-            Some(npc) => npc,
-            None => return (None, None, None),
-        };
-
         let spawn = &self.file.npcs[spawn_index];
         let act_rate = match spawn.spawn_type {
             0 => SETTINGS.npcs.speed_0,
@@ -303,8 +379,12 @@ impl Map {
         if act_rate == 0 || act_delta < Duration::milliseconds(act_rate as i64) {
             (None, talk_update, None)
         } else {
-            let pos_update = self.act_npc_move(index, npc_id, npc_data, act_rate, &act_delta);
-            let attack_update = self.act_npc_attack(index, npc_data);
+            let attack_update = self.act_npc_attack(index, npc_id);
+            let pos_update = if attack_update.is_some() {
+                None
+            } else {
+                self.act_npc_move(index, npc_id, act_rate, &act_delta)
+            };
             (pos_update, talk_update, attack_update)
         }
     }

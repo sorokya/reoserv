@@ -52,6 +52,7 @@ lazy_static! {
         load_skill_master_file().expect("Failed to load Skill Master file!");
     static ref SPELL_DB: EsfFile = load_spell_file().expect("Failed to load ESF file!");
     static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
+    static ref EXP_TABLE: [EOInt; 254] = load_exp_table();
 }
 
 #[tokio::main]
@@ -365,4 +366,14 @@ fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut talk_file = TalkFile::default();
     talk_file.deserialize(&reader);
     Ok(talk_file)
+}
+
+fn load_exp_table() -> [EOInt; 254] {
+    let mut exp_table = [0; 254];
+
+    for (i, exp) in exp_table.iter_mut().skip(0).enumerate() {
+        *exp = ((i as f64).powf(3.0) * 133.1).round() as EOInt;
+    }
+
+    exp_table
 }

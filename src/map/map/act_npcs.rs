@@ -176,21 +176,20 @@ impl Map {
             .filter(|opponent| adjacent_player_ids.contains(&opponent.player_id))
             .max_by_key(|opponent| opponent.damage_dealt);
 
-        match adjacent_opponent {
-            Some(opponent) => Some(opponent.player_id),
-            None => {
-                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-                    Some(npc_data) => npc_data,
-                    None => return None,
-                };
+        if let Some(opponent) = adjacent_opponent {
+            Some(opponent.player_id)
+        } else {
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return None,
+            };
 
-                // Choose a random player if npc is aggressive or blocked by non-opponents
-                if npc_data.r#type == EnfNpcType::Aggressive || !npc.oppenents.is_empty() {
-                    let mut rng = rand::thread_rng();
-                    adjacent_player_ids.choose(&mut rng).copied()
-                } else {
-                    None
-                }
+            // Choose a random player if npc is aggressive or blocked by non-opponents
+            if npc_data.r#type == EnfNpcType::Aggressive || !npc.oppenents.is_empty() {
+                let mut rng = rand::thread_rng();
+                adjacent_player_ids.choose(&mut rng).copied()
+            } else {
+                None
             }
         }
     }

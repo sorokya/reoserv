@@ -1,10 +1,14 @@
+use std::cmp;
+
 use chrono::{DateTime, Duration, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
 };
+use evalexpr::{context_map, eval_float_with_context};
+use rand::Rng;
 
-use crate::utils;
+use crate::{utils, FORMULAS, NPC_DB};
 
 #[derive(Debug, Default)]
 pub struct Npc {
@@ -46,6 +50,83 @@ impl Npc {
             coords: self.coords,
             direction: self.direction,
         }
+    }
+
+    pub fn damage(
+        &mut self,
+        player_id: EOShort,
+        amount: u16,
+        accuracy: u16,
+        critical: bool,
+    ) -> EOInt {
+        let npc_data = match NPC_DB.npcs.get(self.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => {
+                return 0;
+            }
+        };
+
+        let context = match context_map! {
+            "critical" => critical,
+            "damage" => amount as f64,
+            "target_armor" => npc_data.armor as f64,
+            "target_sitting" => false,
+            "accuracy" => accuracy as f64,
+            "target_evade" => npc_data.evade as f64,
+        } {
+            Ok(context) => context,
+            Err(e) => {
+                error!("Failed to generate formula context: {}", e);
+                return 0;
+            }
+        };
+
+        let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+            Ok(hit_rate) => hit_rate,
+            Err(e) => {
+                error!("Failed to calculate hit rate: {}", e);
+                0.0
+            }
+        };
+
+        let mut rng = rand::thread_rng();
+        let rand = rng.gen_range(0.0..1.0);
+
+        if hit_rate < rand {
+            return 0;
+        }
+
+        let damage = match eval_float_with_context(&FORMULAS.damage, &context) {
+            Ok(amount) => cmp::min(amount.floor() as EOInt, self.hp as EOInt),
+            Err(e) => {
+                error!("Failed to calculate damage: {}", e);
+                0
+            }
+        };
+
+        self.hp -= damage as EOThree;
+        if self.hp > 0 {
+            match self.oppenents.iter().position(|o| o.player_id == player_id) {
+                Some(index) => {
+                    let opponent = self.oppenents.get_mut(index).unwrap();
+                    opponent.damage_dealt += damage;
+                    opponent.last_hit = Utc::now();
+                }
+                None => {
+                    self.oppenents.push(NpcOpponent {
+                        player_id,
+                        damage_dealt: damage,
+                        last_hit: Utc::now(),
+                    });
+                }
+            }
+        } else {
+            self.alive = false;
+            self.dead_since = Utc::now();
+            self.oppenents.clear();
+        }
+
+        damage
     }
 }
 

@@ -1,54 +1,28 @@
-use std::cmp;
-
-use chrono::Utc;
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOChar, EOInt, EOShort},
     protocol::{
         server::{attack, npc},
-        Coords, Direction, LevelUpStats, PacketAction, PacketFamily,
+        Direction, LevelUpStats, PacketAction, PacketFamily,
     },
-    pubs::{EnfNpc, EnfNpcType},
+    pubs::EnfNpcType,
 };
-use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
 use crate::{
-    map::{npc::NpcOpponent, Item, Npc},
-    DROP_DB, EXP_TABLE, FORMULAS, NPC_DB,
+    map::{Item, Npc},
+    utils::get_next_coords,
+    DROP_DB, NPC_DB,
 };
 
 use super::Map;
 
+enum AttackTarget {
+    Npc(EOChar),
+    Player(EOShort),
+}
+
 impl Map {
     pub fn attack(&mut self, player_id: EOShort, direction: Direction) {
-        let (character_coords, character_direction, character_experience) = {
-            if let Some(character) = self.characters.get(&player_id) {
-                (character.coords, character.direction, character.experience)
-            } else {
-                return;
-            }
-        };
-
-        let target_coords = character_coords;
-        let target_attack_coords = match direction {
-            Direction::Up => Coords {
-                x: target_coords.x,
-                y: target_coords.y - 1,
-            },
-            Direction::Down => Coords {
-                x: target_coords.x,
-                y: target_coords.y + 1,
-            },
-            Direction::Left => Coords {
-                x: target_coords.x - 1,
-                y: target_coords.y,
-            },
-            Direction::Right => Coords {
-                x: target_coords.x + 1,
-                y: target_coords.y,
-            },
-        };
-
         let reply = attack::Player {
             player_id,
             direction,
@@ -58,236 +32,248 @@ impl Map {
 
         self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Attack, reply);
 
-        let (index, damage, experience) = if let Some((index, npc)) = self
+        match self.get_attack_target(player_id, direction) {
+            Some(AttackTarget::Npc(npc_index)) => self.attack_npc(player_id, npc_index, direction),
+            Some(AttackTarget::Player(target_player_id)) => {
+                self.attack_player(player_id, target_player_id, direction)
+            }
+            None => {}
+        };
+    }
+
+    fn get_attack_target(&self, player_id: EOShort, direction: Direction) -> Option<AttackTarget> {
+        let attacker = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return None,
+        };
+
+        let target_coords = get_next_coords(
+            &attacker.coords,
+            direction,
+            self.file.width,
+            self.file.height,
+        );
+        if target_coords == attacker.coords {
+            return None;
+        }
+
+        if let Some((index, _)) = self
             .npcs
             .iter()
-            .find(|(_, npc)| npc.coords == target_attack_coords && npc.alive)
+            .find(|(_, npc)| npc.coords == target_coords && npc.alive)
         {
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-                Some(npc_data) => npc_data,
-                None => {
-                    error!("Failed to find npc data for npc id {}", npc.id);
-                    return;
-                }
-            };
+            return Some(AttackTarget::Npc(*index));
+        }
 
-            if !matches!(
-                npc_data.r#type,
-                EnfNpcType::Passive | EnfNpcType::Aggressive
-            ) {
-                return;
-            }
-
-            (
-                *index,
-                self.get_damage_amount(player_id, npc, npc_data),
-                npc_data.experience,
-            )
-        } else {
-            return;
+        if let Some((player_id, _)) = self
+            .characters
+            .iter()
+            .find(|(_, character)| character.coords == target_coords)
+        {
+            return Some(AttackTarget::Player(*player_id));
         };
 
-        let killed = {
-            let npc = self.npcs.get_mut(&index).unwrap();
-            npc.hp -= damage;
-            match npc.oppenents.iter().position(|o| o.player_id == player_id) {
-                Some(index) => {
-                    let opponent = npc.oppenents.get_mut(index).unwrap();
-                    opponent.damage_dealt += damage;
-                    opponent.last_hit = Utc::now();
-                }
-                None => {
-                    npc.oppenents.push(NpcOpponent {
-                        player_id,
-                        damage_dealt: damage,
-                        last_hit: Utc::now(),
-                    });
-                }
-            }
+        None
+    }
 
-            npc.hp == 0
+    fn attack_npc(&mut self, player_id: EOShort, npc_index: EOChar, direction: Direction) {
+        let attacker = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
         };
 
-        if killed {
-            {
-                let npc = self.npcs.get_mut(&index).unwrap();
-                npc.alive = false;
-                npc.oppenents.clear();
-                npc.dead_since = Utc::now();
-            }
+        let npc = match self.npcs.get_mut(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
 
-            let (experience, leveled_up, level, stat_points, skill_points, max_hp, max_tp, max_sp) = {
-                let character = self.characters.get_mut(&player_id).unwrap();
-                character.experience += experience;
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
 
-                let mut leveled_up = false;
-
-                while character.experience > EXP_TABLE[character.level as usize + 1] {
-                    character.level += 1;
-                    character.stat_points += 3;
-                    character.skill_points += 4;
-                    leveled_up = true;
-                }
-
-                character.calculate_stats();
-
-                (
-                    character.experience,
-                    leveled_up,
-                    character.level,
-                    character.stat_points,
-                    character.skill_points,
-                    character.max_hp,
-                    character.max_tp,
-                    character.max_sp,
-                )
-            };
-
-            let drop = {
-                let npc = self.npcs.get(&index).unwrap();
-                get_drop(player_id, target_attack_coords, npc)
-            };
-
-            if leveled_up {
-                let mut packet = npc::Accept {
-                    killer_id: player_id,
-                    killer_direction: direction.to_char(),
-                    npc_index: index as EOShort,
-                    damage,
-                    experience,
-                    level_up: LevelUpStats {
-                        level,
-                        stat_points,
-                        skill_points,
-                        max_hp,
-                        max_tp,
-                        max_sp,
-                    },
-                    ..Default::default()
-                };
-
-                if let Some(drop) = drop {
-                    let index = self.get_next_item_index(1);
-                    packet.drop_index = index;
-                    packet.drop_id = drop.id;
-                    packet.drop_coords = target_attack_coords;
-                    packet.drop_amount = drop.amount;
-                    self.items.insert(index, drop);
-                }
-
-                debug!("{:?}", packet);
-
-                self.send_packet_near(
-                    &target_attack_coords,
-                    PacketAction::Spec,
-                    PacketFamily::Npc,
-                    packet,
-                );
-            } else {
-                let mut packet = npc::Spec {
-                    killer_id: player_id,
-                    killer_direction: direction.to_char(),
-                    npc_index: index as EOShort,
-                    damage,
-                    experience,
-                    ..Default::default()
-                };
-
-                if let Some(drop) = drop {
-                    let index = self.get_next_item_index(1);
-                    packet.drop_index = index;
-                    packet.drop_id = drop.id;
-                    packet.drop_coords = target_attack_coords;
-                    packet.drop_amount = drop.amount;
-                    self.items.insert(index, drop);
-                }
-
-                debug!("{:?}", packet);
-
-                self.send_packet_near(
-                    &target_attack_coords,
-                    PacketAction::Spec,
-                    PacketFamily::Npc,
-                    packet,
-                );
-            }
-
+        if !matches!(
+            npc_data.r#type,
+            EnfNpcType::Passive | EnfNpcType::Aggressive
+        ) {
             return;
         }
 
-        let npc = self.npcs.get(&index).unwrap();
+        let mut rng = rand::thread_rng();
+
+        let amount = rng.gen_range(attacker.min_damage..=attacker.max_damage);
+
+        let attacker_facing_npc =
+            ((npc.direction.to_char() as i32) - (attacker.direction.to_char() as i32)).abs() != 2;
+
+        let critical = npc.hp == npc.max_hp || attacker_facing_npc;
+
+        let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
+
+        if npc.alive {
+            self.attack_npc_reply(player_id, npc_index, direction, damage_dealt);
+        } else {
+            self.attack_npc_killed_reply(player_id, npc_index, direction, damage_dealt);
+        }
+    }
+
+    fn attack_npc_reply(
+        &mut self,
+        player_id: EOShort,
+        npc_index: EOChar,
+        direction: Direction,
+        damage_dealt: EOInt,
+    ) {
+        let reply = attack::Player {
+            player_id,
+            direction,
+        };
+
+        debug!("{:?}", reply);
+
+        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Attack, reply);
+
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
         let reply = npc::Reply {
             player_id,
-            npc_index: index as EOShort,
-            damage,
-            player_direction: character_direction.to_char(),
+            npc_index: npc_index as EOShort,
+            damage: damage_dealt,
+            player_direction: direction.to_char(),
             hp_percentage: npc.get_hp_percentage() as EOShort,
         };
 
         debug!("{:?}", reply);
 
-        self.send_packet_near(
-            &target_attack_coords,
-            PacketAction::Reply,
-            PacketFamily::Npc,
-            reply,
-        );
+        self.send_packet_near(&npc.coords, PacketAction::Reply, PacketFamily::Npc, reply);
     }
 
-    fn get_damage_amount(&self, player_id: EOShort, npc: &Npc, npc_data: &EnfNpc) -> EOInt {
+    fn attack_npc_killed_reply(
+        &mut self,
+        player_id: EOShort,
+        npc_index: EOChar,
+        direction: Direction,
+        damage_dealt: EOInt,
+    ) {
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let leveled_up = character.add_experience(npc_data.experience * 100);
+
+        let drop = { get_drop(player_id, npc) };
+
+        if leveled_up {
+            self.attack_npc_killed_leveled_up_reply(
+                player_id,
+                npc_index,
+                direction,
+                damage_dealt,
+                drop,
+            );
+        } else {
+            let mut packet = npc::Spec {
+                killer_id: player_id,
+                killer_direction: direction.to_char(),
+                npc_index: npc_index as EOShort,
+                damage: damage_dealt,
+                experience: character.experience,
+                ..Default::default()
+            };
+
+            if let Some(drop) = drop {
+                let index = self.get_next_item_index(1);
+                packet.drop_index = index;
+                packet.drop_id = drop.id;
+                packet.drop_coords = drop.coords;
+                packet.drop_amount = drop.amount;
+                self.items.insert(index, drop);
+            }
+
+            debug!("{:?}", packet);
+
+            self.send_packet_near(&npc.coords, PacketAction::Spec, PacketFamily::Npc, packet);
+        }
+    }
+
+    fn attack_npc_killed_leveled_up_reply(
+        &mut self,
+        player_id: EOShort,
+        npc_index: EOChar,
+        direction: Direction,
+        damage_dealt: EOInt,
+        drop: Option<Item>,
+    ) {
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
-            None => return 0,
+            None => return,
         };
 
-        let mut rng = rand::thread_rng();
-        let rand = rng.gen_range(0.0..=1.0);
+        // INFO  eoproxy      > Level up!
+        // Accept { killer_id: 464, killer_direction: 0, npc_index: 5, drop_index: 0, drop_id: 0, drop_coords: Coords { x: 6, y: 4 }, drop_amount: 0, damage: 1, experience: 18000, level_up: LevelUpStats { level: 5, stat_points: 15, skill_points: 20, max_hp: 22, max_tp: 23, max_sp: 25 } }
+        // [212, 2, 1, 6, 254, 1, 254, 1, 254, 7, 5, 1, 254, 254, 254, 2, 254, 254, 38, 72, 254, 254, 6, 16, 254, 21, 254, 23, 254, 24, 254, 26, 254]
 
-        let amount = rng.gen_range(character.min_damage..=character.max_damage);
-
-        let player_facing_npc =
-            ((npc.direction.to_char() as i32) - (character.direction.to_char() as i32)).abs() != 2;
-
-        let critical = npc.hp == npc.max_hp || player_facing_npc;
-
-        let context = match context_map! {
-            "critical" => critical,
-            "damage" => amount as f64,
-            "target_armor" => npc_data.armor as f64,
-            "target_sitting" => false,
-            "accuracy" => character.accuracy as f64,
-            "target_evade" => npc_data.evade as f64,
-        } {
-            Ok(context) => context,
-            Err(e) => {
-                error!("Failed to generate formula context: {}", e);
-                return 0;
-            }
+        let mut packet = npc::Accept {
+            killer_id: player_id,
+            killer_direction: direction.to_char(),
+            npc_index: npc_index as EOShort,
+            damage: damage_dealt,
+            experience: character.experience,
+            level_up: LevelUpStats {
+                level: character.level,
+                stat_points: character.stat_points,
+                skill_points: character.skill_points,
+                max_hp: character.max_hp,
+                max_tp: character.max_tp,
+                max_sp: character.max_sp,
+            },
+            ..Default::default()
         };
 
-        let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
-            Ok(hit_rate) => hit_rate,
-            Err(e) => {
-                error!("Failed to calculate hit rate: {}", e);
-                0.0
-            }
-        };
-
-        if hit_rate < rand {
-            return 0;
+        if let Some(drop) = drop {
+            let index = self.get_next_item_index(1);
+            packet.drop_index = index;
+            packet.drop_id = drop.id;
+            packet.drop_coords = drop.coords;
+            packet.drop_amount = drop.amount;
+            self.items.insert(index, drop);
         }
 
-        match eval_float_with_context(&FORMULAS.damage, &context) {
-            Ok(amount) => cmp::min(amount.floor() as EOInt, npc.hp as EOInt),
-            Err(e) => {
-                error!("Failed to calculate damage: {}", e);
-                0
-            }
-        }
+        debug!("{:?}", packet);
+
+        self.send_packet_near(&npc.coords, PacketAction::Accept, PacketFamily::Npc, packet);
+    }
+
+    fn attack_player(
+        &mut self,
+        _player_id: EOShort,
+        _target_player_id: EOShort,
+        _direction: Direction,
+    ) {
+        unimplemented!("PK and Arena")
     }
 }
 
-fn get_drop(target_player_id: EOShort, target_attack_coords: Coords, npc: &Npc) -> Option<Item> {
+fn get_drop(target_player_id: EOShort, npc: &Npc) -> Option<Item> {
     if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc.id) {
         let mut rng = rand::thread_rng();
         let mut drops = drop_npc.drops.clone();
@@ -300,7 +286,7 @@ fn get_drop(target_player_id: EOShort, target_attack_coords: Coords, npc: &Npc) 
                 return Some(Item {
                     id: drop.item_id,
                     amount,
-                    coords: target_attack_coords,
+                    coords: npc.coords,
                     owner: target_player_id,
                 });
             }

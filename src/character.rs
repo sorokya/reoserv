@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder, MAX2},
+    data::{EOChar, EOInt, EOShort, EOThree, Serializeable, StreamBuilder, MAX2},
     protocol::{
         client::character::Create, server::paperdoll, AdminLevel, BigCoords, CharacterBaseStats,
         CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2, Coords,
@@ -15,7 +15,7 @@ use chrono::prelude::*;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 
-use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, INN_DB, ITEM_DB, SETTINGS};
+use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, INN_DB, ITEM_DB, SETTINGS, EXP_TABLE};
 
 pub enum PaperdollSlot {
     Boots,
@@ -1272,5 +1272,21 @@ impl Character {
                 armor: self.armor,
             },
         }
+    }
+
+    pub fn add_experience(&mut self, experience: EOThree) -> bool {
+        self.experience += experience;
+
+        let mut leveled_up = false;
+
+        while self.experience > EXP_TABLE[self.level as usize + 1] {
+            self.level += 1;
+            self.stat_points += 3;
+            self.skill_points += 4;
+            leveled_up = true;
+        }
+
+        self.calculate_stats();
+        leveled_up
     }
 }

@@ -173,7 +173,7 @@ impl Map {
             None => return,
         };
 
-        let leveled_up = character.add_experience(npc_data.experience * 100);
+        let leveled_up = character.add_experience(npc_data.experience);
 
         let drop = { get_drop(player_id, npc) };
 

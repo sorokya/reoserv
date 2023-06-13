@@ -13,7 +13,7 @@ use super::{Chest, Command, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
-    id: EOShort,
+    _id: EOShort,
     file: EmfFile,
     file_size: EOInt,
     chests: Vec<Chest>,
@@ -45,6 +45,7 @@ mod junk_item;
 mod leave;
 mod open_chest;
 mod open_door;
+mod open_shop;
 mod play_effect;
 mod recover_npcs;
 mod recover_players;
@@ -72,7 +73,7 @@ impl Map {
         rx: UnboundedReceiver<Command>,
     ) -> Self {
         Self {
-            id,
+            _id: id,
             file_size,
             file,
             rx,
@@ -174,6 +175,8 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::OpenShop { player_id, npc_index } => self.open_shop(player_id, npc_index).await,
 
             Command::RecoverNpcs => self.recover_npcs().await,
 

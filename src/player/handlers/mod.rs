@@ -15,6 +15,7 @@ pub mod npc_map_info;
 pub mod paperdoll;
 pub mod players;
 pub mod refresh;
+pub mod shop;
 pub mod sit;
 pub mod talk;
 pub mod walk;

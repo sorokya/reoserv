@@ -82,6 +82,10 @@ pub enum Command {
         target_player_id: EOShort, // TODO: rename to player_id
         door_coords: Coords,       // TODO: rename to coords
     },
+    OpenShop {
+        player_id: EOShort,
+        npc_index: EOChar,
+    },
     RecoverNpcs,
     RecoverPlayers,
     RequestPaperdoll {

@@ -163,6 +163,10 @@ impl MapHandle {
         });
     }
 
+    pub fn open_shop(&self, player_id: EOShort, npc_index: EOChar) {
+        let _ = self.tx.send(Command::OpenShop { player_id, npc_index });
+    }
+
     pub fn recover_npcs(&self) {
         let _ = self.tx.send(Command::RecoverNpcs);
     }

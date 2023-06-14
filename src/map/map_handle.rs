@@ -195,6 +195,14 @@ impl MapHandle {
         });
     }
 
+    pub fn sell_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
+        let _ = self.tx.send(Command::SellItem {
+            player_id,
+            item,
+            session_id,
+        });
+    }
+
     pub fn sit(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::Sit { player_id });
     }

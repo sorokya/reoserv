@@ -100,6 +100,11 @@ pub enum Command {
     Save {
         respond_to: oneshot::Sender<()>,
     },
+    SellItem {
+        player_id: EOShort,
+        item: Item,
+        session_id: EOShort,
+    },
     SendChatMessage {
         target_player_id: EOShort,
         message: String,

@@ -52,6 +52,7 @@ mod recover_npcs;
 mod recover_players;
 mod request_paperdoll;
 mod save;
+mod sell_item;
 mod send_chat_message;
 mod send_packet_near;
 mod send_packet_near_player;
@@ -198,6 +199,10 @@ impl Map {
             } => self.request_paperdoll(player_id, target_player_id),
 
             Command::Save { respond_to } => self.save(respond_to).await,
+
+            Command::SellItem { player_id, item, session_id } => {
+                self.sell_item(player_id, item, session_id).await
+            }
 
             Command::SendChatMessage {
                 target_player_id,

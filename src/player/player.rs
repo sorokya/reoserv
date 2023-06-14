@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOInt, EOShort, StreamBuilder, MAX2},
+    data::{EOInt, EOShort, StreamBuilder, MAX2, EOChar},
     net::PacketProcessor,
     protocol::{PacketAction, PacketFamily},
 };
@@ -34,6 +34,7 @@ pub struct Player {
     ip: String,
     character: Option<Character>,
     session_id: Option<EOShort>,
+    interact_npc_index: Option<EOChar>,
     warp_session: Option<WarpSession>,
 }
 
@@ -65,6 +66,7 @@ impl Player {
             character: None,
             warp_session: None,
             session_id: None,
+            interact_npc_index: None,
         }
     }
 
@@ -191,6 +193,9 @@ impl Player {
                     let _ = respond_to.send(Err(MissingSessionIdError));
                 }
             }
+            Command::GetInteractNpcIndex { respond_to } => {
+                let _ = respond_to.send(self.interact_npc_index);
+            }
             Command::GetSequenceStart { respond_to } => {
                 let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
             }
@@ -250,6 +255,9 @@ impl Player {
             }
             Command::SetCharacter(character) => {
                 self.character = Some(*character);
+            }
+            Command::SetInteractNpcIndex(index) => {
+                self.interact_npc_index = Some(index);
             }
             Command::SetMap(map) => {
                 self.map = Some(map);

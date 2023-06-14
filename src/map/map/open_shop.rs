@@ -45,6 +45,8 @@ impl Map {
             }
         };
 
+        player.set_interact_npc_index(npc_index);
+
         // TODO: stupid that I have to map over the shop data here
         // they should be compatible in protocol
         let reply = shop::Open {

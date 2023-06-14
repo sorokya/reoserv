@@ -159,6 +159,17 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_interact_npc_index(
+        &self,
+    ) -> Option<EOChar> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetInteractNpcIndex { respond_to: tx });
+        match rx.await {
+            Ok(index) => index,
+            Err(_) => None,
+        }
+    }
+
     pub async fn get_sequence_bytes(
         &self,
     ) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
@@ -242,6 +253,10 @@ impl PlayerHandle {
 
     pub fn set_character(&self, character: Box<Character>) {
         let _ = self.tx.send(Command::SetCharacter(character));
+    }
+
+    pub fn set_interact_npc_index(&self, index: EOChar) {
+        let _ = self.tx.send(Command::SetInteractNpcIndex(index));
     }
 
     pub fn set_map(&self, map: MapHandle) {

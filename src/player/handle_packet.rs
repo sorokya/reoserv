@@ -40,6 +40,9 @@ pub async fn handle_packet(
     let buf = reader.get_vec(reader.remaining());
     match family {
         PacketFamily::Shop => match action {
+            PacketAction::Buy => {
+                handlers::shop::buy(buf, player.clone()).await;
+            }
             PacketAction::Open => {
                 handlers::shop::open(buf, player.clone()).await;
             }

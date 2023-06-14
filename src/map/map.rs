@@ -25,6 +25,7 @@ pub struct Map {
 
 mod act_npcs;
 mod attack;
+mod buy_item;
 mod drop_item;
 mod emote;
 mod enter;
@@ -56,9 +57,9 @@ mod send_packet_near;
 mod send_packet_near_player;
 mod serialize;
 mod sit;
-mod stand;
 mod spawn_items;
 mod spawn_npcs;
+mod stand;
 mod take_chest_item;
 mod unequip;
 mod use_item;
@@ -91,6 +92,12 @@ impl Map {
                 target_player_id,
                 direction,
             } => self.attack(target_player_id, direction),
+
+            Command::BuyItem {
+                player_id,
+                item,
+                session_id,
+            } => self.buy_item(player_id, item, session_id).await,
 
             Command::DropItem {
                 target_player_id,
@@ -176,7 +183,10 @@ impl Map {
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
 
-            Command::OpenShop { player_id, npc_index } => self.open_shop(player_id, npc_index).await,
+            Command::OpenShop {
+                player_id,
+                npc_index,
+            } => self.open_shop(player_id, npc_index).await,
 
             Command::RecoverNpcs => self.recover_npcs().await,
 
@@ -198,13 +208,9 @@ impl Map {
                 self.serialize(respond_to);
             }
 
-            Command::Sit {
-                player_id
-            } => self.sit(player_id),
+            Command::Sit { player_id } => self.sit(player_id),
 
-            Command::Stand {
-                player_id
-            } => self.stand(player_id),
+            Command::Stand { player_id } => self.stand(player_id),
 
             Command::SpawnItems => self.spawn_items().await,
 

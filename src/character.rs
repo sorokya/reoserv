@@ -15,7 +15,9 @@ use chrono::prelude::*;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 
-use crate::{player::PlayerHandle, utils, CLASS_DB, FORMULAS, INN_DB, ITEM_DB, SETTINGS, EXP_TABLE};
+use crate::{
+    player::PlayerHandle, utils, CLASS_DB, EXP_TABLE, FORMULAS, INN_DB, ITEM_DB, SETTINGS,
+};
 
 pub enum PaperdollSlot {
     Boots,
@@ -468,6 +470,15 @@ impl Character {
         if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
             self.weight += (item.weight as EOInt * amount) as EOChar;
         }
+    }
+
+    pub fn get_item_amount(&self, item_id: EOShort) -> EOInt {
+        let existing_item = match self.items.iter().find(|item| item.id == item_id) {
+            Some(item) => item,
+            None => return 0,
+        };
+
+        existing_item.amount
     }
 
     pub fn remove_item(&mut self, item_id: EOShort, amount: EOInt) {

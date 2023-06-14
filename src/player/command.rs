@@ -51,6 +51,9 @@ pub enum Command {
     GetSessionId {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
+    GetInteractNpcIndex {
+        respond_to: oneshot::Sender<Option<EOChar>>,
+    },
     GetSequenceBytes {
         respond_to: oneshot::Sender<(EOShort, EOChar)>,
     },
@@ -78,6 +81,7 @@ pub enum Command {
     SetAccountId(EOInt),
     SetBusy(bool),
     SetCharacter(Box<Character>),
+    SetInteractNpcIndex(EOChar),
     SetMap(MapHandle),
     SetState(ClientState),
     TakeCharacter {

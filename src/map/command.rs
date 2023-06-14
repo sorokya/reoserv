@@ -18,6 +18,11 @@ pub enum Command {
         item: Item,
         session_id: EOShort,
     },
+    CraftItem {
+        player_id: EOShort,
+        item_id: EOShort,
+        session_id: EOShort,
+    },
     DropItem {
         target_player_id: EOShort,
         item: ShortItem,

@@ -99,6 +99,8 @@ impl Map {
             },
         };
 
+        debug!("Send: {:?}", reply);
+
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
 

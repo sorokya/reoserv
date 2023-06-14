@@ -26,6 +26,7 @@ pub struct Map {
 mod act_npcs;
 mod attack;
 mod buy_item;
+mod craft_item;
 mod drop_item;
 mod emote;
 mod enter;
@@ -99,6 +100,12 @@ impl Map {
                 item,
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
+
+            Command::CraftItem {
+                player_id,
+                item_id,
+                session_id,
+            } => self.craft_item(player_id, item_id, session_id).await,
 
             Command::DropItem {
                 target_player_id,
@@ -200,9 +207,11 @@ impl Map {
 
             Command::Save { respond_to } => self.save(respond_to).await,
 
-            Command::SellItem { player_id, item, session_id } => {
-                self.sell_item(player_id, item, session_id).await
-            }
+            Command::SellItem {
+                player_id,
+                item,
+                session_id,
+            } => self.sell_item(player_id, item, session_id).await,
 
             Command::SendChatMessage {
                 target_player_id,

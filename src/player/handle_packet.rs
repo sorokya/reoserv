@@ -43,6 +43,9 @@ pub async fn handle_packet(
             PacketAction::Buy => {
                 handlers::shop::buy(buf, player.clone()).await;
             }
+            PacketAction::Create => {
+                handlers::shop::craft(buf, player.clone()).await;
+            }
             PacketAction::Open => {
                 handlers::shop::open(buf, player.clone()).await;
             }

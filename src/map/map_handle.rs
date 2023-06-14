@@ -40,6 +40,14 @@ impl MapHandle {
         });
     }
 
+    pub fn craft_item(&self, player_id: EOShort, item_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::CraftItem {
+            player_id,
+            item_id,
+            session_id,
+        });
+    }
+
     pub fn drop_item(&self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
         let _ = self.tx.send(Command::DropItem {
             target_player_id,

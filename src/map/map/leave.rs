@@ -21,8 +21,8 @@ impl Map {
             animation: warp_animation,
         };
 
-        self.send_packet_near_player(
-            target_player_id,
+        self.send_packet_near(
+            &target.coords,
             PacketAction::Remove,
             PacketFamily::Avatar,
             packet,

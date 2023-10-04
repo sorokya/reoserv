@@ -3,6 +3,8 @@ use eo::{
     protocol::{PacketAction, PacketFamily},
 };
 
+use crate::utils::in_range;
+
 use super::Map;
 
 impl Map {
@@ -24,7 +26,7 @@ impl Map {
                     continue;
                 }
 
-                if character.is_in_range(&target.coords) {
+                if in_range(&character.coords, &target.coords) {
                     character
                         .player
                         .as_ref()

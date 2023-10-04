@@ -1,29 +1,21 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::EOShort,
     protocol::{server::door, Coords, PacketAction, PacketFamily},
 };
+
+use crate::utils::in_client_range;
 
 use super::Map;
 
 impl Map {
     pub fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
         let target = self.characters.get(&target_player_id).unwrap();
-        if target.is_in_range(&door_coords) {
+        if in_client_range(&target.coords, &door_coords) {
             let packet = door::Open {
                 coords: door_coords,
             };
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
-            let buf = builder.get();
-            for character in self.characters.values() {
-                if character.is_in_range(&door_coords) {
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Open,
-                        PacketFamily::Door,
-                        buf.clone(),
-                    );
-                }
-            }
+
+            self.send_packet_near(&door_coords, PacketAction::Open, PacketFamily::Door, packet);
         }
     }
 }

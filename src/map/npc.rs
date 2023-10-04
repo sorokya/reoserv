@@ -8,7 +8,7 @@ use eo::{
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{utils, FORMULAS, NPC_DB};
+use crate::{FORMULAS, NPC_DB};
 
 #[derive(Debug, Default)]
 pub struct Npc {
@@ -34,10 +34,6 @@ pub struct NpcOpponent {
 }
 
 impl Npc {
-    pub fn is_in_range(&self, coords: &Coords) -> bool {
-        utils::in_range(&self.coords, coords)
-    }
-
     pub fn get_hp_percentage(&self) -> EOChar {
         let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
         percent.floor() as EOChar

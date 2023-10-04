@@ -3,6 +3,8 @@ use eo::{
     protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
 };
 
+use crate::utils::in_client_range;
+
 use super::Map;
 
 impl Map {
@@ -17,7 +19,7 @@ impl Map {
             None => return,
         };
 
-        if !character.is_in_range(&coords) {
+        if !in_client_range(&character.coords, &coords) {
             return;
         }
 

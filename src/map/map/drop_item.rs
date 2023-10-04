@@ -110,20 +110,12 @@ impl Map {
             coords,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        let buf = builder.get();
-
-        debug!("{:?}", reply);
-
-        for character in self.characters.values() {
-            if target_player_id != character.player_id.unwrap() && character.is_in_range(&coords) {
-                character.player.as_ref().unwrap().send(
-                    PacketAction::Add,
-                    PacketFamily::Item,
-                    buf.clone(),
-                );
-            }
-        }
+        self.send_packet_near_exclude_player(
+            &coords,
+            target_player_id,
+            PacketAction::Add,
+            PacketFamily::Item,
+            reply,
+        );
     }
 }

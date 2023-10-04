@@ -7,13 +7,22 @@ pub fn get_distance(a: &Coords, b: &Coords) -> EOChar {
     (dx + dy) as EOChar
 }
 
-pub fn in_range(a: &Coords, b: &Coords) -> bool {
-    let distance = get_distance(a, b);
+pub fn in_range(observer: &Coords, other: &Coords) -> bool {
+    let distance = get_distance(observer, other);
 
-    // TODO: move hard coded values to config
-    if a.x > b.x || a.y > b.y {
+    if observer.x >= other.x || observer.y >= other.y {
         distance <= 12
     } else {
         distance <= 15
+    }
+}
+
+pub fn in_client_range(observer: &Coords, other: &Coords) -> bool {
+    let distance = get_distance(observer, other);
+
+    if observer.x >= other.x || observer.y >= other.y {
+        distance <= 11
+    } else {
+        distance <= 14
     }
 }

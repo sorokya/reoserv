@@ -15,7 +15,7 @@ use rand::{seq::SliceRandom, Rng};
 use crate::{
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords},
+    utils::{get_distance, get_next_coords, in_range},
     FORMULAS, NPC_DB, SETTINGS, TALK_DB,
 };
 
@@ -439,7 +439,7 @@ impl Map {
                 let in_range_npc_indexes: Vec<EOChar> = self
                     .npcs
                     .iter()
-                    .filter(|(_, n)| n.is_in_range(&character.coords))
+                    .filter(|(_, n)| in_range(&character.coords, &n.coords))
                     .map(|(i, _)| i)
                     .cloned()
                     .collect();

@@ -4,6 +4,8 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
+use crate::utils::in_client_range;
+
 use super::Map;
 
 impl Map {
@@ -17,18 +19,18 @@ impl Map {
         let mut nearby_npcs = Vec::new();
         let mut nearby_characters = Vec::new();
         for (index, item) in self.items.iter() {
-            if target.is_in_range(&item.coords) {
+            if in_client_range(&target.coords, &item.coords) {
                 nearby_items.push(item.to_item_map_info(*index));
             }
         }
         for (index, npc) in self.npcs.iter() {
-            if npc.alive && target.is_in_range(&npc.coords) {
+            if npc.alive && in_client_range(&target.coords, &npc.coords) {
                 nearby_npcs.push(npc.to_map_info(index));
             }
         }
         for character in self.characters.values() {
             if target_player_id == character.player_id.unwrap()
-                || target.is_in_range(&character.coords)
+                || in_client_range(&target.coords, &character.coords)
             {
                 nearby_characters.push(character.to_map_info());
             }

@@ -1,5 +1,5 @@
 use eo::{
-    data::{Serializeable, StreamBuilder},
+    data::{EOShort, Serializeable, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
 };
 
@@ -8,9 +8,10 @@ use crate::utils::in_range;
 use super::Map;
 
 impl Map {
-    pub fn send_packet_near<T>(
+    pub fn send_packet_near_exclude_player<T>(
         &self,
         coords: &Coords,
+        exclude_player_id: EOShort,
         action: PacketAction,
         family: PacketFamily,
         packet: T,
@@ -20,8 +21,8 @@ impl Map {
         let mut builder = StreamBuilder::new();
         packet.serialize(&mut builder);
         let buf = builder.get();
-        for character in self.characters.values() {
-            if in_range(coords, &character.coords) {
+        for (player_id, character) in self.characters.iter() {
+            if *player_id != exclude_player_id && in_range(coords, &character.coords) {
                 character
                     .player
                     .as_ref()

@@ -3,7 +3,10 @@ use eo::{
     protocol::{server::walk, Direction, PacketAction, PacketFamily},
 };
 
-use crate::map::{get_warp_at, is_in_bounds};
+use crate::{
+    map::{get_warp_at, is_in_bounds},
+    utils::{in_client_range, in_range},
+};
 
 use super::Map;
 
@@ -58,22 +61,22 @@ impl Map {
 
                     for (player_id, character) in self.characters.iter() {
                         if *player_id != target_player_id
-                            && character.is_in_range(&target_coords)
-                            && !character.is_in_range(&target_previous_coords)
+                            && in_client_range(&target_coords, &character.coords)
+                            && !in_client_range(&target_previous_coords, &character.coords)
                         {
                             packet.player_ids.push(*player_id);
                         }
                     }
                     for (index, item) in self.items.iter() {
-                        if item.is_in_range(&target_coords)
-                            && !item.is_in_range(&target_previous_coords)
+                        if in_client_range(&target_coords, &item.coords)
+                            && !in_client_range(&target_previous_coords, &item.coords)
                         {
                             packet.items.push(item.to_item_map_info(*index));
                         }
                     }
                     for (index, npc) in self.npcs.iter() {
-                        if npc.is_in_range(&target_coords)
-                            && !npc.is_in_range(&target_previous_coords)
+                        if in_client_range(&target_coords, &npc.coords)
+                            && !in_client_range(&target_previous_coords, &npc.coords)
                         {
                             packet.npc_indexes.push(*index);
                         }
@@ -96,12 +99,13 @@ impl Map {
                 direction,
                 coords: target_coords,
             };
+
             debug!("Send: {:?}", walk_packet);
             let mut builder = StreamBuilder::new();
             walk_packet.serialize(&mut builder);
             let walk_packet_buf = builder.get();
             for (player_id, character) in self.characters.iter() {
-                if target_player_id != *player_id && character.is_in_range(&target_coords) {
+                if target_player_id != *player_id && in_range(&character.coords, &target_coords) {
                     character.player.as_ref().unwrap().send(
                         PacketAction::Player,
                         PacketFamily::Walk,

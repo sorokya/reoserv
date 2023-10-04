@@ -76,21 +76,12 @@ impl Map {
         if is_visible_change && self.characters.len() > 1 {
             let reply = avatar::Agree { change };
 
-            debug!("{:?}", reply);
-
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            let buf = builder.get();
-
-            for (target_player_id, character) in self.characters.iter() {
-                if *target_player_id != player_id && character.is_in_range(&character.coords) {
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Agree,
-                        PacketFamily::Avatar,
-                        buf.clone(),
-                    );
-                }
-            }
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Agree,
+                PacketFamily::Avatar,
+                reply,
+            );
         }
     }
 }

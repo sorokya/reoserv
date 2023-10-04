@@ -14,7 +14,7 @@ use super::Map;
 
 impl Map {
     pub fn unequip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
-        let character = match self.characters.get_mut(&player_id) {
+        let target = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
                 error!("Failed to get character");
@@ -22,7 +22,7 @@ impl Map {
             }
         };
 
-        if !character.unequip(item_id, sub_loc) {
+        if !target.unequip(item_id, sub_loc) {
             return;
         }
 
@@ -31,7 +31,7 @@ impl Map {
             slot: AvatarSlot::Clothes,
             sound: 0,
             data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                paperdoll: character.get_paperdoll_bahws(),
+                paperdoll: target.get_paperdoll_bahws(),
             }),
         };
 
@@ -39,14 +39,14 @@ impl Map {
             change: change.clone(),
             item_id,
             sub_loc,
-            stats: character.get_item_character_stats(),
+            stats: target.get_item_character_stats(),
         };
 
         debug!("{:?}", reply);
 
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
-        character.player.as_ref().unwrap().send(
+        target.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::Paperdoll,
             builder.get(),
@@ -66,19 +66,12 @@ impl Map {
 
             debug!("{:?}", reply);
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            let buf = builder.get();
-
-            for (target_player_id, character) in self.characters.iter() {
-                if *target_player_id != player_id && character.is_in_range(&character.coords) {
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Agree,
-                        PacketFamily::Avatar,
-                        buf.clone(),
-                    );
-                }
-            }
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Agree,
+                PacketFamily::Avatar,
+                reply,
+            );
         }
     }
 }

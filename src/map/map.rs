@@ -56,6 +56,7 @@ mod save;
 mod sell_item;
 mod send_chat_message;
 mod send_packet_near;
+mod send_packet_near_exclude_player;
 mod send_packet_near_player;
 mod serialize;
 mod sit;

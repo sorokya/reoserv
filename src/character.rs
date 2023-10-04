@@ -15,9 +15,7 @@ use chrono::prelude::*;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::{prelude::*, Conn, Params, Row, TxOpts};
 
-use crate::{
-    player::PlayerHandle, utils, CLASS_DB, EXP_TABLE, FORMULAS, INN_DB, ITEM_DB, SETTINGS,
-};
+use crate::{player::PlayerHandle, CLASS_DB, EXP_TABLE, FORMULAS, INN_DB, ITEM_DB, SETTINGS};
 
 pub enum PaperdollSlot {
     Boots,
@@ -431,10 +429,6 @@ impl Character {
             AdminLevel::Guardian | AdminLevel::GameMaster => PaperdollIcon::Gm,
             AdminLevel::HighGameMaster => PaperdollIcon::Hgm,
         }
-    }
-
-    pub fn is_in_range(&self, coords: &Coords) -> bool {
-        utils::in_range(&self.coords, coords)
     }
 
     pub fn can_hold(&self, item_id: EOShort, max_amount: EOInt) -> EOInt {

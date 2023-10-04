@@ -23,7 +23,7 @@ pub struct Npc {
     pub walk_idle_for: Option<Duration>,
     pub hp: EOThree,
     pub max_hp: EOThree,
-    pub oppenents: Vec<NpcOpponent>,
+    pub opponents: Vec<NpcOpponent>,
 }
 
 #[derive(Debug, Default)]
@@ -102,14 +102,14 @@ impl Npc {
 
         self.hp -= damage as EOThree;
         if self.hp > 0 {
-            match self.oppenents.iter().position(|o| o.player_id == player_id) {
+            match self.opponents.iter().position(|o| o.player_id == player_id) {
                 Some(index) => {
-                    let opponent = self.oppenents.get_mut(index).unwrap();
+                    let opponent = self.opponents.get_mut(index).unwrap();
                     opponent.damage_dealt += damage;
                     opponent.last_hit = Utc::now();
                 }
                 None => {
-                    self.oppenents.push(NpcOpponent {
+                    self.opponents.push(NpcOpponent {
                         player_id,
                         damage_dealt: damage,
                         last_hit: Utc::now(),
@@ -119,7 +119,7 @@ impl Npc {
         } else {
             self.alive = false;
             self.dead_since = Utc::now();
-            self.oppenents.clear();
+            self.opponents.clear();
         }
 
         damage
@@ -199,7 +199,7 @@ impl NPCBuilder {
             walk_idle_for: self.walk_idle_for,
             hp: self.hp,
             max_hp: self.max_hp,
-            oppenents: Vec::new(),
+            opponents: Vec::new(),
         }
     }
 }

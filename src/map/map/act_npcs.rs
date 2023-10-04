@@ -66,33 +66,75 @@ impl Map {
             None => return None,
         };
 
-        let x_delta = target_coords.x as i32 - npc_coords.x as i32;
-        let y_delta = target_coords.y as i32 - npc_coords.y as i32;
+        let x_delta = npc_coords.x as i32 - target_coords.x as i32;
+        let y_delta = npc_coords.y as i32 - target_coords.y as i32;
 
-        let direction = if x_delta.abs() > y_delta.abs() {
-            if x_delta > 0 {
+        let mut direction = if x_delta.abs() > y_delta.abs() {
+            if x_delta < 0 {
                 Direction::Right
             } else {
                 Direction::Left
             }
-        } else if y_delta > 0 {
+        } else if y_delta < 0 {
             Direction::Down
         } else {
             Direction::Up
         };
 
         let new_coords = get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
+
         if self.is_tile_walkable_npc(&new_coords) {
             let mut npc = self.npcs.get_mut(&index).unwrap();
+            npc.direction = direction;
             npc.coords = new_coords;
             npc.last_act = Some(Utc::now());
             Some(NPCUpdatePos {
                 npc_index: index,
                 coords: npc.coords,
-                direction,
+                direction: npc.direction,
             })
         } else {
-            self.act_npc_move_idle(index)
+            if matches!(direction, Direction::Up | Direction::Down) {
+                direction = if x_delta < 0 {
+                    Direction::Right
+                } else {
+                    Direction::Left
+                };
+            }
+            let new_coords =
+                get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
+
+            if self.is_tile_walkable_npc(&new_coords) {
+                let mut npc = self.npcs.get_mut(&index).unwrap();
+                npc.direction = direction;
+                npc.coords = new_coords;
+                npc.last_act = Some(Utc::now());
+                Some(NPCUpdatePos {
+                    npc_index: index,
+                    coords: npc.coords,
+                    direction: npc.direction,
+                })
+            } else {
+                let mut rng = rand::thread_rng();
+                direction = Direction::from_char(rng.gen_range(0..=3)).unwrap();
+
+                let new_coords =
+                    get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
+
+                if self.is_tile_walkable_npc(&new_coords) {
+                    let mut npc = self.npcs.get_mut(&index).unwrap();
+                    npc.direction = direction;
+                    npc.coords = new_coords;
+                    npc.last_act = Some(Utc::now());
+                    Some(NPCUpdatePos {
+                        npc_index: index,
+                        coords: npc.coords,
+                        direction: npc.direction,
+                    })
+                } else {
+                    None
+                }
+            }
         }
     }
 
@@ -118,14 +160,17 @@ impl Map {
             None => return None,
         };
 
-        if !npc.oppenents.is_empty() {
-            let opponents_in_range = npc.oppenents.iter().filter(|opponent| {
-                let opponent = match self.characters.get(&opponent.player_id) {
+        if !npc.opponents.is_empty() {
+            let now = Utc::now();
+            let opponents_in_range = npc.opponents.iter().filter(|opponent| {
+                let character = match self.characters.get(&opponent.player_id) {
                     Some(opponent) => opponent,
                     None => return false,
                 };
-                let distance = get_distance(&npc.coords, &opponent.coords);
+                let distance = get_distance(&npc.coords, &character.coords);
                 distance <= SETTINGS.npcs.chase_distance as EOChar
+                    && now.signed_duration_since(opponent.last_hit).num_seconds()
+                        < SETTINGS.npcs.bored_timer as i64
             });
 
             // get opponent with max damage dealt
@@ -170,10 +215,16 @@ impl Map {
             .map(|(player_id, _)| *player_id)
             .collect::<Vec<_>>();
 
+        let now = Utc::now();
+
         let adjacent_opponent = npc
-            .oppenents
+            .opponents
             .iter()
-            .filter(|opponent| adjacent_player_ids.contains(&opponent.player_id))
+            .filter(|opponent| {
+                adjacent_player_ids.contains(&opponent.player_id)
+                    && now.signed_duration_since(opponent.last_hit).num_seconds()
+                        < SETTINGS.npcs.bored_timer as i64
+            })
             .max_by_key(|opponent| opponent.damage_dealt);
 
         if let Some(opponent) = adjacent_opponent {
@@ -184,8 +235,9 @@ impl Map {
                 None => return None,
             };
 
-            // Choose a random player if npc is aggressive or blocked by non-opponents
-            if npc_data.r#type == EnfNpcType::Aggressive || !npc.oppenents.is_empty() {
+            // TODO: also attack adjacent players if blocking path to opponent(s)
+            // Choose a random player if npc is aggressive
+            if npc_data.r#type == EnfNpcType::Aggressive {
                 let mut rng = rand::thread_rng();
                 adjacent_player_ids.choose(&mut rng).copied()
             } else {
@@ -245,11 +297,11 @@ impl Map {
         act_rate: EOInt,
         act_delta: &Duration,
     ) -> Option<NPCUpdatePos> {
-        let (walk_idle_for, has_oppenents) = {
+        let (walk_idle_for, has_opponent) = {
             match self.npcs.get(&index) {
                 Some(npc) => (
                     npc.walk_idle_for.unwrap_or_else(|| Duration::seconds(0)),
-                    !npc.oppenents.is_empty(),
+                    !npc.opponents.is_empty(),
                 ),
                 None => return None,
             }
@@ -262,7 +314,7 @@ impl Map {
             None => return None,
         };
 
-        if npc_data.r#type == EnfNpcType::Aggressive || has_oppenents {
+        if npc_data.r#type == EnfNpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id)
         } else if act_delta >= &idle_rate {
             self.act_npc_move_idle(index)

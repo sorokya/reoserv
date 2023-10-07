@@ -81,22 +81,34 @@ impl Map {
                         spawn_coords
                     } else {
                         Coords {
-                            x: cmp::min(spawn_coords.x + rng.gen_range(0..=3), self.file.width),
-                            y: cmp::min(spawn_coords.y + rng.gen_range(0..=3), self.file.height),
+                            x: cmp::max(
+                                cmp::min(
+                                    spawn_coords.x as i32 + rng.gen_range(-2..=2),
+                                    self.file.width as i32,
+                                ),
+                                0,
+                            ) as EOChar,
+                            y: cmp::max(
+                                cmp::min(
+                                    spawn_coords.y as i32 + rng.gen_range(-2..=2),
+                                    self.file.height as i32,
+                                ),
+                                0,
+                            ) as EOChar,
                         }
                     };
 
                     while !self.is_tile_walkable_npc(&spawn_coords) {
                         let x = cmp::max(
                             cmp::min(
-                                spawn_coords.x as i32 + rng.gen_range(-3..=3),
+                                spawn_coords.x as i32 + rng.gen_range(-2..=2),
                                 self.file.width as i32,
                             ),
                             0,
                         );
                         let y = cmp::max(
                             cmp::min(
-                                spawn_coords.y as i32 + rng.gen_range(-3..=3),
+                                spawn_coords.y as i32 + rng.gen_range(-2..=2),
                                 self.file.height as i32,
                             ),
                             0,

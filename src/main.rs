@@ -16,6 +16,7 @@ use commands::Commands;
 mod formulas;
 use formulas::Formulas;
 mod errors;
+mod handlers;
 mod map;
 mod player;
 mod settings;

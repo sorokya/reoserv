@@ -1119,7 +1119,7 @@ impl Character {
         )
         .await?;
 
-        // TODO: save inventory/bank/spells
+        // TODO: save bank/spells
 
         for item in &old_items {
             if !self.items.contains(item) {

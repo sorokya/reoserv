@@ -85,7 +85,6 @@ pub async fn talk(
         PacketAction::Msg => msg(reader, player, world).await,
         PacketAction::Report => report(reader, player, world).await,
         PacketAction::Tell => tell(reader, player, world).await,
-        PacketAction::Open | PacketAction::Request => {} // no-op
         _ => error!("Unhandled packet Talk_{:?}", action),
     }
 }

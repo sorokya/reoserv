@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, WarpAnimation,
     },
@@ -14,6 +14,7 @@ pub enum Command {
     Attack {
         target_player_id: EOShort,
         direction: Direction,
+        timestamp: EOThree,
     },
     BuyItem {
         player_id: EOShort,
@@ -143,7 +144,7 @@ pub enum Command {
         target_player_id: EOShort,
         direction: Direction,
         coords: Coords,
-        timestamp: EOInt,
+        timestamp: EOThree,
     },
     SpawnItems,
     SpawnNpcs,

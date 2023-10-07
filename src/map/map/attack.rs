@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{
         server::{attack, npc},
         Direction, LevelUpStats, PacketAction, PacketFamily,
@@ -22,7 +22,8 @@ enum AttackTarget {
 }
 
 impl Map {
-    pub fn attack(&mut self, player_id: EOShort, direction: Direction) {
+    // TODO: enforce timestamp
+    pub fn attack(&mut self, player_id: EOShort, direction: Direction, _timestamp: EOThree) {
         let reply = attack::Player {
             player_id,
             direction,

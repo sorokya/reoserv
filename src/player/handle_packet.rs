@@ -1,4 +1,7 @@
-use super::{handlers, ClientState, PlayerHandle};
+use crate::{
+    handlers,
+    player::{ClientState, PlayerHandle},
+};
 use bytes::Bytes;
 use eo::{
     data::{EOInt, StreamReader},

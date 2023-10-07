@@ -2,7 +2,6 @@ mod client_state;
 pub use client_state::ClientState;
 mod command;
 pub use command::Command;
-mod handlers;
 mod packet_bus;
 #[allow(clippy::module_inception)]
 mod player;

@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, WarpAnimation,
     },
@@ -275,7 +275,7 @@ impl MapHandle {
         target_player_id: EOShort,
         direction: Direction,
         coords: Coords,
-        timestamp: EOInt,
+        timestamp: EOThree,
     ) {
         let _ = self.tx.send(Command::Walk {
             target_player_id,
@@ -285,10 +285,11 @@ impl MapHandle {
         });
     }
 
-    pub fn attack(&self, target_player_id: EOShort, direction: Direction) {
+    pub fn attack(&self, target_player_id: EOShort, direction: Direction, timestamp: EOThree) {
         let _ = self.tx.send(Command::Attack {
             target_player_id,
             direction,
+            timestamp,
         });
     }
 }

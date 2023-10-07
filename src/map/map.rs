@@ -94,7 +94,8 @@ impl Map {
             Command::Attack {
                 target_player_id,
                 direction,
-            } => self.attack(target_player_id, direction),
+                timestamp,
+            } => self.attack(target_player_id, direction, timestamp),
 
             Command::BuyItem {
                 player_id,

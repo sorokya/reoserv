@@ -9,8 +9,6 @@ async fn r#use(reader: StreamReader, player: PlayerHandle) {
     let mut packet = Use::default();
     packet.deserialize(&reader);
 
-    // TODO: implement anti speed
-
     let player_id = player.get_player_id().await;
     if let Err(e) = player_id {
         error!("Error getting player id {}", e);
@@ -27,7 +25,7 @@ async fn r#use(reader: StreamReader, player: PlayerHandle) {
 
     let map = map.unwrap();
 
-    map.attack(player_id, packet.direction);
+    map.attack(player_id, packet.direction, packet.timestamp);
 }
 
 pub async fn attack(action: PacketAction, reader: StreamReader, player: PlayerHandle) {

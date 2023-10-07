@@ -1,6 +1,6 @@
 use eo::{
     data::{Serializeable, StreamBuilder},
-    protocol::{server::recover, SitState, PacketAction, PacketFamily},
+    protocol::{server::recover, PacketAction, PacketFamily, SitState},
 };
 
 use super::Map;
@@ -23,11 +23,13 @@ impl Map {
             }
 
             if character.tp < character.max_tp {
-                character.tp += (character.max_tp / if character.sit_state != SitState::Stand {
-                    5
-                } else {
-                    10
-                }) + 1;
+                character.tp += (character.max_tp
+                    / if character.sit_state != SitState::Stand {
+                        5
+                    } else {
+                        10
+                    })
+                    + 1;
 
                 if character.tp > character.max_tp {
                     character.tp = character.max_tp;
@@ -39,8 +41,6 @@ impl Map {
                 tp: character.tp,
                 sp: 0,
             };
-
-            debug!("{:?}", packet);
 
             let mut builder = StreamBuilder::new();
             packet.serialize(&mut builder);

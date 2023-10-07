@@ -60,8 +60,6 @@ impl Map {
                         hp_percentage: character.get_hp_percentage(),
                     };
 
-                    debug!("{:?}", packet);
-
                     self.send_packet_near_player(
                         player_id,
                         PacketAction::Agree,
@@ -199,8 +197,6 @@ impl Map {
             current: character.weight,
             max: character.max_weight,
         };
-
-        debug!("{:?}", reply);
 
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);

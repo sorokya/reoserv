@@ -35,8 +35,6 @@ impl Map {
                 .collect(),
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
         character.player.as_ref().unwrap().send(

@@ -524,8 +524,6 @@ impl Map {
                         chat: talk_updates_in_range,
                     };
 
-                    debug!("Send: {:?}", packet);
-
                     let mut builder = StreamBuilder::new();
                     packet.serialize(&mut builder);
 

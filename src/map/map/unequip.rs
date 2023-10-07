@@ -42,8 +42,6 @@ impl Map {
             stats: target.get_item_character_stats(),
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
         target.player.as_ref().unwrap().send(
@@ -63,8 +61,6 @@ impl Map {
 
         if is_visible_change && self.characters.len() > 1 {
             let reply = avatar::Agree { change };
-
-            debug!("{:?}", reply);
 
             self.send_packet_near_player(
                 player_id,

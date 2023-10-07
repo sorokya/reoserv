@@ -27,8 +27,6 @@ impl Map {
             direction: character.direction,
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
 

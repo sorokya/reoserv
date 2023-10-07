@@ -32,8 +32,6 @@ pub async fn ping_sln() {
         }
     };
 
-    debug!("Pinging SLN: {}", url);
-
     let client = reqwest::Client::new();
     let response = match client.get(url).header("User-Agent", "EOSERV").send().await {
         Ok(response) => response,
@@ -66,6 +64,4 @@ pub async fn ping_sln() {
             }
         }
     }
-
-    debug!("Pinged SLN successfully");
 }

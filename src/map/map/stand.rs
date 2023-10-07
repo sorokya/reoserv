@@ -26,8 +26,6 @@ impl Map {
             coords: character.coords,
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
 

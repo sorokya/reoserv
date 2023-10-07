@@ -28,8 +28,6 @@ impl Map {
             direction,
         };
 
-        debug!("{:?}", reply);
-
         self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Attack, reply);
 
         match self.get_attack_target(player_id, direction) {
@@ -129,8 +127,6 @@ impl Map {
             direction,
         };
 
-        debug!("{:?}", reply);
-
         self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Attack, reply);
 
         let npc = match self.npcs.get(&npc_index) {
@@ -145,8 +141,6 @@ impl Map {
             player_direction: direction.to_char(),
             hp_percentage: npc.get_hp_percentage() as EOShort,
         };
-
-        debug!("{:?}", reply);
 
         self.send_packet_near(&npc.coords, PacketAction::Reply, PacketFamily::Npc, reply);
     }
@@ -204,8 +198,6 @@ impl Map {
                 self.items.insert(index, drop);
             }
 
-            debug!("{:?}", packet);
-
             self.send_packet_near(&npc.coords, PacketAction::Spec, PacketFamily::Npc, packet);
         }
     }
@@ -227,10 +219,6 @@ impl Map {
             Some(character) => character,
             None => return,
         };
-
-        // INFO  eoproxy      > Level up!
-        // Accept { killer_id: 464, killer_direction: 0, npc_index: 5, drop_index: 0, drop_id: 0, drop_coords: Coords { x: 6, y: 4 }, drop_amount: 0, damage: 1, experience: 18000, level_up: LevelUpStats { level: 5, stat_points: 15, skill_points: 20, max_hp: 22, max_tp: 23, max_sp: 25 } }
-        // [212, 2, 1, 6, 254, 1, 254, 1, 254, 7, 5, 1, 254, 254, 254, 2, 254, 254, 38, 72, 254, 254, 6, 16, 254, 21, 254, 23, 254, 24, 254, 26, 254]
 
         let mut packet = npc::Accept {
             killer_id: player_id,
@@ -257,8 +245,6 @@ impl Map {
             packet.drop_amount = drop.amount;
             self.items.insert(index, drop);
         }
-
-        debug!("{:?}", packet);
 
         self.send_packet_near(&npc.coords, PacketAction::Accept, PacketFamily::Npc, packet);
     }

@@ -270,10 +270,18 @@ impl MapHandle {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
     }
 
-    pub fn walk(&self, target_player_id: EOShort, direction: Direction) {
+    pub fn walk(
+        &self,
+        target_player_id: EOShort,
+        direction: Direction,
+        coords: Coords,
+        timestamp: EOInt,
+    ) {
         let _ = self.tx.send(Command::Walk {
             target_player_id,
             direction,
+            coords,
+            timestamp,
         });
     }
 

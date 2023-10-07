@@ -58,7 +58,6 @@ impl Player {
         };
 
         self.warp_session = Some(warp_session);
-        debug!("Send: {:?}", request);
 
         let mut builder = StreamBuilder::new();
         request.serialize(&mut builder);

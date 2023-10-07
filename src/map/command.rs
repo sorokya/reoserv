@@ -1,7 +1,9 @@
 use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{server::range, Coords, Direction, Emote, NearbyInfo, ShortItem, WarpAnimation, Item},
+    protocol::{
+        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, WarpAnimation,
+    },
 };
 use tokio::sync::oneshot;
 
@@ -140,6 +142,8 @@ pub enum Command {
     Walk {
         target_player_id: EOShort,
         direction: Direction,
+        coords: Coords,
+        timestamp: EOInt,
     },
     SpawnItems,
     SpawnNpcs,

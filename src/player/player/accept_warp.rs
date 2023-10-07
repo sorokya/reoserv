@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::warp, Coords, PacketAction, PacketFamily, WarpType, SitState},
+    protocol::{server::warp, Coords, PacketAction, PacketFamily, SitState, WarpType},
 };
 
 use crate::{
@@ -106,8 +106,6 @@ impl Player {
                         nearby: nearby_info,
                     }
                 };
-
-                debug!("Send: {:?}", agree);
 
                 let mut builder = StreamBuilder::new();
                 agree.serialize(&mut builder);

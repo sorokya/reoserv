@@ -252,7 +252,9 @@ impl Map {
             Command::Walk {
                 target_player_id,
                 direction,
-            } => self.walk(target_player_id, direction),
+                coords,
+                timestamp,
+            } => self.walk(target_player_id, direction, coords, timestamp),
         }
     }
 }

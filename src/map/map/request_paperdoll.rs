@@ -51,8 +51,6 @@ impl Map {
             paperdoll_icon: target.get_icon(),
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
 

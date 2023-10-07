@@ -48,8 +48,6 @@ impl Map {
             },
         };
 
-        debug!("{:?}", reply);
-
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
         let buf = builder.get();

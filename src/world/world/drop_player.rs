@@ -11,7 +11,7 @@ impl World {
         character_name: &str,
         respond_to: oneshot::Sender<()>,
     ) {
-        debug!(
+        warn!(
             "Dropping player! id: {}, account_id: {}, character_name: {}",
             player_id, account_id, character_name
         );

@@ -1,6 +1,6 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::walk, Direction, PacketAction, PacketFamily},
+    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
 };
 
 use crate::{
@@ -11,8 +11,16 @@ use crate::{
 use super::Map;
 
 // TODO: this function is sooooooooo ugly. Please refactor it
+// TODO: force refresh if client out of sync
+// TODO: enforce timestamp
 impl Map {
-    pub fn walk(&mut self, target_player_id: EOShort, direction: Direction) {
+    pub fn walk(
+        &mut self,
+        target_player_id: EOShort,
+        direction: Direction,
+        _coords: Coords,
+        _timestamp: EOInt,
+    ) {
         if let Some((target_previous_coords, target_coords, target_player)) = {
             let (coords, admin_level, player) = match self.characters.get(&target_player_id) {
                 Some(character) => (
@@ -84,7 +92,6 @@ impl Map {
                     packet
                 };
 
-                debug!("Send: {:?}", packet);
                 let mut builder = StreamBuilder::new();
                 packet.serialize(&mut builder);
                 target_player.as_ref().unwrap().send(
@@ -100,7 +107,6 @@ impl Map {
                 coords: target_coords,
             };
 
-            debug!("Send: {:?}", walk_packet);
             let mut builder = StreamBuilder::new();
             walk_packet.serialize(&mut builder);
             let walk_packet_buf = builder.get();

@@ -3,11 +3,10 @@ use eo::{
     protocol::client::warp::Accept,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
-pub async fn accept(buf: Bytes, player: PlayerHandle) {
+pub async fn accept(reader: StreamReader, player: PlayerHandle) {
     let mut accept = Accept::default();
-    let reader = StreamReader::new(buf);
     accept.deserialize(&reader);
     player.accept_warp(accept.map_id, accept.session_id);
 }

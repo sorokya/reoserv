@@ -3,11 +3,10 @@ use eo::{
     protocol::{client::character::Remove, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn remove(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn remove(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut remove = Remove::default();
-    let reader = StreamReader::new(buf);
     remove.deserialize(&reader);
 
     debug!("Recv: {:?}", remove);

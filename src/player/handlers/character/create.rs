@@ -3,11 +3,10 @@ use eo::{
     protocol::{client::character::Create, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn create(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn create(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut create = Create::default();
-    let reader = StreamReader::new(buf);
     create.deserialize(&reader);
 
     debug!("Recv: {:?}", create);

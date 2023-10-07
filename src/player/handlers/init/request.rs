@@ -1,7 +1,4 @@
-use crate::{
-    player::{ClientState, PlayerHandle},
-    Bytes,
-};
+use crate::player::{ClientState, PlayerHandle};
 use eo::{
     data::{EOByte, Serializeable, StreamBuilder, StreamReader},
     net::stupid_hash,
@@ -15,11 +12,10 @@ use eo::{
     },
 };
 pub async fn request(
-    buf: Bytes,
+    reader: StreamReader,
     player: PlayerHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = client::init::Init::default();
-    let reader = StreamReader::new(buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);

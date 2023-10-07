@@ -3,14 +3,13 @@ use eo::{
     protocol::client::emote::Report,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
 pub async fn report(
-    buf: Bytes,
+    reader: StreamReader,
     player: PlayerHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut report = Report::default();
-    let reader = StreamReader::new(buf);
     report.deserialize(&reader);
 
     debug!("Recv: {:?}", report);

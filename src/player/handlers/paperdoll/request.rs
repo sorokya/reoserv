@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use eo::{
     data::{Serializeable, StreamReader},
     protocol::client::paperdoll,
@@ -6,8 +5,7 @@ use eo::{
 
 use crate::player::PlayerHandle;
 
-pub async fn request(buf: Bytes, player: PlayerHandle) {
-    let reader = StreamReader::new(buf);
+pub async fn request(reader: StreamReader, player: PlayerHandle) {
     let mut packet = paperdoll::Request::default();
     packet.deserialize(&reader);
 

@@ -3,11 +3,10 @@ use eo::{
     protocol::{client::character::Take, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn take(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn take(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut take = Take::default();
-    let reader = StreamReader::new(buf);
     take.deserialize(&reader);
 
     debug!("Recv: {:?}", take);

@@ -3,11 +3,10 @@ use eo::{
     protocol::client::talk::Tell,
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn tell(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn tell(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut tell = Tell::default();
-    let reader = StreamReader::new(buf);
     tell.deserialize(&reader);
 
     debug!("Recv: Tell {{ name: {}, message: ******** }}", tell.name);

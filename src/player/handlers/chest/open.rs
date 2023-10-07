@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use eo::{
     data::{Serializeable, StreamReader},
     protocol::client::chest::Open,
@@ -6,8 +5,7 @@ use eo::{
 
 use crate::player::PlayerHandle;
 
-pub async fn open(buf: Bytes, player: PlayerHandle) {
-    let reader = StreamReader::new(buf);
+pub async fn open(reader: StreamReader, player: PlayerHandle) {
     let mut packet = Open::default();
     packet.deserialize(&reader);
 

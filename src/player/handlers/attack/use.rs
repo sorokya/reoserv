@@ -1,12 +1,10 @@
 use crate::player::PlayerHandle;
-use bytes::Bytes;
 use eo::{
     data::{Serializeable, StreamReader},
     protocol::client::attack::Use,
 };
 
-pub async fn r#use(buf: Bytes, player: PlayerHandle) {
-    let reader = StreamReader::new(buf);
+pub async fn r#use(reader: StreamReader, player: PlayerHandle) {
     let mut packet = Use::default();
     packet.deserialize(&reader);
 

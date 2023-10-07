@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use eo::{
     data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{client::account::Create, PacketAction, PacketFamily},
@@ -6,9 +5,8 @@ use eo::{
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn create(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn create(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut create = Create::default();
-    let reader = StreamReader::new(buf);
     create.deserialize(&reader);
 
     debug!(

@@ -6,11 +6,10 @@ use eo::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn agree(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn agree(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut agree = Agree::default();
-    let reader = StreamReader::new(buf);
     agree.deserialize(&reader);
 
     debug!("Recv: {:?}", agree);

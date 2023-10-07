@@ -1,18 +1,12 @@
 use eo::{
-    data::{Serializeable, StreamReader, EOChar},
-    protocol::{
-        client::shop::Open,
-    },
+    data::{EOChar, Serializeable, StreamReader},
+    protocol::client::shop::Open,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
-pub async fn open(
-    buf: Bytes,
-    player: PlayerHandle,
-) {
+pub async fn open(reader: StreamReader, player: PlayerHandle) {
     let mut request = Open::default();
-    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
     debug!("{:?}", request);
 

@@ -3,14 +3,13 @@ use eo::{
     protocol::client::connection::Accept,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
 pub async fn accept(
-    buf: Bytes,
+    reader: StreamReader,
     player: PlayerHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut packet = Accept::default();
-    let reader = StreamReader::new(buf);
     packet.deserialize(&reader);
 
     debug!("Recv: {:?}", packet);

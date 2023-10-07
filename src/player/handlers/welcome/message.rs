@@ -3,11 +3,10 @@ use eo::{
     protocol::{client::welcome::Msg, PacketAction, PacketFamily},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn message(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn message(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut message = Msg::default();
-    let reader = StreamReader::new(buf);
     message.deserialize(&reader);
 
     debug!("Recv: {:?}", message);

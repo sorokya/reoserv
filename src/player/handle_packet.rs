@@ -37,104 +37,97 @@ pub async fn handle_packet(
         }
     }
 
-    let buf = reader.get_vec(reader.remaining());
     match family {
         PacketFamily::Shop => match action {
             PacketAction::Buy => {
-                handlers::shop::buy(buf, player.clone()).await;
+                handlers::shop::buy(reader, player.clone()).await;
             }
             PacketAction::Create => {
-                handlers::shop::craft(buf, player.clone()).await;
+                handlers::shop::craft(reader, player.clone()).await;
             }
             PacketAction::Open => {
-                handlers::shop::open(buf, player.clone()).await;
+                handlers::shop::open(reader, player.clone()).await;
             }
             PacketAction::Sell => {
-                handlers::shop::sell(buf, player.clone()).await;
+                handlers::shop::sell(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Sit => match action {
             PacketAction::Request => {
-                handlers::sit::request(buf, player.clone()).await;
+                handlers::sit::request(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Chest => match action {
             PacketAction::Open => {
-                handlers::chest::open(buf, player.clone()).await;
+                handlers::chest::open(reader, player.clone()).await;
             }
             PacketAction::Take => {
-                handlers::chest::take(buf, player.clone()).await;
+                handlers::chest::take(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Paperdoll => match action {
             PacketAction::Add => {
-                handlers::paperdoll::add(buf, player.clone()).await;
+                handlers::paperdoll::add(reader, player.clone()).await;
             }
             PacketAction::Remove => {
-                handlers::paperdoll::remove(buf, player.clone()).await;
+                handlers::paperdoll::remove(reader, player.clone()).await;
             }
             PacketAction::Request => {
-                handlers::paperdoll::request(buf, player.clone()).await;
+                handlers::paperdoll::request(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Item => match action {
             PacketAction::Drop => {
-                handlers::item::drop(buf, player.clone()).await;
+                handlers::item::drop(reader, player.clone()).await;
             }
             PacketAction::Get => {
-                handlers::item::get(buf, player.clone()).await;
+                handlers::item::get(reader, player.clone()).await;
             }
             PacketAction::Junk => {
-                handlers::item::junk(buf, player.clone()).await;
+                handlers::item::junk(reader, player.clone()).await;
             }
             PacketAction::Use => {
-                handlers::item::r#use(buf, player.clone()).await;
+                handlers::item::r#use(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Attack => match action {
             PacketAction::Use => {
-                handlers::attack::r#use(buf, player.clone()).await;
+                handlers::attack::r#use(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Talk => match action {
             PacketAction::Announce => {
-                handlers::talk::announce(buf, player.clone(), world.clone()).await;
+                handlers::talk::announce(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Tell => {
-                handlers::talk::tell(buf, player.clone(), world.clone()).await;
+                handlers::talk::tell(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Report => {
-                handlers::talk::report(buf, player.clone(), world.clone()).await?;
+                handlers::talk::report(reader, player.clone(), world.clone()).await?;
             }
             PacketAction::Admin => {
-                handlers::talk::admin(buf, player.clone(), world.clone()).await;
+                handlers::talk::admin(reader, player.clone(), world.clone()).await;
             }
-            // PacketAction::Open => {
-            //     handlers::talk::open(buf, player.clone(), world.clone()).await;
-            // }
-            // PacketAction::Request => {
-            //     handlers::talk::request(buf, player.clone(), world.clone()).await;
-            // }
             PacketAction::Msg => {
-                handlers::talk::message(buf, player.clone(), world.clone()).await;
+                handlers::talk::message(reader, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Init => match action {
             PacketAction::Init => {
-                handlers::init::request(buf, player.clone()).await?;
+                handlers::init::request(reader, player.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Connection => match action {
             PacketAction::Accept => {
-                handlers::connection::accept(buf, player.clone()).await?;
+                handlers::connection::accept(reader, player.clone()).await?;
             }
             PacketAction::Ping => {
                 player.pong();
@@ -143,90 +136,90 @@ pub async fn handle_packet(
         },
         PacketFamily::Account => match action {
             PacketAction::Request => {
-                handlers::account::request(buf, player.clone(), world.clone()).await;
+                handlers::account::request(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Create => {
-                handlers::account::create(buf, player.clone(), world.clone()).await;
+                handlers::account::create(reader, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Login => match action {
             PacketAction::Request => {
-                handlers::login::request(buf, player.clone(), world.clone()).await?;
+                handlers::login::request(reader, player.clone(), world.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Character => match action {
             PacketAction::Request => {
-                handlers::character::request(buf, player.clone(), world.clone()).await;
+                handlers::character::request(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Create => {
-                handlers::character::create(buf, player.clone(), world.clone()).await;
+                handlers::character::create(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Take => {
-                handlers::character::take(buf, player.clone(), world.clone()).await;
+                handlers::character::take(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Remove => {
-                handlers::character::remove(buf, player.clone(), world.clone()).await;
+                handlers::character::remove(reader, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Door => match action {
             PacketAction::Open => {
-                handlers::door::open(buf, player.clone()).await?;
+                handlers::door::open(reader, player.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Emote => match action {
             PacketAction::Report => {
-                handlers::emote::report(buf, player.clone()).await?;
+                handlers::emote::report(reader, player.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Walk => match action {
             PacketAction::Player => {
-                handlers::walk::player(buf, player.clone()).await?;
+                handlers::walk::player(reader, player.clone()).await?;
             }
             PacketAction::Spec => {
-                handlers::walk::spec(buf, player.clone()).await?;
+                handlers::walk::spec(reader, player.clone()).await?;
             }
             PacketAction::Admin => {
-                handlers::walk::admin(buf, player.clone()).await?;
+                handlers::walk::admin(reader, player.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Players => match action {
             PacketAction::List | PacketAction::Request => {
-                handlers::players::list(buf, player.clone(), world.clone()).await;
+                handlers::players::list(reader, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Welcome => match action {
             PacketAction::Request => {
-                handlers::welcome::request(buf, player.clone(), world.clone()).await;
+                handlers::welcome::request(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Agree => {
-                handlers::welcome::agree(buf, player.clone(), world.clone()).await;
+                handlers::welcome::agree(reader, player.clone(), world.clone()).await;
             }
             PacketAction::Msg => {
-                handlers::welcome::message(buf, player.clone(), world.clone()).await;
+                handlers::welcome::message(reader, player.clone(), world.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Face => match action {
             PacketAction::Player => {
-                handlers::face::player(buf, player.clone()).await?;
+                handlers::face::player(reader, player.clone()).await?;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::PlayerRange => match action {
             PacketAction::Request => {
-                handlers::character_map_info::request(buf, player.clone()).await;
+                handlers::character_map_info::request(reader, player.clone()).await;
             }
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Range => match action {
-            PacketAction::Request => handlers::map_info::request(buf, player.clone()).await,
+            PacketAction::Request => handlers::map_info::request(reader, player.clone()).await,
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Refresh => match action {
@@ -234,12 +227,12 @@ pub async fn handle_packet(
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::Warp => match action {
-            PacketAction::Accept => handlers::warp::accept(buf, player.clone()).await,
-            PacketAction::Take => handlers::warp::take(buf, player.clone(), world.clone()).await,
+            PacketAction::Accept => handlers::warp::accept(reader, player.clone()).await,
+            PacketAction::Take => handlers::warp::take(reader, player.clone(), world.clone()).await,
             _ => error!("Unhandled packet {:?}_{:?}", action, family),
         },
         PacketFamily::NPCRange => match action {
-            PacketAction::Request => handlers::npc_map_info::request(buf, player.clone()).await,
+            PacketAction::Request => handlers::npc_map_info::request(reader, player.clone()).await,
             _ => error!("Unhandles packet {:?}_{:?}", action, family),
         },
         _ => {

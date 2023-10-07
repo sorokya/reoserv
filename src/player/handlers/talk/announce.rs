@@ -3,11 +3,10 @@ use eo::{
     protocol::{client::talk::Announce, AdminLevel},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn announce(buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn announce(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let mut announce = Announce::default();
-    let reader = StreamReader::new(buf);
     announce.deserialize(&reader);
 
     debug!("Recv: {:?}", announce);

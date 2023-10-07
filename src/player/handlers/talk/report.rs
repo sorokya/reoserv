@@ -3,17 +3,16 @@ use eo::{
     protocol::{client::talk::Report, AdminLevel},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
 use super::handle_command::handle_command;
 
 pub async fn report(
-    buf: Bytes,
+    reader: StreamReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut report = Report::default();
-    let reader = StreamReader::new(buf);
     report.deserialize(&reader);
 
     debug!("Recv: {:?}", report);

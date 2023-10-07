@@ -7,15 +7,14 @@ use eo::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
 pub async fn request(
-    buf: Bytes,
+    reader: StreamReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut request = Request::default();
-    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
 
     debug!(

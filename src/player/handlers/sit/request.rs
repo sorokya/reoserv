@@ -1,18 +1,12 @@
 use eo::{
     data::{Serializeable, StreamReader},
-    protocol::{
-        client::sit::Request, SitAction,
-    },
+    protocol::{client::sit::Request, SitAction},
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
-pub async fn request(
-    buf: Bytes,
-    player: PlayerHandle,
-) {
+pub async fn request(reader: StreamReader, player: PlayerHandle) {
     let mut request = Request::default();
-    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
     debug!("{:?}", request);
 

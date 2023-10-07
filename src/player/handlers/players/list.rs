@@ -1,14 +1,14 @@
 use eo::{
-    data::{Serializeable, StreamBuilder},
+    data::{Serializeable, StreamBuilder, StreamReader},
     protocol::{
         server::init::{Init, InitData, InitPlayers},
         InitReply, PacketAction, PacketFamily,
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle, Bytes};
+use crate::{player::PlayerHandle, world::WorldHandle};
 
-pub async fn list(_buf: Bytes, player: PlayerHandle, world: WorldHandle) {
+pub async fn list(_: StreamReader, player: PlayerHandle, world: WorldHandle) {
     let players = world.get_online_list().await;
 
     let reply = Init {

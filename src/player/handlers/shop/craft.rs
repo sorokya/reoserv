@@ -3,11 +3,10 @@ use eo::{
     protocol::client::shop::Create,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
-pub async fn craft(buf: Bytes, player: PlayerHandle) {
+pub async fn craft(reader: StreamReader, player: PlayerHandle) {
     let mut request = Create::default();
-    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
     debug!("{:?}", request);
 

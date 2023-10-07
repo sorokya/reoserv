@@ -3,11 +3,10 @@ use eo::{
     protocol::client::shop::Sell,
 };
 
-use crate::{player::PlayerHandle, Bytes};
+use crate::player::PlayerHandle;
 
-pub async fn sell(buf: Bytes, player: PlayerHandle) {
+pub async fn sell(reader: StreamReader, player: PlayerHandle) {
     let mut request = Sell::default();
-    let reader = StreamReader::new(buf);
     request.deserialize(&reader);
     debug!("{:?}", request);
 

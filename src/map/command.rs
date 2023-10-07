@@ -123,6 +123,10 @@ pub enum Command {
     Sit {
         player_id: EOShort,
     },
+    SitChair {
+        player_id: EOShort,
+        coords: Coords,
+    },
     Stand {
         player_id: EOShort,
     },

@@ -215,6 +215,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::Sit { player_id });
     }
 
+    pub fn sit_chair(&self, player_id: EOShort, coords: Coords) {
+        let _ = self.tx.send(Command::SitChair { player_id, coords });
+    }
+
     pub fn stand(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::Stand { player_id });
     }

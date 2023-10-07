@@ -45,6 +45,7 @@ pub async fn handle_packet(
             handlers::account(action, reader, player.clone(), world.clone()).await
         }
         PacketFamily::Attack => handlers::attack(action, reader, player.clone()).await,
+        PacketFamily::Chair => handlers::chair(action, reader, player.clone()).await,
         PacketFamily::Character => {
             handlers::character(action, reader, player.clone(), world.clone()).await
         }
@@ -53,6 +54,7 @@ pub async fn handle_packet(
         PacketFamily::Door => handlers::door(action, reader, player.clone()).await,
         PacketFamily::Emote => handlers::emote(action, reader, player.clone()).await,
         PacketFamily::Face => handlers::face(action, reader, player.clone()).await,
+        PacketFamily::Global => handlers::global(action, reader, player.clone()).await,
         PacketFamily::Init => handlers::init(action, reader, player.clone()).await,
         PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
         PacketFamily::Login => handlers::login(action, reader, player.clone(), world.clone()).await,

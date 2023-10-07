@@ -6,6 +6,9 @@ pub use account::account;
 mod attack;
 pub use attack::attack;
 
+mod chair;
+pub use chair::chair;
+
 mod character;
 pub use character::character;
 
@@ -23,6 +26,9 @@ pub use emote::emote;
 
 mod face;
 pub use face::face;
+
+mod global;
+pub use global::global;
 
 mod init;
 pub use init::init;

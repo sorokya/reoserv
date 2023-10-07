@@ -39,6 +39,7 @@ mod get_map_info;
 mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
+mod get_tile;
 mod give_item;
 mod is_tile_occupied;
 mod is_tile_walkable;
@@ -60,6 +61,7 @@ mod send_packet_near_exclude_player;
 mod send_packet_near_player;
 mod serialize;
 mod sit;
+mod sit_chair;
 mod spawn_items;
 mod spawn_npcs;
 mod stand;
@@ -225,6 +227,8 @@ impl Map {
             }
 
             Command::Sit { player_id } => self.sit(player_id),
+
+            Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),
 
             Command::Stand { player_id } => self.stand(player_id),
 

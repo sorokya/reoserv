@@ -256,7 +256,7 @@ impl Map {
         _target_player_id: EOShort,
         _direction: Direction,
     ) {
-        unimplemented!("PK and Arena")
+        error!("PVP is not implemented yet!");
     }
 }
 

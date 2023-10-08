@@ -32,6 +32,7 @@ mod emote;
 mod enter;
 mod equip;
 mod face;
+mod forget_skill;
 mod get_character;
 mod get_dimensions;
 mod get_item;
@@ -141,6 +142,12 @@ impl Map {
                 target_player_id,
                 direction,
             } => self.face(target_player_id, direction),
+
+            Command::ForgetSkill {
+                player_id,
+                skill_id,
+                session_id,
+            } => self.forget_skill(player_id, skill_id, session_id).await,
 
             Command::GetCharacter {
                 player_id,

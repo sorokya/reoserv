@@ -834,6 +834,10 @@ impl Character {
         }
     }
 
+    pub fn remove_spell(&mut self, spell_id: EOShort) {
+        self.spells.retain(|spell| spell.id != spell_id);
+    }
+
     pub fn has_spell(&self, spell_id: EOShort) -> bool {
         self.spells.iter().any(|spell| spell.id == spell_id)
     }

@@ -49,6 +49,11 @@ pub enum Command {
         target_player_id: EOShort,
         direction: Direction,
     },
+    ForgetSkill {
+        player_id: EOShort,
+        skill_id: EOShort,
+        session_id: EOShort,
+    },
     GetCharacter {
         player_id: EOShort,
         respond_to: oneshot::Sender<Option<Box<Character>>>,

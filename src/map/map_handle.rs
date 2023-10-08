@@ -88,6 +88,14 @@ impl MapHandle {
         });
     }
 
+    pub fn forget_skill(&self, player_id: EOShort, skill_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::ForgetSkill {
+            player_id,
+            skill_id,
+            session_id,
+        });
+    }
+
     pub async fn get_character(&self, player_id: EOShort) -> Option<Box<Character>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter {

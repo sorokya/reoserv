@@ -230,6 +230,13 @@ impl MapHandle {
         });
     }
 
+    pub fn reset_character(&self, player_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::ResetCharacter {
+            player_id,
+            session_id,
+        });
+    }
+
     pub fn sell_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
         let _ = self.tx.send(Command::SellItem {
             player_id,

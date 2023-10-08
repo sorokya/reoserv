@@ -53,6 +53,8 @@ pub struct World {
     pub recover_rate: EOInt,
     pub npc_recover_rate: EOInt,
     pub exp_multiplier: EOInt,
+    pub stat_points_per_level: EOInt,
+    pub skill_points_per_level: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

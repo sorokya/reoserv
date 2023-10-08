@@ -123,6 +123,10 @@ pub enum Command {
         player_id: EOShort,
         target_player_id: EOShort,
     },
+    ResetCharacter {
+        player_id: EOShort,
+        session_id: EOShort,
+    },
     Save {
         respond_to: oneshot::Sender<()>,
     },

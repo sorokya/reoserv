@@ -4,10 +4,10 @@ use eo::{
     data::{EOChar, EOInt, EOShort, EOThree, Serializeable, StreamBuilder, MAX2},
     protocol::{
         client::character::Create, server::paperdoll, AdminLevel, BigCoords, CharacterBaseStats,
-        CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2,
-        CharacterStats3, Coords, Direction, Gender, Item, ItemCharacterStats, PacketAction,
-        PacketFamily, PaperdollB000a0hsw, PaperdollBahws, PaperdollFull, PaperdollIcon, SitState,
-        Skin, Spell, Weight,
+        CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats1,
+        CharacterStats2, CharacterStats3, Coords, Direction, Gender, Item, ItemCharacterStats,
+        PacketAction, PacketFamily, PaperdollB000a0hsw, PaperdollBahws, PaperdollFull,
+        PaperdollIcon, SitState, Skin, Spell, Weight,
     },
     pubs::EifItemType,
 };
@@ -842,6 +842,22 @@ impl Character {
         self.spells.iter().any(|spell| spell.id == spell_id)
     }
 
+    pub fn reset(&mut self) {
+        self.base_strength = 0;
+        self.base_intelligence = 0;
+        self.base_wisdom = 0;
+        self.base_agility = 0;
+        self.base_constitution = 0;
+        self.base_charisma = 0;
+
+        self.spells.clear();
+        self.stat_points = (self.level as EOInt * SETTINGS.world.stat_points_per_level) as EOShort;
+        self.skill_points =
+            (self.level as EOInt * SETTINGS.world.skill_points_per_level) as EOShort;
+
+        self.calculate_stats();
+    }
+
     pub async fn load(
         conn: &mut Conn,
         id: EOInt,
@@ -1301,6 +1317,33 @@ impl Character {
         Ok(())
     }
 
+    pub fn get_character_stats_1(&self) -> CharacterStats1 {
+        CharacterStats1 {
+            hp: self.hp,
+            max_hp: self.max_hp,
+            tp: self.tp,
+            max_tp: self.max_tp,
+            max_sp: self.max_sp,
+            stat_points: self.stat_points,
+            skill_points: self.skill_points,
+            secondary: CharacterSecondaryStats {
+                mindam: self.min_damage,
+                maxdam: self.max_damage,
+                accuracy: self.accuracy,
+                evade: self.evasion,
+                armor: self.armor,
+            },
+            base: CharacterBaseStats {
+                str: self.adj_strength,
+                intl: self.adj_intelligence,
+                wis: self.adj_wisdom,
+                agi: self.adj_agility,
+                con: self.adj_constitution,
+                cha: self.adj_charisma,
+            },
+        }
+    }
+
     pub fn get_character_stats_2(&self) -> CharacterStats2 {
         CharacterStats2 {
             hp: self.hp,
@@ -1382,8 +1425,8 @@ impl Character {
 
         while self.experience > EXP_TABLE[self.level as usize + 1] {
             self.level += 1;
-            self.stat_points += 3;
-            self.skill_points += 4;
+            self.stat_points += SETTINGS.world.stat_points_per_level as EOShort;
+            self.skill_points += SETTINGS.world.skill_points_per_level as EOShort;
             leveled_up = true;
         }
 

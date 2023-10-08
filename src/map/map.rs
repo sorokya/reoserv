@@ -57,6 +57,7 @@ mod play_effect;
 mod recover_npcs;
 mod recover_players;
 mod request_paperdoll;
+mod reset_character;
 mod save;
 mod sell_item;
 mod send_chat_message;
@@ -231,6 +232,11 @@ impl Map {
                 player_id,
                 target_player_id,
             } => self.request_paperdoll(player_id, target_player_id),
+
+            Command::ResetCharacter {
+                player_id,
+                session_id,
+            } => self.reset_character(player_id, session_id).await,
 
             Command::Save { respond_to } => self.save(respond_to).await,
 

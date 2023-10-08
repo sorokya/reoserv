@@ -80,6 +80,9 @@ npc_recover_rate = 105
 # Apply a multipler to experience gains when killing NPCs
 exp_multiplier = 1
 
+stat_points_per_level = 3
+skill_points_per_level = 4
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

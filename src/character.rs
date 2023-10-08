@@ -825,6 +825,19 @@ impl Character {
         }
     }
 
+    pub fn add_spell(&mut self, spell_id: EOShort) {
+        if !self.has_spell(spell_id) {
+            self.spells.push(Spell {
+                id: spell_id,
+                level: 1,
+            });
+        }
+    }
+
+    pub fn has_spell(&self, spell_id: EOShort) -> bool {
+        self.spells.iter().any(|spell| spell.id == spell_id)
+    }
+
     pub async fn load(
         conn: &mut Conn,
         id: EOInt,
@@ -1043,6 +1056,19 @@ impl Character {
             )
             .await?;
 
+        let old_spells = conn
+            .exec_map(
+                include_str!("sql/get_character_spells.sql"),
+                params! {
+                    "character_id" => self.id,
+                },
+                |mut row: Row| Spell {
+                    id: row.take(0).unwrap(),
+                    level: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
         let mut tx = conn.start_transaction(TxOpts::default()).await?;
 
         tx.exec_drop(
@@ -1125,6 +1151,43 @@ impl Character {
         .await?;
 
         // TODO: save bank/spells
+
+        for spell in &old_spells {
+            if !self.has_spell(spell.id) {
+                tx.exec_drop(
+                    include_str!("./sql/delete_spell.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "spell_id" => spell.id,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for spell in &self.spells {
+            if !old_spells.contains(spell) {
+                tx.exec_drop(
+                    include_str!("./sql/create_spell.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "spell_id" => spell.id,
+                        "level" => spell.level,
+                    },
+                )
+                .await?;
+            } else {
+                tx.exec_drop(
+                    include_str!("./sql/update_spell.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "spell_id" => spell.id,
+                        "level" => spell.level,
+                    },
+                )
+                .await?;
+            }
+        }
 
         for item in &old_items {
             if !self.items.contains(item) {

@@ -1,7 +1,7 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamReader},
+    data::{EOChar, EOShort, Serializeable, StreamReader},
     protocol::{
-        client::statskill::{Add, AddData, Open},
+        client::statskill::{Add, AddData, Open, Take},
         PacketAction,
     },
 };
@@ -60,10 +60,34 @@ async fn open(reader: StreamReader, player: PlayerHandle) {
     map.open_skill_master(player_id, packet.npc_index as EOChar);
 }
 
+async fn take(reader: StreamReader, player: PlayerHandle) {
+    let mut packet = Take::default();
+    packet.deserialize(&reader);
+
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
+    map.learn_skill(player_id, packet.spell_id, packet.session_id as EOShort);
+}
+
 pub async fn stat_skill(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
     match action {
         PacketAction::Add => add(reader, player).await,
         PacketAction::Open => open(reader, player).await,
+        PacketAction::Take => take(reader, player).await,
         _ => error!("Unhandled packet StatSkill_{:?}", action),
     }
 }

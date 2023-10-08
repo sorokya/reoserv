@@ -156,6 +156,14 @@ impl MapHandle {
         });
     }
 
+    pub fn learn_skill(&self, player_id: EOShort, spell_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::LearnSkill {
+            player_id,
+            spell_id,
+            session_id,
+        });
+    }
+
     pub async fn leave(
         &self,
         target_player_id: EOShort,

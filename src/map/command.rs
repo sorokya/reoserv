@@ -82,6 +82,11 @@ pub enum Command {
         item_id: EOShort,
         amount: EOInt,
     },
+    LearnSkill {
+        player_id: EOShort,
+        spell_id: EOShort,
+        session_id: EOShort,
+    },
     Leave {
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,

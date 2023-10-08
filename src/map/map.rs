@@ -45,6 +45,7 @@ mod is_tile_occupied;
 mod is_tile_walkable;
 mod is_tile_walkable_npc;
 mod junk_item;
+mod learn_skill;
 mod leave;
 mod level_stat;
 mod open_chest;
@@ -183,6 +184,12 @@ impl Map {
                 item_id,
                 amount,
             } => self.junk_item(target_player_id, item_id, amount),
+
+            Command::LearnSkill {
+                player_id,
+                spell_id,
+                session_id,
+            } => self.learn_skill(player_id, spell_id, session_id).await,
 
             Command::Leave {
                 target_player_id,

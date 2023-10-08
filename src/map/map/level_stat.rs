@@ -51,7 +51,7 @@ impl Map {
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);
 
-        let _ = character.player.as_ref().unwrap().send(
+        character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::StatSkill,
             builder.get(),

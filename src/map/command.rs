@@ -103,6 +103,10 @@ pub enum Command {
         player_id: EOShort,
         npc_index: EOChar,
     },
+    OpenSkillMaster {
+        player_id: EOShort,
+        npc_index: EOChar,
+    },
     RecoverNpcs,
     RecoverPlayers,
     RequestPaperdoll {

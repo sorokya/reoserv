@@ -50,6 +50,7 @@ mod level_stat;
 mod open_chest;
 mod open_door;
 mod open_shop;
+mod open_skill_master;
 mod play_effect;
 mod recover_npcs;
 mod recover_players;
@@ -202,6 +203,11 @@ impl Map {
                 player_id,
                 npc_index,
             } => self.open_shop(player_id, npc_index).await,
+
+            Command::OpenSkillMaster {
+                player_id,
+                npc_index,
+            } => self.open_skill_master(player_id, npc_index).await,
 
             Command::RecoverNpcs => self.recover_npcs().await,
 

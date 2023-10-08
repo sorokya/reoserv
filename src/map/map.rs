@@ -46,6 +46,7 @@ mod is_tile_walkable;
 mod is_tile_walkable_npc;
 mod junk_item;
 mod leave;
+mod level_stat;
 mod open_chest;
 mod open_door;
 mod open_shop;
@@ -187,6 +188,8 @@ impl Map {
                 warp_animation,
                 respond_to,
             } => self.leave(target_player_id, warp_animation, respond_to),
+
+            Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 

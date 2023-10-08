@@ -2,7 +2,7 @@ use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{
-        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, WarpAnimation,
+        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
     pubs::EmfFile,
 };
@@ -168,6 +168,10 @@ impl MapHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn level_stat(&self, player_id: EOShort, stat_id: StatId) {
+        let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
     pub fn open_chest(&self, player_id: EOShort, coords: Coords) {

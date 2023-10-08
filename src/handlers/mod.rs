@@ -63,6 +63,9 @@ pub use shop::shop;
 mod sit;
 pub use sit::sit;
 
+mod stat_skill;
+pub use stat_skill::stat_skill;
+
 mod talk;
 pub use talk::talk;
 

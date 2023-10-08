@@ -4,10 +4,10 @@ use eo::{
     data::{EOChar, EOInt, EOShort, EOThree, Serializeable, StreamBuilder, MAX2},
     protocol::{
         client::character::Create, server::paperdoll, AdminLevel, BigCoords, CharacterBaseStats,
-        CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2, Coords,
-        Direction, Gender, Item, ItemCharacterStats, PacketAction, PacketFamily,
-        PaperdollB000a0hsw, PaperdollBahws, PaperdollFull, PaperdollIcon, SitState, Skin, Spell,
-        Weight,
+        CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2,
+        CharacterStats3, Coords, Direction, Gender, Item, ItemCharacterStats, PacketAction,
+        PacketFamily, PaperdollB000a0hsw, PaperdollBahws, PaperdollFull, PaperdollIcon, SitState,
+        Skin, Spell, Weight,
     },
     pubs::EifItemType,
 };
@@ -1258,6 +1258,30 @@ impl Character {
                 agi: self.adj_agility,
                 con: self.adj_constitution,
                 cha: self.adj_charisma,
+            },
+        }
+    }
+
+    pub fn get_character_stats_3(&self) -> CharacterStats3 {
+        CharacterStats3 {
+            base: CharacterBaseStats {
+                str: self.adj_strength,
+                intl: self.adj_intelligence,
+                wis: self.adj_wisdom,
+                agi: self.adj_agility,
+                con: self.adj_constitution,
+                cha: self.adj_charisma,
+            },
+            max_hp: self.max_hp,
+            max_tp: self.max_tp,
+            max_sp: self.max_sp,
+            max_weight: self.max_weight as EOShort,
+            secondary: CharacterSecondaryStats {
+                mindam: self.min_damage,
+                maxdam: self.max_damage,
+                accuracy: self.accuracy,
+                evade: self.evasion,
+                armor: self.armor,
             },
         }
     }

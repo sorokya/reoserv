@@ -2,7 +2,7 @@ use bytes::Bytes;
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{
-        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, WarpAnimation,
+        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
 };
 use tokio::sync::oneshot;
@@ -86,6 +86,10 @@ pub enum Command {
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<Character>,
+    },
+    LevelStat {
+        player_id: EOShort,
+        stat_id: StatId,
     },
     OpenChest {
         player_id: EOShort,

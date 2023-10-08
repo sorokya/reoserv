@@ -2,9 +2,11 @@ use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::{chair, sit},
-        Direction, PacketAction, PacketFamily, SitState,
+        PacketAction, PacketFamily, SitState,
     },
 };
+
+use crate::utils::get_next_coords;
 
 use super::Map;
 
@@ -46,12 +48,12 @@ impl Map {
             SitState::Chair => {
                 character.sit_state = SitState::Stand;
 
-                match character.direction {
-                    Direction::Down => character.coords.y += 1,
-                    Direction::Left => character.coords.x -= 1,
-                    Direction::Up => character.coords.y -= 1,
-                    Direction::Right => character.coords.x += 1,
-                }
+                character.coords = get_next_coords(
+                    &character.coords,
+                    character.direction,
+                    self.file.width,
+                    self.file.height,
+                );
 
                 let reply = chair::Close {
                     player_id,

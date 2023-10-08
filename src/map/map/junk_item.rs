@@ -2,7 +2,7 @@ use std::cmp;
 
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::item, PacketAction, PacketFamily, ShortItem, Weight},
+    protocol::{server::item, PacketAction, PacketFamily, ShortItem},
 };
 
 use super::Map;
@@ -42,10 +42,7 @@ impl Map {
                 Some(item) => item.amount,
                 None => 0,
             },
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight: character.get_weight(),
         };
 
         let mut builder = StreamBuilder::new();

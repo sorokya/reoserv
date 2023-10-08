@@ -7,6 +7,7 @@ use eo::{
         CharacterBaseStats2, CharacterMapInfo, CharacterSecondaryStats, CharacterStats2, Coords,
         Direction, Gender, Item, ItemCharacterStats, PacketAction, PacketFamily,
         PaperdollB000a0hsw, PaperdollBahws, PaperdollFull, PaperdollIcon, SitState, Skin, Spell,
+        Weight,
     },
     pubs::EifItemType,
 };
@@ -99,8 +100,8 @@ pub struct Character {
     pub tp: EOShort,
     pub max_tp: EOShort,
     pub max_sp: EOShort,
-    pub weight: EOChar,
-    pub max_weight: EOChar,
+    pub weight: EOInt,
+    pub max_weight: EOInt,
     pub base_strength: EOShort,
     pub base_intelligence: EOShort,
     pub base_wisdom: EOShort,
@@ -264,10 +265,7 @@ impl Character {
             }
 
             let record = &ITEM_DB.items[(item.id - 1) as usize];
-            self.weight += (record.weight as EOInt * item.amount) as EOChar;
-            if self.weight >= 250 {
-                break;
-            }
+            self.weight += record.weight as EOInt * item.amount;
         }
 
         let paperdoll_items = vec![
@@ -294,7 +292,7 @@ impl Character {
             }
 
             let item = &ITEM_DB.items[(item_id - 1) as usize];
-            self.weight += item.weight;
+            self.weight += item.weight as EOInt;
             self.max_hp += item.hp;
             self.max_tp += item.tp;
             self.min_damage += item.min_damage;
@@ -308,10 +306,6 @@ impl Character {
             self.adj_agility += item.agi as EOShort;
             self.adj_constitution += item.con as EOShort;
             self.adj_charisma += item.cha as EOShort;
-        }
-
-        if self.weight > 250 {
-            self.weight = 250;
         }
 
         let context = match context_map! {
@@ -361,7 +355,7 @@ impl Character {
         };
 
         self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
-            Ok(max_weight) => cmp::min(max_weight.floor() as EOInt, 250) as EOChar,
+            Ok(max_weight) => cmp::min(max_weight.floor() as EOInt, 250),
             Err(e) => {
                 error!("Failed to calculate max_weight: {}", e);
                 70
@@ -421,6 +415,13 @@ impl Character {
         }
     }
 
+    pub fn get_weight(&self) -> Weight {
+        Weight {
+            current: cmp::min(self.weight, 250) as EOChar,
+            max: self.max_weight as EOChar,
+        }
+    }
+
     pub fn get_icon(&self) -> PaperdollIcon {
         // TODO: group stuff
 
@@ -432,6 +433,10 @@ impl Character {
     }
 
     pub fn can_hold(&self, item_id: EOShort, max_amount: EOInt) -> EOInt {
+        if self.weight > self.max_weight {
+            return 0;
+        }
+
         let item = ITEM_DB.items.get(item_id as usize - 1);
 
         if item.is_none() {
@@ -462,7 +467,7 @@ impl Character {
         }
 
         if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
-            self.weight += (item.weight as EOInt * amount) as EOChar;
+            self.weight += item.weight as EOInt * amount;
         }
     }
 
@@ -488,7 +493,7 @@ impl Character {
         }
 
         if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
-            self.weight -= (item.weight as EOInt * amount) as EOChar;
+            self.weight -= item.weight as EOInt * amount;
         }
     }
 

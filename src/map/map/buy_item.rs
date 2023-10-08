@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::shop::Buy, Item, PacketAction, PacketFamily, Weight},
+    protocol::{server::shop::Buy, Item, PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
 
@@ -89,16 +89,15 @@ impl Map {
         character.remove_item(1, price);
         character.add_item(item.id, amount);
 
+        let weight = character.get_weight();
+
         let reply = Buy {
             gold_amount: character.get_item_amount(1),
             bought_item: Item {
                 id: item.id,
                 amount,
             },
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight,
         };
 
         let mut builder = StreamBuilder::new();

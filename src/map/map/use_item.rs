@@ -7,7 +7,7 @@ use eo::{
             recover,
         },
         AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarChangeHairColor, AvatarSlot,
-        Coords, Item, ItemType, PacketAction, PacketFamily, WarpAnimation, Weight,
+        Coords, Item, ItemType, PacketAction, PacketFamily, WarpAnimation,
     },
     pubs::{EifItemSpecial, EifItemType},
 };
@@ -193,10 +193,7 @@ impl Map {
             },
         };
 
-        reply.weight = Weight {
-            current: character.weight,
-            max: character.max_weight,
-        };
+        reply.weight = character.get_weight();
 
         let mut builder = StreamBuilder::new();
         reply.serialize(&mut builder);

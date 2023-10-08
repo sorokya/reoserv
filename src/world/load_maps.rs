@@ -20,10 +20,14 @@ use crate::{map::MapHandle, SETTINGS};
 pub async fn load_maps(
     pool: Pool,
 ) -> Result<HashMap<EOShort, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
+    if SETTINGS.server.num_of_maps > EOShort::MAX.into() {
+        panic!("Too many maps to load!");
+    }
+
     let max_id = SETTINGS.server.num_of_maps as EOShort;
     let mut map_files: HashMap<EOShort, MapHandle> = HashMap::with_capacity(max_id as usize);
     let mut load_handles = vec![];
-    for i in 1..max_id + 1 {
+    for i in 1..=max_id {
         load_handles.push(load_map(i, pool.to_owned()));
     }
 

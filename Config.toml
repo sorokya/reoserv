@@ -77,6 +77,9 @@ recover_rate = 90
 # How often npcs recover HP/TP in seconds
 npc_recover_rate = 105
 
+# Apply a multipler to experience gains when killing NPCs
+exp_multiplier = 1
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

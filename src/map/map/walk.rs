@@ -5,7 +5,7 @@ use eo::{
 
 use crate::{
     map::{get_warp_at, is_in_bounds},
-    utils::{in_client_range, in_range},
+    utils::{get_next_coords, in_client_range, in_range},
 };
 
 use super::Map;
@@ -32,15 +32,9 @@ impl Map {
             };
 
             let previous_coords = coords;
-            let mut coords = coords;
-            match direction {
-                Direction::Up => coords.y -= 1,
-                Direction::Down => coords.y += 1,
-                Direction::Left => coords.x -= 1,
-                Direction::Right => coords.x += 1,
-            }
-
-            let is_tile_walkable = admin_level as EOChar >= 1 || self.is_tile_walkable(&coords);
+            let coords = get_next_coords(&coords, direction, self.file.width, self.file.height);
+            let is_tile_walkable = admin_level as EOChar >= 1
+                || (self.is_tile_walkable(&coords) && !self.is_tile_occupied(&coords));
             if !is_in_bounds(coords, self.file.width, self.file.height) || !is_tile_walkable {
                 return;
             }

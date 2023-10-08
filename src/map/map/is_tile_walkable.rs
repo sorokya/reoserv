@@ -30,7 +30,6 @@ impl Map {
             );
         }
 
-        // TODO: Ghost timer
-        !self.is_tile_occupied(coords)
+        true
     }
 }

@@ -1,6 +1,6 @@
 use eo::{
     data::{EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::shop::Create, Item, PacketAction, PacketFamily, Weight},
+    protocol::{server::shop::Create, Item, PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
 
@@ -114,10 +114,7 @@ impl Map {
 
         let reply = Create {
             craft_item_id: item_id,
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight: character.get_weight(),
             ingredients: [
                 Item {
                     id: craft.ingredient1_item_id,

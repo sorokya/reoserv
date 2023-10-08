@@ -8,14 +8,13 @@ use super::Map;
 impl Map {
     pub async fn recover_players(&mut self) {
         for character in self.characters.values_mut() {
+            let divisor = match character.sit_state {
+                SitState::Stand => 5,
+                _ => 10,
+            };
+
             if character.hp < character.max_hp {
-                character.hp += (character.max_hp
-                    / if character.sit_state != SitState::Stand {
-                        5
-                    } else {
-                        10
-                    })
-                    + 1;
+                character.hp += (character.max_hp / divisor) + 1;
 
                 if character.hp > character.max_hp {
                     character.hp = character.max_hp;
@@ -23,13 +22,7 @@ impl Map {
             }
 
             if character.tp < character.max_tp {
-                character.tp += (character.max_tp
-                    / if character.sit_state != SitState::Stand {
-                        5
-                    } else {
-                        10
-                    })
-                    + 1;
+                character.tp += (character.max_tp / divisor) + 1;
 
                 if character.tp > character.max_tp {
                     character.tp = character.max_tp;

@@ -2,7 +2,7 @@ use std::cmp;
 
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::item, Coords, PacketAction, PacketFamily, ShortItem, Weight},
+    protocol::{server::item, Coords, PacketAction, PacketFamily, ShortItem},
     pubs::EifItemSpecial,
 };
 
@@ -67,6 +67,8 @@ impl Map {
         let item_index = self.get_next_item_index(1);
 
         let character = self.characters.get(&target_player_id).unwrap();
+        let weight = character.get_weight();
+
         let reply = item::Drop {
             item_id: item.id,
             amount_dropped: amount_to_drop,
@@ -76,10 +78,7 @@ impl Map {
                 None => 0,
             },
             coords,
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight,
         };
 
         let mut builder = StreamBuilder::new();

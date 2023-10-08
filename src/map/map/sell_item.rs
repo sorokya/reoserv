@@ -2,7 +2,7 @@ use std::cmp;
 
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::shop::Sell, Item, PacketAction, PacketFamily, ReverseItem, Weight},
+    protocol::{server::shop::Sell, Item, PacketAction, PacketFamily, ReverseItem},
     pubs::EnfNpcType,
 };
 
@@ -93,10 +93,7 @@ impl Map {
                 id: item.id,
                 amount: character.get_item_amount(item.id),
             },
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight: character.get_weight(),
         };
 
         let mut builder = StreamBuilder::new();

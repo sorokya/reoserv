@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2018"
 
+[profile.release]
+panic = 'abort'
+
 [features]
 console = ["console-subscriber"]
 

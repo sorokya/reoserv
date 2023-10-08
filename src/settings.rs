@@ -52,6 +52,7 @@ pub struct World {
     pub drop_distance: EOChar,
     pub recover_rate: EOInt,
     pub npc_recover_rate: EOInt,
+    pub exp_multiplier: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::item, PacketAction, PacketFamily, ShortItem, Weight},
+    protocol::{server::item, PacketAction, PacketFamily, ShortItem},
 };
 
 use crate::{utils::get_distance, SETTINGS};
@@ -9,65 +9,58 @@ use super::Map;
 
 impl Map {
     pub fn get_item(&mut self, target_player_id: EOShort, item_index: EOShort) {
-        let (item_id, item_coords, item_index, item_amount, amount_taken) = {
-            let item = self.items.get_mut(&item_index);
-
-            if item.is_none() {
-                return;
-            }
-
-            let character = self.characters.get_mut(&target_player_id);
-
-            if character.is_none() {
-                return;
-            }
-
-            let item = item.unwrap();
-            let character = character.unwrap();
-
-            let distance = get_distance(&item.coords, &character.coords);
-            if distance > SETTINGS.world.drop_distance {
-                return;
-            }
-
-            let amount = character.can_hold(item.id, item.amount);
-            if amount == 0 {
-                return;
-            }
-
-            character.add_item(item.id, amount);
-
-            let reply = item::Get {
-                taken_item_index: item_index,
-                taken_item: ShortItem {
-                    id: item.id,
-                    amount,
-                },
-                weight: Weight {
-                    current: character.weight,
-                    max: character.max_weight,
-                },
-            };
-
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            let buf = builder.get();
-
-            character
-                .player
-                .as_ref()
-                .unwrap()
-                .send(PacketAction::Get, PacketFamily::Item, buf);
-
-            if amount == item.amount {
-                self.items.remove(&item_index);
-                return;
-            } else {
-                item.amount -= amount;
-            }
-
-            (item.id, item.coords, item_index, item.amount, amount)
+        let (item_id, item_amount, item_coords) = match self.items.get(&item_index) {
+            Some(item) => (item.id, item.amount, item.coords),
+            None => return,
         };
+
+        let character = match self.characters.get_mut(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let distance = get_distance(&item_coords, &character.coords);
+        if distance > SETTINGS.world.drop_distance {
+            return;
+        }
+
+        let amount_picked_up = character.can_hold(item_id, item_amount);
+        if amount_picked_up == 0 {
+            return;
+        }
+
+        character.add_item(item_id, amount_picked_up);
+
+        let reply = item::Get {
+            taken_item_index: item_index,
+            taken_item: ShortItem {
+                id: item_id,
+                amount: amount_picked_up,
+            },
+            weight: character.get_weight(),
+        };
+
+        let mut builder = StreamBuilder::new();
+        reply.serialize(&mut builder);
+        let buf = builder.get();
+
+        character
+            .player
+            .as_ref()
+            .unwrap()
+            .send(PacketAction::Get, PacketFamily::Item, buf);
+
+        if amount_picked_up == item_amount {
+            self.items.remove(&item_index);
+        } else {
+            match self.items.get_mut(&item_index) {
+                Some(item) => item.amount -= amount_picked_up,
+                None => {
+                    error!("Failed to get item {}", item_index);
+                    return;
+                }
+            }
+        }
 
         let reply = item::Remove { item_index };
 
@@ -78,11 +71,11 @@ impl Map {
             reply,
         );
 
-        if amount_taken != item_amount {
+        if amount_picked_up != item_amount {
             let reply = item::Add {
                 item_id,
                 item_index,
-                item_amount,
+                item_amount: item_amount - amount_picked_up,
                 coords: item_coords,
             };
 

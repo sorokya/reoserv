@@ -1,10 +1,10 @@
 use std::{io::Cursor, path::Path};
 
 use eo::{
-    data::{EOChar, EOShort},
+    data::EOShort,
     protocol::{
         server::welcome::{Reply, ReplyData, ReplyEnterGame},
-        Weight, WelcomeReply,
+        WelcomeReply,
     },
 };
 use tokio::{
@@ -73,13 +73,9 @@ impl World {
                 }
 
                 let character = character.unwrap();
-
-                let weight = Weight {
-                    current: character.weight as EOChar,
-                    max: character.max_weight as EOChar,
-                };
                 let items = character.items.clone();
                 let spells = character.spells.clone();
+                let weight = character.get_weight();
 
                 map.enter(character, None).await;
                 let nearby_info = map.get_nearby_info(player_id).await;

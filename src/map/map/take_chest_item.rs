@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem, Weight},
+    protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
 };
 
 use crate::utils::get_distance;
@@ -45,10 +45,7 @@ impl Map {
                 id: item.item_id,
                 amount: item.amount,
             },
-            weight: Weight {
-                current: character.weight,
-                max: character.max_weight,
-            },
+            weight: character.get_weight(),
             items: remaining_items.clone(),
         };
 

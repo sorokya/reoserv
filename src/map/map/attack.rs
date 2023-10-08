@@ -11,7 +11,7 @@ use rand::Rng;
 use crate::{
     map::{Item, Npc},
     utils::get_next_coords,
-    DROP_DB, NPC_DB,
+    DROP_DB, NPC_DB, SETTINGS,
 };
 
 use super::Map;
@@ -168,7 +168,8 @@ impl Map {
             None => return,
         };
 
-        let leveled_up = character.add_experience(npc_data.experience);
+        let leveled_up =
+            character.add_experience(npc_data.experience * SETTINGS.world.exp_multiplier);
 
         let drop = { get_drop(player_id, npc) };
 

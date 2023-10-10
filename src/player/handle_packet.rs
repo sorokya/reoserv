@@ -68,6 +68,7 @@ pub async fn handle_packet(
         PacketFamily::Refresh => handlers::refresh(action, player.clone()).await,
         PacketFamily::Shop => handlers::shop(action, reader, player.clone()).await,
         PacketFamily::Sit => handlers::sit(action, reader, player.clone()).await,
+        PacketFamily::Spell => handlers::spell(action, reader, player.clone()).await,
         PacketFamily::StatSkill => handlers::stat_skill(action, reader, player.clone()).await,
         PacketFamily::Talk => handlers::talk(action, reader, player.clone(), world.clone()).await,
         PacketFamily::Walk => handlers::walk(reader, player.clone()).await,

@@ -7,7 +7,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::character::Character;
+use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
@@ -20,6 +20,10 @@ pub enum Command {
         player_id: EOShort,
         item: Item,
         session_id: EOShort,
+    },
+    CastSpell {
+        player_id: EOShort,
+        target: SpellTarget,
     },
     CraftItem {
         player_id: EOShort,
@@ -151,6 +155,11 @@ pub enum Command {
     },
     Stand {
         player_id: EOShort,
+    },
+    StartSpellChant {
+        player_id: EOShort,
+        spell_id: EOShort,
+        timestamp: EOThree,
     },
     TakeChestItem {
         player_id: EOShort,

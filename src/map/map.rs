@@ -26,6 +26,7 @@ pub struct Map {
 mod act_npcs;
 mod attack;
 mod buy_item;
+mod cast_spell;
 mod craft_item;
 mod drop_item;
 mod emote;
@@ -70,6 +71,7 @@ mod sit_chair;
 mod spawn_items;
 mod spawn_npcs;
 mod stand;
+mod start_spell_chant;
 mod take_chest_item;
 mod unequip;
 mod use_item;
@@ -109,6 +111,8 @@ impl Map {
                 item,
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
+
+            Command::CastSpell { player_id, target } => self.cast_spell(player_id, target),
 
             Command::CraftItem {
                 player_id,
@@ -260,6 +264,12 @@ impl Map {
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),
 
             Command::Stand { player_id } => self.stand(player_id),
+
+            Command::StartSpellChant {
+                player_id,
+                spell_id,
+                timestamp,
+            } => self.start_spell_chant(player_id, spell_id, timestamp),
 
             Command::SpawnItems => self.spawn_items().await,
 

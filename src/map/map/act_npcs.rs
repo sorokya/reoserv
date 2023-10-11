@@ -379,6 +379,11 @@ impl Map {
         if let Some(npc) = self.npcs.get_mut(&index) {
             npc.direction = direction;
             npc.last_act = Some(Utc::now());
+
+            if killed_state == PlayerKilledState::Dead {
+                npc.opponents
+                    .retain(|opponent| opponent.player_id != target_player_id);
+            }
         }
 
         Some(NPCUpdateAttack {

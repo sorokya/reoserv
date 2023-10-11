@@ -11,6 +11,10 @@ use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
+    AddLockerItem {
+        player_id: EOShort,
+        item: Item,
+    },
     Attack {
         target_player_id: EOShort,
         direction: Direction,
@@ -112,6 +116,9 @@ pub enum Command {
     OpenDoor {
         target_player_id: EOShort, // TODO: rename to player_id
         door_coords: Coords,       // TODO: rename to coords
+    },
+    OpenLocker {
+        player_id: EOShort,
     },
     OpenShop {
         player_id: EOShort,

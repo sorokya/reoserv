@@ -24,6 +24,19 @@ impl Character {
             )
             .await?;
 
+        let old_bank = conn
+            .exec_map(
+                include_str!("../sql/get_character_bank.sql"),
+                params! {
+                    "character_id" => self.id,
+                },
+                |mut row: Row| Item {
+                    id: row.take(0).unwrap(),
+                    amount: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
         let old_spells = conn
             .exec_map(
                 include_str!("../sql/get_character_spells.sql"),
@@ -184,6 +197,43 @@ impl Character {
             } else {
                 tx.exec_drop(
                     include_str!("../sql/update_inventory_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                        "quantity" => item.amount,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for item in &old_bank {
+            if !self.bank.contains(item) {
+                tx.exec_drop(
+                    include_str!("../sql/delete_bank_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for item in &self.bank {
+            if !old_bank.contains(item) {
+                tx.exec_drop(
+                    include_str!("../sql/create_bank_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item.id,
+                        "quantity" => item.amount,
+                    },
+                )
+                .await?;
+            } else {
+                tx.exec_drop(
+                    include_str!("../sql/update_bank_item.sql"),
                     params! {
                         "character_id" => self.id,
                         "item_id" => item.id,

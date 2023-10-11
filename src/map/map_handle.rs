@@ -32,6 +32,10 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn add_locker_item(&self, player_id: EOShort, item: Item) {
+        let _ = self.tx.send(Command::AddLockerItem { player_id, item });
+    }
+
     pub fn buy_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
         let _ = self.tx.send(Command::BuyItem {
             player_id,
@@ -203,6 +207,10 @@ impl MapHandle {
             target_player_id,
             door_coords,
         });
+    }
+
+    pub fn open_locker(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::OpenLocker { player_id });
     }
 
     pub fn open_shop(&self, player_id: EOShort, npc_index: EOChar) {

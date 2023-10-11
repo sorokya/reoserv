@@ -36,6 +36,9 @@ pub use init::init;
 mod item;
 pub use item::item;
 
+mod locker;
+pub use locker::locker;
+
 mod login;
 pub use login::login;
 

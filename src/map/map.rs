@@ -24,6 +24,7 @@ pub struct Map {
 }
 
 mod act_npcs;
+mod add_locker_item;
 mod attack;
 mod attack_npc_replies;
 mod buy_item;
@@ -54,6 +55,7 @@ mod leave;
 mod level_stat;
 mod open_chest;
 mod open_door;
+mod open_locker;
 mod open_shop;
 mod open_skill_master;
 mod play_effect;
@@ -102,6 +104,7 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
             Command::Attack {
                 target_player_id,
                 direction,
@@ -219,6 +222,8 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::OpenLocker { player_id } => self.open_locker(player_id),
 
             Command::OpenShop {
                 player_id,

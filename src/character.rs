@@ -13,6 +13,7 @@ use mysql_async::Conn;
 
 use crate::{player::PlayerHandle, EXP_TABLE, SETTINGS};
 
+mod add_bank_item;
 mod add_item;
 mod calculate_stats;
 mod can_hold;

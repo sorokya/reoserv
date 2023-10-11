@@ -36,6 +36,9 @@ pub use init::init;
 mod item;
 pub use item::item;
 
+mod locker;
+pub use locker::locker;
+
 mod login;
 pub use login::login;
 
@@ -62,6 +65,9 @@ pub use shop::shop;
 
 mod sit;
 pub use sit::sit;
+
+mod spell;
+pub use spell::spell;
 
 mod stat_skill;
 pub use stat_skill::stat_skill;

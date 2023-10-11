@@ -12,7 +12,7 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::character::Character;
+use crate::character::{Character, SpellTarget};
 
 use super::{Command, Map};
 
@@ -32,12 +32,20 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn add_locker_item(&self, player_id: EOShort, item: Item) {
+        let _ = self.tx.send(Command::AddLockerItem { player_id, item });
+    }
+
     pub fn buy_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
         let _ = self.tx.send(Command::BuyItem {
             player_id,
             item,
             session_id,
         });
+    }
+
+    pub fn cast_spell(&self, player_id: EOShort, target: SpellTarget) {
+        let _ = self.tx.send(Command::CastSpell { player_id, target });
     }
 
     pub fn craft_item(&self, player_id: EOShort, item_id: EOShort, session_id: EOShort) {
@@ -201,6 +209,10 @@ impl MapHandle {
         });
     }
 
+    pub fn open_locker(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::OpenLocker { player_id });
+    }
+
     pub fn open_shop(&self, player_id: EOShort, npc_index: EOChar) {
         let _ = self.tx.send(Command::OpenShop {
             player_id,
@@ -255,6 +267,14 @@ impl MapHandle {
 
     pub fn stand(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::Stand { player_id });
+    }
+
+    pub fn start_spell_chant(&self, player_id: EOShort, spell_id: EOShort, timestamp: EOThree) {
+        let _ = self.tx.send(Command::StartSpellChant {
+            player_id,
+            spell_id,
+            timestamp,
+        });
     }
 
     pub async fn save(&self) {

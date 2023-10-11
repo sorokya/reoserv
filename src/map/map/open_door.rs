@@ -8,9 +8,13 @@ use crate::utils::in_client_range;
 use super::Map;
 
 impl Map {
-    pub fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
-        let target = self.characters.get(&target_player_id).unwrap();
-        if in_client_range(&target.coords, &door_coords) {
+    pub fn open_door(&self, player_id: EOShort, door_coords: Coords) {
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if in_client_range(&character.coords, &door_coords) {
             let packet = door::Open {
                 coords: door_coords,
             };

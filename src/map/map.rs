@@ -24,8 +24,11 @@ pub struct Map {
 }
 
 mod act_npcs;
+mod add_locker_item;
 mod attack;
+mod attack_npc_replies;
 mod buy_item;
+mod cast_spell;
 mod craft_item;
 mod drop_item;
 mod emote;
@@ -41,6 +44,7 @@ mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
 mod get_tile;
+mod give_experience;
 mod give_item;
 mod is_tile_occupied;
 mod is_tile_walkable;
@@ -51,6 +55,7 @@ mod leave;
 mod level_stat;
 mod open_chest;
 mod open_door;
+mod open_locker;
 mod open_shop;
 mod open_skill_master;
 mod play_effect;
@@ -70,6 +75,7 @@ mod sit_chair;
 mod spawn_items;
 mod spawn_npcs;
 mod stand;
+mod start_spell_chant;
 mod take_chest_item;
 mod unequip;
 mod use_item;
@@ -98,6 +104,7 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
             Command::Attack {
                 target_player_id,
                 direction,
@@ -109,6 +116,8 @@ impl Map {
                 item,
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
+
+            Command::CastSpell { player_id, target } => self.cast_spell(player_id, target),
 
             Command::CraftItem {
                 player_id,
@@ -214,6 +223,8 @@ impl Map {
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
 
+            Command::OpenLocker { player_id } => self.open_locker(player_id),
+
             Command::OpenShop {
                 player_id,
                 npc_index,
@@ -260,6 +271,12 @@ impl Map {
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),
 
             Command::Stand { player_id } => self.stand(player_id),
+
+            Command::StartSpellChant {
+                player_id,
+                spell_id,
+                timestamp,
+            } => self.start_spell_chant(player_id, spell_id, timestamp),
 
             Command::SpawnItems => self.spawn_items().await,
 

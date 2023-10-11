@@ -88,15 +88,15 @@ impl Npc {
         let mut rng = rand::thread_rng();
         let rand = rng.gen_range(0.0..1.0);
 
-        if hit_rate < rand {
-            return 0;
-        }
-
-        let damage = match eval_float_with_context(&FORMULAS.damage, &context) {
-            Ok(amount) => cmp::min(amount.floor() as EOInt, self.hp as EOInt),
-            Err(e) => {
-                error!("Failed to calculate damage: {}", e);
-                0
+        let damage = if hit_rate < rand {
+            0
+        } else {
+            match eval_float_with_context(&FORMULAS.damage, &context) {
+                Ok(amount) => cmp::min(amount.floor() as EOInt, self.hp as EOInt),
+                Err(e) => {
+                    error!("Failed to calculate damage: {}", e);
+                    0
+                }
             }
         };
 

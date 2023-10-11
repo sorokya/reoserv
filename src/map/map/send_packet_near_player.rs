@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
@@ -17,10 +18,19 @@ impl Map {
     ) where
         T: Serializeable,
     {
+        let mut builder = StreamBuilder::new();
+        packet.serialize(&mut builder);
+        self.send_buf_near_player(player_id, action, family, builder.get());
+    }
+
+    pub fn send_buf_near_player(
+        &self,
+        player_id: EOShort,
+        action: PacketAction,
+        family: PacketFamily,
+        buf: Bytes,
+    ) {
         if let Some(target) = self.characters.get(&player_id) {
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
-            let buf = builder.get();
             for (id, character) in self.characters.iter() {
                 if id == &player_id || character.player.is_none() {
                     continue;

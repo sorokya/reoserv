@@ -7,10 +7,14 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::character::Character;
+use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
+    AddLockerItem {
+        player_id: EOShort,
+        item: Item,
+    },
     Attack {
         target_player_id: EOShort,
         direction: Direction,
@@ -20,6 +24,10 @@ pub enum Command {
         player_id: EOShort,
         item: Item,
         session_id: EOShort,
+    },
+    CastSpell {
+        player_id: EOShort,
+        target: SpellTarget,
     },
     CraftItem {
         player_id: EOShort,
@@ -109,6 +117,9 @@ pub enum Command {
         target_player_id: EOShort, // TODO: rename to player_id
         door_coords: Coords,       // TODO: rename to coords
     },
+    OpenLocker {
+        player_id: EOShort,
+    },
     OpenShop {
         player_id: EOShort,
         npc_index: EOChar,
@@ -151,6 +162,11 @@ pub enum Command {
     },
     Stand {
         player_id: EOShort,
+    },
+    StartSpellChant {
+        player_id: EOShort,
+        spell_id: EOShort,
+        timestamp: EOThree,
     },
     TakeChestItem {
         player_id: EOShort,

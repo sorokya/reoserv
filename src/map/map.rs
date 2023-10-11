@@ -25,6 +25,7 @@ pub struct Map {
 
 mod act_npcs;
 mod attack;
+mod attack_npc_replies;
 mod buy_item;
 mod cast_spell;
 mod craft_item;
@@ -42,6 +43,7 @@ mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
 mod get_tile;
+mod give_experience;
 mod give_item;
 mod is_tile_occupied;
 mod is_tile_walkable;

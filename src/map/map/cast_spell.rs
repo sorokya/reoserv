@@ -1,14 +1,15 @@
 use std::cmp;
 
 use eo::{
-    data::{EOInt, EOShort, StreamBuilder},
+    data::{EOChar, EOInt, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
-    pubs::{EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
+    pubs::{EnfNpcType, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
 };
+use rand::Rng;
 
 use crate::{
     character::{SpellState, SpellTarget},
-    SPELL_DB,
+    NPC_DB, SPELL_DB,
 };
 
 use super::Map;
@@ -216,10 +217,88 @@ impl Map {
 
     fn cast_damage_spell(
         &mut self,
-        _player_id: EOShort,
-        _spell_id: EOShort,
-        _spell_data: &EsfSpell,
-        _target: SpellTarget,
+        player_id: EOShort,
+        spell_id: EOShort,
+        spell_data: &EsfSpell,
+        target: SpellTarget,
     ) {
+        if spell_data.target_restrict == EsfSpellTargetRestrict::Friendly
+            || spell_data.target_type != EsfSpellTargetType::Other
+        {
+            return;
+        }
+
+        match target {
+            SpellTarget::Npc(npc_index) => {
+                self.cast_damage_npc(player_id, npc_index, spell_id, spell_data)
+            }
+            SpellTarget::OtherPlayer(_) => warn!("Spell PVP not implemented yet"),
+            _ => {}
+        }
+    }
+
+    fn cast_damage_npc(
+        &mut self,
+        player_id: EOShort,
+        npc_index: EOChar,
+        spell_id: EOShort,
+        spell_data: &EsfSpell,
+    ) {
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if character.tp < spell_data.tp_cost {
+            return;
+        }
+
+        let direction = character.direction;
+
+        let npc = match self.npcs.get_mut(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        if !matches!(
+            npc_data.r#type,
+            EnfNpcType::Passive | EnfNpcType::Aggressive
+        ) {
+            return;
+        }
+
+        let mut rng = rand::thread_rng();
+
+        let amount = rng.gen_range(
+            character.min_damage + spell_data.min_damage
+                ..=character.max_damage + spell_data.max_damage,
+        );
+
+        let critical = npc.hp == npc.max_hp;
+
+        let damage_dealt = npc.damage(player_id, amount, character.accuracy, critical);
+
+        if npc.alive {
+            self.attack_npc_reply(
+                player_id,
+                npc_index,
+                direction,
+                damage_dealt,
+                Some(spell_id),
+            );
+        } else {
+            self.attack_npc_killed_reply(
+                player_id,
+                npc_index,
+                direction,
+                damage_dealt,
+                Some(spell_id),
+            );
+        }
     }
 }

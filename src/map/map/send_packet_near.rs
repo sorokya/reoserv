@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eo::{
     data::{Serializeable, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
@@ -19,7 +20,16 @@ impl Map {
     {
         let mut builder = StreamBuilder::new();
         packet.serialize(&mut builder);
-        let buf = builder.get();
+        self.send_buf_near(coords, action, family, builder.get())
+    }
+
+    pub fn send_buf_near(
+        &self,
+        coords: &Coords,
+        action: PacketAction,
+        family: PacketFamily,
+        buf: Bytes,
+    ) {
         for character in self.characters.values() {
             if in_range(coords, &character.coords) {
                 character

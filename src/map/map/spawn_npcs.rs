@@ -77,6 +77,7 @@ impl Map {
                 };
 
                 if !alive && now.timestamp() - dead_since.timestamp() > spawn_time.into() {
+                    let file_spawn_coords = spawn_coords;
                     let mut spawn_coords = if spawn_type == 7 {
                         spawn_coords
                     } else {
@@ -98,17 +99,20 @@ impl Map {
                         }
                     };
 
-                    while !self.is_tile_walkable_npc(&spawn_coords) {
+                    let mut i = 0;
+                    while !self.is_tile_walkable_npc(&spawn_coords)
+                        && (i > 100 || !self.is_tile_occupied(&spawn_coords))
+                    {
                         let x = cmp::max(
                             cmp::min(
-                                spawn_coords.x as i32 + rng.gen_range(-2..=2),
+                                file_spawn_coords.x as i32 + rng.gen_range(-2..=2),
                                 self.file.width as i32,
                             ),
                             0,
                         );
                         let y = cmp::max(
                             cmp::min(
-                                spawn_coords.y as i32 + rng.gen_range(-2..=2),
+                                file_spawn_coords.y as i32 + rng.gen_range(-2..=2),
                                 self.file.height as i32,
                             ),
                             0,
@@ -117,6 +121,12 @@ impl Map {
                             x: x as EOChar,
                             y: y as EOChar,
                         };
+
+                        i += 1;
+
+                        if i >= 200 {
+                            break;
+                        }
                     }
 
                     if let Some(npc) = self.npcs.get_mut(&index) {

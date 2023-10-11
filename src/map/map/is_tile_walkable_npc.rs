@@ -37,6 +37,6 @@ impl Map {
             );
         }
 
-        !self.is_tile_occupied(coords)
+        true
     }
 }

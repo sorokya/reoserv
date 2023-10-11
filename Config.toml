@@ -55,9 +55,9 @@ spawn_direction = 0
 home = "Wanderer"
 
 [jail]
-map = 176
-x = 1
-y = 1
+map = 76
+x = 6
+y = 6
 
 [rescue]
 map = 4

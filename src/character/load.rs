@@ -61,6 +61,7 @@ impl Character {
         character.paperdoll.armlet[1] = row.take("armlet2").unwrap();
         character.paperdoll.bracer[0] = row.take("bracer").unwrap();
         character.paperdoll.bracer[1] = row.take("bracer2").unwrap();
+        character.paperdoll.necklace = row.take("necklace").unwrap();
         character.level = row.take("level").unwrap();
         character.experience = row.take("experience").unwrap();
         character.hp = row.take("hp").unwrap();

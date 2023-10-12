@@ -10,12 +10,9 @@ use tokio::sync::oneshot;
 
 use crate::player::{ClientState, PlayerHandle};
 
-use super::super::World;
+use super::{super::World, password_hash::validate_password};
 
-use super::{
-    account_exists::account_exists, get_character_list::get_character_list,
-    get_password_hash::get_password_hash,
-};
+use super::{account_exists::account_exists, get_character_list::get_character_list};
 
 impl World {
     pub async fn login(
@@ -54,26 +51,26 @@ impl World {
             return;
         }
 
-        let password_hash = get_password_hash(username, password);
-
-        let row = conn
+        let row = match conn
             .exec_first::<Row, &str, Params>(
-                include_str!("../../../sql/verify_password.sql"),
+                include_str!("../../../sql/get_password_hash.sql"),
                 params! {
                     "name" => username,
-                    "password_hash" => &password_hash,
                 },
             )
-            .await;
-
-        if let Err(e) = row {
-            error!("Error verifying password: {}", e);
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
+            .await
+        {
+            Ok(row) => row,
+            Err(e) => {
+                error!("Error getting password hash: {}", e);
+                let _ = respond_to.send(Err(Box::new(e)));
+                return;
+            }
         }
+        .unwrap();
 
-        let row = row.unwrap();
-        if row.is_none() {
+        let password_hash: String = row.get("password_hash").unwrap();
+        if !validate_password(username, password, &password_hash) {
             let _ = respond_to.send(Ok(Reply {
                 reply_code: LoginReply::WrongUserPass,
                 data: login::ReplyData::WrongUserPass(login::ReplyWrongUserPass {
@@ -82,8 +79,6 @@ impl World {
             }));
             return;
         }
-
-        let row = row.unwrap();
 
         let account_id: EOInt = row.get("id").unwrap();
         if self.accounts.contains(&account_id) {

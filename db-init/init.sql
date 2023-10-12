@@ -27,7 +27,7 @@ DROP TABLE IF EXISTS `Account`;
 CREATE TABLE `Account` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(16) NOT NULL,
-  `password_hash` char(64) NOT NULL,
+  `password_hash` char(100) NOT NULL,
   `real_name` varchar(64) NOT NULL,
   `location` varchar(64) NOT NULL,
   `email` varchar(64) NOT NULL,

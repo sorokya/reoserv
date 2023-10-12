@@ -10,7 +10,7 @@ use crate::{errors::WrongSessionIdError, player::PlayerHandle};
 
 use super::super::World;
 
-use super::{account_exists::account_exists, get_password_hash::get_password_hash};
+use super::{account_exists::account_exists, password_hash::generate_password_hash};
 
 impl World {
     pub async fn create_account(
@@ -66,8 +66,7 @@ impl World {
             return;
         }
 
-        let password_hash = get_password_hash(&details.username, &details.password);
-
+        let password_hash = generate_password_hash(&details.username, &details.password);
         let player_ip = player.get_ip_addr().await;
         if let Err(e) = player_ip {
             let _ = respond_to.send(Err(e));

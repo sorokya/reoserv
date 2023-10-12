@@ -34,6 +34,11 @@ pub enum Command {
         item_id: EOShort,
         session_id: EOShort,
     },
+    DepositGold {
+        player_id: EOShort,
+        session_id: EOThree,
+        amount: EOInt,
+    },
     DropItem {
         target_player_id: EOShort,
         item: ShortItem,
@@ -109,6 +114,10 @@ pub enum Command {
         player_id: EOShort,
         stat_id: StatId,
     },
+    OpenBank {
+        player_id: EOShort,
+        npc_index: EOChar,
+    },
     OpenChest {
         player_id: EOShort,
         coords: Coords,
@@ -173,10 +182,17 @@ pub enum Command {
         coords: Coords,
         item_id: EOShort,
     },
+    TakeLockerItem {
+        player_id: EOShort,
+        item_id: EOShort,
+    },
     Unequip {
         player_id: EOShort,
         item_id: EOShort,
         sub_loc: EOChar,
+    },
+    UpgradeLocker {
+        player_id: EOShort,
     },
     UseItem {
         player_id: EOShort,
@@ -187,6 +203,11 @@ pub enum Command {
         direction: Direction,
         coords: Coords,
         timestamp: EOThree,
+    },
+    WithdrawGold {
+        player_id: EOShort,
+        session_id: EOThree,
+        amount: EOInt,
     },
     SpawnItems,
     SpawnNpcs,

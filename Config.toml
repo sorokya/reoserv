@@ -115,3 +115,33 @@ speed_6 = 15000
 
 # Speed that NPCs talk at in miliseconds
 talk_rate = 37500
+
+[bank]
+
+# Maximum amount of an item a bank locker will hold
+max_item_amount = 200
+
+# Amount of items you can store in a locker before any upgrades
+base_size = 25
+
+# Number of extra items you can desposit each upgrade
+size_step = 5
+
+# Maximum amount of upgrades that can be bought
+max_upgrades = 7
+
+# Base price for bank upgrade
+upgrade_base_cost = 1000
+
+# Price increase for each upgrade
+upgrade_cost_step = 1000
+
+[limits]
+
+# Maximum amount of gold a player can deposit
+max_bank_gold = 2000000000
+
+# Maximum amount of an item a player can have in their inventory
+max_item = 2000000000
+
+

@@ -22,7 +22,6 @@ impl Character {
                 "race" => &(self.skin as u32),
                 "hair_style" => &(self.hair_style as u32),
                 "hair_color" => &(self.hair_color as u32),
-                "bank_max" => &0_u32, // TODO: figure out bank max
             },
         )
         .await?;

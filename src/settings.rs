@@ -87,6 +87,22 @@ pub struct Sln {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Bank {
+    pub max_item_amount: EOInt,
+    pub base_size: EOInt,
+    pub size_step: EOInt,
+    pub max_upgrades: EOInt,
+    pub upgrade_base_cost: EOInt,
+    pub upgrade_cost_step: EOInt,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Limits {
+    pub max_bank_gold: EOInt,
+    pub max_item: EOInt,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -96,6 +112,8 @@ pub struct Settings {
     pub world: World,
     pub npcs: NPCs,
     pub sln: Sln,
+    pub bank: Bank,
+    pub limits: Limits,
 }
 
 impl Settings {

@@ -56,6 +56,14 @@ impl MapHandle {
         });
     }
 
+    pub fn deposit_gold(&self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+        let _ = self.tx.send(Command::DepositGold {
+            player_id,
+            session_id,
+            amount,
+        });
+    }
+
     pub fn drop_item(&self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
         let _ = self.tx.send(Command::DropItem {
             target_player_id,
@@ -198,6 +206,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
+    pub fn open_bank(&self, player_id: EOShort, npc_index: EOChar) {
+        let _ = self.tx.send(Command::OpenBank {
+            player_id,
+            npc_index,
+        });
+    }
+
     pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
         let _ = self.tx.send(Command::OpenChest { player_id, coords });
     }
@@ -312,6 +327,10 @@ impl MapHandle {
         });
     }
 
+    pub fn take_locker_item(&self, player_id: EOShort, item_id: EOShort) {
+        let _ = self.tx.send(Command::TakeLockerItem { player_id, item_id });
+    }
+
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
     }
@@ -322,6 +341,10 @@ impl MapHandle {
             item_id,
             sub_loc,
         });
+    }
+
+    pub fn upgrade_locker(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::UpgradeLocker { player_id });
     }
 
     pub fn use_item(&self, player_id: EOShort, item_id: EOShort) {
@@ -340,6 +363,14 @@ impl MapHandle {
             direction,
             coords,
             timestamp,
+        });
+    }
+
+    pub fn withdraw_gold(&self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+        let _ = self.tx.send(Command::WithdrawGold {
+            player_id,
+            session_id,
+            amount,
         });
     }
 

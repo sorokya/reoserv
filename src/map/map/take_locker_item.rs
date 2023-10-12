@@ -1,33 +1,19 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
-    protocol::{Coords, Item, PacketAction, PacketFamily},
+    data::{EOShort, StreamBuilder},
+    protocol::{Coords, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
-
-use crate::SETTINGS;
 
 use super::Map;
 
 impl Map {
-    pub fn add_locker_item(&mut self, player_id: EOShort, item: Item) {
+    pub fn take_locker_item(&mut self, player_id: EOShort, item_id: EOShort) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
-
-        let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
-        if character.bank.len() as EOInt >= bank_size {
-            let mut builder = StreamBuilder::new();
-            builder.add_char(bank_size as EOChar);
-            character.player.as_ref().unwrap().send(
-                PacketAction::Spec,
-                PacketFamily::Locker,
-                builder.get(),
-            );
-            return;
-        }
 
         let adjacent_tiles = [
             self.get_tile(&Coords {
@@ -55,12 +41,12 @@ impl Map {
             return;
         }
 
-        let amount = cmp::min(character.get_item_amount(item.id), item.amount);
+        let amount = character.get_bank_item_amount(item_id);
         if amount == 0 {
             return;
         }
 
-        let amount = cmp::min(character.can_bank_hold(item.id, amount), amount);
+        let amount = cmp::min(character.can_hold(item_id, amount), amount);
         if amount == 0 {
             return;
         }
@@ -70,12 +56,12 @@ impl Map {
             None => return,
         };
 
-        character.remove_item(item.id, amount);
-        character.add_bank_item(item.id, amount);
+        character.remove_bank_item(item_id, amount);
+        character.add_item(item_id, amount);
 
         let mut builder = StreamBuilder::new();
-        builder.add_short(item.id);
-        builder.add_int(character.get_item_amount(item.id));
+        builder.add_short(item_id);
+        builder.add_three(character.get_item_amount(item_id));
 
         let weight = character.get_weight();
         builder.add_char(weight.current);
@@ -87,7 +73,7 @@ impl Map {
         }
 
         character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
+            PacketAction::Get,
             PacketFamily::Locker,
             builder.get(),
         );

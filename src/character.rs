@@ -55,7 +55,7 @@ pub struct Character {
     pub skin: Skin,
     pub hair_style: EOShort,
     pub hair_color: EOShort,
-    pub bank_max: EOInt,
+    pub bank_level: EOInt,
     pub gold_bank: EOInt,
     pub guild_name: Option<String>,
     pub guild_tag: Option<String>,
@@ -152,12 +152,17 @@ impl Character {
     }
 
     pub fn get_item_amount(&self, item_id: EOShort) -> EOInt {
-        let existing_item = match self.items.iter().find(|item| item.id == item_id) {
-            Some(item) => item,
-            None => return 0,
-        };
+        match self.items.iter().find(|item| item.id == item_id) {
+            Some(item) => item.amount,
+            None => 0,
+        }
+    }
 
-        existing_item.amount
+    pub fn get_bank_item_amount(&self, item_id: EOShort) -> EOInt {
+        match self.bank.iter().find(|item| item.id == item_id) {
+            Some(item) => item.amount,
+            None => 0,
+        }
     }
 
     pub fn add_spell(&mut self, spell_id: EOShort) {

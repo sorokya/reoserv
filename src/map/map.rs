@@ -30,6 +30,7 @@ mod attack_npc_replies;
 mod buy_item;
 mod cast_spell;
 mod craft_item;
+mod deposit_gold;
 mod drop_item;
 mod emote;
 mod enter;
@@ -53,6 +54,7 @@ mod junk_item;
 mod learn_skill;
 mod leave;
 mod level_stat;
+mod open_bank;
 mod open_chest;
 mod open_door;
 mod open_locker;
@@ -77,9 +79,12 @@ mod spawn_npcs;
 mod stand;
 mod start_spell_chant;
 mod take_chest_item;
+mod take_locker_item;
 mod unequip;
+mod upgrade_locker;
 mod use_item;
 mod walk;
+mod withdraw_gold;
 
 impl Map {
     pub fn new(
@@ -124,6 +129,12 @@ impl Map {
                 item_id,
                 session_id,
             } => self.craft_item(player_id, item_id, session_id).await,
+
+            Command::DepositGold {
+                player_id,
+                session_id,
+                amount,
+            } => self.deposit_gold(player_id, session_id, amount).await,
 
             Command::DropItem {
                 target_player_id,
@@ -216,6 +227,11 @@ impl Map {
 
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
+            Command::OpenBank {
+                player_id,
+                npc_index,
+            } => self.open_bank(player_id, npc_index).await,
+
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 
             Command::OpenDoor {
@@ -290,6 +306,10 @@ impl Map {
                 self.take_chest_item(player_id, coords, item_id);
             }
 
+            Command::TakeLockerItem { player_id, item_id } => {
+                self.take_locker_item(player_id, item_id)
+            }
+
             Command::ActNpcs => self.act_npcs(),
 
             Command::Unequip {
@@ -297,6 +317,8 @@ impl Map {
                 item_id,
                 sub_loc,
             } => self.unequip(player_id, item_id, sub_loc),
+
+            Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
 
@@ -306,6 +328,12 @@ impl Map {
                 coords,
                 timestamp,
             } => self.walk(target_player_id, direction, coords, timestamp),
+
+            Command::WithdrawGold {
+                player_id,
+                session_id,
+                amount,
+            } => self.withdraw_gold(player_id, session_id, amount).await,
         }
     }
 }

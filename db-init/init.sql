@@ -79,7 +79,7 @@ CREATE TABLE `Character` (
   `race` int NOT NULL DEFAULT '0',
   `hair_style` int NOT NULL DEFAULT '0',
   `hair_color` int NOT NULL DEFAULT '0',
-  `bank_max` int NOT NULL DEFAULT '0',
+  `bank_level` int NOT NULL DEFAULT '0',
   `gold_bank` int NOT NULL DEFAULT '0',
   `guild_id` int DEFAULT NULL,
   `guild_rank_id` int DEFAULT NULL,

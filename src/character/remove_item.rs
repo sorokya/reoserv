@@ -21,4 +21,17 @@ impl Character {
             self.weight -= item.weight as EOInt * amount;
         }
     }
+
+    pub fn remove_bank_item(&mut self, item_id: EOShort, amount: EOInt) {
+        let existing_item = match self.bank.iter_mut().find(|item| item.id == item_id) {
+            Some(item) => item,
+            None => return,
+        };
+
+        if existing_item.amount <= amount {
+            self.bank.retain(|item| item.id != item_id);
+        } else {
+            existing_item.amount -= amount;
+        }
+    }
 }

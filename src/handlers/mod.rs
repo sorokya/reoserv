@@ -6,6 +6,9 @@ pub use account::account;
 mod attack;
 pub use attack::attack;
 
+mod bank;
+pub use bank::bank;
+
 mod chair;
 pub use chair::chair;
 

@@ -43,7 +43,7 @@ impl Character {
         character.skin = Skin::from_char(row.take("race").unwrap()).unwrap();
         character.hair_style = row.take("hair_style").unwrap();
         character.hair_color = row.take("hair_color").unwrap();
-        character.bank_max = row.take("bank_max").unwrap();
+        character.bank_level = row.take("bank_level").unwrap();
         character.gold_bank = row.take("gold_bank").unwrap();
         character.guild_rank_id = row.take("guild_rank_id").unwrap();
         character.guild_rank_string = row.take("guild_rank_string").unwrap();

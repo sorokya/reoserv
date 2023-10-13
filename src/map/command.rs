@@ -148,6 +148,10 @@ pub enum Command {
     },
     RecoverNpcs,
     RecoverPlayers,
+    RemoveBoardPost {
+        player_id: EOShort,
+        post_id: EOShort,
+    },
     RequestPaperdoll {
         player_id: EOShort,
         target_player_id: EOShort,

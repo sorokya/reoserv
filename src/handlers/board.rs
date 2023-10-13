@@ -18,6 +18,12 @@ fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.open_board(player_id, board_id + 1);
 }
 
+fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+    let _board_id = reader.get_short();
+    let post_id = reader.get_short();
+    map.remove_board_post(player_id, post_id);
+}
+
 fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let _board_id = reader.get_short();
     let post_id = reader.get_short();
@@ -44,6 +50,7 @@ pub async fn board(action: PacketAction, reader: StreamReader, player: PlayerHan
     match action {
         PacketAction::Create => create(reader, player_id, map),
         PacketAction::Open => open(reader, player_id, map),
+        PacketAction::Remove => remove(reader, player_id, map),
         PacketAction::Take => take(reader, player_id, map),
         _ => error!("Unhandled packet Board_{:?}", action),
     }

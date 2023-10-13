@@ -71,11 +71,8 @@ impl Map {
                 return map.open_board(player_id, board_id);
             }
 
-            match insert_post(&mut conn, board_id, character_id, subject, body).await {
-                Ok(_) => {}
-                Err(e) => {
-                    error!("Failed to insert post: {}", e);
-                }
+            if let Err(e) = insert_post(&mut conn, board_id, character_id, subject, body).await {
+                error!("Failed to insert post: {}", e);
             }
 
             map.open_board(player_id, board_id);
@@ -155,20 +152,15 @@ async fn insert_post(
     character_id: EOInt,
     subject: String,
     body: String,
-) -> Result<(), Box<dyn std::error::Error>> {
-    match conn
-        .exec_drop(
-            include_str!("../../sql/create_board_post.sql"),
-            params! {
-                "board_id" => board_id,
-                "character_id" => character_id,
-                "subject" => subject,
-                "body" => body,
-            },
-        )
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => Err(Box::new(e)),
-    }
+) -> Result<(), mysql_async::Error> {
+    conn.exec_drop(
+        include_str!("../../sql/create_board_post.sql"),
+        params! {
+            "board_id" => board_id,
+            "character_id" => character_id,
+            "subject" => subject,
+            "body" => body,
+        },
+    )
+    .await
 }

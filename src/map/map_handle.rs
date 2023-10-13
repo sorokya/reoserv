@@ -265,6 +265,12 @@ impl MapHandle {
         let _ = self.tx.send(Command::RecoverPlayers);
     }
 
+    pub fn remove_board_post(&self, player_id: EOShort, post_id: EOShort) {
+        let _ = self
+            .tx
+            .send(Command::RemoveBoardPost { player_id, post_id });
+    }
+
     pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
         let _ = self.tx.send(Command::RequestPaperdoll {
             player_id,

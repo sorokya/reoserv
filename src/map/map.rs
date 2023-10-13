@@ -66,6 +66,7 @@ mod play_effect;
 mod player_in_range_of_tile;
 mod recover_npcs;
 mod recover_players;
+mod remove_board_post;
 mod request_paperdoll;
 mod reset_character;
 mod save;
@@ -269,6 +270,10 @@ impl Map {
             Command::RecoverNpcs => self.recover_npcs().await,
 
             Command::RecoverPlayers => self.recover_players().await,
+
+            Command::RemoveBoardPost { player_id, post_id } => {
+                self.remove_board_post(player_id, post_id).await
+            }
 
             Command::RequestPaperdoll {
                 player_id,

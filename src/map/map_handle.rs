@@ -249,6 +249,14 @@ impl MapHandle {
         });
     }
 
+    pub fn post_board_message(&self, player_id: EOShort, subject: String, body: String) {
+        let _ = self.tx.send(Command::PostBoardMessage {
+            player_id,
+            subject,
+            body,
+        });
+    }
+
     pub fn recover_npcs(&self) {
         let _ = self.tx.send(Command::RecoverNpcs);
     }

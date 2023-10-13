@@ -63,6 +63,7 @@ mod open_shop;
 mod open_skill_master;
 mod play_effect;
 mod player_in_range_of_tile;
+mod post_board_message;
 mod recover_npcs;
 mod recover_players;
 mod request_paperdoll;
@@ -258,6 +259,12 @@ impl Map {
                 player_id,
                 npc_index,
             } => self.open_skill_master(player_id, npc_index).await,
+
+            Command::PostBoardMessage {
+                player_id,
+                subject,
+                body,
+            } => self.post_board_message(player_id, subject, body).await,
 
             Command::RecoverNpcs => self.recover_npcs().await,
 

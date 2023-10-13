@@ -5,9 +5,17 @@ use eo::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
+fn create(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+    let _board_id = reader.get_short();
+    reader.seek(1);
+    let subject = reader.get_break_string();
+    let body = reader.get_break_string();
+    map.post_board_message(player_id, subject, body);
+}
+
 fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let board_id = reader.get_short();
-    map.open_board(player_id, board_id);
+    map.open_board(player_id, board_id + 1);
 }
 
 fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
@@ -34,6 +42,7 @@ pub async fn board(action: PacketAction, reader: StreamReader, player: PlayerHan
     };
 
     match action {
+        PacketAction::Create => create(reader, player_id, map),
         PacketAction::Open => open(reader, player_id, map),
         PacketAction::Take => take(reader, player_id, map),
         _ => error!("Unhandled packet Board_{:?}", action),

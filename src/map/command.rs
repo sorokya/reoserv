@@ -141,6 +141,11 @@ pub enum Command {
         player_id: EOShort,
         npc_index: EOChar,
     },
+    PostBoardMessage {
+        player_id: EOShort,
+        subject: String,
+        body: String,
+    },
     RecoverNpcs,
     RecoverPlayers,
     RequestPaperdoll {

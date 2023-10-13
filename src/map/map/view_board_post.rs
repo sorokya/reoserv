@@ -9,7 +9,7 @@ use crate::utils::get_board_tile_spec;
 use super::Map;
 
 impl Map {
-    pub async fn view_board_post(&mut self, player_id: EOShort, post_id: EOShort) {
+    pub async fn view_board_post(&self, player_id: EOShort, post_id: EOShort) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

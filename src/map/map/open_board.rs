@@ -1,3 +1,4 @@
+use chrono::{DateTime, NaiveDateTime, Utc};
 use eo::{
     data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
@@ -12,6 +13,7 @@ struct BoardPost {
     id: EOShort,
     author: String,
     subject: String,
+    created_at: NaiveDateTime,
 }
 
 impl Map {
@@ -64,6 +66,7 @@ impl Map {
                         id: row.take("id").unwrap(),
                         author: row.take("author").unwrap(),
                         subject: row.take("subject").unwrap(),
+                        created_at: row.take("created_at").unwrap(),
                     },
                 )
                 .await

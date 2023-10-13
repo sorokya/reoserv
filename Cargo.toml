@@ -24,7 +24,8 @@ reqwest = "0.11"
 serde_derive = "^1.0.8"
 serde = "^1.0.8"
 console-subscriber = { version = "0.1", optional = true }
-mysql_async = "0.29"
+mysql_common = { version = "0.30", features = ["chrono"] }
+mysql_async = "0.32"
 argon2 = "0.5.2"
 eo = { git = "https://github.com/sorokya/eo", features = ["use_serde", "generate_protocol"] }
 rand = "0.8"

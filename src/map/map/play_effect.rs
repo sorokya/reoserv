@@ -9,6 +9,15 @@ use super::Map;
 
 impl Map {
     pub fn play_effect(&mut self, player_id: EOShort, effect_id: EOThree) {
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if character.hidden {
+            return;
+        }
+
         let packet = effect::Player {
             player_id,
             effect_id,

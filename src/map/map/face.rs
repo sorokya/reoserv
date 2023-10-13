@@ -10,6 +10,10 @@ impl Map {
         {
             let mut target = self.characters.get_mut(&target_player_id).unwrap();
             target.direction = direction;
+
+            if target.hidden {
+                return;
+            }
         }
 
         let packet = face::Player {

@@ -84,6 +84,7 @@ mod stand;
 mod start_spell_chant;
 mod take_chest_item;
 mod take_locker_item;
+mod toggle_hidden;
 mod unequip;
 mod upgrade_locker;
 mod use_item;
@@ -329,6 +330,8 @@ impl Map {
             Command::TakeLockerItem { player_id, item_id } => {
                 self.take_locker_item(player_id, item_id)
             }
+
+            Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),
 

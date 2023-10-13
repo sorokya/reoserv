@@ -30,7 +30,7 @@ impl Map {
         }
         for character in self.characters.values() {
             if target_player_id == character.player_id.unwrap()
-                || in_client_range(&target.coords, &character.coords)
+                || (!character.hidden && in_client_range(&target.coords, &character.coords))
             {
                 nearby_characters.push(character.to_map_info());
             }

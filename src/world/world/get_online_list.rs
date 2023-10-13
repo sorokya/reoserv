@@ -7,6 +7,10 @@ impl World {
         let mut online_list = Vec::new();
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
+                if character.hidden {
+                    continue;
+                }
+
                 let mut entry = OnlinePlayers::new();
                 entry.name = character.name.to_string();
                 entry.class_id = character.class;

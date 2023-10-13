@@ -352,6 +352,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TakeLockerItem { player_id, item_id });
     }
 
+    pub fn toggle_hidden(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::ToggleHidden { player_id });
+    }
+
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
     }

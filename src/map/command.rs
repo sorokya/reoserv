@@ -199,6 +199,9 @@ pub enum Command {
         player_id: EOShort,
         item_id: EOShort,
     },
+    ToggleHidden {
+        player_id: EOShort,
+    },
     Unequip {
         player_id: EOShort,
         item_id: EOShort,

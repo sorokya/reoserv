@@ -168,7 +168,8 @@ impl Map {
                     None => return false,
                 };
                 let distance = get_distance(&npc.coords, &character.coords);
-                distance <= SETTINGS.npcs.chase_distance as EOChar
+                !character.hidden
+                    && distance <= SETTINGS.npcs.chase_distance as EOChar
                     && now.signed_duration_since(opponent.last_hit).num_seconds()
                         < SETTINGS.npcs.bored_timer as i64
             });
@@ -183,7 +184,7 @@ impl Map {
                 .iter()
                 .filter(|(_, character)| {
                     let distance = get_distance(&npc.coords, &character.coords);
-                    distance <= SETTINGS.npcs.chase_distance as EOChar
+                    !character.hidden && distance <= SETTINGS.npcs.chase_distance as EOChar
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -210,7 +211,7 @@ impl Map {
             .filter(|(_, character)| {
                 adjacent_tiles
                     .iter()
-                    .any(|coords| coords == &character.coords)
+                    .any(|coords| coords == &character.coords && !character.hidden)
             })
             .map(|(player_id, _)| *player_id)
             .collect::<Vec<_>>();

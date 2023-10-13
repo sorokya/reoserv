@@ -36,6 +36,8 @@ impl Map {
             builder.get(),
         );
 
-        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Sit, reply);
+        if !character.hidden {
+            self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Sit, reply);
+        }
     }
 }

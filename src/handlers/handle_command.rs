@@ -115,6 +115,27 @@ async fn spawn_item(args: &[String], character: &Character) {
     }
 }
 
+async fn hide(character: &Character) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => {
+            return;
+        }
+    };
+
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Failed to get player id: {}", e);
+            return;
+        }
+    };
+
+    if let Ok(map) = player.get_map().await {
+        map.toggle_hidden(player_id);
+    }
+}
+
 fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
@@ -203,10 +224,11 @@ pub async fn handle_command(
                 && validate_args(&args, command, &player)
             {
                 match command.name.as_str() {
+                    "hide" => hide(character).await,
+                    "spawnitem" => spawn_item(&args, character).await,
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
-                    "spawnitem" => spawn_item(&args, character).await,
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

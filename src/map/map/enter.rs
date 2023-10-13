@@ -12,19 +12,21 @@ impl Map {
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<()>,
     ) {
-        let mut character_map_info = new_character.to_map_info();
-        character_map_info.animation = warp_animation;
+        if !new_character.hidden {
+            let mut character_map_info = new_character.to_map_info();
+            character_map_info.animation = warp_animation;
 
-        let mut packet = players::Agree::default();
-        packet.nearby.num_characters = 1;
-        packet.nearby.characters.push(character_map_info);
+            let mut packet = players::Agree::default();
+            packet.nearby.num_characters = 1;
+            packet.nearby.characters.push(character_map_info);
 
-        self.send_packet_near(
-            &new_character.coords,
-            PacketAction::Agree,
-            PacketFamily::Players,
-            packet,
-        );
+            self.send_packet_near(
+                &new_character.coords,
+                PacketAction::Agree,
+                PacketFamily::Players,
+                packet,
+            );
+        }
 
         self.characters
             .insert(new_character.player_id.unwrap(), *new_character);

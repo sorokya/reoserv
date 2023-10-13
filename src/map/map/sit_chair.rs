@@ -113,6 +113,10 @@ impl Map {
             builder.get(),
         );
 
+        if character.hidden {
+            return;
+        }
+
         let reply = Player {
             player_id,
             coords,

@@ -21,12 +21,14 @@ impl Map {
         _coords: Coords,
         _timestamp: EOInt,
     ) {
-        if let Some((target_previous_coords, target_coords, target_player)) = {
-            let (coords, admin_level, player) = match self.characters.get(&target_player_id) {
+        if let Some((target_previous_coords, target_coords, target_player, target_hidden)) = {
+            let (coords, admin_level, player, hidden) = match self.characters.get(&target_player_id)
+            {
                 Some(character) => (
                     character.coords,
                     character.admin_level,
                     character.player.clone(),
+                    character.hidden,
                 ),
                 None => return,
             };
@@ -39,7 +41,7 @@ impl Map {
                 return;
             }
 
-            Some((previous_coords, coords, player))
+            Some((previous_coords, coords, player, hidden))
         } {
             if let Some(character) = self.characters.get_mut(&target_player_id) {
                 character.coords = target_coords;
@@ -63,6 +65,7 @@ impl Map {
 
                     for (player_id, character) in self.characters.iter() {
                         if *player_id != target_player_id
+                            && !character.hidden
                             && in_client_range(&target_coords, &character.coords)
                             && !in_client_range(&target_previous_coords, &character.coords)
                         {
@@ -93,6 +96,10 @@ impl Map {
                     PacketFamily::Walk,
                     builder.get(),
                 );
+            }
+
+            if target_hidden {
+                return;
             }
 
             let walk_packet = walk::Player {

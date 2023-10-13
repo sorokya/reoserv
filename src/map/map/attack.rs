@@ -22,7 +22,19 @@ impl Map {
             direction,
         };
 
-        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Attack, reply);
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if !character.hidden {
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Player,
+                PacketFamily::Attack,
+                reply,
+            );
+        }
 
         match self.get_attack_target(player_id, direction) {
             Some(AttackTarget::Npc(npc_index)) => self.attack_npc(player_id, npc_index, direction),

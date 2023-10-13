@@ -29,6 +29,10 @@ impl Map {
             cast_time: Utc::now(),
         };
 
+        if character.hidden {
+            return;
+        }
+
         let packet = Request {
             player_id,
             spell_id,

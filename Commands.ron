@@ -111,6 +111,14 @@
                     required: false,
                 )
             ]
+        ),
+        (
+            name: "hide",
+            alias: "x",
+            description: "Toggle hide state",
+            usage: "$x",
+            admin_level: "Guardian",
+            args: []
         )
     ]
 )

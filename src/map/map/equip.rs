@@ -62,6 +62,10 @@ impl Map {
             builder.get(),
         );
 
+        if character.hidden {
+            return;
+        }
+
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
             EifItemType::Armor

@@ -16,17 +16,19 @@ impl Map {
         respond_to: oneshot::Sender<Character>,
     ) {
         let target = self.characters.remove(&target_player_id).unwrap();
-        let packet = avatar::Remove {
-            player_id: target_player_id,
-            animation: warp_animation,
-        };
+        if !target.hidden {
+            let packet = avatar::Remove {
+                player_id: target_player_id,
+                animation: warp_animation,
+            };
 
-        self.send_packet_near(
-            &target.coords,
-            PacketAction::Remove,
-            PacketFamily::Avatar,
-            packet,
-        );
+            self.send_packet_near(
+                &target.coords,
+                PacketAction::Remove,
+                PacketFamily::Avatar,
+                packet,
+            );
+        }
 
         let _ = respond_to.send(target);
     }

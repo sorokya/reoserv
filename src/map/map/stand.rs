@@ -38,12 +38,14 @@ impl Map {
                     builder.get(),
                 );
 
-                self.send_packet_near_player(
-                    player_id,
-                    PacketAction::Remove,
-                    PacketFamily::Sit,
-                    reply,
-                );
+                if !character.hidden {
+                    self.send_packet_near_player(
+                        player_id,
+                        PacketAction::Remove,
+                        PacketFamily::Sit,
+                        reply,
+                    );
+                }
             }
             SitState::Chair => {
                 character.sit_state = SitState::Stand;
@@ -69,12 +71,14 @@ impl Map {
                     builder.get(),
                 );
 
-                self.send_packet_near_player(
-                    player_id,
-                    PacketAction::Remove,
-                    PacketFamily::Sit,
-                    reply,
-                );
+                if !character.hidden {
+                    self.send_packet_near_player(
+                        player_id,
+                        PacketAction::Remove,
+                        PacketFamily::Sit,
+                        reply,
+                    );
+                }
             }
             _ => {}
         }

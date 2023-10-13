@@ -16,8 +16,33 @@ pub async fn handle_packet(
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let reader = StreamReader::new(packet);
-    let action = PacketAction::from_byte(reader.get_byte()).unwrap();
-    let family = PacketFamily::from_byte(reader.get_byte()).unwrap();
+    let action = match PacketAction::from_byte(reader.get_byte()) {
+        Some(action) => action,
+        None => {
+            reader.reset();
+            let buf = reader.get_vec(reader.remaining());
+            error!(
+                "Invalid packet action! This should never happen..\nPacket: {:?}",
+                &buf[..]
+            );
+            player.close("invalid packet action".to_string());
+            return Ok(());
+        }
+    };
+
+    let family = match PacketFamily::from_byte(reader.get_byte()) {
+        Some(family) => family,
+        None => {
+            reader.reset();
+            let buf = reader.get_vec(reader.remaining());
+            error!(
+                "Invalid packet family! This should never happen..\nPacket: {:?}",
+                &buf[..]
+            );
+            player.close("invalid packet family".to_string());
+            return Ok(());
+        }
+    };
 
     if player.get_state().await? != ClientState::Uninitialized {
         if family != PacketFamily::Init {

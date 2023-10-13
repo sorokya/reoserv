@@ -30,6 +30,11 @@ impl Map {
             return;
         }
 
+        if board_id == SETTINGS.board.admin_board as EOShort && character.admin_level.to_char() < 1
+        {
+            return;
+        }
+
         let player = match &character.player {
             Some(player) => player.clone(),
             None => return,

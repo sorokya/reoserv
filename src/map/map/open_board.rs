@@ -1,11 +1,14 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use eo::{
     data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::{params, prelude::Queryable, Row};
 
-use crate::{utils::get_board_tile_spec, SETTINGS};
+use crate::{
+    utils::{format_duration, get_board_tile_spec},
+    SETTINGS,
+};
 
 use super::Map;
 
@@ -76,10 +79,16 @@ impl Map {
             builder.add_char(posts.len() as EOChar);
 
             for post in posts {
+                let subject = if SETTINGS.board.date_posts {
+                    format!("{} ({})", post.subject, format_duration(&post.created_at))
+                } else {
+                    post.subject
+                };
+
                 builder.add_short(post.id);
                 builder.add_byte(EO_BREAK_CHAR);
                 builder.add_break_string(&post.author);
-                builder.add_break_string(&post.subject);
+                builder.add_break_string(&subject);
             }
 
             player.send(PacketAction::Open, PacketFamily::Board, builder.get());

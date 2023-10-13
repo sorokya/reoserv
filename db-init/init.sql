@@ -54,7 +54,27 @@ CREATE TABLE `Bank` (
   `item_id` int NOT NULL,
   `quantity` int NOT NULL,
   PRIMARY KEY (`character_id`,`item_id`),
-  CONSTRAINT `bank_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `bank_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `BoardPost`
+--
+
+DROP TABLE IF EXISTS `BoardPost`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `BoardPost` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `board_id` tinyint NOT NULL,
+  `character_id` int NOT NULL,
+  `subject` varchar(32) NOT NULL,
+  `body` varchar(2048) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `board_id_idx` (`board_id`),
+  CONSTRAINT `board_post_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -89,7 +109,7 @@ CREATE TABLE `Character` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`),
   KEY `account_id_idx` (`account_id`),
-  CONSTRAINT `character_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `character_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -124,7 +144,7 @@ CREATE TABLE `GuildRank` (
   `rank` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `guild_rank_guild_id` (`guild_id`),
-  CONSTRAINT `guild_rank_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `guild_rank_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -140,7 +160,7 @@ CREATE TABLE `Inventory` (
   `item_id` int NOT NULL,
   `quantity` int NOT NULL,
   PRIMARY KEY (`character_id`,`item_id`),
-  CONSTRAINT `inventory_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `inventory_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -169,7 +189,7 @@ CREATE TABLE `Paperdoll` (
   `bracer` int NOT NULL DEFAULT '0',
   `bracer2` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
-  CONSTRAINT `paperdoll_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `paperdoll_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -189,7 +209,7 @@ CREATE TABLE `Position` (
   `sitting` int NOT NULL DEFAULT '0',
   `hidden` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
-  CONSTRAINT `position_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `position_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -205,7 +225,7 @@ CREATE TABLE `Spell` (
   `spell_id` int NOT NULL,
   `level` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`,`spell_id`),
-  CONSTRAINT `spell_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `spell_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -233,7 +253,7 @@ CREATE TABLE `Stats` (
   `karma` int NOT NULL DEFAULT '1000',
   `usage` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
-  CONSTRAINT `stats_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `stats_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

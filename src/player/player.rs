@@ -35,6 +35,7 @@ pub struct Player {
     character: Option<Character>,
     session_id: Option<EOShort>,
     interact_npc_index: Option<EOChar>,
+    board_id: Option<EOShort>,
     warp_session: Option<WarpSession>,
 }
 
@@ -68,6 +69,7 @@ impl Player {
             warp_session: None,
             session_id: None,
             interact_npc_index: None,
+            board_id: None,
         }
     }
 
@@ -96,6 +98,9 @@ impl Player {
                         self.state,
                     )));
                 }
+            }
+            Command::GetBoardId { respond_to } => {
+                let _ = respond_to.send(self.board_id);
             }
             Command::GetCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
@@ -224,6 +229,9 @@ impl Player {
             }
             Command::SetAccountId(account_id) => {
                 self.account_id = account_id;
+            }
+            Command::SetBoardId(board_id) => {
+                self.board_id = Some(board_id);
             }
             Command::SetBusy(busy) => {
                 self.busy = busy;

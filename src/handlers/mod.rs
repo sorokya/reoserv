@@ -9,6 +9,9 @@ pub use attack::attack;
 mod bank;
 pub use bank::bank;
 
+mod board;
+pub use board::board;
+
 mod chair;
 pub use chair::chair;
 

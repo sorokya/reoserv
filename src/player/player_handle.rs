@@ -71,6 +71,15 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_board_id(&self) -> Option<EOShort> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetBoardId { respond_to: tx });
+        match rx.await {
+            Ok(board_id) => board_id,
+            Err(_) => None,
+        }
+    }
+
     pub async fn get_character(
         &self,
     ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
@@ -159,11 +168,11 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_interact_npc_index(
-        &self,
-    ) -> Option<EOChar> {
+    pub async fn get_interact_npc_index(&self) -> Option<EOChar> {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetInteractNpcIndex { respond_to: tx });
+        let _ = self
+            .tx
+            .send(Command::GetInteractNpcIndex { respond_to: tx });
         match rx.await {
             Ok(index) => index,
             Err(_) => None,
@@ -245,6 +254,10 @@ impl PlayerHandle {
 
     pub fn set_account_id(&self, account_id: EOInt) {
         let _ = self.tx.send(Command::SetAccountId(account_id));
+    }
+
+    pub fn set_board_id(&self, board_id: EOShort) {
+        let _ = self.tx.send(Command::SetBoardId(board_id));
     }
 
     pub fn set_busy(&self, busy: bool) {

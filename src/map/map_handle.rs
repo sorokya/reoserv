@@ -213,6 +213,13 @@ impl MapHandle {
         });
     }
 
+    pub fn open_board(&self, player_id: EOShort, board_id: EOShort) {
+        let _ = self.tx.send(Command::OpenBoard {
+            player_id,
+            board_id,
+        });
+    }
+
     pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
         let _ = self.tx.send(Command::OpenChest { player_id, coords });
     }
@@ -349,6 +356,10 @@ impl MapHandle {
 
     pub fn use_item(&self, player_id: EOShort, item_id: EOShort) {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
+    }
+
+    pub fn view_board_post(&self, player_id: EOShort, post_id: EOShort) {
+        let _ = self.tx.send(Command::ViewBoardPost { player_id, post_id });
     }
 
     pub fn walk(

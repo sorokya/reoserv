@@ -27,6 +27,9 @@ pub enum Command {
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
+    GetBoardId {
+        respond_to: oneshot::Sender<Option<EOShort>>,
+    },
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
@@ -79,6 +82,7 @@ pub enum Command {
     },
     Send(PacketAction, PacketFamily, Bytes),
     SetAccountId(EOInt),
+    SetBoardId(EOShort),
     SetBusy(bool),
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(EOChar),

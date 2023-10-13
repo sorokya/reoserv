@@ -55,12 +55,14 @@ mod learn_skill;
 mod leave;
 mod level_stat;
 mod open_bank;
+mod open_board;
 mod open_chest;
 mod open_door;
 mod open_locker;
 mod open_shop;
 mod open_skill_master;
 mod play_effect;
+mod player_in_range_of_tile;
 mod recover_npcs;
 mod recover_players;
 mod request_paperdoll;
@@ -83,6 +85,7 @@ mod take_locker_item;
 mod unequip;
 mod upgrade_locker;
 mod use_item;
+mod view_board_post;
 mod walk;
 mod withdraw_gold;
 
@@ -232,6 +235,11 @@ impl Map {
                 npc_index,
             } => self.open_bank(player_id, npc_index).await,
 
+            Command::OpenBoard {
+                player_id,
+                board_id,
+            } => self.open_board(player_id, board_id),
+
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 
             Command::OpenDoor {
@@ -321,6 +329,10 @@ impl Map {
             Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
+
+            Command::ViewBoardPost { player_id, post_id } => {
+                self.view_board_post(player_id, post_id).await
+            }
 
             Command::Walk {
                 target_player_id,

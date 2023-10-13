@@ -118,6 +118,10 @@ pub enum Command {
         player_id: EOShort,
         npc_index: EOChar,
     },
+    OpenBoard {
+        player_id: EOShort,
+        board_id: EOShort,
+    },
     OpenChest {
         player_id: EOShort,
         coords: Coords,
@@ -197,6 +201,10 @@ pub enum Command {
     UseItem {
         player_id: EOShort,
         item_id: EOShort,
+    },
+    ViewBoardPost {
+        player_id: EOShort,
+        post_id: EOShort,
     },
     Walk {
         target_player_id: EOShort,

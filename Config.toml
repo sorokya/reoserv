@@ -144,4 +144,35 @@ max_bank_gold = 2000000000
 # Maximum amount of an item a player can have in their inventory
 max_item = 2000000000
 
+[board]
 
+# Maximum number of posts a board will hold before deleting old posts
+max_posts = 20
+
+# Maximum number of posts a user can have on a board at any one time
+# Any less than 2 will not be enforced by the official client
+max_user_posts = 6
+
+# Maximum number of "recent" posts a user can have on a board
+# Any less than 2 will not be enforced by the official client
+max_recent_posts = 2
+
+# Age of a post to be considered "recent" in minutes
+recent_post_time = 30
+
+# Maximum length of board post subjects
+# Shouldn't be changed unless using a custom client which supports it
+max_subject_length = 32
+
+# Maximum length of board posts
+max_post_length = 2048
+
+# Adds "(x minutes ago)" text to every post on a board
+date_posts = true
+
+# Board number that reports/requests are logged (1 to 8)
+# This board can't be accessed by players if placed in-game
+admin_board = 8
+
+# Maximum number of posts that the AdminBoard can hold
+admin_max_posts = 100

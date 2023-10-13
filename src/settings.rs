@@ -103,6 +103,19 @@ pub struct Limits {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Board {
+    pub max_posts: EOInt,
+    pub max_user_posts: EOInt,
+    pub max_recent_posts: EOInt,
+    pub recent_post_time: EOInt,
+    pub max_subject_length: EOInt,
+    pub max_post_length: EOInt,
+    pub date_posts: bool,
+    pub admin_board: EOInt,
+    pub admin_max_posts: EOInt,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -114,6 +127,7 @@ pub struct Settings {
     pub sln: Sln,
     pub bank: Bank,
     pub limits: Limits,
+    pub board: Board,
 }
 
 impl Settings {

@@ -101,6 +101,11 @@ pub enum Command {
     PingPlayers,
     RecoverNpcs,
     RecoverPlayers,
+    ReportPlayer {
+        player_id: EOShort,
+        reportee_name: String,
+        message: String,
+    },
     RequestAccountCreation {
         name: String,
         player: PlayerHandle,
@@ -123,6 +128,10 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    SendAdminMessage {
+        player_id: EOShort,
+        message: String,
     },
     SendPrivateMessage {
         from: PlayerHandle,

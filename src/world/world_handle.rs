@@ -247,6 +247,14 @@ impl WorldHandle {
         let _ = self.tx.send(Command::RecoverPlayers);
     }
 
+    pub fn report_player(&self, player_id: EOShort, reportee_name: String, message: String) {
+        let _ = self.tx.send(Command::ReportPlayer {
+            player_id,
+            reportee_name,
+            message,
+        });
+    }
+
     pub async fn request_account_creation(
         &self,
         name: String,
@@ -299,6 +307,12 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn send_admin_message(&self, player_id: EOShort, message: String) {
+        let _ = self
+            .tx
+            .send(Command::SendAdminMessage { player_id, message });
     }
 
     pub fn send_private_message(&self, from: PlayerHandle, to: String, message: String) {

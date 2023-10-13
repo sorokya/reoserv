@@ -18,6 +18,7 @@ pub struct World {
 
 mod account;
 mod add_player;
+mod admin;
 mod chat;
 mod drop_player;
 mod enter_game;
@@ -187,6 +188,12 @@ impl World {
                 }
             }
 
+            Command::ReportPlayer {
+                player_id,
+                reportee_name,
+                message,
+            } => self.report_player(player_id, reportee_name, message).await,
+
             Command::RequestAccountCreation {
                 name,
                 player,
@@ -217,6 +224,8 @@ impl World {
                 self.select_character(player, character_id, respond_to)
                     .await
             }
+
+            Command::SendAdminMessage { player_id, message } => self.send_admin_message(player_id, message).await,
 
             Command::SendPrivateMessage { from, to, message } => {
                 self.send_private_message(&from, &to, &message).await

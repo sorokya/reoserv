@@ -44,6 +44,9 @@ pub async fn handle_packet(
         PacketFamily::Account => {
             handlers::account(action, reader, player.clone(), world.clone()).await
         }
+        PacketFamily::AdminInteract => {
+            handlers::admin_interact(action, reader, player.clone(), world.clone()).await
+        }
         PacketFamily::Attack => handlers::attack(action, reader, player.clone()).await,
         PacketFamily::Bank => handlers::bank(action, reader, player.clone()).await,
         PacketFamily::Board => handlers::board(action, reader, player.clone()).await,

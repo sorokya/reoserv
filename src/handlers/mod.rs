@@ -3,6 +3,9 @@ mod handle_command;
 mod account;
 pub use account::account;
 
+mod admin_interact;
+pub use admin_interact::admin_interact;
+
 mod attack;
 pub use attack::attack;
 

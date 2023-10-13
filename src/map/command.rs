@@ -34,6 +34,11 @@ pub enum Command {
         item_id: EOShort,
         session_id: EOShort,
     },
+    CreateBoardPost {
+        player_id: EOShort,
+        subject: String,
+        body: String,
+    },
     DepositGold {
         player_id: EOShort,
         session_id: EOThree,
@@ -140,11 +145,6 @@ pub enum Command {
     OpenSkillMaster {
         player_id: EOShort,
         npc_index: EOChar,
-    },
-    PostBoardMessage {
-        player_id: EOShort,
-        subject: String,
-        body: String,
     },
     RecoverNpcs,
     RecoverPlayers,

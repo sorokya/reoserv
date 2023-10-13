@@ -56,6 +56,14 @@ impl MapHandle {
         });
     }
 
+    pub fn create_board_post(&self, player_id: EOShort, subject: String, body: String) {
+        let _ = self.tx.send(Command::CreateBoardPost {
+            player_id,
+            subject,
+            body,
+        });
+    }
+
     pub fn deposit_gold(&self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
@@ -246,14 +254,6 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenSkillMaster {
             player_id,
             npc_index,
-        });
-    }
-
-    pub fn post_board_message(&self, player_id: EOShort, subject: String, body: String) {
-        let _ = self.tx.send(Command::PostBoardMessage {
-            player_id,
-            subject,
-            body,
         });
     }
 

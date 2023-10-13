@@ -30,6 +30,7 @@ mod attack_npc_replies;
 mod buy_item;
 mod cast_spell;
 mod craft_item;
+mod create_board_post;
 mod deposit_gold;
 mod drop_item;
 mod emote;
@@ -63,7 +64,6 @@ mod open_shop;
 mod open_skill_master;
 mod play_effect;
 mod player_in_range_of_tile;
-mod post_board_message;
 mod recover_npcs;
 mod recover_players;
 mod request_paperdoll;
@@ -133,6 +133,12 @@ impl Map {
                 item_id,
                 session_id,
             } => self.craft_item(player_id, item_id, session_id).await,
+
+            Command::CreateBoardPost {
+                player_id,
+                subject,
+                body,
+            } => self.create_board_post(player_id, subject, body).await,
 
             Command::DepositGold {
                 player_id,
@@ -259,12 +265,6 @@ impl Map {
                 player_id,
                 npc_index,
             } => self.open_skill_master(player_id, npc_index).await,
-
-            Command::PostBoardMessage {
-                player_id,
-                subject,
-                body,
-            } => self.post_board_message(player_id, subject, body).await,
 
             Command::RecoverNpcs => self.recover_npcs().await,
 

@@ -6,7 +6,7 @@ use crate::{errors::DataNotFoundError, utils::get_board_tile_spec, SETTINGS};
 use super::Map;
 
 impl Map {
-    pub async fn post_board_message(&mut self, player_id: EOShort, subject: String, body: String) {
+    pub async fn create_board_post(&mut self, player_id: EOShort, subject: String, body: String) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

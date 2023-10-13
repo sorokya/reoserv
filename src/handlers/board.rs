@@ -10,7 +10,7 @@ fn create(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     reader.seek(1);
     let subject = reader.get_break_string();
     let body = reader.get_break_string();
-    map.post_board_message(player_id, subject, body);
+    map.create_board_post(player_id, subject, body);
 }
 
 fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {

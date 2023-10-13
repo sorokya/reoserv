@@ -64,6 +64,7 @@ pub async fn handle_packet(
         PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
         PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
         PacketFamily::Login => handlers::login(action, reader, player.clone(), world.clone()).await,
+        PacketFamily::Message => handlers::message(action, reader, player.clone()).await,
         PacketFamily::NPCRange => handlers::npc_range(action, reader, player.clone()).await,
         PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,
         PacketFamily::PlayerRange => handlers::player_range(action, reader, player.clone()).await,

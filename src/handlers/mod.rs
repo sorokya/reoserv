@@ -51,6 +51,9 @@ pub use locker::locker;
 mod login;
 pub use login::login;
 
+mod message;
+pub use message::message;
+
 mod npc_range;
 pub use npc_range::npc_range;
 

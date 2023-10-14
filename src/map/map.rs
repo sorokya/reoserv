@@ -219,6 +219,13 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::HasPlayer {
+                player_id,
+                respond_to,
+            } => {
+                let _ = respond_to.send(self.characters.contains_key(&player_id));
+            }
+
             Command::JunkItem {
                 target_player_id,
                 item_id,

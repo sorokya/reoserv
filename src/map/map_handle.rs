@@ -188,6 +188,15 @@ impl MapHandle {
         });
     }
 
+    pub async fn has_player(&self, player_id: EOShort) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::HasPlayer {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub fn learn_skill(&self, player_id: EOShort, spell_id: EOShort, session_id: EOShort) {
         let _ = self.tx.send(Command::LearnSkill {
             player_id,

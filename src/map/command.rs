@@ -100,6 +100,10 @@ pub enum Command {
         item_id: EOShort,
         amount: EOInt,
     },
+    HasPlayer {
+        player_id: EOShort,
+        respond_to: oneshot::Sender<bool>,
+    },
     JunkItem {
         target_player_id: EOShort,
         item_id: EOShort,

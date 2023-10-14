@@ -13,7 +13,7 @@ use super::{Chest, Command, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
-    _id: EOShort,
+    id: EOShort,
     file: EmfFile,
     file_size: EOInt,
     chests: Vec<Chest>,
@@ -24,6 +24,7 @@ pub struct Map {
 }
 
 mod act_npcs;
+mod add_chest_item;
 mod add_locker_item;
 mod attack;
 mod attack_npc_replies;
@@ -101,7 +102,7 @@ impl Map {
         rx: UnboundedReceiver<Command>,
     ) -> Self {
         Self {
-            _id: id,
+            id,
             file_size,
             file,
             rx,
@@ -115,6 +116,7 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
             Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
             Command::Attack {
                 target_player_id,
@@ -326,12 +328,8 @@ impl Map {
 
             Command::SpawnNpcs => self.spawn_npcs().await,
 
-            Command::TakeChestItem {
-                player_id,
-                coords,
-                item_id,
-            } => {
-                self.take_chest_item(player_id, coords, item_id);
+            Command::TakeChestItem { player_id, item_id } => {
+                self.take_chest_item(player_id, item_id).await;
             }
 
             Command::TakeLockerItem { player_id, item_id } => {

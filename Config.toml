@@ -144,6 +144,9 @@ max_bank_gold = 2000000000
 # Maximum amount of an item a player can have in their inventory
 max_item = 2000000000
 
+# Maximum amount of an item a chest will hold
+max_chest = 10000000
+
 [board]
 
 # Maximum number of posts a board will hold before deleting old posts
@@ -176,3 +179,10 @@ admin_board = 8
 
 # Maximum number of posts that the AdminBoard can hold
 admin_max_posts = 100
+
+[chest]
+
+# Numbers of slots in a chest
+slots = 5
+
+

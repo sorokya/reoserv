@@ -14,6 +14,12 @@ impl Map {
             None => return,
         };
 
+        let chest_index = self
+            .chests
+            .iter()
+            .position(|chest| chest.coords == coords)
+            .unwrap();
+
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -22,6 +28,13 @@ impl Map {
         if !in_client_range(&character.coords, &coords) {
             return;
         }
+
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
+        player.set_chest_index(chest_index);
 
         let reply = chest::Open {
             coords,

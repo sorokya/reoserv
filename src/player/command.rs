@@ -33,6 +33,9 @@ pub enum Command {
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
+    GetChestIndex {
+        respond_to: oneshot::Sender<Option<usize>>,
+    },
     GenEncodingMultiples {
         respond_to: oneshot::Sender<[EOByte; 2]>,
     },
@@ -86,6 +89,7 @@ pub enum Command {
     SetBusy(bool),
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(EOChar),
+    SetChestIndex(usize),
     SetMap(MapHandle),
     SetState(ClientState),
     TakeCharacter {

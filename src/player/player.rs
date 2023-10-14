@@ -36,6 +36,7 @@ pub struct Player {
     session_id: Option<EOShort>,
     interact_npc_index: Option<EOChar>,
     board_id: Option<EOShort>,
+    chest_index: Option<usize>,
     warp_session: Option<WarpSession>,
 }
 
@@ -70,6 +71,7 @@ impl Player {
             session_id: None,
             interact_npc_index: None,
             board_id: None,
+            chest_index: None,
         }
     }
 
@@ -115,6 +117,9 @@ impl Player {
                         self.state,
                     )));
                 }
+            }
+            Command::GetChestIndex { respond_to } => {
+                let _ = respond_to.send(self.chest_index);
             }
             Command::GenEncodingMultiples { respond_to } => {
                 self.bus.packet_processor = PacketProcessor::new();
@@ -238,6 +243,9 @@ impl Player {
             }
             Command::SetCharacter(character) => {
                 self.character = Some(*character);
+            }
+            Command::SetChestIndex(index) => {
+                self.chest_index = Some(index);
             }
             Command::SetInteractNpcIndex(index) => {
                 self.interact_npc_index = Some(index);

@@ -11,6 +11,10 @@ use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
+    AddChestItem {
+        player_id: EOShort,
+        item: Item,
+    },
     AddLockerItem {
         player_id: EOShort,
         item: Item,
@@ -196,7 +200,6 @@ pub enum Command {
     },
     TakeChestItem {
         player_id: EOShort,
-        coords: Coords,
         item_id: EOShort,
     },
     TakeLockerItem {

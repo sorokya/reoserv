@@ -32,6 +32,10 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn add_chest_item(&self, player_id: EOShort, item: Item) {
+        let _ = self.tx.send(Command::AddChestItem { player_id, item });
+    }
+
     pub fn add_locker_item(&self, player_id: EOShort, item: Item) {
         let _ = self.tx.send(Command::AddLockerItem { player_id, item });
     }
@@ -349,12 +353,8 @@ impl MapHandle {
         let _ = self.tx.send(Command::SpawnNpcs);
     }
 
-    pub fn take_chest_item(&self, player_id: EOShort, coords: Coords, item_id: EOShort) {
-        let _ = self.tx.send(Command::TakeChestItem {
-            player_id,
-            coords,
-            item_id,
-        });
+    pub fn take_chest_item(&self, player_id: EOShort, item_id: EOShort) {
+        let _ = self.tx.send(Command::TakeChestItem { player_id, item_id });
     }
 
     pub fn take_locker_item(&self, player_id: EOShort, item_id: EOShort) {

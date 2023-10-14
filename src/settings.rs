@@ -100,6 +100,7 @@ pub struct Bank {
 pub struct Limits {
     pub max_bank_gold: EOInt,
     pub max_item: EOInt,
+    pub max_chest: EOInt,
 }
 
 #[derive(Debug, Deserialize)]
@@ -116,6 +117,11 @@ pub struct Board {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Chest {
+    pub slots: EOInt,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -128,6 +134,7 @@ pub struct Settings {
     pub bank: Bank,
     pub limits: Limits,
     pub board: Board,
+    pub chest: Chest,
 }
 
 impl Settings {

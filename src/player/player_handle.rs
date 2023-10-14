@@ -92,6 +92,12 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_chest_index(&self) -> Option<usize> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetChestIndex { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn gen_encoding_multiples(
         &self,
     ) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
@@ -258,6 +264,10 @@ impl PlayerHandle {
 
     pub fn set_board_id(&self, board_id: EOShort) {
         let _ = self.tx.send(Command::SetBoardId(board_id));
+    }
+
+    pub fn set_chest_index(&self, index: usize) {
+        let _ = self.tx.send(Command::SetChestIndex(index));
     }
 
     pub fn set_busy(&self, busy: bool) {

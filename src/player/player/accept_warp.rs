@@ -24,6 +24,9 @@ impl Player {
 
                 if let Some(current_map) = &self.map {
                     let character = current_map.leave(self.id, warp_session.animation).await;
+                    self.interact_npc_index = None;
+                    self.chest_index = None;
+                    self.board_id = None;
                     self.character = Some(character);
                 }
 

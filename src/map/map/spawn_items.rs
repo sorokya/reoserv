@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
 use eo::{
-    data::{Serializeable, StreamBuilder},
+    data::{EOInt, Serializeable, StreamBuilder},
     protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
     pubs::EmfTileSpec,
 };
@@ -12,6 +12,7 @@ use crate::{
         Chest,
     },
     utils::get_distance,
+    SETTINGS,
 };
 
 use super::Map;
@@ -47,6 +48,14 @@ impl Map {
             {
                 if chest.key.is_none() && item.key_required != 0 {
                     chest.key = Some(item.key_required);
+                }
+
+                if item.chest_slot as EOInt + 1 > SETTINGS.chest.slots {
+                    warn!(
+                        "Chest at map {} ({:?}) has too many slots",
+                        self.id, item_coords
+                    );
+                    continue;
                 }
 
                 chest.spawns.push(ChestSpawn {
@@ -105,7 +114,9 @@ impl Map {
             }
 
             let now = Utc::now();
+            let mut chest_index: usize = 0;
             for chest in self.chests.iter_mut() {
+                chest_index += 1;
                 let max_slot = chest
                     .spawns
                     .iter()
@@ -166,13 +177,29 @@ impl Map {
 
                     for character in self.characters.values() {
                         let distance = get_distance(&character.coords, &chest.coords);
-                        if distance <= 1 {
-                            character.player.as_ref().unwrap().send(
-                                PacketAction::Agree,
-                                PacketFamily::Chest,
-                                buf.clone(),
-                            );
+                        if distance > 1 {
+                            continue;
                         }
+
+                        let player = match character.player.as_ref() {
+                            Some(player) => player,
+                            None => continue,
+                        };
+
+                        let player_chest_index = match player.get_chest_index().await {
+                            Some(index) => index,
+                            None => continue,
+                        };
+
+                        if player_chest_index != chest_index - 1 {
+                            continue;
+                        }
+
+                        character.player.as_ref().unwrap().send(
+                            PacketAction::Agree,
+                            PacketFamily::Chest,
+                            buf.clone(),
+                        );
                     }
                 }
             }

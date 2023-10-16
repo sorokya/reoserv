@@ -12,7 +12,7 @@ console = ["console-subscriber"]
 
 [dependencies]
 bytes = "1.0"
-config = { version = "0.12", features = ["toml", "ron"] }
+config = { version = "0.13", features = ["toml", "ron"] }
 chrono = "0.4"
 lazy_static = "1.0"
 log = "0.4"

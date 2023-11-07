@@ -145,52 +145,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    let mut npc_spawn_interval =
-        time::interval(Duration::from_secs(SETTINGS.npcs.respawn_rate.into()));
-    npc_spawn_interval.tick().await;
-    let npc_spawn_world = world.clone();
+    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate.into()));
+    let tick_world = world.clone();
     tokio::spawn(async move {
         loop {
-            npc_spawn_interval.tick().await;
-            npc_spawn_world.spawn_npcs();
-        }
-    });
-
-    let mut npc_act_interval = time::interval(Duration::from_millis(SETTINGS.npcs.act_rate.into()));
-    let npc_act_world = world.clone();
-    tokio::spawn(async move {
-        loop {
-            npc_act_interval.tick().await;
-            npc_act_world.act_npcs();
-        }
-    });
-
-    let mut item_spawn_interval = time::interval(Duration::from_secs(60));
-    let item_spawn_world = world.clone();
-    tokio::spawn(async move {
-        loop {
-            item_spawn_world.spawn_items();
-            item_spawn_interval.tick().await;
-        }
-    });
-
-    let mut player_recover_interval =
-        time::interval(Duration::from_secs(SETTINGS.world.recover_rate.into()));
-    let recover_world = world.clone();
-    tokio::spawn(async move {
-        loop {
-            player_recover_interval.tick().await;
-            recover_world.recover_players();
-        }
-    });
-
-    let mut npc_recover_interval =
-        time::interval(Duration::from_secs(SETTINGS.world.npc_recover_rate.into()));
-    let npc_recover_world = world.clone();
-    tokio::spawn(async move {
-        loop {
-            npc_recover_interval.tick().await;
-            npc_recover_world.recover_npcs();
+            tick_interval.tick().await;
+            tick_world.tick();
         }
     });
 

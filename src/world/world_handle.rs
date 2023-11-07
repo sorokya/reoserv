@@ -239,14 +239,6 @@ impl WorldHandle {
         let _ = self.tx.send(Command::PingPlayers);
     }
 
-    pub fn recover_npcs(&self) {
-        let _ = self.tx.send(Command::RecoverNpcs);
-    }
-
-    pub fn recover_players(&self) {
-        let _ = self.tx.send(Command::RecoverPlayers);
-    }
-
     pub fn report_player(&self, player_id: EOShort, reportee_name: String, message: String) {
         let _ = self.tx.send(Command::ReportPlayer {
             player_id,
@@ -327,16 +319,8 @@ impl WorldHandle {
         rx.await.unwrap();
     }
 
-    pub fn spawn_items(&self) {
-        let _ = self.tx.send(Command::SpawnItems);
-    }
-
-    pub fn spawn_npcs(&self) {
-        let _ = self.tx.send(Command::SpawnNpcs);
-    }
-
-    pub fn act_npcs(&self) {
-        let _ = self.tx.send(Command::ActNpcs);
+    pub fn tick(&self) {
+        let _ = self.tx.send(Command::Tick);
     }
 }
 

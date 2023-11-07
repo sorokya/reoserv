@@ -52,19 +52,20 @@ pub struct World {
     pub drop_distance: EOChar,
     pub recover_rate: EOInt,
     pub npc_recover_rate: EOInt,
+    pub chest_spawn_rate: EOInt,
     pub exp_multiplier: EOInt,
     pub stat_points_per_level: EOInt,
     pub skill_points_per_level: EOInt,
+    pub tick_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct NPCs {
     pub instant_spawn: bool,
+    pub respawn_rate: EOInt,
     pub freeze_on_empty_map: bool,
     pub chase_distance: EOInt,
     pub bored_timer: EOInt,
-    pub respawn_rate: EOInt,
-    pub act_rate: EOInt,
     pub speed_0: EOInt,
     pub speed_1: EOInt,
     pub speed_2: EOInt,
@@ -122,6 +123,25 @@ pub struct Chest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Quake {
+    pub min_ticks: EOInt,
+    pub max_ticks: EOInt,
+    pub min_strength: EOInt,
+    pub max_strength: EOInt,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Map {
+    pub quake_rate: EOInt,
+    pub quakes: Vec<Quake>,
+    pub spike_rate: EOInt,
+    pub spike_damage: f32,
+    pub drain_rate: EOInt,
+    pub drain_hp_damage: f32,
+    pub drain_tp_damage: f32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -135,6 +155,7 @@ pub struct Settings {
     pub limits: Limits,
     pub board: Board,
     pub chest: Chest,
+    pub map: Map,
 }
 
 impl Settings {

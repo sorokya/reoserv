@@ -1,6 +1,7 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
 use super::{load_maps::load_maps, Command};
+use chrono::{DateTime, Utc};
 use eo::data::{EOInt, EOShort};
 use mysql_async::Pool;
 use std::collections::HashMap;
@@ -14,6 +15,10 @@ pub struct World {
     characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
+    last_npc_spawn_tick: DateTime<Utc>,
+    last_item_spawn_tick: DateTime<Utc>,
+    last_player_recover_tick: DateTime<Utc>,
+    last_npc_recover_tick: DateTime<Utc>,
 }
 
 mod account;
@@ -28,6 +33,7 @@ mod get_next_player_id;
 mod get_online_list;
 mod get_welcome_request_data;
 mod shutdown;
+mod tick;
 
 impl World {
     pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
@@ -38,6 +44,10 @@ impl World {
             accounts: Vec::new(),
             characters: HashMap::new(),
             maps: None,
+            last_npc_spawn_tick: Utc::now(),
+            last_item_spawn_tick: Utc::now(),
+            last_player_recover_tick: Utc::now(),
+            last_npc_recover_tick: Utc::now(),
         }
     }
 
@@ -172,22 +182,6 @@ impl World {
                 }
             }
 
-            Command::RecoverNpcs => {
-                if let Some(maps) = self.maps.as_ref() {
-                    for map in maps.values() {
-                        map.recover_npcs();
-                    }
-                }
-            }
-
-            Command::RecoverPlayers => {
-                if let Some(maps) = self.maps.as_ref() {
-                    for map in maps.values() {
-                        map.recover_players();
-                    }
-                }
-            }
-
             Command::ReportPlayer {
                 player_id,
                 reportee_name,
@@ -225,7 +219,9 @@ impl World {
                     .await
             }
 
-            Command::SendAdminMessage { player_id, message } => self.send_admin_message(player_id, message).await,
+            Command::SendAdminMessage { player_id, message } => {
+                self.send_admin_message(player_id, message).await
+            }
 
             Command::SendPrivateMessage { from, to, message } => {
                 self.send_private_message(&from, &to, &message).await
@@ -233,22 +229,8 @@ impl World {
 
             Command::Shutdown { respond_to } => self.shutdown(respond_to).await,
 
-            Command::SpawnItems => {
-                for map in self.maps.as_ref().unwrap().values() {
-                    map.spawn_items();
-                }
-            }
-
-            Command::SpawnNpcs => {
-                for map in self.maps.as_ref().unwrap().values() {
-                    map.spawn_npcs();
-                }
-            }
-
-            Command::ActNpcs => {
-                for map in self.maps.as_ref().unwrap().values() {
-                    map.act_npcs();
-                }
+            Command::Tick => {
+                self.tick().await;
             }
         }
     }

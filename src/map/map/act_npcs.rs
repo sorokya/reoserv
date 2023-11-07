@@ -15,7 +15,7 @@ use rand::{seq::SliceRandom, Rng};
 use crate::{
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords, in_range},
+    utils::{get_distance, get_next_coords, in_range, ticks_since},
     FORMULAS, NPC_DB, SETTINGS, TALK_DB,
 };
 
@@ -28,20 +28,20 @@ impl Map {
             None => return None,
         };
 
-        let now = Utc::now();
-        let mut rng = rand::thread_rng();
-
         let npc = match self.npcs.get_mut(&index) {
             Some(npc) => npc,
             None => return None,
         };
 
-        let talk_delta = now - npc.last_talk.unwrap();
-        if !npc.alive || talk_delta < Duration::milliseconds(SETTINGS.npcs.talk_rate as i64) {
+        let talk_delta = ticks_since(&npc.last_talk.unwrap());
+        if !npc.alive || talk_delta < SETTINGS.npcs.talk_rate {
             return None;
         }
 
+        let now = Utc::now();
         npc.last_talk = Some(now);
+
+        let mut rng = rand::thread_rng();
         let roll = rng.gen_range(0..=100);
         if roll <= talk_record.rate {
             let message_index = rng.gen_range(0..talk_record.messages.len());
@@ -258,7 +258,7 @@ impl Map {
 
         if action == 10 {
             self.npcs.get_mut(&index).unwrap().walk_idle_for =
-                Some(Duration::seconds(rng.gen_range(1..=4)));
+                Some(rng.gen_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
             return None;
         }
 
@@ -296,19 +296,16 @@ impl Map {
         index: EOChar,
         npc_id: EOShort,
         act_rate: EOInt,
-        act_delta: &Duration,
+        act_delta: EOInt,
     ) -> Option<NPCUpdatePos> {
         let (walk_idle_for, has_opponent) = {
             match self.npcs.get(&index) {
-                Some(npc) => (
-                    npc.walk_idle_for.unwrap_or_else(|| Duration::seconds(0)),
-                    !npc.opponents.is_empty(),
-                ),
+                Some(npc) => (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty()),
                 None => return None,
             }
         };
 
-        let idle_rate = Duration::milliseconds(act_rate as i64) + walk_idle_for;
+        let idle_rate = act_rate + walk_idle_for;
 
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
@@ -317,7 +314,7 @@ impl Map {
 
         if npc_data.r#type == EnfNpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id)
-        } else if act_delta >= &idle_rate {
+        } else if act_delta >= idle_rate {
             self.act_npc_move_idle(index)
         } else {
             None
@@ -431,16 +428,15 @@ impl Map {
 
         let talk_update = self.act_npc_talk(index, npc_id);
 
-        let now = Utc::now();
-        let act_delta = now - last_act;
-        if act_rate == 0 || act_delta < Duration::milliseconds(act_rate as i64) {
+        let act_delta = ticks_since(&last_act);
+        if act_rate == 0 || act_delta < act_rate {
             (None, talk_update, None)
         } else {
             let attack_update = self.act_npc_attack(index, npc_id);
             let pos_update = if attack_update.is_some() {
                 None
             } else {
-                self.act_npc_move(index, npc_id, act_rate, &act_delta)
+                self.act_npc_move(index, npc_id, act_rate, act_delta)
             };
             (pos_update, talk_update, attack_update)
         }

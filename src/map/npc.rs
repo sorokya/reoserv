@@ -1,6 +1,6 @@
 use std::cmp;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
@@ -20,7 +20,7 @@ pub struct Npc {
     pub dead_since: DateTime<Utc>,
     pub last_act: Option<DateTime<Utc>>,
     pub last_talk: Option<DateTime<Utc>>,
-    pub walk_idle_for: Option<Duration>,
+    pub walk_idle_for: Option<EOInt>,
     pub hp: EOThree,
     pub max_hp: EOThree,
     pub opponents: Vec<NpcOpponent>,
@@ -136,7 +136,7 @@ pub struct NPCBuilder {
     dead_since: DateTime<Utc>,
     last_act: Option<DateTime<Utc>>,
     last_talk: Option<DateTime<Utc>>,
-    walk_idle_for: Option<Duration>,
+    walk_idle_for: Option<EOInt>,
     hp: EOThree,
     max_hp: EOThree,
 }

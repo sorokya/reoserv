@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort},
     pubs::EmfFile,
@@ -21,6 +22,9 @@ pub struct Map {
     npcs: HashMap<EOChar, Npc>,
     characters: HashMap<EOShort, Character>,
     pool: Pool,
+    last_quake: DateTime<Utc>,
+    quake_rate: Option<EOInt>,
+    quake_strength: Option<EOInt>,
 }
 
 mod act_npcs;
@@ -85,6 +89,7 @@ mod stand;
 mod start_spell_chant;
 mod take_chest_item;
 mod take_locker_item;
+mod timed_quake;
 mod toggle_hidden;
 mod unequip;
 mod upgrade_locker;
@@ -111,6 +116,9 @@ impl Map {
             npcs: HashMap::new(),
             characters: HashMap::new(),
             pool,
+            last_quake: Utc::now(),
+            quake_rate: None,
+            quake_strength: None,
         }
     }
 
@@ -335,6 +343,8 @@ impl Map {
             Command::TakeLockerItem { player_id, item_id } => {
                 self.take_locker_item(player_id, item_id)
             }
+
+            Command::TimedQuake => self.timed_quake(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

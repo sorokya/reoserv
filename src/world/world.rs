@@ -19,6 +19,7 @@ pub struct World {
     last_item_spawn_tick: DateTime<Utc>,
     last_player_recover_tick: DateTime<Utc>,
     last_npc_recover_tick: DateTime<Utc>,
+    last_quake_tick: DateTime<Utc>,
 }
 
 mod account;
@@ -48,6 +49,7 @@ impl World {
             last_item_spawn_tick: Utc::now(),
             last_player_recover_tick: Utc::now(),
             last_npc_recover_tick: Utc::now(),
+            last_quake_tick: Utc::now(),
         }
     }
 

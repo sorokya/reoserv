@@ -93,7 +93,7 @@ tick_rate = 125
 [map]
 # How frequently earthquake events occur in ticks
 # TODO: check this with GameServer
-quake_rate = 5
+quake_rate = 40
 
 # Control the different type of quake map effects
 quakes = [

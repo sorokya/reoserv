@@ -1,6 +1,7 @@
 use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
+    pubs::EmfTileSpec,
 };
 
 use crate::{
@@ -98,26 +99,24 @@ impl Map {
                 );
             }
 
-            if target_hidden {
-                return;
+            if !target_hidden {
+                let walk_packet = walk::Player {
+                    player_id: target_player_id,
+                    direction,
+                    coords: target_coords,
+                };
+
+                self.send_packet_near(
+                    &target_coords,
+                    PacketAction::Player,
+                    PacketFamily::Walk,
+                    walk_packet,
+                );
             }
 
-            let walk_packet = walk::Player {
-                player_id: target_player_id,
-                direction,
-                coords: target_coords,
-            };
-
-            let mut builder = StreamBuilder::new();
-            walk_packet.serialize(&mut builder);
-            let walk_packet_buf = builder.get();
-            for (player_id, character) in self.characters.iter() {
-                if target_player_id != *player_id && in_range(&character.coords, &target_coords) {
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Player,
-                        PacketFamily::Walk,
-                        walk_packet_buf.clone(),
-                    );
+            if let Some(tile) = self.get_tile(&target_coords) {
+                if matches!(tile, EmfTileSpec::Spikes | EmfTileSpec::HiddenSpikes) {
+                    self.spike_damage(target_player_id)
                 }
             }
         }

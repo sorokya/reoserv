@@ -85,6 +85,7 @@ mod sit;
 mod sit_chair;
 mod spawn_items;
 mod spawn_npcs;
+mod spike_damage;
 mod stand;
 mod start_spell_chant;
 mod take_chest_item;

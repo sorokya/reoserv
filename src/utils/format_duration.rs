@@ -1,8 +1,8 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, TimeZone, Utc};
 
 pub fn format_duration(other: &NaiveDateTime) -> String {
     let now = Utc::now();
-    let other_dt = chrono::DateTime::<Utc>::from_utc(*other, Utc);
+    let other_dt = TimeZone::from_utc_datetime(&Utc, other);
     let duration = now.signed_duration_since(other_dt);
 
     if duration.num_days() >= 7 {

@@ -17,7 +17,9 @@ impl Map {
         let mut damaged_player_ids: Vec<EOShort> = Vec::new();
 
         for character in self.characters.values() {
-            if self.get_tile(&character.coords).unwrap_or_default() == EmfTileSpec::TimedSpikes {
+            if !character.hidden
+                && self.get_tile(&character.coords).unwrap_or_default() == EmfTileSpec::TimedSpikes
+            {
                 damaged_player_ids.push(character.player_id.unwrap());
             } else {
                 // TODO: only send if player near spike?

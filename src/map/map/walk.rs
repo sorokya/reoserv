@@ -112,11 +112,11 @@ impl Map {
                     PacketFamily::Walk,
                     walk_packet,
                 );
-            }
 
-            if let Some(tile) = self.get_tile(&target_coords) {
-                if matches!(tile, EmfTileSpec::Spikes | EmfTileSpec::HiddenSpikes) {
-                    self.spike_damage(target_player_id)
+                if let Some(tile) = self.get_tile(&target_coords) {
+                    if matches!(tile, EmfTileSpec::Spikes | EmfTileSpec::HiddenSpikes) {
+                        self.spike_damage(target_player_id)
+                    }
                 }
             }
         }

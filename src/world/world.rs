@@ -21,6 +21,7 @@ pub struct World {
     quake_ticks: EOInt,
     spike_ticks: EOInt,
     drain_ticks: EOInt,
+    warp_suck_ticks: EOInt,
 }
 
 mod account;
@@ -53,6 +54,7 @@ impl World {
             quake_ticks: 0,
             spike_ticks: 0,
             drain_ticks: 0,
+            warp_suck_ticks: 0,
         }
     }
 

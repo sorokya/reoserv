@@ -373,6 +373,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedSpikes);
     }
 
+    pub fn timed_warp_suck(&self) {
+        let _ = self.tx.send(Command::TimedWarpSuck);
+    }
+
     pub fn toggle_hidden(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

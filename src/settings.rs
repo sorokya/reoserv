@@ -139,6 +139,7 @@ pub struct Map {
     pub drain_rate: EOInt,
     pub drain_hp_damage: f32,
     pub drain_tp_damage: f32,
+    pub warp_suck_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

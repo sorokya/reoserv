@@ -52,6 +52,7 @@ mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
 mod get_tile;
+mod get_warp;
 mod give_experience;
 mod give_item;
 mod is_tile_occupied;
@@ -94,6 +95,7 @@ mod take_locker_item;
 mod timed_drain;
 mod timed_quake;
 mod timed_spikes;
+mod timed_warp_suck;
 mod toggle_hidden;
 mod unequip;
 mod upgrade_locker;
@@ -361,6 +363,8 @@ impl Map {
             Command::TimedQuake => self.timed_quake(),
 
             Command::TimedSpikes => self.timed_spikes(),
+
+            Command::TimedWarpSuck => self.timed_warp_suck(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

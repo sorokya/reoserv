@@ -209,6 +209,7 @@ pub enum Command {
     TimedDrain,
     TimedQuake,
     TimedSpikes,
+    TimedWarpSuck,
     ToggleHidden {
         player_id: EOShort,
     },

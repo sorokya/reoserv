@@ -16,6 +16,7 @@ impl World {
         self.quake_ticks += 1;
         self.spike_ticks += 1;
         self.drain_ticks += 1;
+        self.warp_suck_ticks += 1;
 
         for map in maps {
             map.act_npcs();
@@ -47,6 +48,10 @@ impl World {
             if self.drain_ticks >= SETTINGS.map.drain_rate {
                 map.timed_drain();
             }
+
+            if self.warp_suck_ticks >= SETTINGS.map.warp_suck_rate {
+                map.timed_warp_suck();
+            }
         }
 
         if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {
@@ -75,6 +80,10 @@ impl World {
 
         if self.drain_ticks >= SETTINGS.map.drain_rate {
             self.drain_ticks = 0;
+        }
+
+        if self.warp_suck_ticks >= SETTINGS.map.warp_suck_rate {
+            self.warp_suck_ticks = 0;
         }
     }
 }

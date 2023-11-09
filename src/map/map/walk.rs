@@ -5,7 +5,7 @@ use eo::{
 };
 
 use crate::{
-    map::{get_warp_at, is_in_bounds},
+    map::is_in_bounds,
     utils::{get_next_coords, in_client_range},
 };
 
@@ -50,9 +50,12 @@ impl Map {
             }
 
             // TODO: Ghost timer check
-            if let Some(warp) = get_warp_at(target_coords, &self.file.warp_rows) {
-                // TODO: verify warp requirements
+            if let Some(warp) = self.get_warp(&target_coords) {
                 if let Some(target) = self.characters.get_mut(&target_player_id) {
+                    if warp.level_required > target.level {
+                        return;
+                    }
+
                     target.player.as_ref().unwrap().request_warp(
                         warp.map,
                         warp.coords,
@@ -60,44 +63,46 @@ impl Map {
                         None,
                     );
                 }
-            } else {
-                let packet = {
-                    let mut packet = walk::Reply::default();
 
-                    for (player_id, character) in self.characters.iter() {
-                        if *player_id != target_player_id
-                            && !character.hidden
-                            && in_client_range(&target_coords, &character.coords)
-                            && !in_client_range(&target_previous_coords, &character.coords)
-                        {
-                            packet.player_ids.push(*player_id);
-                        }
-                    }
-                    for (index, item) in self.items.iter() {
-                        if in_client_range(&target_coords, &item.coords)
-                            && !in_client_range(&target_previous_coords, &item.coords)
-                        {
-                            packet.items.push(item.to_item_map_info(*index));
-                        }
-                    }
-                    for (index, npc) in self.npcs.iter() {
-                        if in_client_range(&target_coords, &npc.coords)
-                            && !in_client_range(&target_previous_coords, &npc.coords)
-                        {
-                            packet.npc_indexes.push(*index);
-                        }
-                    }
-                    packet
-                };
-
-                let mut builder = StreamBuilder::new();
-                packet.serialize(&mut builder);
-                target_player.as_ref().unwrap().send(
-                    PacketAction::Reply,
-                    PacketFamily::Walk,
-                    builder.get(),
-                );
+                return;
             }
+
+            let packet = {
+                let mut packet = walk::Reply::default();
+
+                for (player_id, character) in self.characters.iter() {
+                    if *player_id != target_player_id
+                        && !character.hidden
+                        && in_client_range(&target_coords, &character.coords)
+                        && !in_client_range(&target_previous_coords, &character.coords)
+                    {
+                        packet.player_ids.push(*player_id);
+                    }
+                }
+                for (index, item) in self.items.iter() {
+                    if in_client_range(&target_coords, &item.coords)
+                        && !in_client_range(&target_previous_coords, &item.coords)
+                    {
+                        packet.items.push(item.to_item_map_info(*index));
+                    }
+                }
+                for (index, npc) in self.npcs.iter() {
+                    if in_client_range(&target_coords, &npc.coords)
+                        && !in_client_range(&target_previous_coords, &npc.coords)
+                    {
+                        packet.npc_indexes.push(*index);
+                    }
+                }
+                packet
+            };
+
+            let mut builder = StreamBuilder::new();
+            packet.serialize(&mut builder);
+            target_player.as_ref().unwrap().send(
+                PacketAction::Reply,
+                PacketFamily::Walk,
+                builder.get(),
+            );
 
             if !target_hidden {
                 let walk_packet = walk::Player {

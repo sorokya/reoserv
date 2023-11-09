@@ -121,6 +121,9 @@ drain_hp_damage = 0.2
 # Percentage of max TP that drain events will damage
 drain_tp_damage = 0.1
 
+# Amount of ticks before a player is "sucked" into a nearby warp
+warp_suck_rate = 120
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

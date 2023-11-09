@@ -91,6 +91,7 @@ mod stand;
 mod start_spell_chant;
 mod take_chest_item;
 mod take_locker_item;
+mod timed_drain;
 mod timed_quake;
 mod timed_spikes;
 mod toggle_hidden;
@@ -354,6 +355,8 @@ impl Map {
             Command::TakeLockerItem { player_id, item_id } => {
                 self.take_locker_item(player_id, item_id)
             }
+
+            Command::TimedDrain => self.timed_drain(),
 
             Command::TimedQuake => self.timed_quake(),
 

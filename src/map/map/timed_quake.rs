@@ -1,4 +1,3 @@
-use chrono::Utc;
 use eo::{
     data::{EOChar, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
@@ -6,7 +5,7 @@ use eo::{
 };
 use rand::{thread_rng, Rng};
 
-use crate::{utils::ticks_since, SETTINGS};
+use crate::SETTINGS;
 
 use super::Map;
 
@@ -47,8 +46,8 @@ impl Map {
             }
         };
 
-        let delta = ticks_since(&self.last_quake);
-        if delta >= rate * SETTINGS.world.tick_rate {
+        self.quake_ticks += 1;
+        if self.quake_ticks >= rate {
             let mut builder = StreamBuilder::new();
             builder.add_char(1);
             builder.add_char(strength as EOChar);
@@ -65,7 +64,7 @@ impl Map {
 
             self.quake_rate = None;
             self.quake_strength = None;
-            self.last_quake = Utc::now();
+            self.quake_ticks = 0;
         }
     }
 }

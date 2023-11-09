@@ -207,6 +207,7 @@ pub enum Command {
         item_id: EOShort,
     },
     TimedQuake,
+    TimedSpikes,
     ToggleHidden {
         player_id: EOShort,
     },

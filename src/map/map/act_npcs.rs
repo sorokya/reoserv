@@ -1,6 +1,6 @@
 use std::cmp;
 
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use eo::{
     data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
@@ -15,7 +15,7 @@ use rand::{seq::SliceRandom, Rng};
 use crate::{
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords, in_range, ticks_since},
+    utils::{get_distance, get_next_coords, in_range},
     FORMULAS, NPC_DB, SETTINGS, TALK_DB,
 };
 
@@ -33,13 +33,11 @@ impl Map {
             None => return None,
         };
 
-        let talk_delta = ticks_since(&npc.last_talk.unwrap());
-        if !npc.alive || talk_delta < SETTINGS.npcs.talk_rate {
+        if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate as i32 {
             return None;
         }
 
-        let now = Utc::now();
-        npc.last_talk = Some(now);
+        npc.talk_ticks = 0;
 
         let mut rng = rand::thread_rng();
         let roll = rng.gen_range(0..=100);
@@ -87,7 +85,7 @@ impl Map {
             let mut npc = self.npcs.get_mut(&index).unwrap();
             npc.direction = direction;
             npc.coords = new_coords;
-            npc.last_act = Some(Utc::now());
+            npc.act_ticks = 0;
             Some(NPCUpdatePos {
                 npc_index: index,
                 coords: npc.coords,
@@ -108,7 +106,7 @@ impl Map {
                 let mut npc = self.npcs.get_mut(&index).unwrap();
                 npc.direction = direction;
                 npc.coords = new_coords;
-                npc.last_act = Some(Utc::now());
+                npc.act_ticks = 0;
                 Some(NPCUpdatePos {
                     npc_index: index,
                     coords: npc.coords,
@@ -125,7 +123,7 @@ impl Map {
                     let mut npc = self.npcs.get_mut(&index).unwrap();
                     npc.direction = direction;
                     npc.coords = new_coords;
-                    npc.last_act = Some(Utc::now());
+                    npc.act_ticks = 0;
                     Some(NPCUpdatePos {
                         npc_index: index,
                         coords: npc.coords,
@@ -272,7 +270,7 @@ impl Map {
 
         if let Some(npc) = self.npcs.get_mut(&index) {
             npc.direction = new_direction;
-            npc.last_act = Some(Utc::now());
+            npc.act_ticks = 0;
             npc.walk_idle_for = None;
         }
 
@@ -296,7 +294,7 @@ impl Map {
         index: EOChar,
         npc_id: EOShort,
         act_rate: EOInt,
-        act_delta: EOInt,
+        act_ticks: EOInt,
     ) -> Option<NPCUpdatePos> {
         let (walk_idle_for, has_opponent) = {
             match self.npcs.get(&index) {
@@ -314,7 +312,7 @@ impl Map {
 
         if npc_data.r#type == EnfNpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id)
-        } else if act_delta >= idle_rate {
+        } else if act_ticks >= idle_rate {
             self.act_npc_move_idle(index)
         } else {
             None
@@ -376,7 +374,7 @@ impl Map {
 
         if let Some(npc) = self.npcs.get_mut(&index) {
             npc.direction = direction;
-            npc.last_act = Some(Utc::now());
+            npc.act_ticks = 0;
 
             if killed_state == PlayerKilledState::Dead {
                 npc.opponents
@@ -402,12 +400,14 @@ impl Map {
         Option<NPCUpdateChat>,
         Option<NPCUpdateAttack>,
     ) {
-        let (npc_id, spawn_index, last_act) = match self.npcs.get(&index) {
+        let (npc_id, spawn_index, act_ticks) = match self.npcs.get_mut(&index) {
             Some(npc) => {
                 if !npc.alive {
                     return (None, None, None);
                 } else {
-                    (npc.id, npc.spawn_index, npc.last_act.unwrap())
+                    npc.act_ticks += 1;
+                    npc.talk_ticks += 1;
+                    (npc.id, npc.spawn_index, npc.act_ticks)
                 }
             }
             None => return (None, None, None),
@@ -428,15 +428,14 @@ impl Map {
 
         let talk_update = self.act_npc_talk(index, npc_id);
 
-        let act_delta = ticks_since(&last_act);
-        if act_rate == 0 || act_delta < act_rate {
+        if act_ticks == 0 || act_ticks < act_rate {
             (None, talk_update, None)
         } else {
             let attack_update = self.act_npc_attack(index, npc_id);
             let pos_update = if attack_update.is_some() {
                 None
             } else {
-                self.act_npc_move(index, npc_id, act_rate, act_delta)
+                self.act_npc_move(index, npc_id, act_rate, act_ticks)
             };
             (pos_update, talk_update, attack_update)
         }
@@ -447,9 +446,8 @@ impl Map {
             return;
         }
 
-        let now = Utc::now();
-
-        if self.npcs.get(&0).unwrap().last_act.is_none() {
+        if !self.npcs_initialized {
+            self.npcs_initialized = true;
             for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
                 let npcs = {
                     self.npcs
@@ -462,8 +460,8 @@ impl Map {
 
                 for index in npcs {
                     let npc = self.npcs.get_mut(&index).unwrap();
-                    npc.last_act = Some(now);
-                    npc.last_talk = Some(now + Duration::milliseconds(7500 * index as i64));
+                    npc.act_ticks = 0;
+                    npc.talk_ticks = -60 * index as i32;
                 }
             }
         }

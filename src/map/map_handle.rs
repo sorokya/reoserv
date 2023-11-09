@@ -365,6 +365,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedQuake);
     }
 
+    pub fn timed_spikes(&self) {
+        let _ = self.tx.send(Command::TimedSpikes);
+    }
+
     pub fn toggle_hidden(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

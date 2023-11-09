@@ -1,7 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
 use super::{load_maps::load_maps, Command};
-use chrono::{DateTime, Utc};
 use eo::data::{EOInt, EOShort};
 use mysql_async::Pool;
 use std::collections::HashMap;
@@ -15,11 +14,12 @@ pub struct World {
     characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
-    last_npc_spawn_tick: DateTime<Utc>,
-    last_item_spawn_tick: DateTime<Utc>,
-    last_player_recover_tick: DateTime<Utc>,
-    last_npc_recover_tick: DateTime<Utc>,
-    last_quake_tick: DateTime<Utc>,
+    npc_spawn_ticks: EOInt,
+    item_spawn_ticks: EOInt,
+    player_recover_ticks: EOInt,
+    npc_recover_ticks: EOInt,
+    quake_ticks: EOInt,
+    spike_ticks: EOInt,
 }
 
 mod account;
@@ -45,11 +45,12 @@ impl World {
             accounts: Vec::new(),
             characters: HashMap::new(),
             maps: None,
-            last_npc_spawn_tick: Utc::now(),
-            last_item_spawn_tick: Utc::now(),
-            last_player_recover_tick: Utc::now(),
-            last_npc_recover_tick: Utc::now(),
-            last_quake_tick: Utc::now(),
+            npc_spawn_ticks: 0,
+            item_spawn_ticks: 0,
+            player_recover_ticks: 0,
+            npc_recover_ticks: 0,
+            quake_ticks: 0,
+            spike_ticks: 0,
         }
     }
 

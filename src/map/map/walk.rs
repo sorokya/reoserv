@@ -6,7 +6,7 @@ use eo::{
 
 use crate::{
     map::{get_warp_at, is_in_bounds},
-    utils::{get_next_coords, in_client_range, in_range},
+    utils::{get_next_coords, in_client_range},
 };
 
 use super::Map;

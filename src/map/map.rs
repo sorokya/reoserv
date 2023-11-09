@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    pubs::EmfFile,
+    pubs::{EmfFile, EmfTileSpec},
 };
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -20,11 +19,13 @@ pub struct Map {
     chests: Vec<Chest>,
     items: HashMap<EOShort, Item>,
     npcs: HashMap<EOChar, Npc>,
+    npcs_initialized: bool,
     characters: HashMap<EOShort, Character>,
     pool: Pool,
-    last_quake: DateTime<Utc>,
+    quake_ticks: EOInt,
     quake_rate: Option<EOInt>,
     quake_strength: Option<EOInt>,
+    has_timed_spikes: bool,
 }
 
 mod act_npcs;
@@ -91,6 +92,7 @@ mod start_spell_chant;
 mod take_chest_item;
 mod take_locker_item;
 mod timed_quake;
+mod timed_spikes;
 mod toggle_hidden;
 mod unequip;
 mod upgrade_locker;
@@ -107,6 +109,12 @@ impl Map {
         pool: Pool,
         rx: UnboundedReceiver<Command>,
     ) -> Self {
+        let has_timed_spikes = file.spec_rows.iter().any(|row| {
+            row.tiles
+                .iter()
+                .any(|tile| tile.spec == EmfTileSpec::TimedSpikes)
+        });
+
         Self {
             id,
             file_size,
@@ -115,11 +123,13 @@ impl Map {
             chests: Vec::new(),
             items: HashMap::new(),
             npcs: HashMap::new(),
+            npcs_initialized: false,
             characters: HashMap::new(),
             pool,
-            last_quake: Utc::now(),
+            quake_ticks: 0,
             quake_rate: None,
             quake_strength: None,
+            has_timed_spikes,
         }
     }
 
@@ -346,6 +356,8 @@ impl Map {
             }
 
             Command::TimedQuake => self.timed_quake(),
+
+            Command::TimedSpikes => self.timed_spikes(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

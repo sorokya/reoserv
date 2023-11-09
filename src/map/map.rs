@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use eo::{
     data::{EOChar, EOInt, EOShort},
+    protocol::Coords,
     pubs::{EmfFile, EmfTileSpec},
 };
 use mysql_async::Pool;
@@ -9,7 +10,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::character::Character;
 
-use super::{Chest, Command, Item, Npc};
+use super::{Chest, Command, Door, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -17,6 +18,7 @@ pub struct Map {
     file: EmfFile,
     file_size: EOInt,
     chests: Vec<Chest>,
+    doors: Vec<Door>,
     items: HashMap<EOShort, Item>,
     npcs: HashMap<EOChar, Npc>,
     npcs_initialized: bool,
@@ -92,6 +94,7 @@ mod stand;
 mod start_spell_chant;
 mod take_chest_item;
 mod take_locker_item;
+mod timed_door_close;
 mod timed_drain;
 mod timed_quake;
 mod timed_spikes;
@@ -118,12 +121,28 @@ impl Map {
                 .any(|tile| tile.spec == EmfTileSpec::TimedSpikes)
         });
 
+        let mut doors: Vec<Door> = Vec::new();
+        for row in &file.warp_rows {
+            for tile in &row.tiles {
+                if tile.warp.door > 0 {
+                    doors.push(Door::new(
+                        Coords {
+                            x: tile.x,
+                            y: row.y,
+                        },
+                        tile.warp.door,
+                    ));
+                }
+            }
+        }
+
         Self {
             id,
             file_size,
             file,
             rx,
             chests: Vec::new(),
+            doors,
             items: HashMap::new(),
             npcs: HashMap::new(),
             npcs_initialized: false,
@@ -357,6 +376,8 @@ impl Map {
             Command::TakeLockerItem { player_id, item_id } => {
                 self.take_locker_item(player_id, item_id)
             }
+
+            Command::TimedDoorClose => self.timed_door_close(),
 
             Command::TimedDrain => self.timed_drain(),
 

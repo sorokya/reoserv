@@ -2,6 +2,8 @@ mod chest;
 pub use chest::Chest;
 mod command;
 pub use command::Command;
+mod door;
+pub use door::Door;
 mod item;
 pub use item::Item;
 #[allow(clippy::module_inception)]

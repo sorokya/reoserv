@@ -124,6 +124,9 @@ drain_tp_damage = 0.1
 # Amount of ticks before a player is "sucked" into a nearby warp
 warp_suck_rate = 120
 
+# Number of ticks before a door is closed
+door_close_rate = 24
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time

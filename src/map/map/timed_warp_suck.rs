@@ -29,7 +29,7 @@ impl Map {
                 .iter()
                 .map(|coords| self.get_warp(coords))
                 .find(|warp| match warp {
-                    Some(warp) => warp.door < 1 && warp.level_required <= character.level,
+                    Some(warp) => warp.door <= 1 && warp.level_required <= character.level,
                     None => false,
                 }) {
                 Some(warp) => warp.unwrap(),

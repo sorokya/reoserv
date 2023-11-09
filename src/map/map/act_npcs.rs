@@ -428,7 +428,7 @@ impl Map {
 
         let talk_update = self.act_npc_talk(index, npc_id);
 
-        if act_ticks == 0 || act_ticks < act_rate {
+        if act_rate == 0 || act_ticks == 0 || act_ticks < act_rate {
             (None, talk_update, None)
         } else {
             let attack_update = self.act_npc_attack(index, npc_id);

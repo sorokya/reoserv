@@ -56,6 +56,18 @@ impl Map {
                         return;
                     }
 
+                    if warp.door > 0 {
+                        let door = match self.doors.iter().find(|door| door.coords == target_coords)
+                        {
+                            Some(door) => door,
+                            None => return,
+                        };
+
+                        if !door.open {
+                            return;
+                        }
+                    }
+
                     target.player.as_ref().unwrap().request_warp(
                         warp.map,
                         warp.coords,

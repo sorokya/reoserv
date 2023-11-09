@@ -52,6 +52,8 @@ impl World {
             if self.warp_suck_ticks >= SETTINGS.map.warp_suck_rate {
                 map.timed_warp_suck();
             }
+
+            map.timed_door_close();
         }
 
         if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {

@@ -92,13 +92,13 @@ impl Map {
 
     fn timed_drain_tp(&mut self) {
         for character in self.characters.values_mut() {
-            let damage =
-                (character.max_tp as f32 * SETTINGS.map.drain_tp_damage).floor() as EOShort;
-            let damage = cmp::min(damage, character.tp);
-
-            if damage == 0 {
+            if character.tp == 0 {
                 continue;
             }
+
+            let damage = (character.max_tp as f32 * SETTINGS.map.drain_tp_damage).floor() as i32;
+            let damage = cmp::min(damage, character.tp as i32 - 1);
+            let damage = cmp::max(damage, 0) as EOShort;
 
             character.tp -= damage;
 

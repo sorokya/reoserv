@@ -46,6 +46,7 @@ mod enter;
 mod equip;
 mod face;
 mod forget_skill;
+mod get_adjacent_tiles;
 mod get_character;
 mod get_dimensions;
 mod get_item;

@@ -1,30 +1,9 @@
-use eo::protocol::Coords;
-
 use super::Map;
 
 impl Map {
     pub fn timed_warp_suck(&mut self) {
         for character in self.characters.values() {
-            let coords = [
-                character.coords,
-                Coords {
-                    x: character.coords.x + 1,
-                    y: character.coords.y,
-                },
-                Coords {
-                    x: character.coords.x - 1,
-                    y: character.coords.y,
-                },
-                Coords {
-                    x: character.coords.x,
-                    y: character.coords.y + 1,
-                },
-                Coords {
-                    x: character.coords.x,
-                    y: character.coords.y - 1,
-                },
-            ];
-
+            let coords = self.get_adjacent_tiles(&character.coords);
             let warp = match coords
                 .iter()
                 .map(|coords| self.get_warp(coords))

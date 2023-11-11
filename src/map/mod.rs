@@ -2,6 +2,8 @@ mod chest;
 pub use chest::Chest;
 mod command;
 pub use command::Command;
+mod create_chests;
+pub use create_chests::create_chests;
 mod door;
 pub use door::Door;
 mod item;

@@ -10,7 +10,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::character::Character;
 
-use super::{Chest, Command, Door, Item, Npc};
+use super::{create_chests, Chest, Command, Door, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -137,12 +137,14 @@ impl Map {
             }
         }
 
+        let chests = create_chests(id, &file);
+
         Self {
             id,
             file_size,
             file,
             rx,
-            chests: Vec::new(),
+            chests,
             doors,
             items: HashMap::new(),
             npcs: HashMap::new(),

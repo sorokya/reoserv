@@ -1,118 +1,17 @@
 use chrono::{Duration, Utc};
 use eo::{
-    data::{EOInt, Serializeable, StreamBuilder},
-    protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
-    pubs::EmfTileSpec,
+    data::{Serializeable, StreamBuilder},
+    protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
 };
 use rand::seq::SliceRandom;
 
-use crate::{
-    map::{
-        chest::{ChestItem, ChestSpawn},
-        Chest,
-    },
-    utils::get_distance,
-    SETTINGS,
-};
+use crate::{map::chest::ChestItem, utils::get_distance};
 
 use super::Map;
 
 impl Map {
-    fn create_chests(&mut self) {
-        let now = Utc::now();
-        for item in &self.file.items {
-            let item_coords = Coords {
-                x: item.x,
-                y: item.y,
-            };
-
-            if self
-                .file
-                .spec_rows
-                .iter()
-                .find(|row| row.y == item.y)
-                .and_then(|row| {
-                    row.tiles
-                        .iter()
-                        .find(|tile| tile.spec == EmfTileSpec::Chest && tile.x == item.x)
-                })
-                .is_none()
-            {
-                continue;
-            }
-
-            if let Some(chest) = self
-                .chests
-                .iter_mut()
-                .find(|chest| chest.coords == item_coords)
-            {
-                if chest.key.is_none() && item.key_required != 0 {
-                    chest.key = Some(item.key_required);
-                }
-
-                if item.chest_slot as EOInt + 1 > SETTINGS.chest.slots {
-                    warn!(
-                        "Chest at map {} ({:?}) has too many slots",
-                        self.id, item_coords
-                    );
-                    continue;
-                }
-
-                chest.spawns.push(ChestSpawn {
-                    slot: item.chest_slot + 1,
-                    item_id: item.item_id,
-                    amount: item.item_amount,
-                    spawn_time: item.spawn_time,
-                    last_taken: now,
-                });
-            } else {
-                self.chests.push(Chest {
-                    coords: item_coords,
-                    items: Vec::new(),
-                    spawns: vec![ChestSpawn {
-                        slot: item.chest_slot + 1,
-                        item_id: item.item_id,
-                        amount: item.item_amount,
-                        spawn_time: item.spawn_time,
-                        last_taken: now,
-                    }],
-                    key: match item.key_required {
-                        0 => None,
-                        key => Some(key),
-                    },
-                });
-            }
-        }
-
-        // For any chests that don't have spawns
-        for row in &self.file.spec_rows {
-            for tile in &row.tiles {
-                if tile.spec == EmfTileSpec::Chest
-                    && !self
-                        .chests
-                        .iter()
-                        .any(|chest| chest.coords.y == row.y && chest.coords.x == tile.x)
-                {
-                    self.chests.push(Chest {
-                        coords: Coords {
-                            x: tile.x,
-                            y: row.y,
-                        },
-                        items: Vec::new(),
-                        spawns: Vec::new(),
-                        key: None,
-                    });
-                }
-            }
-        }
-    }
-
     pub async fn spawn_items(&mut self) {
         if !self.file.items.is_empty() {
-            if self.chests.is_empty() {
-                self.create_chests();
-            }
-
             let now = Utc::now();
             let mut chest_index: usize = 0;
             for chest in self.chests.iter_mut() {

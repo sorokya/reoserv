@@ -92,31 +92,27 @@ tick_rate = 125
 
 [map]
 # How frequently earthquake events occur in ticks
-# TODO: check this with GameServer
-quake_rate = 40
+quake_rate = 25
 
 # Control the different type of quake map effects
 quakes = [
-  { min_ticks = 4, max_ticks = 12, min_strength = 0, max_strength = 1 },
-  { min_ticks = 6, max_ticks = 12, min_strength = 0, max_strength = 2 },
-  { min_ticks = 2, max_ticks = 10, min_strength = 3, max_strength = 5 },
-  { min_ticks = 1, max_ticks = 4, min_strength = 6, max_strength = 8 }
+  { min_ticks = 3, max_ticks = 29, min_strength = 0, max_strength = 2 },
+  { min_ticks = 3, max_ticks = 22, min_strength = 0, max_strength = 2 },
+  { min_ticks = 3, max_ticks = 15, min_strength = 4, max_strength = 6 },
+  { min_ticks = 2, max_ticks = 8, min_strength = 6, max_strength = 8 }
 ]
 
 # How frequently timed spikes will activate (in ticks)
-# TODO: check this with GameServer
 spike_rate = 12
 
 # Percentage of max HP that spikes will damage
-# TODO: check this with GameServer
 spike_damage = 0.2
 
 # How frequently timed drain events occur in ticks
-# TODO: check this with GameServer
-drain_rate = 120
+drain_rate = 125
 
 # Percentage of max HP that drain events will damage
-drain_hp_damage = 0.2
+drain_hp_damage = 0.1
 
 # Percentage of max TP that drain events will damage
 drain_tp_damage = 0.1

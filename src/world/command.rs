@@ -121,6 +121,7 @@ pub enum Command {
         respond_to:
             oneshot::Sender<Result<character::Player, Box<dyn std::error::Error + Send + Sync>>>,
     },
+    Save,
     SelectCharacter {
         character_id: EOInt,
         player: PlayerHandle,

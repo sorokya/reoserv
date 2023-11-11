@@ -8,11 +8,7 @@ use super::World;
 
 impl World {
     pub async fn shutdown(&mut self, respond_to: oneshot::Sender<()>) {
-        if let Some(maps) = self.maps.as_ref() {
-            for map in maps.values() {
-                map.save().await;
-            }
-        }
+        self.save().await;
 
         let packet = message::Close::new();
         let mut builder = StreamBuilder::new();

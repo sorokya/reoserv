@@ -287,6 +287,10 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub fn save(&self) {
+        let _ = self.tx.send(Command::Save);
+    }
+
     pub async fn select_character(
         &self,
         character_id: EOInt,

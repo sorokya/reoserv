@@ -577,7 +577,7 @@ dependencies = [
 [[package]]
 name = "eo"
 version = "0.0.3"
-source = "git+https://github.com/sorokya/eo#1439fcd9b66b7cf37681c2f4e42c06bcc487e7f9"
+source = "git+https://github.com/sorokya/eo#72bee00657d3cff7934a9335e75924decd0eed29"
 dependencies = [
  "bytes",
  "log",

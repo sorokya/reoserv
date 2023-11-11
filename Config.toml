@@ -29,6 +29,10 @@ num_of_maps = 282
 min_version = "0.0.28"
 max_version = "0.3.29"
 
+# How often the server will save all online maps, and characters
+# in minutes, 0 to disable
+save_rate = 5
+
 [database]
 host = "127.0.0.1"
 port = "3306"

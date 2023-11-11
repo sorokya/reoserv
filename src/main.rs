@@ -114,21 +114,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     info!("Classes: {}", CLASS_DB.num_classes);
-    info!(
-        "Drops: {}",
-        DROP_DB
-            .npcs
-            .iter()
-            .map(|npc| npc.num_of_drops as EOInt)
-            .sum::<EOInt>()
-    );
-    info!("Inns: {}", INN_DB.inns.len());
     info!("Items: {}", ITEM_DB.num_items);
     info!("NPCs: {}", NPC_DB.num_npcs);
-    info!("Shops: {}", SHOP_DB.shops.len());
-    info!("Skill Masters: {}", SKILL_MASTER_DB.skill_masters.len());
     info!("Spells: {}", SPELL_DB.num_spells);
-    info!("Noisy NPCs: {}", TALK_DB.npcs.len());
 
     let world = WorldHandle::new(pool.clone());
     {
@@ -153,6 +141,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tick_world.tick();
         }
     });
+
+    if SETTINGS.server.save_rate > 0 {
+        let mut save_interval =
+            time::interval(Duration::from_secs(SETTINGS.server.save_rate as u64 * 60));
+        let save_world = world.clone();
+        tokio::spawn(async move {
+            loop {
+                save_interval.tick().await;
+                save_world.save();
+            }
+        });
+    }
 
     if SETTINGS.sln.enabled {
         let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.sln.rate as u64 * 60));

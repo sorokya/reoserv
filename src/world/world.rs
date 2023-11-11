@@ -35,6 +35,7 @@ mod get_file;
 mod get_next_player_id;
 mod get_online_list;
 mod get_welcome_request_data;
+mod save;
 mod shutdown;
 mod tick;
 
@@ -216,6 +217,8 @@ impl World {
                 self.request_character_deletion(player, character_id, respond_to)
                     .await
             }
+
+            Command::Save => self.save().await,
 
             Command::SelectCharacter {
                 character_id,

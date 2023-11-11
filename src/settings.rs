@@ -12,6 +12,7 @@ pub struct Server {
     pub num_of_maps: EOInt,
     pub min_version: String,
     pub max_version: String,
+    pub save_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

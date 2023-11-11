@@ -11,6 +11,10 @@ use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptTradeRequest {
+        player_id: EOShort,
+        target_player_id: EOShort,
+    },
     AddChestItem {
         player_id: EOShort,
         item: Item,
@@ -28,6 +32,9 @@ pub enum Command {
         player_id: EOShort,
         item: Item,
         session_id: EOShort,
+    },
+    CancelTrade {
+        player_id: EOShort,
     },
     CastSpell {
         player_id: EOShort,
@@ -164,6 +171,10 @@ pub enum Command {
         post_id: EOShort,
     },
     RequestPaperdoll {
+        player_id: EOShort,
+        target_player_id: EOShort,
+    },
+    RequestTrade {
         player_id: EOShort,
         target_player_id: EOShort,
     },

@@ -42,6 +42,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
+    pub fn cancel_trade(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::CancelTrade { player_id });
+    }
+
     pub fn close(&self, reason: String) {
         let _ = self.tx.send(Command::Close(reason));
     }
@@ -185,6 +189,17 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_interact_player_id(&self) -> Option<EOShort> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .tx
+            .send(Command::GetInteractPlayerId { respond_to: tx });
+        match rx.await {
+            Ok(index) => index,
+            Err(_) => None,
+        }
+    }
+
     pub async fn get_sequence_bytes(
         &self,
     ) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
@@ -223,6 +238,12 @@ impl PlayerHandle {
             Ok(state) => Ok(state),
             Err(_) => Err("Player disconnected".into()),
         }
+    }
+
+    pub async fn is_trading(&self) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::IsTrading { respond_to: tx });
+        (rx.await).unwrap_or(false)
     }
 
     pub fn ping(&self) {
@@ -280,6 +301,14 @@ impl PlayerHandle {
 
     pub fn set_interact_npc_index(&self, index: EOChar) {
         let _ = self.tx.send(Command::SetInteractNpcIndex(index));
+    }
+
+    pub fn set_interact_player_id(&self, id: Option<EOShort>) {
+        let _ = self.tx.send(Command::SetInteractPlayerId(id));
+    }
+
+    pub fn set_trading(&self, trading: bool) {
+        let _ = self.tx.send(Command::SetTrading(trading));
     }
 
     pub fn set_map(&self, map: MapHandle) {

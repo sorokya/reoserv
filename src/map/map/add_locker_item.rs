@@ -11,11 +11,15 @@ use crate::SETTINGS;
 use super::Map;
 
 impl Map {
-    pub fn add_locker_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_locker_item(&mut self, player_id: EOShort, item: Item) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
+
+        if character.player.as_ref().unwrap().is_trading().await {
+            return;
+        }
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as EOInt >= bank_size {

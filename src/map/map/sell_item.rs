@@ -21,6 +21,10 @@ impl Map {
             None => return,
         };
 
+        if character.player.as_ref().unwrap().is_trading().await {
+            return;
+        }
+
         let actual_session_id = match character.player.as_ref().unwrap().get_session_id().await {
             Ok(id) => id,
             Err(e) => {

@@ -19,6 +19,9 @@ pub enum Command {
         map_id: EOShort,
         session_id: EOShort,
     },
+    CancelTrade {
+        player_id: EOShort,
+    },
     Close(String),
     Die,
     GenerateSessionId {
@@ -60,6 +63,9 @@ pub enum Command {
     GetInteractNpcIndex {
         respond_to: oneshot::Sender<Option<EOChar>>,
     },
+    GetInteractPlayerId {
+        respond_to: oneshot::Sender<Option<EOShort>>,
+    },
     GetSequenceBytes {
         respond_to: oneshot::Sender<(EOShort, EOChar)>,
     },
@@ -68,6 +74,9 @@ pub enum Command {
     },
     GetState {
         respond_to: oneshot::Sender<ClientState>,
+    },
+    IsTrading {
+        respond_to: oneshot::Sender<bool>,
     },
     GenSequence {
         respond_to: oneshot::Sender<EOInt>,
@@ -89,6 +98,8 @@ pub enum Command {
     SetBusy(bool),
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(EOChar),
+    SetInteractPlayerId(Option<EOShort>),
+    SetTrading(bool),
     SetChestIndex(usize),
     SetMap(MapHandle),
     SetState(ClientState),

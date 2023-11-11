@@ -21,6 +21,10 @@ impl Map {
             None => return,
         };
 
+        if player.is_trading().await {
+            return;
+        }
+
         let actual_session_id = match player.get_session_id().await {
             Ok(session_id) => session_id as EOThree,
             Err(_) => return,

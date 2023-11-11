@@ -32,6 +32,13 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn accept_trade_request(&self, player_id: EOShort, target_player_id: EOShort) {
+        let _ = self.tx.send(Command::AcceptTradeRequest {
+            player_id,
+            target_player_id,
+        });
+    }
+
     pub fn add_chest_item(&self, player_id: EOShort, item: Item) {
         let _ = self.tx.send(Command::AddChestItem { player_id, item });
     }
@@ -46,6 +53,10 @@ impl MapHandle {
             item,
             session_id,
         });
+    }
+
+    pub fn cancel_trade(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::CancelTrade { player_id });
     }
 
     pub fn cast_spell(&self, player_id: EOShort, target: SpellTarget) {
@@ -292,6 +303,13 @@ impl MapHandle {
 
     pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
         let _ = self.tx.send(Command::RequestPaperdoll {
+            player_id,
+            target_player_id,
+        });
+    }
+
+    pub fn request_trade(&self, player_id: EOShort, target_player_id: EOShort) {
+        let _ = self.tx.send(Command::RequestTrade {
             player_id,
             target_player_id,
         });

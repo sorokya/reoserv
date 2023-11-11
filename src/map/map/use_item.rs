@@ -17,13 +17,17 @@ use crate::{character::PaperdollSlot, ITEM_DB};
 use super::Map;
 
 impl Map {
-    pub fn use_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub async fn use_item(&mut self, player_id: EOShort, item_id: EOShort) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
                 return;
             }
         };
+
+        if character.player.as_ref().unwrap().is_trading().await {
+            return;
+        }
 
         if !character.items.iter().any(|item| item.id == item_id) {
             return;

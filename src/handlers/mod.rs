@@ -87,6 +87,9 @@ pub use stat_skill::stat_skill;
 mod talk;
 pub use talk::talk;
 
+mod trade;
+pub use trade::trade;
+
 mod walk;
 pub use walk::walk;
 

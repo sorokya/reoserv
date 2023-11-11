@@ -8,7 +8,7 @@ use eo::{
 use super::Map;
 
 impl Map {
-    pub fn junk_item(&mut self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub async fn junk_item(&mut self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
         if amount == 0 {
             return;
         }
@@ -18,6 +18,10 @@ impl Map {
                 Some(character) => character,
                 None => return,
             };
+
+            if character.player.as_ref().unwrap().is_trading().await {
+                return;
+            }
 
             let actual_item = match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item,

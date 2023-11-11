@@ -35,12 +35,15 @@ pub struct Player {
     character: Option<Character>,
     session_id: Option<EOShort>,
     interact_npc_index: Option<EOChar>,
+    interact_player_id: Option<EOShort>,
     board_id: Option<EOShort>,
     chest_index: Option<usize>,
     warp_session: Option<WarpSession>,
+    trading: bool,
 }
 
 mod accept_warp;
+mod cancel_trade;
 mod close;
 mod die;
 mod request_warp;
@@ -70,8 +73,10 @@ impl Player {
             warp_session: None,
             session_id: None,
             interact_npc_index: None,
+            interact_player_id: None,
             board_id: None,
             chest_index: None,
+            trading: false,
         }
     }
 
@@ -80,6 +85,7 @@ impl Player {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }
+            Command::CancelTrade { player_id } => self.cancel_trade(player_id).await,
             Command::Close(reason) => {
                 self.close(reason).await;
                 return false;
@@ -181,11 +187,17 @@ impl Player {
             Command::GetInteractNpcIndex { respond_to } => {
                 let _ = respond_to.send(self.interact_npc_index);
             }
+            Command::GetInteractPlayerId { respond_to } => {
+                let _ = respond_to.send(self.interact_player_id);
+            }
             Command::GetSequenceStart { respond_to } => {
                 let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
             }
             Command::GetState { respond_to } => {
                 let _ = respond_to.send(self.state);
+            }
+            Command::IsTrading { respond_to } => {
+                let _ = respond_to.send(self.trading);
             }
             Command::GenSequence { respond_to } => {
                 let sequence = self.bus.sequencer.gen_sequence();
@@ -250,11 +262,17 @@ impl Player {
             Command::SetInteractNpcIndex(index) => {
                 self.interact_npc_index = Some(index);
             }
+            Command::SetInteractPlayerId(id) => {
+                self.interact_player_id = id;
+            }
             Command::SetMap(map) => {
                 self.map = Some(map);
             }
             Command::SetState(state) => {
                 self.state = state;
+            }
+            Command::SetTrading(trading) => {
+                self.trading = trading;
             }
             Command::TakeCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {

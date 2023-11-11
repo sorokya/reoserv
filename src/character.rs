@@ -90,7 +90,7 @@ pub struct Character {
     pub min_damage: EOShort,
     pub max_damage: EOShort,
     pub accuracy: EOShort,
-    pub evasion: EOShort, // TODO: rename to evade?
+    pub evasion: EOShort,
     pub armor: EOShort,
     pub map_id: EOShort,
     pub coords: Coords,

@@ -30,12 +30,14 @@ pub struct Map {
     has_timed_spikes: bool,
 }
 
+mod accept_trade_request;
 mod act_npcs;
 mod add_chest_item;
 mod add_locker_item;
 mod attack;
 mod attack_npc_replies;
 mod buy_item;
+mod cancel_trade;
 mod cast_spell;
 mod craft_item;
 mod create_board_post;
@@ -78,6 +80,7 @@ mod recover_npcs;
 mod recover_players;
 mod remove_board_post;
 mod request_paperdoll;
+mod request_trade;
 mod reset_character;
 mod save;
 mod sell_item;
@@ -160,8 +163,14 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptTradeRequest {
+                player_id,
+                target_player_id,
+            } => self.accept_trade_request(player_id, target_player_id).await,
             Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
-            Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
+            Command::AddLockerItem { player_id, item } => {
+                self.add_locker_item(player_id, item).await
+            }
             Command::Attack {
                 target_player_id,
                 direction,
@@ -173,6 +182,8 @@ impl Map {
                 item,
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
+
+            Command::CancelTrade { player_id } => self.cancel_trade(player_id),
 
             Command::CastSpell { player_id, target } => self.cast_spell(player_id, target),
 
@@ -198,7 +209,7 @@ impl Map {
                 target_player_id,
                 item,
                 coords,
-            } => self.drop_item(target_player_id, item, coords),
+            } => self.drop_item(target_player_id, item, coords).await,
 
             Command::Emote {
                 target_player_id,
@@ -215,7 +226,7 @@ impl Map {
                 player_id,
                 item_id,
                 sub_loc,
-            } => self.equip(player_id, item_id, sub_loc),
+            } => self.equip(player_id, item_id, sub_loc).await,
 
             Command::Face {
                 target_player_id,
@@ -287,7 +298,7 @@ impl Map {
                 target_player_id,
                 item_id,
                 amount,
-            } => self.junk_item(target_player_id, item_id, amount),
+            } => self.junk_item(target_player_id, item_id, amount).await,
 
             Command::LearnSkill {
                 player_id,
@@ -299,7 +310,10 @@ impl Map {
                 target_player_id,
                 warp_animation,
                 respond_to,
-            } => self.leave(target_player_id, warp_animation, respond_to),
+            } => {
+                self.leave(target_player_id, warp_animation, respond_to)
+                    .await
+            }
 
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
@@ -344,6 +358,11 @@ impl Map {
                 player_id,
                 target_player_id,
             } => self.request_paperdoll(player_id, target_player_id),
+
+            Command::RequestTrade {
+                player_id,
+                target_player_id,
+            } => self.request_trade(player_id, target_player_id),
 
             Command::ResetCharacter {
                 player_id,
@@ -413,7 +432,7 @@ impl Map {
 
             Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
 
-            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
+            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,
 
             Command::ViewBoardPost { player_id, post_id } => {
                 self.view_board_post(player_id, post_id).await

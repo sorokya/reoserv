@@ -11,7 +11,7 @@ use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 use super::Map;
 
 impl Map {
-    pub fn drop_item(&mut self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
+    pub async fn drop_item(&mut self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
         if item.amount == 0 {
             return;
         }
@@ -32,6 +32,10 @@ impl Map {
             };
 
             if character.map_id == SETTINGS.jail.map {
+                return;
+            }
+
+            if character.player.as_ref().unwrap().is_trading().await {
                 return;
             }
 

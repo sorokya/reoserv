@@ -103,6 +103,7 @@ pub async fn handle_packet(
         PacketFamily::Spell => handlers::spell(action, reader, player.clone()).await,
         PacketFamily::StatSkill => handlers::stat_skill(action, reader, player.clone()).await,
         PacketFamily::Talk => handlers::talk(action, reader, player.clone(), world.clone()).await,
+        PacketFamily::Trade => handlers::trade(action, reader, player.clone()).await,
         PacketFamily::Walk => handlers::walk(reader, player.clone()).await,
         PacketFamily::Warp => handlers::warp(action, reader, player.clone(), world.clone()).await,
         PacketFamily::Welcome => {

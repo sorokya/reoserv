@@ -31,6 +31,10 @@ impl Map {
             None => return,
         };
 
+        if player.is_trading().await {
+            return;
+        }
+
         let chest: &Chest = match self.chests.get(chest_index) {
             Some(chest) => chest,
             None => return,

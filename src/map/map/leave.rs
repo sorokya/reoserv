@@ -9,12 +9,13 @@ use crate::character::Character;
 use super::Map;
 
 impl Map {
-    pub fn leave(
+    pub async fn leave(
         &mut self,
         target_player_id: EOShort,
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<Character>,
     ) {
+        self.cancel_trade(target_player_id);
         let target = self.characters.remove(&target_player_id).unwrap();
         if !target.hidden {
             let packet = avatar::Remove {

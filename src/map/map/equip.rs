@@ -13,7 +13,7 @@ use crate::ITEM_DB;
 use super::Map;
 
 impl Map {
-    pub fn equip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub async fn equip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -21,6 +21,10 @@ impl Map {
                 return;
             }
         };
+
+        if character.player.as_ref().unwrap().is_trading().await {
+            return;
+        }
 
         if !character.items.iter().any(|i| i.id == item_id) {
             warn!(

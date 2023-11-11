@@ -1,8 +1,10 @@
 use eo::data::EOInt;
 use eo::protocol::server::welcome::{Reply, ReplyData};
-use eo::protocol::WelcomeReply;
+use eo::protocol::{Coords, WelcomeReply};
 use tokio::sync::oneshot;
 
+use crate::errors::DataNotFoundError;
+use crate::SETTINGS;
 use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
 
 use super::super::World;
@@ -71,6 +73,25 @@ impl World {
         character.logged_in_at = Some(chrono::Utc::now());
 
         character.calculate_stats();
+
+        if let Some(maps) = self.maps.as_ref() {
+            if !maps.contains_key(&character.map_id) {
+                if maps.contains_key(&SETTINGS.rescue.map) {
+                    character.map_id = SETTINGS.rescue.map;
+                    character.coords = Coords {
+                        x: SETTINGS.rescue.x,
+                        y: SETTINGS.rescue.y,
+                    };
+                } else {
+                    error!("Rescue map not found!");
+                    let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
+                        "map".to_string(),
+                        SETTINGS.rescue.map,
+                    ))));
+                    return;
+                }
+            }
+        }
 
         let select_character = match self
             .get_welcome_request_data(player.clone(), &character)

@@ -253,6 +253,17 @@ impl Map {
                 respond_to,
             } => self.get_nearby_info(target_player_id, respond_to),
 
+            Command::GetRelogCoords { respond_to } => {
+                let _ = respond_to.send(if self.file.relog_x > 0 {
+                    Some(Coords {
+                        x: self.file.relog_x,
+                        y: self.file.relog_y,
+                    })
+                } else {
+                    None
+                });
+            }
+
             Command::GetRidAndSize { respond_to } => {
                 self.get_rid_and_size(respond_to);
             }

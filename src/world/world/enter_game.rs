@@ -72,10 +72,14 @@ impl World {
                     return;
                 }
 
-                let character = character.unwrap();
+                let mut character = character.unwrap();
                 let items = character.items.clone();
                 let spells = character.spells.clone();
                 let weight = character.get_weight();
+
+                if let Some(relog_coords) = map.get_relog_coords().await {
+                    character.coords = relog_coords;
+                }
 
                 map.enter(character, None).await;
                 let nearby_info = map.get_nearby_info(player_id).await;

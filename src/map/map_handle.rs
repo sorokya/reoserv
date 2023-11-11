@@ -170,6 +170,12 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_relog_coords(&self) -> Option<Coords> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetRelogCoords { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn get_rid_and_size(&self) -> ([EOShort; 2], EOInt) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRidAndSize { respond_to: tx });

@@ -96,6 +96,9 @@ pub enum Command {
         target_player_id: EOShort,
         respond_to: oneshot::Sender<NearbyInfo>,
     },
+    GetRelogCoords {
+        respond_to: oneshot::Sender<Option<Coords>>,
+    },
     GetRidAndSize {
         respond_to: oneshot::Sender<([EOShort; 2], EOInt)>,
     },

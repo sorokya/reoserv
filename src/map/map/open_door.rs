@@ -28,6 +28,7 @@ impl Map {
             return;
         }
 
+        // Key 1 just means it's an unlocked door
         if door.key > 1
             && !character.items.iter().any(|item| {
                 let item_data = match ITEM_DB.items.get(item.id as usize - 1) {

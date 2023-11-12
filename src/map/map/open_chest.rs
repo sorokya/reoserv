@@ -1,9 +1,10 @@
 use eo::{
     data::{EOShort, Serializeable, StreamBuilder},
     protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
+    pubs::EifItemType,
 };
 
-use crate::utils::in_client_range;
+use crate::{utils::in_client_range, ITEM_DB};
 
 use super::Map;
 
@@ -27,6 +28,19 @@ impl Map {
 
         if !in_client_range(&character.coords, &coords) {
             return;
+        }
+
+        if let Some(key) = chest.key {
+            if !character.items.iter().any(|item| {
+                let item_data = match ITEM_DB.items.get(item.id as usize - 1) {
+                    Some(item_data) => item_data,
+                    None => return false,
+                };
+
+                item_data.r#type == EifItemType::Key && item_data.spec1 as EOShort == key
+            }) {
+                return;
+            }
         }
 
         let player = match character.player.as_ref() {

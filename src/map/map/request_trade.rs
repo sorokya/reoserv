@@ -1,14 +1,20 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{EOChar, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
-use crate::utils::in_client_range;
+use crate::{utils::in_client_range, SETTINGS};
 
 use super::Map;
 
+const MAGIC_NUMBER: EOChar = 138;
+
 impl Map {
     pub fn request_trade(&self, player_id: EOShort, target_player_id: EOShort) {
+        if self.id == SETTINGS.jail.map {
+            return;
+        }
+
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => {
@@ -45,7 +51,7 @@ impl Map {
             player.set_interact_player_id(Some(target_player_id));
 
             let mut builder = StreamBuilder::new();
-            builder.add_char(138);
+            builder.add_char(MAGIC_NUMBER);
             builder.add_short(player_id);
             builder.add_string(&character.name);
             target_player.send(PacketAction::Request, PacketFamily::Trade, builder.get());

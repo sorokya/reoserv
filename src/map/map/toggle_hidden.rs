@@ -25,7 +25,8 @@ impl Map {
             };
 
             let mut builder = StreamBuilder::new();
-            builder.add_char(1);
+            let number_of_characters = 1;
+            builder.add_char(number_of_characters);
             builder.add_byte(EO_BREAK_CHAR);
 
             let map_info = character.to_map_info();

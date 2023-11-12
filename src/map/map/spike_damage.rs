@@ -1,13 +1,15 @@
 use std::cmp;
 
 use eo::{
-    data::{EOShort, EOThree, StreamBuilder},
+    data::{EOChar, EOShort, EOThree, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use crate::SETTINGS;
 
 use super::Map;
+
+const EFFECT_SPIKE: EOChar = 2;
 
 impl Map {
     pub fn spike_damage(&mut self, player_id: EOShort) {
@@ -24,7 +26,7 @@ impl Map {
         let hp_percentage = character.get_hp_percentage();
 
         let mut builder = StreamBuilder::new();
-        builder.add_char(2);
+        builder.add_char(EFFECT_SPIKE);
         builder.add_short(damage);
         builder.add_short(character.hp);
         builder.add_short(character.max_hp);

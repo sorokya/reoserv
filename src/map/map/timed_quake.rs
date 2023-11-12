@@ -9,6 +9,8 @@ use crate::SETTINGS;
 
 use super::Map;
 
+const EFFECT_QUAKE: EOChar = 1;
+
 impl Map {
     pub fn timed_quake(&mut self) {
         if !matches!(
@@ -49,7 +51,7 @@ impl Map {
         self.quake_ticks += 1;
         if self.quake_ticks >= rate {
             let mut builder = StreamBuilder::new();
-            builder.add_char(1);
+            builder.add_char(EFFECT_QUAKE);
             builder.add_char(strength as EOChar);
 
             let buf = builder.get();

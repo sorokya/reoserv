@@ -102,6 +102,7 @@ pub struct Bank {
 pub struct Limits {
     pub max_bank_gold: EOInt,
     pub max_item: EOInt,
+    pub max_trade: EOInt,
     pub max_chest: EOInt,
 }
 

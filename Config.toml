@@ -185,6 +185,9 @@ max_bank_gold = 2000000000
 # Maximum amount of an item a player can have in their inventory
 max_item = 2000000000
 
+# Maximum amount of an item players can trade
+max_trade = 2000000000
+
 # Maximum amount of an item a chest will hold
 max_chest = 10000000
 

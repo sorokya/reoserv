@@ -1,9 +1,11 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{EOChar, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::Map;
+
+const UNAGREED: EOChar = 0;
 
 impl Map {
     pub async fn unaccept_trade(&mut self, player_id: EOShort) {
@@ -35,13 +37,13 @@ impl Map {
         player.set_trade_accepted(false);
 
         let mut builder = StreamBuilder::new();
-        builder.add_char(0);
+        builder.add_char(UNAGREED);
 
         player.send(PacketAction::Spec, PacketFamily::Trade, builder.get());
 
         let mut builder = StreamBuilder::new();
         builder.add_short(player_id);
-        builder.add_char(0);
+        builder.add_char(UNAGREED);
         partner.send(PacketAction::Agree, PacketFamily::Trade, builder.get());
     }
 }

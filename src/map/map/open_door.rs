@@ -28,7 +28,7 @@ impl Map {
             return;
         }
 
-        if door.key > 0
+        if door.key > 1
             && !character.items.iter().any(|item| {
                 let item_data = match ITEM_DB.items.get(item.id as usize - 1) {
                     Some(item_data) => item_data,

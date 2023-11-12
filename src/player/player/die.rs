@@ -8,7 +8,7 @@ impl Player {
             .map
             .as_ref()
             .unwrap()
-            .leave(self.id, Some(WarpAnimation::None))
+            .leave(self.id, Some(WarpAnimation::None), self.interact_player_id)
             .await;
         character.map_id = 0;
         character.coords = Coords { x: 0, y: 0 };

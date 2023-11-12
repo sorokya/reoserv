@@ -4,7 +4,7 @@ impl Player {
     pub async fn close(&mut self, reason: String) {
         self.queue.borrow_mut().clear();
         if let Some(map) = self.map.as_ref() {
-            let mut character = map.leave(self.id, None).await;
+            let mut character = map.leave(self.id, None, self.interact_player_id).await;
             let pool = self.pool.clone();
             let _ = tokio::task::Builder::new()
                 .name("character_save")

@@ -11,6 +11,9 @@ use crate::character::{Character, SpellTarget};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptTrade {
+        player_id: EOShort,
+    },
     AcceptTradeRequest {
         player_id: EOShort,
         target_player_id: EOShort,
@@ -20,6 +23,10 @@ pub enum Command {
         item: Item,
     },
     AddLockerItem {
+        player_id: EOShort,
+        item: Item,
+    },
+    AddTradeItem {
         player_id: EOShort,
         item: Item,
     },
@@ -35,6 +42,7 @@ pub enum Command {
     },
     CancelTrade {
         player_id: EOShort,
+        partner_player_id: EOShort,
     },
     CastSpell {
         player_id: EOShort,
@@ -129,8 +137,9 @@ pub enum Command {
         session_id: EOShort,
     },
     Leave {
-        target_player_id: EOShort,
+        player_id: EOShort,
         warp_animation: Option<WarpAnimation>,
+        interact_player_id: Option<EOShort>,
         respond_to: oneshot::Sender<Character>,
     },
     LevelStat {
@@ -176,6 +185,10 @@ pub enum Command {
     },
     RemoveCitizenship {
         player_id: EOShort,
+    },
+    RemoveTradeItem {
+        player_id: EOShort,
+        item_id: EOShort,
     },
     RequestCitizenship {
         player_id: EOShort,
@@ -246,6 +259,9 @@ pub enum Command {
     TimedSpikes,
     TimedWarpSuck,
     ToggleHidden {
+        player_id: EOShort,
+    },
+    UnacceptTrade {
         player_id: EOShort,
     },
     Unequip {

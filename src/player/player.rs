@@ -40,6 +40,7 @@ pub struct Player {
     chest_index: Option<usize>,
     warp_session: Option<WarpSession>,
     trading: bool,
+    trade_accepted: bool,
     sleep_cost: Option<EOInt>,
 }
 
@@ -78,6 +79,7 @@ impl Player {
             board_id: None,
             chest_index: None,
             trading: false,
+            trade_accepted: false,
             sleep_cost: None,
         }
     }
@@ -87,7 +89,7 @@ impl Player {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }
-            Command::CancelTrade { player_id } => self.cancel_trade(player_id).await,
+            Command::CancelTrade => self.cancel_trade().await,
             Command::Close(reason) => {
                 self.close(reason).await;
                 return false;
@@ -201,6 +203,9 @@ impl Player {
             Command::GetState { respond_to } => {
                 let _ = respond_to.send(self.state);
             }
+            Command::IsTradeAccepted { respond_to } => {
+                let _ = respond_to.send(self.trade_accepted);
+            }
             Command::IsTrading { respond_to } => {
                 let _ = respond_to.send(self.trading);
             }
@@ -278,6 +283,9 @@ impl Player {
             }
             Command::SetState(state) => {
                 self.state = state;
+            }
+            Command::SetTradeAccepted(accepted) => {
+                self.trade_accepted = accepted;
             }
             Command::SetTrading(trading) => {
                 self.trading = trading;

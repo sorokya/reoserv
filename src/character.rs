@@ -99,6 +99,7 @@ pub struct Character {
     pub hidden: bool,
     pub items: Vec<Item>,
     pub bank: Vec<Item>,
+    pub trade_items: Vec<Item>,
     pub spells: Vec<Spell>,
     pub logged_in_at: Option<DateTime<Utc>>,
     pub spell_state: SpellState,

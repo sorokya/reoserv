@@ -30,15 +30,18 @@ pub struct Map {
     has_timed_spikes: bool,
 }
 
+mod accept_trade;
 mod accept_trade_request;
 mod act_npcs;
 mod add_chest_item;
 mod add_locker_item;
+mod add_trade_item;
 mod attack;
 mod attack_npc_replies;
 mod buy_item;
 mod cancel_trade;
 mod cast_spell;
+mod complete_trade;
 mod craft_item;
 mod create_board_post;
 mod deposit_gold;
@@ -81,6 +84,7 @@ mod recover_npcs;
 mod recover_players;
 mod remove_board_post;
 mod remove_citizenship;
+mod remove_trade_item;
 mod request_citizenship;
 mod request_paperdoll;
 mod request_sleep;
@@ -92,6 +96,7 @@ mod send_chat_message;
 mod send_packet_near;
 mod send_packet_near_exclude_player;
 mod send_packet_near_player;
+mod send_trade_update;
 mod serialize;
 mod sit;
 mod sit_chair;
@@ -109,6 +114,7 @@ mod timed_quake;
 mod timed_spikes;
 mod timed_warp_suck;
 mod toggle_hidden;
+mod unaccept_trade;
 mod unequip;
 mod upgrade_locker;
 mod use_item;
@@ -168,6 +174,7 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptTrade { player_id } => self.accept_trade(player_id).await,
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
@@ -176,6 +183,7 @@ impl Map {
             Command::AddLockerItem { player_id, item } => {
                 self.add_locker_item(player_id, item).await
             }
+            Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
             Command::Attack {
                 target_player_id,
                 direction,
@@ -188,7 +196,10 @@ impl Map {
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
 
-            Command::CancelTrade { player_id } => self.cancel_trade(player_id),
+            Command::CancelTrade {
+                player_id,
+                partner_player_id,
+            } => self.cancel_trade(player_id, partner_player_id),
 
             Command::CastSpell { player_id, target } => self.cast_spell(player_id, target),
 
@@ -312,12 +323,12 @@ impl Map {
             } => self.learn_skill(player_id, spell_id, session_id).await,
 
             Command::Leave {
-                target_player_id,
+                player_id,
                 warp_animation,
                 respond_to,
+                interact_player_id,
             } => {
-                self.leave(target_player_id, warp_animation, respond_to)
-                    .await
+                self.leave(player_id, warp_animation, respond_to, interact_player_id);
             }
 
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
@@ -365,6 +376,10 @@ impl Map {
             }
 
             Command::RemoveCitizenship { player_id } => self.remove_citizenship(player_id).await,
+
+            Command::RemoveTradeItem { player_id, item_id } => {
+                self.remove_trade_item(player_id, item_id).await
+            }
 
             Command::RequestCitizenship {
                 player_id,
@@ -454,6 +469,8 @@ impl Map {
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),
+
+            Command::UnacceptTrade { player_id } => self.unaccept_trade(player_id).await,
 
             Command::Unequip {
                 player_id,

@@ -19,9 +19,7 @@ pub enum Command {
         map_id: EOShort,
         session_id: EOShort,
     },
-    CancelTrade {
-        player_id: EOShort,
-    },
+    CancelTrade,
     Close(String),
     Die,
     GenerateSessionId {
@@ -78,6 +76,9 @@ pub enum Command {
     GetSleepCost {
         respond_to: oneshot::Sender<Option<EOInt>>,
     },
+    IsTradeAccepted {
+        respond_to: oneshot::Sender<bool>,
+    },
     IsTrading {
         respond_to: oneshot::Sender<bool>,
     },
@@ -102,6 +103,7 @@ pub enum Command {
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(EOChar),
     SetInteractPlayerId(Option<EOShort>),
+    SetTradeAccepted(bool),
     SetTrading(bool),
     SetChestIndex(usize),
     SetMap(MapHandle),

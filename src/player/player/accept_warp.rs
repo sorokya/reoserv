@@ -34,23 +34,16 @@ impl Player {
         }
 
         if let Some(current_map) = &self.map {
-            if let Some(interact_player_id) = self.interact_player_id {
-                self.interact_player_id = None;
-
-                let mut builder = StreamBuilder::new();
-                builder.add_short(interact_player_id);
-                let _ = self
-                    .bus
-                    .send(PacketAction::Close, PacketFamily::Trade, builder.get())
-                    .await;
-            }
-
-            let character = current_map.leave(self.id, warp_session.animation).await;
+            let character = current_map
+                .leave(self.id, warp_session.animation, self.interact_player_id)
+                .await;
             self.interact_npc_index = None;
             self.chest_index = None;
             self.board_id = None;
             self.character = Some(character);
             self.trading = false;
+            self.trade_accepted = false;
+            self.interact_player_id = None;
         }
 
         let mut character = match &self.character {

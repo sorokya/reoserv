@@ -42,8 +42,8 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
-    pub fn cancel_trade(&self, player_id: EOShort) {
-        let _ = self.tx.send(Command::CancelTrade { player_id });
+    pub fn cancel_trade(&self) {
+        let _ = self.tx.send(Command::CancelTrade);
     }
 
     pub fn close(&self, reason: String) {
@@ -249,6 +249,12 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn is_trade_accepted(&self) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });
+        (rx.await).unwrap_or(false)
+    }
+
     pub async fn is_trading(&self) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTrading { respond_to: tx });
@@ -318,6 +324,10 @@ impl PlayerHandle {
 
     pub fn set_sleep_cost(&self, cost: EOInt) {
         let _ = self.tx.send(Command::SetSleepCost(cost));
+    }
+
+    pub fn set_trade_accepted(&self, accepted: bool) {
+        let _ = self.tx.send(Command::SetTradeAccepted(accepted));
     }
 
     pub fn set_trading(&self, trading: bool) {

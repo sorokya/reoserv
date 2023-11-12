@@ -1,6 +1,6 @@
 use eo::{
     data::{EOShort, StreamReader},
-    protocol::PacketAction,
+    protocol::{Item, PacketAction},
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
@@ -19,10 +19,36 @@ fn accept(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.accept_trade_request(player_id, target_player_id);
 }
 
-fn close(player: PlayerHandle, player_id: EOShort, map: MapHandle) {
-    player.set_trading(false);
-    player.set_interact_player_id(None);
-    map.cancel_trade(player_id);
+async fn close(player: PlayerHandle, player_id: EOShort, map: MapHandle) {
+    if let Some(interact_player_id) = player.get_interact_player_id().await {
+        map.cancel_trade(player_id, interact_player_id);
+    }
+}
+
+fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+    let item_id = reader.get_short();
+    let amount = reader.get_int();
+    map.add_trade_item(
+        player_id,
+        Item {
+            id: item_id,
+            amount,
+        },
+    );
+}
+
+fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+    let item_id = reader.get_short();
+    map.remove_trade_item(player_id, item_id);
+}
+
+fn agree(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+    let agree = reader.get_char() == 1;
+    if agree {
+        map.accept_trade(player_id);
+    } else {
+        map.unaccept_trade(player_id);
+    }
 }
 
 pub async fn trade(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
@@ -45,7 +71,10 @@ pub async fn trade(action: PacketAction, reader: StreamReader, player: PlayerHan
     match action {
         PacketAction::Request => request(reader, player_id, map),
         PacketAction::Accept => accept(reader, player_id, map),
-        PacketAction::Close => close(player, player_id, map),
+        PacketAction::Close => close(player, player_id, map).await,
+        PacketAction::Add => add(reader, player_id, map),
+        PacketAction::Remove => remove(reader, player_id, map),
+        PacketAction::Agree => agree(reader, player_id, map),
         _ => error!("Unhandled packet Trade_{:?}", action),
     }
 }

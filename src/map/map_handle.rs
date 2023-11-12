@@ -32,6 +32,10 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn accept_trade(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::AcceptTrade { player_id });
+    }
+
     pub fn accept_trade_request(&self, player_id: EOShort, target_player_id: EOShort) {
         let _ = self.tx.send(Command::AcceptTradeRequest {
             player_id,
@@ -47,6 +51,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::AddLockerItem { player_id, item });
     }
 
+    pub fn add_trade_item(&self, player_id: EOShort, item: Item) {
+        let _ = self.tx.send(Command::AddTradeItem { player_id, item });
+    }
+
     pub fn buy_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
         let _ = self.tx.send(Command::BuyItem {
             player_id,
@@ -55,8 +63,11 @@ impl MapHandle {
         });
     }
 
-    pub fn cancel_trade(&self, player_id: EOShort) {
-        let _ = self.tx.send(Command::CancelTrade { player_id });
+    pub fn cancel_trade(&self, player_id: EOShort, partner_player_id: EOShort) {
+        let _ = self.tx.send(Command::CancelTrade {
+            player_id,
+            partner_player_id,
+        });
     }
 
     pub fn cast_spell(&self, player_id: EOShort, target: SpellTarget) {
@@ -228,14 +239,16 @@ impl MapHandle {
 
     pub async fn leave(
         &self,
-        target_player_id: EOShort,
+        player_id: EOShort,
         warp_animation: Option<WarpAnimation>,
+        interact_player_id: Option<EOShort>,
     ) -> Character {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
-            target_player_id,
+            player_id,
             warp_animation,
             respond_to: tx,
+            interact_player_id,
         });
         rx.await.unwrap()
     }
@@ -310,6 +323,12 @@ impl MapHandle {
 
     pub fn remove_citizenship(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::RemoveCitizenship { player_id });
+    }
+
+    pub fn remove_trade_item(&self, player_id: EOShort, item_id: EOShort) {
+        let _ = self
+            .tx
+            .send(Command::RemoveTradeItem { player_id, item_id });
     }
 
     pub fn request_citizenship(
@@ -449,6 +468,10 @@ impl MapHandle {
 
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
+    }
+
+    pub fn unaccept_trade(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::UnacceptTrade { player_id });
     }
 
     pub fn unequip(&self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {

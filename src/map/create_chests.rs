@@ -75,7 +75,7 @@ pub fn create_chests(map_id: EOShort, file: &EmfFile) -> Vec<Chest> {
     for row in &file.spec_rows {
         for tile in &row.tiles {
             if tile.spec == EmfTileSpec::Chest
-                && chests
+                && !chests
                     .iter()
                     .any(|chest| chest.coords.y == row.y && chest.coords.x == tile.x)
             {

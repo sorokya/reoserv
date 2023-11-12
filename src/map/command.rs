@@ -153,6 +153,10 @@ pub enum Command {
         target_player_id: EOShort, // TODO: rename to player_id
         door_coords: Coords,       // TODO: rename to coords
     },
+    OpenInn {
+        player_id: EOShort,
+        npc_index: EOChar,
+    },
     OpenLocker {
         player_id: EOShort,
     },
@@ -170,9 +174,21 @@ pub enum Command {
         player_id: EOShort,
         post_id: EOShort,
     },
+    RemoveCitizenship {
+        player_id: EOShort,
+    },
+    RequestCitizenship {
+        player_id: EOShort,
+        session_id: EOShort,
+        answers: [String; 3],
+    },
     RequestPaperdoll {
         player_id: EOShort,
         target_player_id: EOShort,
+    },
+    RequestSleep {
+        player_id: EOShort,
+        session_id: EOShort,
     },
     RequestTrade {
         player_id: EOShort,
@@ -203,6 +219,10 @@ pub enum Command {
     SitChair {
         player_id: EOShort,
         coords: Coords,
+    },
+    Sleep {
+        player_id: EOShort,
+        session_id: EOShort,
     },
     Stand {
         player_id: EOShort,

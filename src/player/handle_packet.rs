@@ -80,6 +80,7 @@ pub async fn handle_packet(
             handlers::character(action, reader, player.clone(), world.clone()).await
         }
         PacketFamily::Chest => handlers::chest(action, reader, player.clone()).await,
+        PacketFamily::Citizen => handlers::citizen(action, reader, player.clone()).await,
         PacketFamily::Connection => handlers::connection(action, reader, player.clone()).await,
         PacketFamily::Door => handlers::door(action, reader, player.clone()).await,
         PacketFamily::Emote => handlers::emote(action, reader, player.clone()).await,

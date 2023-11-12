@@ -231,6 +231,15 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_sleep_cost(&self) -> Option<EOInt> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetSleepCost { respond_to: tx });
+        match rx.await {
+            Ok(cost) => cost,
+            Err(_) => None,
+        }
+    }
+
     pub async fn get_state(&self) -> Result<ClientState, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetState { respond_to: tx });
@@ -305,6 +314,10 @@ impl PlayerHandle {
 
     pub fn set_interact_player_id(&self, id: Option<EOShort>) {
         let _ = self.tx.send(Command::SetInteractPlayerId(id));
+    }
+
+    pub fn set_sleep_cost(&self, cost: EOInt) {
+        let _ = self.tx.send(Command::SetSleepCost(cost));
     }
 
     pub fn set_trading(&self, trading: bool) {

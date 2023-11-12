@@ -75,6 +75,9 @@ pub enum Command {
     GetState {
         respond_to: oneshot::Sender<ClientState>,
     },
+    GetSleepCost {
+        respond_to: oneshot::Sender<Option<EOInt>>,
+    },
     IsTrading {
         respond_to: oneshot::Sender<bool>,
     },
@@ -102,6 +105,7 @@ pub enum Command {
     SetTrading(bool),
     SetChestIndex(usize),
     SetMap(MapHandle),
+    SetSleepCost(EOInt),
     SetState(ClientState),
     TakeCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,

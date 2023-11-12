@@ -71,6 +71,7 @@ mod open_bank;
 mod open_board;
 mod open_chest;
 mod open_door;
+mod open_inn;
 mod open_locker;
 mod open_shop;
 mod open_skill_master;
@@ -79,7 +80,10 @@ mod player_in_range_of_tile;
 mod recover_npcs;
 mod recover_players;
 mod remove_board_post;
+mod remove_citizenship;
+mod request_citizenship;
 mod request_paperdoll;
+mod request_sleep;
 mod request_trade;
 mod reset_character;
 mod save;
@@ -91,6 +95,7 @@ mod send_packet_near_player;
 mod serialize;
 mod sit;
 mod sit_chair;
+mod sleep;
 mod spawn_items;
 mod spawn_npcs;
 mod spike_damage;
@@ -334,6 +339,11 @@ impl Map {
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
 
+            Command::OpenInn {
+                player_id,
+                npc_index,
+            } => self.open_inn(player_id, npc_index).await,
+
             Command::OpenLocker { player_id } => self.open_locker(player_id),
 
             Command::OpenShop {
@@ -354,10 +364,26 @@ impl Map {
                 self.remove_board_post(player_id, post_id).await
             }
 
+            Command::RemoveCitizenship { player_id } => self.remove_citizenship(player_id).await,
+
+            Command::RequestCitizenship {
+                player_id,
+                session_id,
+                answers,
+            } => {
+                self.request_citizenship(player_id, session_id, answers)
+                    .await
+            }
+
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
             } => self.request_paperdoll(player_id, target_player_id),
+
+            Command::RequestSleep {
+                player_id,
+                session_id,
+            } => self.request_sleep(player_id, session_id).await,
 
             Command::RequestTrade {
                 player_id,
@@ -389,6 +415,11 @@ impl Map {
             Command::Sit { player_id } => self.sit(player_id),
 
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),
+
+            Command::Sleep {
+                player_id,
+                session_id,
+            } => self.sleep(player_id, session_id).await,
 
             Command::Stand { player_id } => self.stand(player_id),
 

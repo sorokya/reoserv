@@ -24,6 +24,9 @@ pub use character::character;
 mod chest;
 pub use chest::chest;
 
+mod citizen;
+pub use citizen::citizen;
+
 mod connection;
 pub use connection::connection;
 

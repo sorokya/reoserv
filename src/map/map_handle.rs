@@ -269,6 +269,13 @@ impl MapHandle {
         });
     }
 
+    pub fn open_inn(&self, player_id: EOShort, npc_index: EOChar) {
+        let _ = self.tx.send(Command::OpenInn {
+            player_id,
+            npc_index,
+        });
+    }
+
     pub fn open_locker(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }
@@ -301,10 +308,34 @@ impl MapHandle {
             .send(Command::RemoveBoardPost { player_id, post_id });
     }
 
+    pub fn remove_citizenship(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::RemoveCitizenship { player_id });
+    }
+
+    pub fn request_citizenship(
+        &self,
+        player_id: EOShort,
+        session_id: EOShort,
+        answers: [String; 3],
+    ) {
+        let _ = self.tx.send(Command::RequestCitizenship {
+            player_id,
+            session_id,
+            answers,
+        });
+    }
+
     pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
         let _ = self.tx.send(Command::RequestPaperdoll {
             player_id,
             target_player_id,
+        });
+    }
+
+    pub fn request_sleep(&self, player_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::RequestSleep {
+            player_id,
+            session_id,
         });
     }
 
@@ -336,6 +367,13 @@ impl MapHandle {
 
     pub fn sit_chair(&self, player_id: EOShort, coords: Coords) {
         let _ = self.tx.send(Command::SitChair { player_id, coords });
+    }
+
+    pub fn sleep(&self, player_id: EOShort, session_id: EOShort) {
+        let _ = self.tx.send(Command::Sleep {
+            player_id,
+            session_id,
+        });
     }
 
     pub fn stand(&self, player_id: EOShort) {

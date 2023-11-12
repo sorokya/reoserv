@@ -40,6 +40,7 @@ pub struct Player {
     chest_index: Option<usize>,
     warp_session: Option<WarpSession>,
     trading: bool,
+    sleep_cost: Option<EOInt>,
 }
 
 mod accept_warp;
@@ -77,6 +78,7 @@ impl Player {
             board_id: None,
             chest_index: None,
             trading: false,
+            sleep_cost: None,
         }
     }
 
@@ -158,10 +160,10 @@ impl Player {
                 }
             }
             Command::GetMapId { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let _ = respond_to.send(Ok(character.map_id));
-                } else if let Some(warp_session) = &self.warp_session {
+                if let Some(warp_session) = &self.warp_session {
                     let _ = respond_to.send(Ok(warp_session.map_id));
+                } else if let Some(character) = self.character.as_ref() {
+                    let _ = respond_to.send(Ok(character.map_id));
                 } else {
                     let _ = respond_to.send(Err(InvalidStateError::new(
                         ClientState::Playing,
@@ -192,6 +194,9 @@ impl Player {
             }
             Command::GetSequenceStart { respond_to } => {
                 let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
+            }
+            Command::GetSleepCost { respond_to } => {
+                let _ = respond_to.send(self.sleep_cost);
             }
             Command::GetState { respond_to } => {
                 let _ = respond_to.send(self.state);
@@ -267,6 +272,9 @@ impl Player {
             }
             Command::SetMap(map) => {
                 self.map = Some(map);
+            }
+            Command::SetSleepCost(cost) => {
+                self.sleep_cost = Some(cost);
             }
             Command::SetState(state) => {
                 self.state = state;

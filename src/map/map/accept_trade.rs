@@ -14,6 +14,10 @@ impl Map {
             None => return,
         };
 
+        if character.trade_items.is_empty() {
+            return;
+        }
+
         let player = match character.player.as_ref() {
             Some(player) => player,
             None => return,
@@ -28,6 +32,10 @@ impl Map {
             Some(partner_character) => partner_character,
             None => return,
         };
+
+        if partner_character.trade_items.is_empty() {
+            return;
+        }
 
         let partner = match partner_character.player.as_ref() {
             Some(partner) => partner,

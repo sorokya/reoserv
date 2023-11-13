@@ -1,6 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
-use super::{load_maps::load_maps, Command};
+use super::{load_maps::load_maps, Command, Party};
 use eo::data::{EOInt, EOShort};
 use mysql_async::Pool;
 use std::collections::HashMap;
@@ -14,6 +14,7 @@ pub struct World {
     characters: HashMap<String, EOShort>,
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
+    parties: Vec<Party>,
     npc_spawn_ticks: EOInt,
     item_spawn_ticks: EOInt,
     player_recover_ticks: EOInt,
@@ -35,6 +36,7 @@ mod get_file;
 mod get_next_player_id;
 mod get_online_list;
 mod get_welcome_request_data;
+mod party;
 mod save;
 mod shutdown;
 mod tick;
@@ -48,6 +50,7 @@ impl World {
             accounts: Vec::new(),
             characters: HashMap::new(),
             maps: None,
+            parties: Vec::new(),
             npc_spawn_ticks: 0,
             item_spawn_ticks: 0,
             player_recover_ticks: 0,
@@ -84,6 +87,14 @@ impl World {
                     .await
             }
 
+            Command::BroadcastPartyMessage {
+                player_id,
+                name,
+                message,
+            } => {
+                self.broadcast_party_message(player_id, name, message);
+            }
+
             Command::_BroadcastServerMessage { message } => {
                 self.broadcast_server_message(&message).await
             }
@@ -100,6 +111,8 @@ impl World {
                 respond_to,
             } => self.create_character(player, details, respond_to).await,
 
+            Command::CreateParty { leader, member } => self.create_party(leader, member).await,
+
             Command::DeleteCharacter {
                 session_id,
                 character_id,
@@ -109,6 +122,8 @@ impl World {
                 self.delete_character(player, session_id, character_id, respond_to)
                     .await
             }
+
+            Command::DisbandParty { leader } => self.disband_party(leader),
 
             Command::DropPlayer {
                 player_id,
@@ -166,16 +181,25 @@ impl World {
                 let _ = respond_to.send(self.players.len());
             }
 
-            Command::LoadMapFiles { respond_to } => match load_maps(self.pool.to_owned()).await {
-                Ok(maps) => {
-                    self.maps = Some(maps);
-                    let _ = respond_to.send(());
+            Command::JoinParty {
+                player_id,
+                party_member_id,
+            } => self.join_party(player_id, party_member_id),
+
+            Command::LeaveParty { player_id } => self.leave_party(player_id),
+
+            Command::LoadMapFiles { world, respond_to } => {
+                match load_maps(self.pool.to_owned(), world).await {
+                    Ok(maps) => {
+                        self.maps = Some(maps);
+                        let _ = respond_to.send(());
+                    }
+                    Err(err) => {
+                        warn!("Failed to load maps: {}", err);
+                        let _ = respond_to.send(());
+                    }
                 }
-                Err(err) => {
-                    warn!("Failed to load maps: {}", err);
-                    let _ = respond_to.send(());
-                }
-            },
+            }
 
             Command::Login {
                 name,
@@ -188,6 +212,13 @@ impl World {
                 for player in self.players.values() {
                     player.ping();
                 }
+            }
+
+            Command::PlayerInParty {
+                player_id,
+                respond_to,
+            } => {
+                let _ = respond_to.send(self.player_in_party(player_id));
             }
 
             Command::ReportPlayer {

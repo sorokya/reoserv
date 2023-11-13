@@ -12,7 +12,11 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::character::{Character, SpellTarget};
+use crate::{
+    character::{Character, SpellTarget},
+    player::PartyRequest,
+    world::WorldHandle,
+};
 
 use super::{Command, Map};
 
@@ -22,14 +26,33 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(id: EOShort, file_size: EOInt, pool: Pool, file: EmfFile) -> Self {
+    pub fn new(
+        id: EOShort,
+        file_size: EOInt,
+        pool: Pool,
+        file: EmfFile,
+        world: WorldHandle,
+    ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(id, file_size, file, pool, rx);
+        let map = Map::new(id, file_size, file, pool, world, rx);
         let _ = tokio::task::Builder::new()
             .name(&format!("Map {}", id))
             .spawn(run_map(map));
 
         Self { tx }
+    }
+
+    pub fn accept_party_request(
+        &self,
+        player_id: EOShort,
+        target_player_id: EOShort,
+        request_type: EOChar,
+    ) {
+        let _ = self.tx.send(Command::AcceptPartyRequest {
+            player_id,
+            target_player_id,
+            request_type,
+        });
     }
 
     pub fn accept_trade(&self, player_id: EOShort) {
@@ -355,6 +378,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::RequestSleep {
             player_id,
             session_id,
+        });
+    }
+
+    pub fn party_request(&self, target_player_id: EOShort, request: PartyRequest) {
+        let _ = self.tx.send(Command::PartyRequest {
+            target_player_id,
+            request,
         });
     }
 

@@ -5,3 +5,5 @@ mod load_maps;
 mod world;
 mod world_handle;
 pub use world_handle::WorldHandle;
+mod party;
+pub use party::Party;

@@ -17,7 +17,7 @@ use crate::{
     world::WorldHandle,
 };
 
-use super::{packet_bus::PacketBus, ClientState, Command, WarpSession};
+use super::{packet_bus::PacketBus, ClientState, Command, PartyRequest, WarpSession};
 
 pub struct Player {
     pub id: EOShort,
@@ -42,6 +42,7 @@ pub struct Player {
     trading: bool,
     trade_accepted: bool,
     sleep_cost: Option<EOInt>,
+    party_request: PartyRequest,
 }
 
 mod accept_warp;
@@ -81,6 +82,7 @@ impl Player {
             trading: false,
             trade_accepted: false,
             sleep_cost: None,
+            party_request: PartyRequest::None,
         }
     }
 
@@ -175,6 +177,9 @@ impl Player {
             }
             Command::GetPlayerId { respond_to } => {
                 let _ = respond_to.send(self.id);
+            }
+            Command::GetPartyRequest { respond_to } => {
+                let _ = respond_to.send(self.party_request);
             }
             Command::GetSequenceBytes { respond_to } => {
                 respond_to
@@ -274,6 +279,9 @@ impl Player {
             }
             Command::SetInteractPlayerId(id) => {
                 self.interact_player_id = id;
+            }
+            Command::SetPartyRequest(request) => {
+                self.party_request = request;
             }
             Command::SetMap(map) => {
                 self.map = Some(map);

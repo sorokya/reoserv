@@ -7,10 +7,18 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::character::{Character, SpellTarget};
+use crate::{
+    character::{Character, SpellTarget},
+    player::PartyRequest,
+};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptPartyRequest {
+        player_id: EOShort,
+        target_player_id: EOShort,
+        request_type: EOChar,
+    },
     AcceptTrade {
         player_id: EOShort,
     },
@@ -202,6 +210,10 @@ pub enum Command {
     RequestSleep {
         player_id: EOShort,
         session_id: EOShort,
+    },
+    PartyRequest {
+        target_player_id: EOShort,
+        request: PartyRequest,
     },
     RequestTrade {
         player_id: EOShort,

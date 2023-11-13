@@ -17,8 +17,11 @@ use mysql_async::Pool;
 
 use crate::{map::MapHandle, SETTINGS};
 
+use super::WorldHandle;
+
 pub async fn load_maps(
     pool: Pool,
+    world: WorldHandle,
 ) -> Result<HashMap<EOShort, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
     if SETTINGS.server.num_of_maps > EOShort::MAX.into() {
         panic!("Too many maps to load!");
@@ -28,7 +31,7 @@ pub async fn load_maps(
     let mut map_files: HashMap<EOShort, MapHandle> = HashMap::with_capacity(max_id as usize);
     let mut load_handles = vec![];
     for i in 1..=max_id {
-        load_handles.push(load_map(i, pool.to_owned()));
+        load_handles.push(load_map(i, pool.to_owned(), world.to_owned()));
     }
 
     let mut stream = stream::iter(load_handles).buffer_unordered(100);
@@ -50,6 +53,7 @@ pub async fn load_maps(
 async fn load_map(
     id: EOShort,
     pool: Pool,
+    world: WorldHandle,
 ) -> Result<(EOShort, MapHandle), Box<dyn std::error::Error + Send + Sync>> {
     let raw_path = format!("maps/{:0>5}.emf", id);
     let path = Path::new(&raw_path);
@@ -75,5 +79,8 @@ async fn load_map(
         )));
     }
 
-    Ok((id, MapHandle::new(id, file_size as EOInt, pool, file)))
+    Ok((
+        id,
+        MapHandle::new(id, file_size as EOInt, pool, file, world),
+    ))
 }

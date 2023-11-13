@@ -11,7 +11,7 @@ use crate::{
     map::MapHandle,
 };
 
-use super::ClientState;
+use super::{ClientState, PartyRequest};
 
 #[derive(Debug)]
 pub enum Command {
@@ -54,6 +54,9 @@ pub enum Command {
     },
     GetPlayerId {
         respond_to: oneshot::Sender<EOShort>,
+    },
+    GetPartyRequest {
+        respond_to: oneshot::Sender<PartyRequest>,
     },
     GetSessionId {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
@@ -103,6 +106,7 @@ pub enum Command {
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(EOChar),
     SetInteractPlayerId(Option<EOShort>),
+    SetPartyRequest(PartyRequest),
     SetTradeAccepted(bool),
     SetTrading(bool),
     SetChestIndex(usize),

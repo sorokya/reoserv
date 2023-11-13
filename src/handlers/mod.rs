@@ -63,6 +63,9 @@ pub use npc_range::npc_range;
 mod paperdoll;
 pub use paperdoll::paperdoll;
 
+mod party;
+pub use party::party;
+
 mod player_range;
 pub use player_range::player_range;
 

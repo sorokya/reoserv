@@ -70,6 +70,14 @@ impl WorldHandle {
         });
     }
 
+    pub fn broadcast_party_message(&self, player_id: EOShort, name: String, message: String) {
+        let _ = self.tx.send(Command::BroadcastPartyMessage {
+            player_id,
+            name,
+            message,
+        });
+    }
+
     pub fn _broadcast_server_message(&self, message: String) {
         let _ = self.tx.send(Command::_BroadcastServerMessage { message });
     }
@@ -102,6 +110,10 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub fn create_party(&self, leader: EOShort, member: EOShort) {
+        let _ = self.tx.send(Command::CreateParty { leader, member });
+    }
+
     pub async fn delete_character(
         &self,
         session_id: EOShort,
@@ -116,6 +128,10 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn disband_party(&self, leader: EOShort) {
+        let _ = self.tx.send(Command::DisbandParty { leader });
     }
 
     pub async fn drop_player(
@@ -213,9 +229,23 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
+    pub fn join_party(&self, player_id: EOShort, party_member_id: EOShort) {
+        let _ = self.tx.send(Command::JoinParty {
+            player_id,
+            party_member_id,
+        });
+    }
+
+    pub fn leave_party(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::LeaveParty { player_id });
+    }
+
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::LoadMapFiles { respond_to: tx });
+        let _ = self.tx.send(Command::LoadMapFiles {
+            world: self.clone(),
+            respond_to: tx,
+        });
         rx.await.unwrap();
     }
 
@@ -237,6 +267,15 @@ impl WorldHandle {
 
     pub fn ping_players(&self) {
         let _ = self.tx.send(Command::PingPlayers);
+    }
+
+    pub async fn player_in_party(&self, player_id: EOShort) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::PlayerInParty {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
     }
 
     pub fn report_player(&self, player_id: EOShort, reportee_name: String, message: String) {

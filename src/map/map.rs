@@ -8,12 +8,13 @@ use eo::{
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::character::Character;
+use crate::{character::Character, world::WorldHandle};
 
 use super::{create_chests, Chest, Command, Door, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
+    world: WorldHandle,
     id: EOShort,
     file: EmfFile,
     file_size: EOInt,
@@ -30,6 +31,7 @@ pub struct Map {
     has_timed_spikes: bool,
 }
 
+mod accept_party_request;
 mod accept_trade;
 mod accept_trade_request;
 mod act_npcs;
@@ -78,6 +80,7 @@ mod open_inn;
 mod open_locker;
 mod open_shop;
 mod open_skill_master;
+mod party_request;
 mod play_effect;
 mod player_in_range_of_tile;
 mod recover_npcs;
@@ -128,6 +131,7 @@ impl Map {
         file_size: EOInt,
         file: EmfFile,
         pool: Pool,
+        world: WorldHandle,
         rx: UnboundedReceiver<Command>,
     ) -> Self {
         let has_timed_spikes = file.spec_rows.iter().any(|row| {
@@ -155,6 +159,7 @@ impl Map {
 
         Self {
             id,
+            world,
             file_size,
             file,
             rx,
@@ -174,6 +179,14 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptPartyRequest {
+                player_id,
+                target_player_id,
+                request_type,
+            } => {
+                self.accept_party_request(player_id, target_player_id, request_type)
+                    .await
+            }
             Command::AcceptTrade { player_id } => self.accept_trade(player_id).await,
             Command::AcceptTradeRequest {
                 player_id,
@@ -399,6 +412,11 @@ impl Map {
                 player_id,
                 session_id,
             } => self.request_sleep(player_id, session_id).await,
+
+            Command::PartyRequest {
+                target_player_id,
+                request,
+            } => self.party_request(target_player_id, request).await,
 
             Command::RequestTrade {
                 player_id,

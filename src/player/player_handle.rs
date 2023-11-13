@@ -16,7 +16,7 @@ use crate::{
     world::WorldHandle,
 };
 
-use super::{handle_packet::handle_packet, player::Player, ClientState, Command};
+use super::{handle_packet::handle_packet, player::Player, ClientState, Command, PartyRequest};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -154,6 +154,15 @@ impl PlayerHandle {
             Ok(Ok(map_id)) => Ok(map_id),
             Ok(Err(e)) => Err(Box::new(e)),
             Err(_) => Err("Player disconnected".into()),
+        }
+    }
+
+    pub async fn get_party_request(&self) -> PartyRequest {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPartyRequest { respond_to: tx });
+        match rx.await {
+            Ok(party_request) => party_request,
+            Err(_) => PartyRequest::None,
         }
     }
 
@@ -320,6 +329,10 @@ impl PlayerHandle {
 
     pub fn set_interact_player_id(&self, id: Option<EOShort>) {
         let _ = self.tx.send(Command::SetInteractPlayerId(id));
+    }
+
+    pub fn set_party_request(&self, request: PartyRequest) {
+        let _ = self.tx.send(Command::SetPartyRequest(request));
     }
 
     pub fn set_sleep_cost(&self, cost: EOInt) {

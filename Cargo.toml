@@ -29,7 +29,7 @@ mysql_async = "0.32"
 argon2 = "0.5.2"
 eo = { git = "https://github.com/sorokya/eo", features = ["use_serde", "generate_protocol"] }
 rand = "0.8"
-evalexpr = "8.1.0"
+evalexpr = "11.1.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

@@ -123,8 +123,8 @@ impl Map {
                     coords: target_coords,
                 };
 
-                self.send_packet_near(
-                    &target_coords,
+                self.send_packet_near_player(
+                    target_player_id,
                     PacketAction::Player,
                     PacketFamily::Walk,
                     walk_packet,

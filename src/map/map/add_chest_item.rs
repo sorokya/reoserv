@@ -2,7 +2,7 @@ use std::cmp;
 
 use bytes::Bytes;
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{EOChar, EOShort, StreamBuilder},
     protocol::{Item, PacketAction, PacketFamily},
 };
 
@@ -60,6 +60,13 @@ impl Map {
         };
 
         let user_items = chest.items.iter().filter(|i| i.slot == 0).count();
+        let mut chest_slots: Vec<EOChar> = vec![];
+
+        for spawn in chest.spawns.iter() {
+            if !chest_slots.contains(&spawn.slot) {
+                chest_slots.push(spawn.slot);
+            }
+        }
 
         let mut chest_full = false;
         if let Some(existing_item) = chest.items.iter_mut().find(|i| i.item_id == item.id) {
@@ -69,7 +76,7 @@ impl Map {
                 character.remove_item(item.id, amount);
                 existing_item.amount += amount;
             }
-        } else if chest.spawns.len() + user_items < SETTINGS.chest.slots as usize {
+        } else if chest_slots.len() + user_items < SETTINGS.chest.slots as usize {
             character.remove_item(item.id, amount);
             chest.items.push(ChestItem {
                 slot: 0,

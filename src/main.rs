@@ -327,7 +327,6 @@ fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut talk_file = TalkFile::default();
     talk_file.deserialize(&reader);
 
-    debug!("{:?}", talk_file);
     Ok(talk_file)
 }
 

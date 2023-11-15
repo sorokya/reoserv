@@ -22,7 +22,7 @@ futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
 serde_derive = "^1.0.8"
-serde = "^1.0.189"
+serde = "^1.0.192"
 console-subscriber = { version = "0.2", optional = true }
 mysql_common = { version = "0.30", features = ["chrono"] }
 mysql_async = { version = "0.32", default-features = false, features = ["default-rustls"] }

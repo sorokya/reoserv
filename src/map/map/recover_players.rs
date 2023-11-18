@@ -13,12 +13,21 @@ impl Map {
                 _ => 10,
             };
 
+            let original_hp = character.hp;
             if character.hp < character.max_hp {
                 character.hp += (character.max_hp / divisor) + 1;
 
                 if character.hp > character.max_hp {
                     character.hp = character.max_hp;
                 }
+            }
+
+            if original_hp != character.hp {
+                character
+                    .player
+                    .as_ref()
+                    .unwrap()
+                    .update_party_hp(character.get_hp_percentage());
             }
 
             if character.tp < character.max_tp {

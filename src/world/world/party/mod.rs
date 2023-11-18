@@ -7,3 +7,4 @@ mod leave_party;
 mod player_in_party;
 mod refresh_party;
 mod remove_party_member;
+mod update_party_hp;

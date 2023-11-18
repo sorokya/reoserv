@@ -9,6 +9,9 @@ use super::Character;
 
 impl Character {
     pub fn calculate_stats(&mut self) {
+        let original_hp = self.hp;
+        let original_max_hp = self.max_hp;
+
         let class = &CLASS_DB.classes[(self.class - 1) as usize];
 
         self.adj_strength = self.base_strength + class.str;
@@ -181,6 +184,13 @@ impl Character {
 
         if self.tp > self.max_tp {
             self.tp = self.max_tp;
+        }
+
+        if self.hp != original_hp || self.max_hp != original_max_hp {
+            self.player
+                .as_ref()
+                .unwrap()
+                .update_party_hp(self.get_hp_percentage());
         }
     }
 }

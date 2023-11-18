@@ -119,4 +119,7 @@ pub enum Command {
     TakeSessionId {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
+    UpdatePartyHP {
+        hp_percentage: EOChar,
+    },
 }

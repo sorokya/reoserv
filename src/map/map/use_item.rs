@@ -64,6 +64,8 @@ impl Map {
                         hp_percentage: character.get_hp_percentage(),
                     };
 
+                    player.update_party_hp(character.get_hp_percentage());
+
                     self.send_packet_near_player(
                         player_id,
                         PacketAction::Agree,

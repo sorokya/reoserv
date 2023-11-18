@@ -93,6 +93,7 @@ impl Map {
 
         character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
+        let original_hp = character.hp;
         character.hp = cmp::min(character.hp + spell.hp_heal, character.max_hp);
 
         let character = match self.characters.get(&player_id) {
@@ -100,11 +101,21 @@ impl Map {
             None => return,
         };
 
+        let hp_percentage = character.get_hp_percentage();
+
+        if character.hp != original_hp {
+            character
+                .player
+                .as_ref()
+                .unwrap()
+                .update_party_hp(hp_percentage);
+        }
+
         let mut builder = StreamBuilder::new();
         builder.add_short(player_id);
         builder.add_short(spell_id);
         builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(character.get_hp_percentage());
+        builder.add_char(hp_percentage);
 
         self.send_buf_near_player(
             player_id,
@@ -117,7 +128,7 @@ impl Map {
         builder.add_short(player_id);
         builder.add_short(spell_id);
         builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(character.get_hp_percentage());
+        builder.add_char(hp_percentage);
         builder.add_short(character.hp);
         builder.add_short(character.tp);
 
@@ -162,7 +173,17 @@ impl Map {
             None => return,
         };
 
+        let original_hp = target.hp;
         target.hp = cmp::min(target.hp + spell.hp_heal, target.max_hp);
+        let hp_percentage = target.get_hp_percentage();
+
+        if target.hp != original_hp {
+            target
+                .player
+                .as_ref()
+                .unwrap()
+                .update_party_hp(hp_percentage);
+        }
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,

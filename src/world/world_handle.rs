@@ -368,6 +368,13 @@ impl WorldHandle {
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
     }
+
+    pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: EOChar) {
+        let _ = self.tx.send(Command::UpdatePartyHP {
+            player_id,
+            hp_percentage,
+        });
+    }
 }
 
 async fn run_world(mut world: World) {

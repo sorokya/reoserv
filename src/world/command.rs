@@ -164,4 +164,8 @@ pub enum Command {
         respond_to: oneshot::Sender<()>,
     },
     Tick,
+    UpdatePartyHP {
+        player_id: EOShort,
+        hp_percentage: EOChar,
+    },
 }

@@ -273,6 +273,11 @@ impl World {
             Command::Tick => {
                 self.tick().await;
             }
+
+            Command::UpdatePartyHP {
+                player_id,
+                hp_percentage,
+            } => self.update_party_hp(player_id, hp_percentage),
         }
     }
 }

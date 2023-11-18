@@ -317,6 +317,11 @@ impl Player {
                     let _ = respond_to.send(Err(MissingSessionIdError));
                 }
             }
+            Command::UpdatePartyHP { hp_percentage } => {
+                if self.state == ClientState::Playing {
+                    self.world.update_party_hp(self.id, hp_percentage);
+                }
+            }
         }
 
         true

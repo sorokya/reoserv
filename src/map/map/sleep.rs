@@ -109,5 +109,7 @@ impl Map {
             sleep_map == self.id,
             None,
         );
+
+        character.player.as_ref().unwrap().update_party_hp(100);
     }
 }

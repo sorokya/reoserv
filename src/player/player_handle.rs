@@ -366,6 +366,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::TakeSessionId { respond_to: tx });
         rx.await.unwrap()
     }
+
+    pub fn update_party_hp(&self, hp_percentage: EOChar) {
+        let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
+    }
 }
 
 async fn run_player(mut player: Player, player_handle: PlayerHandle) {

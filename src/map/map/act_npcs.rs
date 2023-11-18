@@ -364,13 +364,23 @@ impl Map {
 
             character.hp -= damage as EOShort;
 
+            let hp_percentage = character.get_hp_percentage();
+
+            if damage > 0 {
+                character
+                    .player
+                    .as_ref()
+                    .unwrap()
+                    .update_party_hp(hp_percentage);
+            }
+
             let killed_state = if character.hp == 0 {
                 PlayerKilledState::Dead
             } else {
                 PlayerKilledState::Alive
             };
 
-            (killed_state, character.get_hp_percentage())
+            (killed_state, hp_percentage)
         };
 
         if let Some(npc) = self.npcs.get_mut(&index) {

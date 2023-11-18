@@ -6,7 +6,7 @@ use eo::{
 use super::Map;
 
 impl Map {
-    pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub async fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
         let player = match self.characters.get(&player_id) {
             Some(character) => character.player.as_ref().unwrap(),
             None => {
@@ -22,6 +22,12 @@ impl Map {
                 return;
             }
         };
+
+        let in_party = self
+            .world
+            .get_player_party(target_player_id)
+            .await
+            .is_some();
 
         let reply = paperdoll::Reply {
             info: PaperdollInfo {
@@ -48,7 +54,7 @@ impl Map {
                 gender: target.gender,
             },
             paperdoll: target.paperdoll.clone(),
-            paperdoll_icon: target.get_icon(),
+            paperdoll_icon: target.get_icon(in_party),
         };
 
         let mut builder = StreamBuilder::new();

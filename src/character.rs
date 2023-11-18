@@ -142,13 +142,29 @@ impl Character {
         }
     }
 
-    pub fn get_icon(&self) -> PaperdollIcon {
-        // TODO: group stuff
-
+    pub fn get_icon(&self, in_party: bool) -> PaperdollIcon {
         match self.admin_level {
-            AdminLevel::Player | AdminLevel::Spy | AdminLevel::LightGuide => PaperdollIcon::Player,
-            AdminLevel::Guardian | AdminLevel::GameMaster => PaperdollIcon::Gm,
-            AdminLevel::HighGameMaster => PaperdollIcon::Hgm,
+            AdminLevel::Player | AdminLevel::Spy | AdminLevel::LightGuide => {
+                if in_party {
+                    PaperdollIcon::Party
+                } else {
+                    PaperdollIcon::Player
+                }
+            }
+            AdminLevel::Guardian | AdminLevel::GameMaster => {
+                if in_party {
+                    PaperdollIcon::GmParty
+                } else {
+                    PaperdollIcon::Gm
+                }
+            }
+            AdminLevel::HighGameMaster => {
+                if in_party {
+                    PaperdollIcon::HgmParty
+                } else {
+                    PaperdollIcon::Hgm
+                }
+            }
         }
     }
 

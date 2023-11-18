@@ -397,7 +397,7 @@ impl Map {
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
-            } => self.request_paperdoll(player_id, target_player_id),
+            } => self.request_paperdoll(player_id, target_player_id).await,
 
             Command::RequestSleep {
                 player_id,

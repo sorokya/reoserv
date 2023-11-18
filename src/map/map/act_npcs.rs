@@ -82,7 +82,7 @@ impl Map {
         let new_coords = get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
         if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-            let mut npc = self.npcs.get_mut(&index).unwrap();
+            let npc = self.npcs.get_mut(&index).unwrap();
             npc.direction = direction;
             npc.coords = new_coords;
             npc.act_ticks = 0;
@@ -103,7 +103,7 @@ impl Map {
                 get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
             if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-                let mut npc = self.npcs.get_mut(&index).unwrap();
+                let npc = self.npcs.get_mut(&index).unwrap();
                 npc.direction = direction;
                 npc.coords = new_coords;
                 npc.act_ticks = 0;
@@ -120,7 +120,7 @@ impl Map {
                     get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
                 if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-                    let mut npc = self.npcs.get_mut(&index).unwrap();
+                    let npc = self.npcs.get_mut(&index).unwrap();
                     npc.direction = direction;
                     npc.coords = new_coords;
                     npc.act_ticks = 0;

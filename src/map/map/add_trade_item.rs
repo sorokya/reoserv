@@ -37,7 +37,7 @@ impl Map {
         }
 
         if offered {
-            let mut trade_item = character
+            let trade_item = character
                 .trade_items
                 .iter_mut()
                 .find(|i| i.id == item.id)

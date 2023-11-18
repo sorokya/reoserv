@@ -104,6 +104,7 @@ pub struct Limits {
     pub max_item: EOInt,
     pub max_trade: EOInt,
     pub max_chest: EOInt,
+    pub max_party_size: EOInt,
 }
 
 #[derive(Debug, Deserialize)]

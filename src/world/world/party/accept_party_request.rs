@@ -26,7 +26,7 @@ impl World {
                 }
 
                 if self.player_in_party(actual_player_id) {
-                    self.join_party(player_id, actual_player_id);
+                    self.join_party(player_id, actual_player_id).await;
                 } else {
                     self.create_party(actual_player_id, player_id).await;
                 }
@@ -37,7 +37,7 @@ impl World {
                 }
 
                 if self.player_in_party(player_id) {
-                    self.join_party(actual_player_id, player_id);
+                    self.join_party(actual_player_id, player_id).await;
                 } else {
                     self.create_party(player_id, actual_player_id).await;
                 }

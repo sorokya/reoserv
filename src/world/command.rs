@@ -10,7 +10,7 @@ use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
-use super::WorldHandle;
+use super::{Party, WorldHandle};
 
 #[derive(Debug)]
 pub enum Command {
@@ -110,6 +110,10 @@ pub enum Command {
         player: PlayerHandle,
         respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
+    GetPlayerParty {
+        player_id: EOShort,
+        respond_to: oneshot::Sender<Option<Party>>,
+    },
     PingPlayers,
     ReportPlayer {
         player_id: EOShort,
@@ -132,6 +136,13 @@ pub enum Command {
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<character::Player, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    RequestPartyList {
+        player_id: EOShort,
+    },
+    RemovePartyMember {
+        player_id: EOShort,
+        target_player_id: EOShort,
     },
     Save,
     SelectCharacter {

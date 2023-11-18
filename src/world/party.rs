@@ -1,6 +1,6 @@
 use eo::data::EOShort;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Party {
     pub members: Vec<EOShort>,
     pub leader: EOShort,

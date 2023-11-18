@@ -191,6 +191,9 @@ max_trade = 2000000000
 # Maximum amount of an item a chest will hold
 max_chest = 10000000
 
+# Maximum amount of players to one group
+max_party_size = 9
+
 [board]
 
 # Maximum number of posts a board will hold before deleting old posts

@@ -6,26 +6,23 @@ use eo::{
 use super::Map;
 
 impl Map {
-    pub fn face(&mut self, target_player_id: EOShort, direction: Direction) {
-        {
-            let mut target = self.characters.get_mut(&target_player_id).unwrap();
-            target.direction = direction;
+    pub fn face(&mut self, player_id: EOShort, direction: Direction) {
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
-            if target.hidden {
-                return;
-            }
+        character.direction = direction;
+
+        if character.hidden {
+            return;
         }
 
         let packet = face::Player {
-            player_id: target_player_id,
+            player_id,
             direction,
         };
 
-        self.send_packet_near_player(
-            target_player_id,
-            PacketAction::Player,
-            PacketFamily::Face,
-            packet,
-        );
+        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Face, packet);
     }
 }

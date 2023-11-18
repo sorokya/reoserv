@@ -11,7 +11,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
-use super::{world::World, Command};
+use super::{world::World, Command, Party};
 
 #[derive(Debug, Clone)]
 pub struct WorldHandle {
@@ -232,6 +232,15 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
+    pub async fn get_player_party(&self, player_id: EOShort) -> Option<Party> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPlayerParty {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::LoadMapFiles {
@@ -307,6 +316,17 @@ impl WorldHandle {
             respond_to: tx,
         });
         rx.await.unwrap()
+    }
+
+    pub fn request_party_list(&self, player_id: EOShort) {
+        let _ = self.tx.send(Command::RequestPartyList { player_id });
+    }
+
+    pub fn remove_party_member(&self, player_id: EOShort, target_player_id: EOShort) {
+        let _ = self.tx.send(Command::RemovePartyMember {
+            player_id,
+            target_player_id,
+        });
     }
 
     pub fn save(&self) {

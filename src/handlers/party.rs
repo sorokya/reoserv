@@ -31,11 +31,11 @@ pub fn accept(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
 
 pub fn remove(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let target_player_id = reader.get_short();
-    // world.remove_from_party(player_id, target_player_id);
+    world.remove_party_member(player_id, target_player_id);
 }
 
-pub fn take(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    // world.request_party_into(player_id);
+pub fn take(player_id: EOShort, world: WorldHandle) {
+    world.request_party_list(player_id);
 }
 
 pub async fn party(
@@ -64,7 +64,7 @@ pub async fn party(
         PacketAction::Request => request(reader, player_id, map),
         PacketAction::Accept => accept(reader, player_id, world),
         PacketAction::Remove => remove(reader, player_id, world),
-        PacketAction::Take => take(reader, player_id, world),
+        PacketAction::Take => take(player_id, world),
         _ => error!("Unhandled packet Party_{:?}", action),
     }
 }

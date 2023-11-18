@@ -1,11 +1,15 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{EOChar, EOInt, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
-use crate::{player::PartyRequest, utils::in_client_range};
+use crate::{player::PartyRequest, utils::in_client_range, SETTINGS};
 
 use super::Map;
+
+const IN_OTHER_PARTY: EOChar = 0;
+const IN_YOUR_PARTY: EOChar = 1;
+const PARTY_FULL: EOChar = 2;
 
 impl Map {
     pub async fn party_request(&self, target_player_id: EOShort, request: PartyRequest) {
@@ -27,6 +31,56 @@ impl Map {
 
         if !in_client_range(&character.coords, &target_character.coords) {
             return;
+        }
+
+        // Check if player already in a party
+        if let Some(party) = self.world.get_player_party(target_player_id).await {
+            let mut builder = StreamBuilder::new();
+
+            let reply = match request {
+                PartyRequest::Join(_) => {
+                    if party.members.contains(&player_id) {
+                        Some(IN_YOUR_PARTY)
+                    } else {
+                        None
+                    }
+                }
+                PartyRequest::Invite(_) => {
+                    if party.members.contains(&player_id) {
+                        Some(IN_YOUR_PARTY)
+                    } else {
+                        Some(IN_OTHER_PARTY)
+                    }
+                }
+                _ => None,
+            };
+
+            if let Some(reply) = reply {
+                builder.add_char(reply);
+                builder.add_string(&target_character.name);
+                character.player.as_ref().unwrap().send(
+                    PacketAction::Reply,
+                    PacketFamily::Party,
+                    builder.get(),
+                );
+
+                return;
+            }
+        }
+
+        // Check if party is full
+        if let Some(party) = self.world.get_player_party(player_id).await {
+            if party.members.len() as EOInt >= SETTINGS.limits.max_party_size {
+                let mut builder = StreamBuilder::new();
+                builder.add_char(PARTY_FULL);
+                character.player.as_ref().unwrap().send(
+                    PacketAction::Reply,
+                    PacketFamily::Party,
+                    builder.get(),
+                );
+
+                return;
+            }
         }
 
         let target = match target_character.player.as_ref() {

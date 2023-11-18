@@ -177,6 +177,13 @@ impl World {
                 let _ = respond_to.send(self.get_online_list().await);
             }
 
+            Command::GetPlayerParty {
+                player_id,
+                respond_to,
+            } => {
+                let _ = respond_to.send(self.get_player_party(player_id));
+            }
+
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.players.len());
             }
@@ -207,6 +214,11 @@ impl World {
                 }
             }
 
+            Command::RemovePartyMember {
+                player_id,
+                target_player_id,
+            } => self.remove_party_member(player_id, target_player_id),
+
             Command::ReportPlayer {
                 player_id,
                 reportee_name,
@@ -234,6 +246,8 @@ impl World {
                 self.request_character_deletion(player, character_id, respond_to)
                     .await
             }
+
+            Command::RequestPartyList { player_id } => self.refresh_party(player_id).await,
 
             Command::Save => self.save().await,
 

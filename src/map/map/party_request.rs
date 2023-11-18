@@ -69,7 +69,15 @@ impl Map {
         }
 
         // Check if party is full
-        if let Some(party) = self.world.get_player_party(player_id).await {
+        if let Some(party) = self
+            .world
+            .get_player_party(match request {
+                PartyRequest::Join(_) => target_player_id,
+                PartyRequest::Invite(_) => player_id,
+                _ => return,
+            })
+            .await
+        {
             if party.members.len() as EOInt >= SETTINGS.limits.max_party_size {
                 let mut builder = StreamBuilder::new();
                 builder.add_char(PARTY_FULL);

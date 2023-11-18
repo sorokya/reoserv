@@ -14,6 +14,11 @@ use super::WorldHandle;
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptPartyRequest {
+        player_id: EOShort,
+        target_player_id: EOShort,
+        request_type: EOChar,
+    },
     AddPlayer {
         respond_to: oneshot::Sender<()>,
         player_id: EOShort,
@@ -37,7 +42,6 @@ pub enum Command {
     },
     BroadcastPartyMessage {
         player_id: EOShort,
-        name: String,
         message: String,
     },
     CreateAccount {
@@ -52,19 +56,12 @@ pub enum Command {
         respond_to:
             oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
-    CreateParty {
-        leader: EOShort,
-        member: EOShort,
-    },
     DeleteCharacter {
         session_id: EOShort,
         character_id: EOInt,
         player: PlayerHandle,
         respond_to:
             oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    },
-    DisbandParty {
-        leader: EOShort,
     },
     DropPlayer {
         player_id: EOShort,
@@ -103,13 +100,6 @@ pub enum Command {
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
-    JoinParty {
-        player_id: EOShort,
-        party_member_id: EOShort,
-    },
-    LeaveParty {
-        player_id: EOShort,
-    },
     LoadMapFiles {
         world: WorldHandle,
         respond_to: oneshot::Sender<()>,
@@ -121,10 +111,6 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     PingPlayers,
-    PlayerInParty {
-        player_id: EOShort,
-        respond_to: oneshot::Sender<bool>,
-    },
     ReportPlayer {
         player_id: EOShort,
         reportee_name: String,

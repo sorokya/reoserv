@@ -75,6 +75,16 @@ async fn tell(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     world.send_private_message(player, tell.name, tell.message);
 }
 
+async fn open(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+    let message = reader.get_end_string();
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(_) => return,
+    };
+
+    world.broadcast_party_message(player_id, message);
+}
+
 pub async fn talk(
     action: PacketAction,
     reader: StreamReader,
@@ -87,6 +97,7 @@ pub async fn talk(
         PacketAction::Msg => msg(reader, player, world).await,
         PacketAction::Report => report(reader, player, world).await,
         PacketAction::Tell => tell(reader, player, world).await,
+        PacketAction::Open => open(reader, player, world).await,
         _ => error!("Unhandled packet Talk_{:?}", action),
     }
 }

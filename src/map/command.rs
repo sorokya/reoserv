@@ -14,11 +14,6 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Command {
-    AcceptPartyRequest {
-        player_id: EOShort,
-        target_player_id: EOShort,
-        request_type: EOChar,
-    },
     AcceptTrade {
         player_id: EOShort,
     },

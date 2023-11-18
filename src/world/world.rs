@@ -64,6 +64,14 @@ impl World {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptPartyRequest {
+                player_id,
+                target_player_id,
+                request_type,
+            } => {
+                self.accept_party_request(player_id, target_player_id, request_type)
+                    .await
+            }
             Command::AddPlayer {
                 respond_to,
                 player_id,
@@ -87,12 +95,8 @@ impl World {
                     .await
             }
 
-            Command::BroadcastPartyMessage {
-                player_id,
-                name,
-                message,
-            } => {
-                self.broadcast_party_message(player_id, name, message);
+            Command::BroadcastPartyMessage { player_id, message } => {
+                self.broadcast_party_message(player_id, message);
             }
 
             Command::_BroadcastServerMessage { message } => {
@@ -111,8 +115,6 @@ impl World {
                 respond_to,
             } => self.create_character(player, details, respond_to).await,
 
-            Command::CreateParty { leader, member } => self.create_party(leader, member).await,
-
             Command::DeleteCharacter {
                 session_id,
                 character_id,
@@ -122,8 +124,6 @@ impl World {
                 self.delete_character(player, session_id, character_id, respond_to)
                     .await
             }
-
-            Command::DisbandParty { leader } => self.disband_party(leader),
 
             Command::DropPlayer {
                 player_id,
@@ -181,13 +181,6 @@ impl World {
                 let _ = respond_to.send(self.players.len());
             }
 
-            Command::JoinParty {
-                player_id,
-                party_member_id,
-            } => self.join_party(player_id, party_member_id),
-
-            Command::LeaveParty { player_id } => self.leave_party(player_id),
-
             Command::LoadMapFiles { world, respond_to } => {
                 match load_maps(self.pool.to_owned(), world).await {
                     Ok(maps) => {
@@ -212,13 +205,6 @@ impl World {
                 for player in self.players.values() {
                     player.ping();
                 }
-            }
-
-            Command::PlayerInParty {
-                player_id,
-                respond_to,
-            } => {
-                let _ = respond_to.send(self.player_in_party(player_id));
             }
 
             Command::ReportPlayer {

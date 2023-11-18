@@ -42,19 +42,6 @@ impl MapHandle {
         Self { tx }
     }
 
-    pub fn accept_party_request(
-        &self,
-        player_id: EOShort,
-        target_player_id: EOShort,
-        request_type: EOChar,
-    ) {
-        let _ = self.tx.send(Command::AcceptPartyRequest {
-            player_id,
-            target_player_id,
-            request_type,
-        });
-    }
-
     pub fn accept_trade(&self, player_id: EOShort) {
         let _ = self.tx.send(Command::AcceptTrade { player_id });
     }

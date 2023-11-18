@@ -31,7 +31,6 @@ pub struct Map {
     has_timed_spikes: bool,
 }
 
-mod accept_party_request;
 mod accept_trade;
 mod accept_trade_request;
 mod act_npcs;
@@ -179,14 +178,6 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::AcceptPartyRequest {
-                player_id,
-                target_player_id,
-                request_type,
-            } => {
-                self.accept_party_request(player_id, target_player_id, request_type)
-                    .await
-            }
             Command::AcceptTrade { player_id } => self.accept_trade(player_id).await,
             Command::AcceptTradeRequest {
                 player_id,

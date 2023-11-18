@@ -18,6 +18,8 @@ impl Player {
                 });
         }
 
+        self.world.remove_party_member(self.id, self.id);
+
         let character_name = self
             .character
             .as_ref()

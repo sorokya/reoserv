@@ -71,6 +71,10 @@ impl Map {
                 self.file.height,
             );
 
+            if !self.is_tile_walkable(&next_coords) {
+                break;
+            }
+
             if !target_coords.contains(&next_coords) {
                 target_coords.push(next_coords);
             }
@@ -78,21 +82,23 @@ impl Map {
 
         target_coords.retain(|c| c != &attacker.coords);
 
-        if let Some((index, _)) = self
-            .npcs
-            .iter()
-            .find(|(_, npc)| npc.alive && target_coords.contains(&npc.coords))
-        {
-            return Some(AttackTarget::Npc(*index));
-        }
+        for coords in target_coords {
+            if let Some((index, _)) = self
+                .npcs
+                .iter()
+                .find(|(_, npc)| npc.alive && npc.coords == coords)
+            {
+                return Some(AttackTarget::Npc(*index));
+            }
 
-        if let Some((player_id, _)) = self
-            .characters
-            .iter()
-            .find(|(_, character)| !character.hidden && target_coords.contains(&character.coords))
-        {
-            return Some(AttackTarget::Player(*player_id));
-        };
+            if let Some((player_id, _)) = self
+                .characters
+                .iter()
+                .find(|(_, character)| !character.hidden && character.coords == coords)
+            {
+                return Some(AttackTarget::Player(*player_id));
+            };
+        }
 
         None
     }

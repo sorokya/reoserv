@@ -94,6 +94,17 @@ skill_points_per_level = 4
 # Recommended not to change
 tick_rate = 125
 
+[combat]
+
+# Range of weapons, default is 1 if not specified
+# arrows = false if the weapon does not require arrows
+weapon_ranges = [
+  { weapon = 297, range = 5, arrows = true },
+  { weapon = 316, range = 5, arrows = true },
+  { weapon = 457, range = 5, arrows = true },
+  { weapon = 365, range = 10, arrows = false },
+]
+
 [map]
 # How frequently earthquake events occur in ticks
 quake_rate = 25

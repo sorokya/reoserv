@@ -1,11 +1,11 @@
 use eo::{
     data::{EOChar, EOShort, EOThree},
-    protocol::{server::attack, Direction, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+    protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
+    pubs::{EifItemSubType, EnfNpcType},
 };
 use rand::Rng;
 
-use crate::{utils::get_next_coords, NPC_DB};
+use crate::{character::Character, utils::get_next_coords, ITEM_DB, NPC_DB, SETTINGS};
 
 use super::Map;
 
@@ -26,6 +26,10 @@ impl Map {
             Some(character) => character,
             None => return,
         };
+
+        if !can_attack(character) {
+            return;
+        }
 
         if !character.hidden {
             self.send_packet_near_player(
@@ -53,20 +57,31 @@ impl Map {
             None => return None,
         };
 
-        let target_coords = get_next_coords(
-            &attacker.coords,
-            direction,
-            self.file.width,
-            self.file.height,
-        );
-        if target_coords == attacker.coords {
-            return None;
+        let range = get_weapon_range(attacker);
+        let mut target_coords: Vec<Coords> = Vec::with_capacity(range as usize);
+        for _ in 0..range {
+            let next_coords = get_next_coords(
+                if target_coords.is_empty() {
+                    &attacker.coords
+                } else {
+                    target_coords.last().unwrap()
+                },
+                direction,
+                self.file.width,
+                self.file.height,
+            );
+
+            if !target_coords.contains(&next_coords) {
+                target_coords.push(next_coords);
+            }
         }
+
+        target_coords.retain(|c| c != &attacker.coords);
 
         if let Some((index, _)) = self
             .npcs
             .iter()
-            .find(|(_, npc)| npc.coords == target_coords && npc.alive)
+            .find(|(_, npc)| npc.alive && target_coords.contains(&npc.coords))
         {
             return Some(AttackTarget::Npc(*index));
         }
@@ -74,7 +89,7 @@ impl Map {
         if let Some((player_id, _)) = self
             .characters
             .iter()
-            .find(|(_, character)| character.coords == target_coords)
+            .find(|(_, character)| !character.hidden && target_coords.contains(&character.coords))
         {
             return Some(AttackTarget::Player(*player_id));
         };
@@ -133,4 +148,51 @@ impl Map {
     ) {
         error!("PVP is not implemented yet!");
     }
+}
+
+fn can_attack(character: &Character) -> bool {
+    let weapon = character.paperdoll.weapon;
+    let shield = character.paperdoll.shield;
+
+    if weapon == 0 {
+        return true;
+    }
+
+    if let Some(config) = SETTINGS
+        .combat
+        .weapon_ranges
+        .iter()
+        .find(|s| s.weapon == weapon)
+    {
+        if !config.arrows {
+            return true;
+        }
+
+        let shield_data = match ITEM_DB.items.get(shield as usize - 1) {
+            Some(data) => data,
+            None => return false,
+        };
+
+        return shield_data.subtype == EifItemSubType::Arrows;
+    }
+
+    true
+}
+
+fn get_weapon_range(character: &Character) -> EOChar {
+    let weapon = character.paperdoll.weapon;
+    if weapon == 0 {
+        return 1;
+    }
+
+    if let Some(config) = SETTINGS
+        .combat
+        .weapon_ranges
+        .iter()
+        .find(|s| s.weapon == weapon)
+    {
+        return config.range;
+    }
+
+    1
 }

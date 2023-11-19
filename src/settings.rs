@@ -108,6 +108,18 @@ pub struct Limits {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Combat {
+    pub weapon_ranges: Vec<WeaponRange>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WeaponRange {
+    pub weapon: EOShort,
+    pub range: EOChar,
+    pub arrows: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Board {
     pub max_posts: EOInt,
     pub max_user_posts: EOInt,
@@ -161,6 +173,7 @@ pub struct Settings {
     pub board: Board,
     pub chest: Chest,
     pub map: Map,
+    pub combat: Combat,
 }
 
 impl Settings {

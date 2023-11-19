@@ -59,7 +59,7 @@ pub async fn ping_sln() {
             };
 
             match code {
-                3 | 4 | 5 => warn!("SLN Error: {}", line),
+                3..=5 => warn!("SLN Error: {}", line),
                 _ => continue,
             }
         }

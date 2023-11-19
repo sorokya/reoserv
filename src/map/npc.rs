@@ -92,7 +92,7 @@ impl Npc {
             0
         } else {
             match eval_float_with_context(&FORMULAS.damage, &context) {
-                Ok(amount) => cmp::min(amount.floor() as EOInt, self.hp as EOInt),
+                Ok(amount) => amount.floor() as EOInt,
                 Err(e) => {
                     error!("Failed to calculate damage: {}", e);
                     0
@@ -100,7 +100,7 @@ impl Npc {
             }
         };
 
-        self.hp -= damage as EOThree;
+        self.hp -= cmp::min(damage, self.hp) as EOThree;
         if self.hp > 0 {
             match self.opponents.iter().position(|o| o.player_id == player_id) {
                 Some(index) => {

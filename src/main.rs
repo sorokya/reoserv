@@ -333,7 +333,7 @@ fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
 fn load_exp_table() -> [EOInt; 254] {
     let mut exp_table = [0; 254];
 
-    for (i, exp) in exp_table.iter_mut().skip(0).enumerate() {
+    for (i, exp) in exp_table.iter_mut().enumerate() {
         *exp = ((i as f64).powf(3.0) * 133.1).round() as EOInt;
     }
 

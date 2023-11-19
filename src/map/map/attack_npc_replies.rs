@@ -95,23 +95,27 @@ impl Map {
                 .filter(|id| self.characters.contains_key(id))
                 .collect();
 
-            let context = match context_map! {
-                "members" => members_on_map.len() as f64,
-                "exp" => npc_data.experience as f64,
-            } {
-                Ok(context) => context,
-                Err(e) => {
-                    error!("Failed to generate formula context: {}", e);
-                    return;
-                }
-            };
+            let experience = if members_on_map.len() > 1 {
+                let context = match context_map! {
+                    "members" => members_on_map.len() as f64,
+                    "exp" => npc_data.experience as f64,
+                } {
+                    Ok(context) => context,
+                    Err(e) => {
+                        error!("Failed to generate formula context: {}", e);
+                        return;
+                    }
+                };
 
-            let experience = match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
-                Ok(experience) => experience as EOInt,
-                Err(e) => {
-                    error!("Failed to calculate party experience share: {}", e);
-                    1
+                match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
+                    Ok(experience) => experience as EOInt,
+                    Err(e) => {
+                        error!("Failed to calculate party experience share: {}", e);
+                        1
+                    }
                 }
+            } else {
+                npc_data.experience
             };
 
             for member_id in members_on_map {

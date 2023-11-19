@@ -2,9 +2,10 @@ use eo::{
     data::{EOChar, EOInt, EOShort, StreamBuilder},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
 };
+use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{map::Item, DROP_DB, NPC_DB};
+use crate::{map::Item, DROP_DB, FORMULAS, NPC_DB};
 
 use super::Map;
 
@@ -67,7 +68,7 @@ impl Map {
         );
     }
 
-    pub fn attack_npc_killed_reply(
+    pub async fn attack_npc_killed_reply(
         &mut self,
         killer_player_id: EOShort,
         npc_index: EOChar,
@@ -85,8 +86,44 @@ impl Map {
             None => return,
         };
 
-        // TODO: Party experience
-        let (leveled_up, experience) = self.give_experience(killer_player_id, npc_data.experience);
+        let mut exp_gains: Vec<(EOShort, bool, EOInt, EOInt)> = Vec::new();
+
+        if let Some(party) = self.world.get_player_party(killer_player_id).await {
+            let members_on_map: Vec<&EOShort> = party
+                .members
+                .iter()
+                .filter(|id| self.characters.contains_key(id))
+                .collect();
+
+            let context = match context_map! {
+                "members" => members_on_map.len() as f64,
+                "exp" => npc_data.experience as f64,
+            } {
+                Ok(context) => context,
+                Err(e) => {
+                    error!("Failed to generate formula context: {}", e);
+                    return;
+                }
+            };
+
+            let experience = match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
+                Ok(experience) => experience as EOInt,
+                Err(e) => {
+                    error!("Failed to calculate party experience share: {}", e);
+                    1
+                }
+            };
+
+            for member_id in members_on_map {
+                let (leveled_up, total_experience, experience_gained) =
+                    self.give_experience(*member_id, experience);
+                exp_gains.push((*member_id, leveled_up, total_experience, experience_gained));
+            }
+        } else {
+            let (leveled_up, experience, experience_gained) =
+                self.give_experience(killer_player_id, npc_data.experience);
+            exp_gains.push((killer_player_id, leveled_up, experience, experience_gained));
+        }
 
         let drop = get_drop(killer_player_id, npc_id, &npc_coords);
 
@@ -125,30 +162,38 @@ impl Map {
                 builder.add_short(tp);
             }
 
-            if player_id == &killer_player_id {
-                builder.add_int(experience);
+            let leveled_up = if let Some((_, leveled_up, total_experience, _)) =
+                exp_gains.iter().find(|(id, _, _, _)| id == player_id)
+            {
+                if exp_gains.len() == 1 {
+                    builder.add_int(*total_experience);
 
-                if leveled_up {
-                    let character = match self.characters.get(&killer_player_id) {
-                        Some(character) => character,
-                        None => return,
-                    };
+                    if *leveled_up {
+                        let character = match self.characters.get(&killer_player_id) {
+                            Some(character) => character,
+                            None => return,
+                        };
 
-                    builder.add_char(character.level);
-                    builder.add_short(character.stat_points);
-                    builder.add_short(character.skill_points);
-                    builder.add_short(character.max_hp);
-                    builder.add_short(character.max_tp);
-                    builder.add_short(character.max_sp);
+                        builder.add_char(character.level);
+                        builder.add_short(character.stat_points);
+                        builder.add_short(character.skill_points);
+                        builder.add_short(character.max_hp);
+                        builder.add_short(character.max_tp);
+                        builder.add_short(character.max_sp);
+                    }
                 }
-            }
+
+                *leveled_up
+            } else {
+                false
+            };
 
             let family = match spell_id {
                 Some(_) => PacketFamily::Cast,
                 _ => PacketFamily::Npc,
             };
 
-            let action = match player_id == &killer_player_id && leveled_up {
+            let action = match exp_gains.len() == 1 && leveled_up {
                 true => PacketAction::Accept,
                 _ => PacketAction::Spec,
             };
@@ -158,6 +203,59 @@ impl Map {
                 .as_ref()
                 .unwrap()
                 .send(action, family, builder.get());
+        }
+
+        if exp_gains.len() > 1 {
+            self.attack_npc_killed_party_reply(&exp_gains);
+        }
+    }
+
+    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(EOShort, bool, EOInt, EOInt)>) {
+        for (player_id, leveled_up, _, experience) in exp_gains {
+            let character = match self.characters.get(player_id) {
+                Some(character) => character,
+                None => continue,
+            };
+
+            if *leveled_up {
+                let mut builder = StreamBuilder::new();
+                builder.add_short(character.stat_points);
+                builder.add_short(character.skill_points);
+                builder.add_short(character.max_hp);
+                builder.add_short(character.max_tp);
+                builder.add_short(character.max_sp);
+
+                character.player.as_ref().unwrap().send(
+                    PacketAction::TargetGroup,
+                    PacketFamily::Recover,
+                    builder.get(),
+                );
+
+                let mut builder = StreamBuilder::new();
+                builder.add_int(character.experience);
+                builder.add_short(character.karma);
+                builder.add_char(1);
+                builder.add_short(character.stat_points);
+                builder.add_short(character.skill_points);
+
+                character.player.as_ref().unwrap().send(
+                    PacketAction::Reply,
+                    PacketFamily::Recover,
+                    builder.get(),
+                );
+            }
+
+            let mut builder = StreamBuilder::new();
+            builder.add_short(*player_id);
+            builder.add_int(*experience);
+            builder.add_char(if *leveled_up { 1 } else { 0 });
+
+            self.send_buf_near(
+                &character.coords,
+                PacketAction::TargetGroup,
+                PacketFamily::Party,
+                builder.get(),
+            );
         }
     }
 }

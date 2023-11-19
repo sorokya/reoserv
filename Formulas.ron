@@ -13,6 +13,7 @@
     max_weight: "70.0 + str",
     hit_rate: "if(target_sitting, 1.0, min(0.8, max(0.5, if(accuracy + target_evade == 0.0, 0.5, accuracy / (target_evade * 2.0)))))",
     damage: "if(critical, 1.5, 1.0) * max(1, if(damage >= target_armor * 2.0, damage, damage * math::pow((damage / (target_armor * 2.0), 2.0))))",
+    party_exp_share: "if(members > 2, floor(exp * (100 / members * 0.01 + 1) / members), floor(exp / 2))",
     classes: [
         // Melee
         (

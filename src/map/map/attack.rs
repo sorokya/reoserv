@@ -16,7 +16,7 @@ enum AttackTarget {
 
 impl Map {
     // TODO: enforce timestamp
-    pub fn attack(&mut self, player_id: EOShort, direction: Direction, _timestamp: EOThree) {
+    pub async fn attack(&mut self, player_id: EOShort, direction: Direction, _timestamp: EOThree) {
         let reply = attack::Player {
             player_id,
             direction,
@@ -37,7 +37,9 @@ impl Map {
         }
 
         match self.get_attack_target(player_id, direction) {
-            Some(AttackTarget::Npc(npc_index)) => self.attack_npc(player_id, npc_index, direction),
+            Some(AttackTarget::Npc(npc_index)) => {
+                self.attack_npc(player_id, npc_index, direction).await
+            }
             Some(AttackTarget::Player(target_player_id)) => {
                 self.attack_player(player_id, target_player_id, direction)
             }
@@ -80,7 +82,7 @@ impl Map {
         None
     }
 
-    fn attack_npc(&mut self, player_id: EOShort, npc_index: EOChar, direction: Direction) {
+    async fn attack_npc(&mut self, player_id: EOShort, npc_index: EOChar, direction: Direction) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -103,9 +105,10 @@ impl Map {
             return;
         }
 
-        let mut rng = rand::thread_rng();
-
-        let amount = rng.gen_range(attacker.min_damage..=attacker.max_damage);
+        let amount = {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(attacker.min_damage..=attacker.max_damage)
+        };
 
         let attacker_facing_npc =
             ((npc.direction.to_char() as i32) - (attacker.direction.to_char() as i32)).abs() != 2;
@@ -117,7 +120,8 @@ impl Map {
         if npc.alive {
             self.attack_npc_reply(player_id, npc_index, direction, damage_dealt, None);
         } else {
-            self.attack_npc_killed_reply(player_id, npc_index, direction, damage_dealt, None);
+            self.attack_npc_killed_reply(player_id, npc_index, direction, damage_dealt, None)
+                .await;
         }
     }
 

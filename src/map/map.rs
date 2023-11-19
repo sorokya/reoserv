@@ -192,7 +192,7 @@ impl Map {
                 target_player_id,
                 direction,
                 timestamp,
-            } => self.attack(target_player_id, direction, timestamp),
+            } => self.attack(target_player_id, direction, timestamp).await,
 
             Command::BuyItem {
                 player_id,
@@ -205,7 +205,7 @@ impl Map {
                 partner_player_id,
             } => self.cancel_trade(player_id, partner_player_id),
 
-            Command::CastSpell { player_id, target } => self.cast_spell(player_id, target),
+            Command::CastSpell { player_id, target } => self.cast_spell(player_id, target).await,
 
             Command::CraftItem {
                 player_id,

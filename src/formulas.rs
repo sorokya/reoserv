@@ -16,6 +16,7 @@ pub struct Formulas {
     pub max_weight: String,
     pub hit_rate: String,
     pub damage: String,
+    pub party_exp_share: String,
     pub classes: Vec<ClassFormulas>,
 }
 

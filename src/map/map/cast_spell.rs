@@ -15,7 +15,7 @@ use crate::{
 use super::Map;
 
 impl Map {
-    pub fn cast_spell(&mut self, player_id: EOShort, target: SpellTarget) {
+    pub async fn cast_spell(&mut self, player_id: EOShort, target: SpellTarget) {
         let spell_id = match self.get_player_spell_id(player_id) {
             Some(spell_id) => spell_id,
             None => return,
@@ -28,7 +28,10 @@ impl Map {
 
         match spell_data.r#type {
             EsfSpellType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target),
-            EsfSpellType::Damage => self.cast_damage_spell(player_id, spell_id, spell_data, target),
+            EsfSpellType::Damage => {
+                self.cast_damage_spell(player_id, spell_id, spell_data, target)
+                    .await
+            }
             EsfSpellType::Bard => {}
         }
     }
@@ -236,7 +239,7 @@ impl Map {
         );
     }
 
-    fn cast_damage_spell(
+    async fn cast_damage_spell(
         &mut self,
         player_id: EOShort,
         spell_id: EOShort,
@@ -252,13 +255,14 @@ impl Map {
         match target {
             SpellTarget::Npc(npc_index) => {
                 self.cast_damage_npc(player_id, npc_index, spell_id, spell_data)
+                    .await
             }
             SpellTarget::OtherPlayer(_) => warn!("Spell PVP not implemented yet"),
             _ => {}
         }
     }
 
-    fn cast_damage_npc(
+    async fn cast_damage_npc(
         &mut self,
         player_id: EOShort,
         npc_index: EOChar,
@@ -293,12 +297,13 @@ impl Map {
             return;
         }
 
-        let mut rng = rand::thread_rng();
-
-        let amount = rng.gen_range(
-            character.min_damage + spell_data.min_damage
-                ..=character.max_damage + spell_data.max_damage,
-        );
+        let amount = {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(
+                character.min_damage + spell_data.min_damage
+                    ..=character.max_damage + spell_data.max_damage,
+            )
+        };
 
         let critical = npc.hp == npc.max_hp;
 
@@ -319,7 +324,8 @@ impl Map {
                 direction,
                 damage_dealt,
                 Some(spell_id),
-            );
+            )
+            .await;
         }
     }
 }

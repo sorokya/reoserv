@@ -10,7 +10,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, world::WorldHandle};
 
-use super::{create_chests, Chest, Command, Door, Item, Npc};
+use super::{Chest, Command, Door, Item, Npc};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -32,98 +32,17 @@ pub struct Map {
     has_timed_spikes: bool,
 }
 
-mod accept_trade;
-mod accept_trade_request;
-mod act_npcs;
-mod add_chest_item;
-mod add_locker_item;
-mod add_trade_item;
-mod attack;
-mod attack_npc_replies;
-mod buy_item;
-mod cancel_trade;
-mod cast_spell;
-mod complete_trade;
-mod craft_item;
-mod create_board_post;
-mod deposit_gold;
-mod drop_item;
-mod emote;
-mod enter;
-mod equip;
-mod face;
-mod forget_skill;
-mod get_adjacent_tiles;
-mod get_character;
-mod get_dimensions;
-mod get_item;
-mod get_map_info;
-mod get_nearby_info;
-mod get_next_item_index;
-mod get_rid_and_size;
-mod get_tile;
-mod get_warp;
-mod give_experience;
-mod give_item;
-mod is_tile_occupied;
-mod is_tile_walkable;
-mod is_tile_walkable_npc;
-mod junk_item;
-mod learn_skill;
-mod leave;
-mod level_stat;
-mod open_bank;
-mod open_board;
-mod open_chest;
-mod open_door;
-mod open_inn;
-mod open_locker;
-mod open_shop;
-mod open_skill_master;
-mod party_request;
-mod play_effect;
-mod player_in_range_of_tile;
-mod recover_npcs;
-mod recover_players;
-mod remove_board_post;
-mod remove_citizenship;
-mod remove_trade_item;
-mod request_citizenship;
-mod request_paperdoll;
-mod request_sleep;
-mod request_trade;
-mod reset_character;
-mod save;
-mod sell_item;
-mod send_chat_message;
-mod send_packet_near;
-mod send_packet_near_exclude_player;
-mod send_packet_near_player;
-mod send_trade_update;
-mod serialize;
-mod sit;
-mod sit_chair;
-mod sleep;
-mod spawn_items;
-mod spawn_npcs;
-mod spike_damage;
-mod stand;
-mod start_spell_chant;
-mod take_chest_item;
-mod take_locker_item;
-mod timed_door_close;
-mod timed_drain;
-mod timed_quake;
-mod timed_spikes;
-mod timed_warp_suck;
-mod toggle_hidden;
-mod unaccept_trade;
-mod unequip;
-mod upgrade_locker;
-mod use_item;
-mod view_board_post;
-mod walk;
-mod withdraw_gold;
+mod bank;
+mod board;
+mod character;
+mod chest;
+mod events;
+mod inn;
+mod locker;
+mod shop;
+mod skill_master;
+mod trade;
+mod utils;
 
 impl Map {
     pub fn new(
@@ -155,7 +74,7 @@ impl Map {
             }
         }
 
-        let chests = create_chests(id, &file);
+        let chests = utils::create_chests(id, &file);
 
         Self {
             id,

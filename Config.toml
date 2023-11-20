@@ -94,6 +94,71 @@ skill_points_per_level = 4
 # Recommended not to change
 tick_rate = 125
 
+# Arena settings
+# map: Map ID to use for the arena
+# rate: Time in ticks for the arena to trigger
+# block: Max amount of players left in area before new event can trigger
+# spawns: List of spawn points and destinations for the arena
+arena = [
+  {
+    map: 46,
+    rate: 720,
+    block: 4,
+    spawns: [
+      { from: { x: 11, y: 44 }, to: { x: 12, y: 24 } }, 
+      { from: { x: 13, y: 44 }, to: { x: 12, y: 17 } }, 
+      { from: { x: 15, y: 44 }, to: { x: 12, y: 10 } }, 
+      { from: { x: 17, y: 44 }, to: { x: 18, y: 24 } }, 
+      { from: { x: 19, y: 44 }, to: { x: 18, y: 10 } }, 
+      { from: { x: 21, y: 44 }, to: { x: 24, y: 24 } }, 
+      { from: { x: 23, y: 44 }, to: { x: 24, y: 17 } }, 
+      { from: { x: 25, y: 44 }, to: { x: 24, y: 10 } }, 
+    ]
+  },
+  {
+    map: 137,
+    rate: 720,
+    block: 2,
+    spawns: [
+      { from: { x: 17, y: 9 }, to: { x: 14, y: 10 } }, 
+      { from: { x: 17, y: 11 }, to: { x: 6, y: 10 } }, 
+    ]
+  },
+  {
+    map: 138,
+    rate: 720,
+    block: 2,
+    spawns: [
+      { from: { x: 17, y: 9 }, to: { x: 14, y: 10 } }, 
+      { from: { x: 17, y: 11 }, to: { x: 6, y: 10 } }, 
+    ]
+  },
+  {
+    map: 183,
+    rate: 720,
+    block: 4,
+    spawns: [
+      { from: { x: 18, y: 39 }, to: { x: 16, y: 12 } }, 
+      { from: { x: 20, y: 39 }, to: { x: 16, y: 28 } }, 
+      { from: { x: 22, y: 39 }, to: { x: 22, y: 20 } }, 
+      { from: { x: 24, y: 39 }, to: { x: 28, y: 28 } }, 
+      { from: { x: 26, y: 39 }, to: { x: 28, y: 12 } }, 
+    ]
+  },
+  {
+    map: 184,
+    rate: 720,
+    block: 4,
+    spawns: [
+      { from: { x: 18, y: 39 }, to: { x: 16, y: 12 } }, 
+      { from: { x: 20, y: 39 }, to: { x: 16, y: 28 } }, 
+      { from: { x: 22, y: 39 }, to: { x: 22, y: 20 } }, 
+      { from: { x: 24, y: 39 }, to: { x: 28, y: 28 } }, 
+      { from: { x: 26, y: 39 }, to: { x: 28, y: 12 } }, 
+    ]
+  }
+]
+
 [combat]
 
 # Range of weapons, default is 1 if not specified
@@ -242,5 +307,3 @@ admin_max_posts = 100
 
 # Numbers of slots in a chest
 slots = 5
-
-

@@ -58,6 +58,27 @@ pub struct World {
     pub stat_points_per_level: EOInt,
     pub skill_points_per_level: EOInt,
     pub tick_rate: EOInt,
+    pub arena: Vec<Arena>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Arena {
+    pub map: EOShort,
+    pub rate: EOInt,
+    pub block: EOChar,
+    pub spawns: Vec<ArenaSpawn>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ArenaSpawn {
+    pub from: ArenaCoords,
+    pub to: ArenaCoords,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ArenaCoords {
+    pub x: EOChar,
+    pub y: EOChar,
 }
 
 #[derive(Debug, Deserialize)]

@@ -15,7 +15,7 @@ use rand::{seq::SliceRandom, Rng};
 use crate::{
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords, in_range},
+    utils::{get_distance, get_next_coords, in_client_range, in_range},
     FORMULAS, NPC_DB, SETTINGS, TALK_DB,
 };
 
@@ -413,7 +413,16 @@ impl Map {
     ) {
         let (npc_id, spawn_index, act_ticks) = match self.npcs.get_mut(&index) {
             Some(npc) => {
-                if !npc.alive {
+                let out_of_range = if SETTINGS.npcs.freeze_out_of_range {
+                    !self
+                        .characters
+                        .values()
+                        .any(|c| !c.hidden && in_client_range(&c.coords, &npc.coords))
+                } else {
+                    false
+                };
+
+                if !npc.alive || out_of_range {
                     return (None, None, None);
                 } else {
                     npc.act_ticks += SETTINGS.npcs.act_rate;

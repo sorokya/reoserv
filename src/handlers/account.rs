@@ -1,43 +1,31 @@
 use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
+    data::{EOShort, Serializeable, StreamReader},
     protocol::{
         client::account::{Create, Request},
-        PacketAction, PacketFamily,
+        PacketAction,
     },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-async fn create(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn create(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut create = Create::default();
     create.deserialize(&reader);
-
-    match world.create_account(player.clone(), create.clone()).await {
-        Ok(reply) => {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-
-            player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
-        }
-        Err(e) => {
-            player.close(format!("Create account failed: {}", e));
-        }
-    };
+    world.create_account(player_id, create.clone());
 }
 
-async fn request(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut request = Request::default();
     request.deserialize(&reader);
+    world.request_account_creation(player_id, request.username);
+}
 
-    if let Ok(reply) = world
-        .request_account_creation(request.username, player.clone())
-        .await
-    {
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+fn agree(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+    let username = reader.get_break_string();
+    let current_password = reader.get_break_string();
+    let new_password = reader.get_break_string();
 
-        player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
-    }
+    world.change_password(player_id, username, current_password, new_password);
 }
 
 pub async fn account(
@@ -46,9 +34,18 @@ pub async fn account(
     player: PlayerHandle,
     world: WorldHandle,
 ) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Create => create(reader, player, world).await,
-        PacketAction::Request => request(reader, player, world).await,
+        PacketAction::Create => create(reader, player_id, world),
+        PacketAction::Request => request(reader, player_id, world),
+        PacketAction::Agree => agree(reader, player_id, world),
         _ => error!("Unhandled packet Account_{:?}", action),
     }
 }

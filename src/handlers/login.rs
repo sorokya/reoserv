@@ -1,33 +1,23 @@
 use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
-    protocol::{client::login::Request, PacketAction, PacketFamily},
+    data::{Serializeable, StreamReader},
+    protocol::{client::login::Request, PacketAction},
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
 async fn request(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
-
-    let reply = match world
-        .login(
-            player.clone(),
-            request.username.clone(),
-            request.password.clone(),
-        )
-        .await
-    {
-        Ok(reply) => reply,
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
         Err(e) => {
-            player.close(format!("Login failed: {}", e));
+            error!("Error getting player id {}", e);
             return;
         }
     };
 
-    let mut builder = StreamBuilder::new();
-    reply.serialize(&mut builder);
+    let mut request = Request::default();
+    request.deserialize(&reader);
 
-    player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+    world.login(player_id, request.username, request.password);
 }
 
 pub async fn login(

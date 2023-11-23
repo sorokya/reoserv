@@ -1,80 +1,79 @@
 use eo::{
-    data::EOChar,
+    data::{EOChar, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::account::{self, Reply},
-        AccountReply,
+        AccountReply, PacketAction, PacketFamily,
     },
 };
-use tokio::sync::oneshot;
-
-use crate::player::PlayerHandle;
 
 use super::account_exists::account_exists;
 
 use super::super::World;
 
 impl World {
-    pub async fn request_account_creation(
-        &self,
-        player: PlayerHandle,
-        username: String,
-        respond_to: oneshot::Sender<Result<Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    ) {
+    pub async fn request_account_creation(&self, player_id: EOShort, username: String) {
+        let player = match self.players.get(&player_id) {
+            Some(player) => player,
+            None => return,
+        };
+
         // TODO: validate name
 
-        let conn = self.pool.get_conn().await;
-
-        if let Err(e) = conn {
-            error!("Error getting connection from pool: {}", e);
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
-        }
-
-        let mut conn = conn.unwrap();
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                player.close(format!("Error getting connection from pool: {}", e));
+                return;
+            }
+        };
 
         let exists = match account_exists(&mut conn, &username).await {
             Ok(exists) => exists,
             Err(e) => {
-                error!("Error checking if account exists: {}", e);
-                // Assume it exists if the check fails
-                true
+                player.close(format!("Error checking if account exists: {}", e));
+                return;
             }
         };
 
         if exists {
-            let _ = respond_to.send(Ok(Reply {
+            let reply = Reply {
                 reply_code: AccountReply::Exists,
                 data: account::ReplyData::Exists(account::ReplyExists {
                     no: "NO".to_string(),
                 }),
-            }));
+            };
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
+            player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
             return;
         }
 
-        let session_id = player.generate_session_id().await;
+        let session_id = match player.generate_session_id().await {
+            Ok(session_id) => session_id,
+            Err(e) => {
+                player.close(format!("Error generating session id: {}", e));
+                return;
+            }
+        };
 
-        if let Err(e) = session_id {
-            let _ = respond_to.send(Err(e));
-            return;
-        }
+        let sequence_start = match player.get_sequence_start().await {
+            Ok(sequence_start) => sequence_start,
+            Err(e) => {
+                player.close(format!("Error getting sequence start: {}", e));
+                return;
+            }
+        };
 
-        let session_id = session_id.unwrap();
-
-        let sequence_start = player.get_sequence_start().await;
-
-        if let Err(e) = sequence_start {
-            let _ = respond_to.send(Err(e));
-            return;
-        }
-
-        let sequence_start = sequence_start.unwrap();
-
-        let _ = respond_to.send(Ok(Reply {
+        let reply = Reply {
             reply_code: AccountReply::SessionId(session_id),
             data: account::ReplyData::SessionId(account::ReplySessionId {
                 ok: "OK".to_string(),
                 sequence_start: sequence_start as EOChar,
             }),
-        }));
+        };
+
+        let mut builder = StreamBuilder::new();
+        reply.serialize(&mut builder);
+        player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
     }
 }

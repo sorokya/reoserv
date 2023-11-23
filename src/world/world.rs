@@ -1,6 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
-use super::{load_maps::load_maps, Command, Party};
+use super::{load_maps::load_maps, Command, Party, WorldHandle};
 use eo::data::{EOInt, EOShort};
 use mysql_async::Pool;
 use std::collections::HashMap;
@@ -68,7 +68,7 @@ impl World {
         }
     }
 
-    pub async fn handle_command(&mut self, command: Command) {
+    pub async fn handle_command(&mut self, command: Command, world_handle: WorldHandle) {
         match command {
             Command::AcceptPartyRequest {
                 player_id,
@@ -78,6 +78,11 @@ impl World {
                 self.accept_party_request(player_id, target_player_id, request_type)
                     .await
             }
+
+            Command::AddLoggedInAccount { account_id } => {
+                self.accounts.push(account_id);
+            }
+
             Command::AddPlayer {
                 respond_to,
                 player_id,
@@ -109,27 +114,26 @@ impl World {
                 self.broadcast_server_message(&message).await
             }
 
-            Command::CreateAccount {
-                player,
-                details,
-                respond_to,
-            } => self.create_account(player, details, respond_to).await,
+            Command::ChangePassword {
+                player_id,
+                username,
+                current_password,
+                new_password,
+            } => self.change_password(player_id, username, current_password, new_password),
 
-            Command::CreateCharacter {
-                details,
-                player,
-                respond_to,
-            } => self.create_character(player, details, respond_to).await,
+            Command::CreateAccount { player_id, details } => {
+                self.create_account(player_id, details).await
+            }
+
+            Command::CreateCharacter { player_id, details } => {
+                self.create_character(player_id, details).await
+            }
 
             Command::DeleteCharacter {
+                player_id,
                 session_id,
                 character_id,
-                player,
-                respond_to,
-            } => {
-                self.delete_character(player, session_id, character_id, respond_to)
-                    .await
-            }
+            } => self.delete_character(player_id, session_id, character_id),
 
             Command::DropPlayer {
                 player_id,
@@ -139,24 +143,23 @@ impl World {
             } => self.drop_player(player_id, account_id, &character_name, respond_to),
 
             Command::EnterGame {
+                player_id,
                 session_id,
-                player,
-                respond_to,
-            } => self.enter_game(player, session_id, respond_to).await,
+            } => self.enter_game(player_id, session_id).await,
 
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
             }
 
             Command::GetFile {
+                player_id,
                 file_type,
                 session_id,
                 file_id,
-                player,
-                respond_to,
+                warp,
             } => {
-                let result = self.get_file(file_type, session_id, file_id, player).await;
-                let _ = respond_to.send(result);
+                self.get_file(player_id, file_type, session_id, file_id, warp)
+                    .await;
             }
 
             Command::GetMap { map_id, respond_to } => {
@@ -194,6 +197,13 @@ impl World {
                 let _ = respond_to.send(self.players.len());
             }
 
+            Command::IsLoggedIn {
+                account_id,
+                respond_to,
+            } => {
+                let _ = respond_to.send(self.accounts.contains(&account_id));
+            }
+
             Command::LoadMapFiles { world, respond_to } => {
                 match load_maps(self.pool.to_owned(), world).await {
                     Ok(maps) => {
@@ -208,11 +218,10 @@ impl World {
             }
 
             Command::Login {
+                player_id,
                 name,
                 password,
-                player,
-                respond_to,
-            } => self.login(player, &name, &password, respond_to).await,
+            } => self.login(player_id, name, password, world_handle),
 
             Command::PingPlayers => {
                 for player in self.players.values() {
@@ -231,25 +240,19 @@ impl World {
                 message,
             } => self.report_player(player_id, reportee_name, message).await,
 
-            Command::RequestAccountCreation {
-                name,
-                player,
-                respond_to,
-            } => {
-                self.request_account_creation(player, name, respond_to)
-                    .await
+            Command::RequestAccountCreation { player_id, name } => {
+                self.request_account_creation(player_id, name).await;
             }
 
-            Command::RequestCharacterCreation { player, respond_to } => {
-                self.request_character_creation(player, respond_to).await
+            Command::RequestCharacterCreation { player_id } => {
+                self.request_character_creation(player_id).await;
             }
 
             Command::RequestCharacterDeletion {
+                player_id,
                 character_id,
-                player,
-                respond_to,
             } => {
-                self.request_character_deletion(player, character_id, respond_to)
+                self.request_character_deletion(player_id, character_id)
                     .await
             }
 
@@ -258,13 +261,9 @@ impl World {
             Command::Save => self.save().await,
 
             Command::SelectCharacter {
+                player_id,
                 character_id,
-                player,
-                respond_to,
-            } => {
-                self.select_character(player, character_id, respond_to)
-                    .await
-            }
+            } => self.select_character(player_id, character_id).await,
 
             Command::SendAdminMessage { player_id, message } => {
                 self.send_admin_message(player_id, message).await

@@ -27,7 +27,6 @@ impl Map {
             let mut queued_characters: Vec<ArenaPlayer> = self
                 .characters
                 .values()
-                .into_iter()
                 .filter(|c| {
                     config
                         .spawns
@@ -40,8 +39,8 @@ impl Map {
                 })
                 .collect();
 
-            if queued_characters.len() == 0
-                || (self.arena_players.len() == 0 && queued_characters.len() == 1)
+            if queued_characters.is_empty()
+                || (self.arena_players.is_empty() && queued_characters.len() == 1)
             {
                 return;
             }

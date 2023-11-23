@@ -1,50 +1,47 @@
 use std::{io::Cursor, path::Path};
 
 use eo::{
-    data::EOShort,
+    data::{EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::welcome::{Reply, ReplyData, ReplyEnterGame},
-        WelcomeReply,
+        PacketAction, PacketFamily, WelcomeReply,
     },
 };
-use tokio::{
-    io::{AsyncBufReadExt, AsyncReadExt},
-    sync::oneshot,
-};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 use crate::{
     errors::{DataNotFoundError, WrongSessionIdError},
-    player::{ClientState, PlayerHandle},
+    player::ClientState,
 };
 
 use super::World;
 
 impl World {
-    pub async fn enter_game(
-        &mut self,
-        player: PlayerHandle,
-        session_id: EOShort,
-        respond_to: oneshot::Sender<Result<Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    ) {
+    pub async fn enter_game(&mut self, player_id: EOShort, session_id: EOShort) {
+        let player = match self.players.get(&player_id) {
+            Some(player) => player,
+            None => return,
+        };
+
         let actual_session_id = player.take_session_id().await;
         if let Err(e) = actual_session_id {
-            let _ = respond_to.send(Err(Box::new(e)));
+            player.close(format!("Error getting session id: {}", e));
             return;
         }
 
         let actual_session_id = actual_session_id.unwrap();
         if actual_session_id != session_id {
-            let _ = respond_to.send(Err(Box::new(WrongSessionIdError::new(
-                actual_session_id,
-                session_id,
-            ))));
+            player.close(format!(
+                "{}",
+                WrongSessionIdError::new(actual_session_id, session_id)
+            ));
             return;
         }
 
         let map_id = match player.get_map_id().await {
             Ok(map_id) => map_id,
             Err(e) => {
-                let _ = respond_to.send(Err(e));
+                player.close(format!("Error getting map id: {}", e));
                 return;
             }
         };
@@ -67,8 +64,7 @@ impl World {
                 let character = player.take_character().await;
 
                 if let Err(e) = character {
-                    error!("Error getting character from player: {:?}", e);
-                    let _ = respond_to.send(Err(Box::new(e)));
+                    player.close(format!("Error getting character from player: {:?}", e));
                     return;
                 }
 
@@ -83,7 +79,7 @@ impl World {
 
                 map.enter(character, None).await;
                 let nearby_info = map.get_nearby_info(player_id).await;
-                let _ = respond_to.send(Ok(Reply {
+                let reply = Reply {
                     reply_code: WelcomeReply::EnterGame,
                     data: ReplyData::EnterGame(ReplyEnterGame {
                         news: get_news().await,
@@ -92,19 +88,22 @@ impl World {
                         spells,
                         nearby: nearby_info,
                     }),
-                }));
+                };
+
+                let mut builder = StreamBuilder::new();
+                reply.serialize(&mut builder);
+                player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
             } else {
-                // TODO: Move character to safe map
-                let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                    "Map".to_string(),
-                    map_id,
-                ))));
+                player.close(format!(
+                    "{}",
+                    DataNotFoundError::new("Map".to_string(), map_id,)
+                ));
             }
         } else {
-            let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                "Map".to_string(),
-                map_id,
-            ))));
+            player.close(format!(
+                "{}",
+                DataNotFoundError::new("Map".to_string(), map_id,)
+            ));
         }
     }
 }

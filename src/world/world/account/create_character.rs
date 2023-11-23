@@ -1,111 +1,119 @@
-use crate::{character::Character, errors::WrongSessionIdError, player::PlayerHandle};
+use crate::{character::Character, errors::WrongSessionIdError};
 use eo::{
-    data::EOChar,
+    data::{EOChar, EOShort, Serializeable, StreamBuilder},
     protocol::{
         client::character::Create,
         server::character::{Reply, ReplyData, ReplyExists, ReplyOk},
-        CharacterList, CharacterReply,
+        CharacterList, CharacterReply, PacketAction, PacketFamily,
     },
 };
 use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
-use tokio::sync::oneshot;
 
 use super::super::World;
 
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub async fn create_character(
-        &self,
-        player: PlayerHandle,
-        details: Create,
-        respond_to: oneshot::Sender<Result<Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    ) {
-        let session_id = player.take_session_id().await;
-        if let Err(e) = session_id {
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
-        }
-
-        let session_id = session_id.unwrap();
-
-        if session_id != details.session_id {
-            let _ = respond_to.send(Err(Box::new(WrongSessionIdError::new(
-                session_id,
-                details.session_id,
-            ))));
-            return;
-        }
-        // TODO: validate name
-
-        let conn = self.pool.get_conn().await;
-
-        if let Err(e) = conn {
-            error!("Error getting connection from pool: {}", e);
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
-        }
-
-        let mut conn = conn.unwrap();
-
-        let exists = match character_exists(&mut conn, &details.name).await {
-            Ok(exists) => exists,
-            Err(e) => {
-                error!("Error checking if character exists: {}", e);
-                // Assume it exists if the check fails
-                true
-            }
+    pub async fn create_character(&self, player_id: EOShort, details: Create) {
+        let player = match self.players.get(&player_id) {
+            Some(player) => player.clone(),
+            None => return,
         };
 
-        if exists {
-            let _ = respond_to.send(Ok(Reply {
-                reply_code: CharacterReply::Exists,
-                data: ReplyData::Exists(ReplyExists {
-                    no: "NO".to_string(),
-                }),
-            }));
-            return;
-        }
+        let conn = self.pool.get_conn();
 
-        let account_id = match player.get_account_id().await {
-            Ok(account_id) => account_id,
-            Err(e) => {
-                error!("Error getting account_id: {}", e);
-                let _ = respond_to.send(Err(e));
+        tokio::spawn(async move {
+            let mut conn = match conn.await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    player.close(format!("Error getting connection from pool: {}", e));
+                    return;
+                }
+            };
+
+            let session_id = player.take_session_id().await;
+            if let Err(e) = session_id {
+                player.close(format!("Error getting session id: {}", e));
                 return;
             }
-        };
 
-        let mut character = Character::from_creation(account_id, &details);
-        if let Err(e) = character.save(&mut conn).await {
-            error!(
-                "Error creating character: {}\n\taccount_id: {}\n\tdetails: {:?}",
-                e, account_id, details
-            );
-            let _ = respond_to.send(Err(e));
-            return;
-        }
+            let session_id = session_id.unwrap();
 
-        info!("New character: {}", details.name);
+            if session_id != details.session_id {
+                player.close(format!(
+                    "{}",
+                    WrongSessionIdError::new(session_id, details.session_id)
+                ));
+                return;
+            }
 
-        let characters = get_character_list(&mut conn, account_id).await;
-        if let Err(e) = characters {
-            error!("Error getting character list: {}", e);
-            let _ = respond_to.send(Err(e));
-            return;
-        }
+            // TODO: validate name
 
-        let characters = characters.unwrap();
+            let exists = match character_exists(&mut conn, &details.name).await {
+                Ok(exists) => exists,
+                Err(e) => {
+                    player.close(format!("Error checking if character exists: {}", e));
+                    // Assume it exists if the check fails
+                    true
+                }
+            };
 
-        let _ = respond_to.send(Ok(Reply {
-            reply_code: CharacterReply::Ok,
-            data: ReplyData::Ok(ReplyOk {
-                character_list: CharacterList {
-                    num_characters: characters.len() as EOChar,
-                    characters,
-                },
-            }),
-        }));
+            if exists {
+                let reply = Reply {
+                    reply_code: CharacterReply::Exists,
+                    data: ReplyData::Exists(ReplyExists {
+                        no: "NO".to_string(),
+                    }),
+                };
+
+                let mut builder = StreamBuilder::new();
+                reply.serialize(&mut builder);
+                player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+
+                return;
+            }
+
+            let account_id = match player.get_account_id().await {
+                Ok(account_id) => account_id,
+                Err(e) => {
+                    player.close(format!("Error getting account_id: {}", e));
+                    return;
+                }
+            };
+
+            let mut character = Character::from_creation(account_id, &details);
+            if let Err(e) = character.save(&mut conn).await {
+                player.close(format!(
+                    "Error creating character: {}\n\taccount_id: {}\n\tdetails: {:?}",
+                    e, account_id, details
+                ));
+                return;
+            }
+
+            info!("New character: {}", details.name);
+
+            let characters = get_character_list(&mut conn, account_id).await;
+            if let Err(e) = characters {
+                player.close(format!("Error getting character list: {}", e));
+                return;
+            }
+
+            let characters = characters.unwrap();
+
+            let reply = Reply {
+                reply_code: CharacterReply::Ok,
+                data: ReplyData::Ok(ReplyOk {
+                    character_list: CharacterList {
+                        num_characters: characters.len() as EOChar,
+                        characters,
+                    },
+                }),
+            };
+
+            let mut builder = StreamBuilder::new();
+            reply.serialize(&mut builder);
+            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+        });
     }
 }
 

@@ -1,10 +1,6 @@
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{
-        client,
-        server::{account, character, init, login, welcome},
-        FileType, OnlinePlayers,
-    },
+    protocol::{client, FileType, OnlinePlayers},
 };
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
@@ -25,8 +21,12 @@ impl WorldHandle {
         let world = World::new(rx, pool);
         let _ = tokio::task::Builder::new()
             .name("World")
-            .spawn(run_world(world));
+            .spawn(run_world(world, WorldHandle::for_tx(tx.clone())));
 
+        Self { tx, is_alive: true }
+    }
+
+    fn for_tx(tx: mpsc::UnboundedSender<Command>) -> Self {
         Self { tx, is_alive: true }
     }
 
@@ -41,6 +41,10 @@ impl WorldHandle {
             target_player_id,
             request_type,
         });
+    }
+
+    pub fn add_logged_in_account(&self, account_id: EOInt) {
+        let _ = self.tx.send(Command::AddLoggedInAccount { account_id });
     }
 
     pub async fn add_player(
@@ -93,48 +97,37 @@ impl WorldHandle {
         let _ = self.tx.send(Command::_BroadcastServerMessage { message });
     }
 
-    pub async fn create_account(
+    pub fn change_password(
         &self,
-        player: PlayerHandle,
-        details: client::account::Create,
-    ) -> Result<account::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::CreateAccount {
-            player,
-            details,
-            respond_to: tx,
+        player_id: EOShort,
+        username: String,
+        current_password: String,
+        new_password: String,
+    ) {
+        let _ = self.tx.send(Command::ChangePassword {
+            player_id,
+            username,
+            current_password,
+            new_password,
         });
-        rx.await.unwrap()
     }
 
-    pub async fn create_character(
-        &self,
-        details: client::character::Create,
-        player: PlayerHandle,
-    ) -> Result<character::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::CreateCharacter {
-            details,
-            player,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
+    pub fn create_account(&self, player_id: EOShort, details: client::account::Create) {
+        let _ = self.tx.send(Command::CreateAccount { player_id, details });
     }
 
-    pub async fn delete_character(
-        &self,
-        session_id: EOShort,
-        character_id: EOInt,
-        player: PlayerHandle,
-    ) -> Result<character::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+    pub fn create_character(&self, player_id: EOShort, details: client::character::Create) {
+        let _ = self
+            .tx
+            .send(Command::CreateCharacter { player_id, details });
+    }
+
+    pub fn delete_character(&self, player_id: EOShort, session_id: EOShort, character_id: EOInt) {
         let _ = self.tx.send(Command::DeleteCharacter {
+            player_id,
             session_id,
             character_id,
-            player,
-            respond_to: tx,
         });
-        rx.await.unwrap()
     }
 
     pub async fn drop_player(
@@ -154,18 +147,11 @@ impl WorldHandle {
         Ok(())
     }
 
-    pub async fn enter_game(
-        &self,
-        session_id: EOShort,
-        player: PlayerHandle,
-    ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+    pub fn enter_game(&self, player_id: EOShort, session_id: EOShort) {
         let _ = self.tx.send(Command::EnterGame {
+            player_id,
             session_id,
-            player,
-            respond_to: tx,
         });
-        rx.await.unwrap()
     }
 
     pub async fn get_character_by_name(
@@ -180,22 +166,21 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_file(
+    pub fn get_file(
         &self,
+        player_id: EOShort,
         file_type: FileType,
         session_id: EOShort,
         file_id: Option<EOChar>,
-        player: PlayerHandle,
-    ) -> Result<init::Init, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+        warp: bool,
+    ) {
         let _ = self.tx.send(Command::GetFile {
+            player_id,
             file_type,
             session_id,
             file_id,
-            player,
-            respond_to: tx,
+            warp,
         });
-        rx.await.unwrap()
     }
 
     pub async fn get_map(
@@ -241,6 +226,15 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub async fn is_logged_in(&self, account_id: EOInt) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::IsLoggedIn {
+            account_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::LoadMapFiles {
@@ -250,20 +244,12 @@ impl WorldHandle {
         rx.await.unwrap();
     }
 
-    pub async fn login(
-        &self,
-        player: PlayerHandle,
-        name: String,
-        password: String,
-    ) -> Result<login::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+    pub fn login(&self, player_id: EOShort, name: String, password: String) {
         let _ = self.tx.send(Command::Login {
-            player,
+            player_id,
             name,
             password,
-            respond_to: tx,
         });
-        rx.await.unwrap()
     }
 
     pub fn ping_players(&self) {
@@ -278,44 +264,23 @@ impl WorldHandle {
         });
     }
 
-    pub async fn request_account_creation(
-        &self,
-        name: String,
-        player: PlayerHandle,
-    ) -> Result<account::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::RequestAccountCreation {
-            name,
-            player,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
+    pub fn request_account_creation(&self, player_id: EOShort, name: String) {
+        let _ = self
+            .tx
+            .send(Command::RequestAccountCreation { player_id, name });
     }
 
-    pub async fn request_character_creation(
-        &self,
-        player: PlayerHandle,
-    ) -> Result<character::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::RequestCharacterCreation {
-            player,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
+    pub fn request_character_creation(&self, player_id: EOShort) {
+        let _ = self
+            .tx
+            .send(Command::RequestCharacterCreation { player_id });
     }
 
-    pub async fn request_character_deletion(
-        &self,
-        character_id: EOInt,
-        player: PlayerHandle,
-    ) -> Result<character::Player, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+    pub fn request_character_deletion(&self, player_id: EOShort, character_id: EOInt) {
         let _ = self.tx.send(Command::RequestCharacterDeletion {
+            player_id,
             character_id,
-            player,
-            respond_to: tx,
         });
-        rx.await.unwrap()
     }
 
     pub fn request_party_list(&self, player_id: EOShort) {
@@ -333,18 +298,11 @@ impl WorldHandle {
         let _ = self.tx.send(Command::Save);
     }
 
-    pub async fn select_character(
-        &self,
-        character_id: EOInt,
-        player: PlayerHandle,
-    ) -> Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
+    pub fn select_character(&self, player_id: EOShort, character_id: EOInt) {
         let _ = self.tx.send(Command::SelectCharacter {
+            player_id,
             character_id,
-            player,
-            respond_to: tx,
         });
-        rx.await.unwrap()
     }
 
     pub fn send_admin_message(&self, player_id: EOShort, message: String) {
@@ -377,10 +335,10 @@ impl WorldHandle {
     }
 }
 
-async fn run_world(mut world: World) {
+async fn run_world(mut world: World, world_handle: WorldHandle) {
     loop {
         if let Some(command) = world.rx.recv().await {
-            world.handle_command(command).await;
+            world.handle_command(command, world_handle.clone()).await;
         }
     }
 }

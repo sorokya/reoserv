@@ -1,10 +1,6 @@
 use eo::{
     data::{EOChar, EOInt, EOShort},
-    protocol::{
-        client,
-        server::{account, character, init, login, welcome},
-        FileType, OnlinePlayers,
-    },
+    protocol::{client, FileType, OnlinePlayers},
 };
 use tokio::sync::oneshot;
 
@@ -18,6 +14,9 @@ pub enum Command {
         player_id: EOShort,
         target_player_id: EOShort,
         request_type: EOChar,
+    },
+    AddLoggedInAccount {
+        account_id: EOInt,
     },
     AddPlayer {
         respond_to: oneshot::Sender<()>,
@@ -44,24 +43,24 @@ pub enum Command {
         player_id: EOShort,
         message: String,
     },
+    ChangePassword {
+        player_id: EOShort,
+        username: String,
+        current_password: String,
+        new_password: String,
+    },
     CreateAccount {
-        player: PlayerHandle,
+        player_id: EOShort,
         details: client::account::Create,
-        respond_to:
-            oneshot::Sender<Result<account::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     CreateCharacter {
+        player_id: EOShort,
         details: client::character::Create,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     DeleteCharacter {
+        player_id: EOShort,
         session_id: EOShort,
         character_id: EOInt,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     DropPlayer {
         player_id: EOShort,
@@ -70,10 +69,8 @@ pub enum Command {
         respond_to: oneshot::Sender<()>,
     },
     EnterGame {
+        player_id: EOShort,
         session_id: EOShort,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     GetCharacterByName {
         name: String,
@@ -81,11 +78,11 @@ pub enum Command {
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
     GetFile {
+        player_id: EOShort,
         file_type: FileType,
         session_id: EOShort,
         file_id: Option<EOChar>,
-        player: PlayerHandle,
-        respond_to: oneshot::Sender<Result<init::Init, Box<dyn std::error::Error + Send + Sync>>>,
+        warp: bool,
     },
     GetMap {
         map_id: EOShort,
@@ -100,15 +97,18 @@ pub enum Command {
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
+    IsLoggedIn {
+        account_id: EOInt,
+        respond_to: oneshot::Sender<bool>,
+    },
     LoadMapFiles {
         world: WorldHandle,
         respond_to: oneshot::Sender<()>,
     },
     Login {
+        player_id: EOShort,
         name: String,
         password: String,
-        player: PlayerHandle,
-        respond_to: oneshot::Sender<Result<login::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     GetPlayerParty {
         player_id: EOShort,
@@ -121,21 +121,15 @@ pub enum Command {
         message: String,
     },
     RequestAccountCreation {
+        player_id: EOShort,
         name: String,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<account::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     RequestCharacterCreation {
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<character::Reply, Box<dyn std::error::Error + Send + Sync>>>,
+        player_id: EOShort,
     },
     RequestCharacterDeletion {
+        player_id: EOShort,
         character_id: EOInt,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<character::Player, Box<dyn std::error::Error + Send + Sync>>>,
     },
     RequestPartyList {
         player_id: EOShort,
@@ -146,10 +140,8 @@ pub enum Command {
     },
     Save,
     SelectCharacter {
+        player_id: EOShort,
         character_id: EOInt,
-        player: PlayerHandle,
-        respond_to:
-            oneshot::Sender<Result<welcome::Reply, Box<dyn std::error::Error + Send + Sync>>>,
     },
     SendAdminMessage {
         player_id: EOShort,

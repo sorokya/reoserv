@@ -1,72 +1,54 @@
-use eo::data::EOInt;
+use eo::data::{EOInt, EOShort, Serializeable, StreamBuilder};
 use eo::protocol::server::welcome::{Reply, ReplyData};
-use eo::protocol::{Coords, WelcomeReply};
-use tokio::sync::oneshot;
+use eo::protocol::{Coords, PacketAction, PacketFamily, WelcomeReply};
 
+use crate::character::Character;
 use crate::errors::DataNotFoundError;
 use crate::SETTINGS;
-use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
 
 use super::super::World;
 
 impl World {
-    pub async fn select_character(
-        &mut self,
-        player: PlayerHandle,
-        character_id: EOInt,
-        respond_to: oneshot::Sender<Result<Reply, Box<dyn std::error::Error + Send + Sync>>>,
-    ) {
+    pub async fn select_character(&mut self, player_id: EOShort, character_id: EOInt) {
+        let player = match self.players.get(&player_id) {
+            Some(player) => player,
+            None => return,
+        };
+
         let account_id = match player.get_account_id().await {
             Ok(account_id) => account_id,
             Err(e) => {
-                error!("Error getting account id: {}", e);
-                let _ = respond_to.send(Err(e));
+                player.close(format!("Error getting account id: {}", e));
                 return;
             }
         };
 
-        let conn = self.pool.get_conn().await;
-
-        if let Err(e) = conn {
-            error!("Error getting connection from pool: {}", e);
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
-        }
-
-        let mut conn = conn.unwrap();
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                player.close(format!("Error getting connection from pool: {}", e));
+                return;
+            }
+        };
 
         let mut character = match Character::load(&mut conn, character_id).await {
             Ok(character) => character,
-            Err(e) => {
-                warn!(
+            Err(_) => {
+                player.close(format!(
                     "Tried to select character that doesn't exist: {}",
                     character_id
-                );
-                let _ = respond_to.send(Err(e));
+                ));
                 return;
             }
         };
 
         if character.account_id != account_id {
-            warn!(
+            player.close(format!(
                 "Player {} attempted to login to character ({}) belonging to another account: {}",
                 account_id, character.name, character.account_id
-            );
-            let _ = respond_to.send(Err(Box::new(WrongAccountError::new(
-                character.account_id,
-                account_id,
-            ))));
+            ));
             return;
         }
-
-        let player_id = player.get_player_id().await;
-
-        if let Err(e) = player_id {
-            let _ = respond_to.send(Err(e));
-            return;
-        }
-
-        let player_id = player_id.unwrap();
 
         character.player_id = Some(player_id);
         character.player = Some(player.clone());
@@ -83,11 +65,10 @@ impl World {
                         y: SETTINGS.rescue.y,
                     };
                 } else {
-                    error!("Rescue map not found!");
-                    let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
-                        "map".to_string(),
-                        SETTINGS.rescue.map,
-                    ))));
+                    player.close(format!(
+                        "Rescue map not found! {}",
+                        DataNotFoundError::new("map".to_string(), SETTINGS.rescue.map,)
+                    ));
                     return;
                 }
             }
@@ -98,8 +79,8 @@ impl World {
             .await
         {
             Ok(select_character) => select_character,
-            Err(err) => {
-                let _ = respond_to.send(Err(err));
+            Err(e) => {
+                player.close(format!("Error getting welcome request data: {}", e));
                 return;
             }
         };
@@ -108,9 +89,13 @@ impl World {
             .insert(character.name.to_string(), player_id);
         player.set_character(Box::new(character));
 
-        let _ = respond_to.send(Ok(Reply {
+        let reply = Reply {
             reply_code: WelcomeReply::SelectCharacter,
             data: ReplyData::SelectCharacter(select_character),
-        }));
+        };
+
+        let mut builder = StreamBuilder::new();
+        reply.serialize(&mut builder);
+        player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
     }
 }

@@ -1,72 +1,69 @@
-use eo::{data::EOInt, protocol::server::character::Player};
-use tokio::sync::oneshot;
+use eo::{
+    data::{EOInt, EOShort, Serializeable, StreamBuilder},
+    protocol::{server::character::Player, PacketAction, PacketFamily},
+};
 
-use crate::{character::Character, errors::WrongAccountError, player::PlayerHandle};
+use crate::character::Character;
 
 use super::super::World;
 
 impl World {
-    pub async fn request_character_deletion(
-        &self,
-        player: PlayerHandle,
-        character_id: EOInt,
-        respond_to: oneshot::Sender<Result<Player, Box<dyn std::error::Error + Send + Sync>>>,
-    ) {
+    pub async fn request_character_deletion(&self, player_id: EOShort, character_id: EOInt) {
+        let player = match self.players.get(&player_id) {
+            Some(player) => player,
+            None => return,
+        };
+
         let account_id = match player.get_account_id().await {
             Ok(account_id) => account_id,
             Err(e) => {
-                error!("Error getting account id: {}", e);
-                let _ = respond_to.send(Err(e));
+                player.close(format!("Error getting account id: {}", e));
                 return;
             }
         };
 
-        let conn = self.pool.get_conn().await;
-
-        if let Err(e) = conn {
-            error!("Error getting connection from pool: {}", e);
-            let _ = respond_to.send(Err(Box::new(e)));
-            return;
-        }
-
-        let mut conn = conn.unwrap();
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                player.close(format!("Error getting connection from pool: {}", e));
+                return;
+            }
+        };
 
         let character = match Character::load(&mut conn, character_id).await {
             Ok(character) => character,
-            Err(e) => {
-                warn!(
+            Err(_) => {
+                player.close(format!(
                     "Tried to request character deletion for a character that doesn't exist: {}",
                     character_id
-                );
-                let _ = respond_to.send(Err(e));
+                ));
                 return;
             }
         };
 
         if character.account_id != account_id {
-            warn!(
+            player.close(format!(
                 "Player {} attempted to delete character ({}) belonging to another account: {}",
                 account_id, character.name, character.account_id
-            );
-            let _ = respond_to.send(Err(Box::new(WrongAccountError::new(
-                character.account_id,
-                account_id,
-            ))));
+            ));
             return;
         }
 
-        let session_id = player.generate_session_id().await;
+        let session_id = match player.generate_session_id().await {
+            Ok(session_id) => session_id,
+            Err(e) => {
+                player.close(format!("Error generating session id: {}", e));
+                return;
+            }
+        };
 
-        if let Err(e) = session_id {
-            let _ = respond_to.send(Err(e));
-            return;
-        }
-
-        let session_id = session_id.unwrap();
-
-        let _ = respond_to.send(Ok(Player {
+        let reply = Player {
             session_id,
             character_id,
-        }));
+        };
+
+        let mut builder = StreamBuilder::new();
+        reply.serialize(&mut builder);
+        player.send(PacketAction::Player, PacketFamily::Character, builder.get());
     }
 }

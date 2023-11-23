@@ -1,91 +1,40 @@
 use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
+    data::{EOShort, Serializeable, StreamReader},
     protocol::{
         client::character::{Create, Remove, Request, Take},
-        PacketAction, PacketFamily,
+        PacketAction,
     },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-async fn create(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn create(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut create = Create::default();
     create.deserialize(&reader);
-
-    match world.create_character(create, player.clone()).await {
-        Ok(reply) => {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
-        }
-        Err(e) => {
-            player.close(format!("Create character failed: {}", e));
-        }
-    };
+    world.create_character(player_id, create);
 }
 
-async fn remove(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn remove(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut remove = Remove::default();
     remove.deserialize(&reader);
-
-    match world
-        .delete_character(remove.session_id, remove.character_id, player.clone())
-        .await
-    {
-        Ok(reply) => {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
-        }
-        Err(e) => {
-            player.close(format!("Remove character failed: {}", e));
-        }
-    };
+    world.delete_character(player_id, remove.session_id, remove.character_id);
 }
 
-async fn request(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut request = Request::default();
     request.deserialize(&reader);
 
     if request.new != "NEW" {
-        player.close("Invalid request".to_string());
         return;
     }
 
-    let reply = match world.request_character_creation(player.clone()).await {
-        Ok(reply) => reply,
-        Err(e) => {
-            player.close(format!("Request character failed: {}", e));
-            return;
-        }
-    };
-
-    let mut builder = StreamBuilder::new();
-    reply.serialize(&mut builder);
-
-    player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+    world.request_character_creation(player_id);
 }
 
-async fn take(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+fn take(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     let mut take = Take::default();
     take.deserialize(&reader);
-
-    match world
-        .request_character_deletion(take.character_id, player.clone())
-        .await
-    {
-        Ok(reply) => {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-
-            player.send(PacketAction::Player, PacketFamily::Character, builder.get());
-        }
-        Err(e) => {
-            player.close(format!("Take character failed: {}", e));
-        }
-    }
+    world.request_character_deletion(player_id, take.character_id);
 }
 
 pub async fn character(
@@ -94,11 +43,19 @@ pub async fn character(
     player: PlayerHandle,
     world: WorldHandle,
 ) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Create => create(reader, player, world).await,
-        PacketAction::Remove => remove(reader, player, world).await,
-        PacketAction::Request => request(reader, player, world).await,
-        PacketAction::Take => take(reader, player, world).await,
+        PacketAction::Create => create(reader, player_id, world),
+        PacketAction::Remove => remove(reader, player_id, world),
+        PacketAction::Request => request(reader, player_id, world),
+        PacketAction::Take => take(reader, player_id, world),
         _ => error!("Unhandled packet Character_{:?}", action),
     }
 }

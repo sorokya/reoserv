@@ -469,12 +469,10 @@ impl Map {
                         .clone()
                 };
 
-                let mut spawn_index = 0;
-                for index in npcs {
+                for (spawn_index, index) in npcs.into_iter().enumerate() {
                     let npc = self.npcs.get_mut(&index).unwrap();
                     npc.act_ticks = 0;
-                    npc.talk_ticks = -60 * spawn_index;
-                    spawn_index += 1;
+                    npc.talk_ticks = -60 * spawn_index as i32;
                 }
             }
         }

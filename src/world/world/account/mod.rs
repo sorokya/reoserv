@@ -1,4 +1,5 @@
 mod account_exists;
+mod change_password;
 mod create_account;
 mod create_character;
 mod delete_character;

@@ -251,7 +251,7 @@ date_posts = true
 
 # Board number that reports/requests are logged (1 to 8)
 # This board can't be accessed by players if placed in-game
-admin_board = 8
+admin_board = 5
 
 # Maximum number of posts that the AdminBoard can hold
 admin_max_posts = 100

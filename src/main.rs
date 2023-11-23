@@ -10,7 +10,9 @@ use std::{fs::File, io::Read, time::Duration};
 use bytes::Bytes;
 use lazy_static::lazy_static;
 
+mod arenas;
 mod character;
+use arenas::Arenas;
 mod commands;
 use commands::Commands;
 mod formulas;
@@ -41,6 +43,7 @@ use crate::player::PlayerHandle;
 
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+    static ref ARENAS: Arenas = Arenas::new().expect("Failed to load arenas!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref CLASS_DB: EcfFile = load_class_file().expect("Failed to load ECF file!");

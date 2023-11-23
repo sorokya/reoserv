@@ -1,6 +1,10 @@
+use eo::data::EOInt;
+
 use crate::SETTINGS;
 
 use super::World;
+
+const ONE_SECOND: EOInt = 8;
 
 impl World {
     pub async fn tick(&mut self) {
@@ -9,6 +13,7 @@ impl World {
             None => return,
         };
 
+        self.npc_act_ticks += 1;
         self.npc_spawn_ticks += 1;
         self.item_spawn_ticks += 1;
         self.player_recover_ticks += 1;
@@ -17,9 +22,12 @@ impl World {
         self.spike_ticks += 1;
         self.drain_ticks += 1;
         self.warp_suck_ticks += 1;
+        self.arena_ticks += 1;
 
         for map in maps {
-            map.act_npcs();
+            if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
+                map.act_npcs();
+            }
 
             if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {
                 map.spawn_npcs();
@@ -37,23 +45,33 @@ impl World {
                 map.recover_npcs();
             }
 
-            if self.quake_ticks >= SETTINGS.map.quake_rate {
+            if self.quake_ticks >= SETTINGS.world.quake_rate {
                 map.timed_quake();
             }
 
-            if self.spike_ticks >= SETTINGS.map.spike_rate {
+            if self.spike_ticks >= SETTINGS.world.spike_rate {
                 map.timed_spikes();
             }
 
-            if self.drain_ticks >= SETTINGS.map.drain_rate {
+            if self.drain_ticks >= SETTINGS.world.drain_rate {
                 map.timed_drain();
             }
 
-            if self.warp_suck_ticks >= SETTINGS.map.warp_suck_rate {
+            if self.warp_suck_ticks >= SETTINGS.world.warp_suck_rate {
                 map.timed_warp_suck();
             }
 
-            map.timed_door_close();
+            if self.door_close_ticks >= SETTINGS.world.door_close_rate {
+                map.timed_door_close();
+            }
+
+            if self.arena_ticks >= ONE_SECOND {
+                map.timed_arena();
+            }
+        }
+
+        if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
+            self.npc_act_ticks = 0;
         }
 
         if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {
@@ -72,20 +90,28 @@ impl World {
             self.npc_recover_ticks = 0;
         }
 
-        if self.quake_ticks >= SETTINGS.map.quake_rate {
+        if self.quake_ticks >= SETTINGS.world.quake_rate {
             self.quake_ticks = 0;
         }
 
-        if self.spike_ticks >= SETTINGS.map.spike_rate {
+        if self.spike_ticks >= SETTINGS.world.spike_rate {
             self.spike_ticks = 0;
         }
 
-        if self.drain_ticks >= SETTINGS.map.drain_rate {
+        if self.drain_ticks >= SETTINGS.world.drain_rate {
             self.drain_ticks = 0;
         }
 
-        if self.warp_suck_ticks >= SETTINGS.map.warp_suck_rate {
+        if self.warp_suck_ticks >= SETTINGS.world.warp_suck_rate {
             self.warp_suck_ticks = 0;
+        }
+
+        if self.door_close_ticks >= SETTINGS.world.door_close_rate {
+            self.door_close_ticks = 0;
+        }
+
+        if self.arena_ticks >= ONE_SECOND {
+            self.arena_ticks = 0;
         }
     }
 }

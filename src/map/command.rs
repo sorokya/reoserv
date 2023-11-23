@@ -260,6 +260,7 @@ pub enum Command {
         player_id: EOShort,
         item_id: EOShort,
     },
+    TimedArena,
     TimedDoorClose,
     TimedDrain,
     TimedQuake,

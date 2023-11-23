@@ -18,7 +18,7 @@ impl Map {
             None => return,
         };
 
-        let damage = (character.max_hp as f32 * SETTINGS.map.spike_damage).floor() as EOShort;
+        let damage = (character.max_hp as f32 * SETTINGS.world.spike_damage).floor() as EOShort;
         let damage = cmp::min(damage, character.hp);
 
         character.hp -= damage;

@@ -1,6 +1,7 @@
 mod act_npcs;
 mod spawn_items;
 mod spawn_npcs;
+mod timed_arena;
 mod timed_door_close;
 mod timed_drain;
 mod timed_quake;

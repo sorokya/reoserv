@@ -29,5 +29,5 @@ target/
 
 # Secrets
 .env
-Config.local.toml
-Commands.local.ron
+*.local.toml
+*.local.ron

@@ -58,27 +58,15 @@ pub struct World {
     pub stat_points_per_level: EOInt,
     pub skill_points_per_level: EOInt,
     pub tick_rate: EOInt,
-    pub arena: Vec<Arena>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Arena {
-    pub map: EOShort,
-    pub rate: EOInt,
-    pub block: EOChar,
-    pub spawns: Vec<ArenaSpawn>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ArenaSpawn {
-    pub from: ArenaCoords,
-    pub to: ArenaCoords,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ArenaCoords {
-    pub x: EOChar,
-    pub y: EOChar,
+    pub arena_spawn_rate: EOInt,
+    pub door_close_rate: EOInt,
+    pub quake_rate: EOInt,
+    pub spike_rate: EOInt,
+    pub spike_damage: f32,
+    pub drain_rate: EOInt,
+    pub drain_hp_damage: f32,
+    pub drain_tp_damage: f32,
+    pub warp_suck_rate: EOInt,
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,6 +76,7 @@ pub struct NPCs {
     pub freeze_on_empty_map: bool,
     pub chase_distance: EOInt,
     pub bored_timer: EOInt,
+    pub act_rate: EOInt,
     pub speed_0: EOInt,
     pub speed_1: EOInt,
     pub speed_2: EOInt,
@@ -168,14 +157,7 @@ pub struct Quake {
 
 #[derive(Debug, Deserialize)]
 pub struct Map {
-    pub quake_rate: EOInt,
     pub quakes: Vec<Quake>,
-    pub spike_rate: EOInt,
-    pub spike_damage: f32,
-    pub drain_rate: EOInt,
-    pub drain_hp_damage: f32,
-    pub drain_tp_damage: f32,
-    pub warp_suck_rate: EOInt,
     pub door_close_rate: EOInt,
 }
 

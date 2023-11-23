@@ -27,6 +27,7 @@ pub struct Map {
     pool: Pool,
     quake_ticks: EOInt,
     arena_ticks: EOInt,
+    arena_players: Vec<EOShort>,
     quake_rate: Option<EOInt>,
     quake_strength: Option<EOInt>,
     has_timed_spikes: bool,
@@ -90,6 +91,7 @@ impl Map {
             characters: HashMap::new(),
             pool,
             arena_ticks: 0,
+            arena_players: Vec::new(),
             quake_ticks: 0,
             quake_rate: None,
             quake_strength: None,
@@ -385,6 +387,8 @@ impl Map {
             Command::TakeLockerItem { player_id, item_id } => {
                 self.take_locker_item(player_id, item_id)
             }
+
+            Command::TimedArena => self.timed_arena(),
 
             Command::TimedDoorClose => self.timed_door_close(),
 

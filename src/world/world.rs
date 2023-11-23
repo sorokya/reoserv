@@ -15,6 +15,7 @@ pub struct World {
     pool: Pool,
     maps: Option<HashMap<EOShort, MapHandle>>,
     parties: Vec<Party>,
+    npc_act_ticks: EOInt,
     npc_spawn_ticks: EOInt,
     item_spawn_ticks: EOInt,
     player_recover_ticks: EOInt,
@@ -23,6 +24,8 @@ pub struct World {
     spike_ticks: EOInt,
     drain_ticks: EOInt,
     warp_suck_ticks: EOInt,
+    arena_ticks: EOInt,
+    door_close_ticks: EOInt,
 }
 
 mod account;
@@ -51,6 +54,7 @@ impl World {
             characters: HashMap::new(),
             maps: None,
             parties: Vec::new(),
+            npc_act_ticks: 0,
             npc_spawn_ticks: 0,
             item_spawn_ticks: 0,
             player_recover_ticks: 0,
@@ -59,6 +63,8 @@ impl World {
             spike_ticks: 0,
             drain_ticks: 0,
             warp_suck_ticks: 0,
+            arena_ticks: 0,
+            door_close_ticks: 0,
         }
     }
 

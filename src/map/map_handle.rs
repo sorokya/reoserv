@@ -459,6 +459,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TakeLockerItem { player_id, item_id });
     }
 
+    pub fn timed_arena(&self) {
+        let _ = self.tx.send(Command::TimedArena);
+    }
+
     pub fn timed_door_close(&self) {
         let _ = self.tx.send(Command::TimedDoorClose);
     }

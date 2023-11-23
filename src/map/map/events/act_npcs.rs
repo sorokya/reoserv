@@ -416,8 +416,8 @@ impl Map {
                 if !npc.alive {
                     return (None, None, None);
                 } else {
-                    npc.act_ticks += 1;
-                    npc.talk_ticks += 1;
+                    npc.act_ticks += SETTINGS.npcs.act_rate;
+                    npc.talk_ticks += SETTINGS.npcs.act_rate as i32;
                     (npc.id, npc.spawn_index, npc.act_ticks)
                 }
             }

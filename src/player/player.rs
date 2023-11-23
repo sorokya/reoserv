@@ -46,6 +46,7 @@ pub struct Player {
 }
 
 mod accept_warp;
+mod arena_die;
 mod cancel_trade;
 mod close;
 mod die;
@@ -96,6 +97,7 @@ impl Player {
                 self.close(reason).await;
                 return false;
             }
+            Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();

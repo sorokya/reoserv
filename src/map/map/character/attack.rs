@@ -1,11 +1,16 @@
 use eo::{
-    data::{EOChar, EOShort, EOThree},
+    data::{EOChar, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
     pubs::{EifItemSubType, EnfNpcType},
 };
 use rand::Rng;
 
-use crate::{character::Character, utils::get_next_coords, ITEM_DB, NPC_DB, SETTINGS};
+use crate::{
+    character::Character,
+    map::map::ArenaPlayer,
+    utils::{get_distance, get_next_coords},
+    ITEM_DB, NPC_DB, SETTINGS,
+};
 
 use super::super::Map;
 
@@ -148,11 +153,116 @@ impl Map {
 
     fn attack_player(
         &mut self,
-        _player_id: EOShort,
-        _target_player_id: EOShort,
-        _direction: Direction,
+        player_id: EOShort,
+        target_player_id: EOShort,
+        direction: Direction,
     ) {
+        if self.arena_players.iter().any(|p| p.player_id == player_id) {
+            return self.attack_player_arena(player_id, target_player_id, direction);
+        }
+
         error!("PVP is not implemented yet!");
+    }
+
+    fn attack_player_arena(
+        &mut self,
+        player_id: EOShort,
+        target_player_id: EOShort,
+        direction: Direction,
+    ) {
+        if !self
+            .arena_players
+            .iter()
+            .any(|p| p.player_id == target_player_id)
+        {
+            return;
+        }
+
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let target_character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if get_distance(&character.coords, &target_character.coords) > 1 {
+            return;
+        }
+
+        let arena_player = self
+            .arena_players
+            .iter_mut()
+            .find(|p| p.player_id == player_id)
+            .unwrap();
+
+        arena_player.kills += 1;
+
+        let arena_player = arena_player.to_owned();
+
+        target_character.player.as_ref().unwrap().arena_die(Coords {
+            x: self.file.relog_x,
+            y: self.file.relog_y,
+        });
+
+        self.arena_players
+            .retain(|p| p.player_id != target_player_id);
+
+        if self.arena_players.len() == 1 {
+            character.player.as_ref().unwrap().arena_die(Coords {
+                x: self.file.relog_x,
+                y: self.file.relog_y,
+            });
+
+            return self.arena_end(
+                &arena_player,
+                character.name.to_owned(),
+                target_character.name.to_owned(),
+            );
+        }
+
+        let mut builder = StreamBuilder::new();
+        builder.add_short(player_id);
+        builder.add_byte(EO_BREAK_CHAR);
+        builder.add_char(direction.to_char());
+        builder.add_byte(EO_BREAK_CHAR);
+        builder.add_short(arena_player.kills);
+        builder.add_byte(EO_BREAK_CHAR);
+        builder.add_break_string(&character.name);
+        builder.add_string(&target_character.name);
+
+        let buf = builder.get();
+
+        for character in self.characters.values() {
+            character.player.as_ref().unwrap().send(
+                PacketAction::Spec,
+                PacketFamily::Arena,
+                buf.clone(),
+            );
+        }
+    }
+
+    fn arena_end(&mut self, arena_player: &ArenaPlayer, winner_name: String, target_name: String) {
+        self.arena_players.clear();
+
+        let mut builder = StreamBuilder::new();
+        builder.add_break_string(&winner_name);
+        builder.add_short(arena_player.kills);
+        builder.add_byte(EO_BREAK_CHAR);
+        builder.add_break_string(&winner_name);
+        builder.add_string(&target_name);
+
+        let buf = builder.get();
+
+        for character in self.characters.values() {
+            character.player.as_ref().unwrap().send(
+                PacketAction::Accept,
+                PacketFamily::Arena,
+                buf.clone(),
+            );
+        }
     }
 }
 

@@ -50,6 +50,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
+    pub fn arena_die(&self, spawn_coords: Coords) {
+        let _ = self.tx.send(Command::ArenaDie { spawn_coords });
+    }
+
     pub fn die(&self) {
         let _ = self.tx.send(Command::Die);
     }

@@ -4,7 +4,7 @@ use eo::{
 };
 use tokio::sync::oneshot;
 
-use crate::character::Character;
+use crate::{character::Character, ARENAS};
 
 use super::super::Map;
 
@@ -21,6 +21,21 @@ impl Map {
         }
 
         let target = self.characters.remove(&player_id).unwrap();
+
+        if let Some(config) = ARENAS.arenas.iter().find(|a| a.map == self.id) {
+            if self.arena_players.iter().any(|p| p.player_id == player_id)
+                && !config
+                    .spawns
+                    .iter()
+                    .any(|s| s.from.x == target.coords.x && s.from.y == target.coords.y)
+            {
+                self.arena_players.retain(|a| a.player_id != player_id);
+                if self.arena_players.len() == 1 {
+                    self.abandon_arena();
+                }
+            }
+        }
+
         if !target.hidden {
             let packet = avatar::Remove {
                 player_id,

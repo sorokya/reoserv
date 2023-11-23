@@ -48,30 +48,32 @@ impl Map {
 
             // TODO: Ghost timer check
             if let Some(warp) = self.get_warp(&target_coords) {
-                if let Some(target) = self.characters.get_mut(&target_player_id) {
-                    if warp.level_required > target.level {
+                let target = match self.characters.get(&target_player_id) {
+                    Some(character) => character,
+                    None => return,
+                };
+
+                if warp.level_required > target.level {
+                    return;
+                }
+
+                if warp.door > 0 {
+                    let door = match self.doors.iter().find(|door| door.coords == target_coords) {
+                        Some(door) => door,
+                        None => return,
+                    };
+
+                    if !door.open {
                         return;
                     }
-
-                    if warp.door > 0 {
-                        let door = match self.doors.iter().find(|door| door.coords == target_coords)
-                        {
-                            Some(door) => door,
-                            None => return,
-                        };
-
-                        if !door.open {
-                            return;
-                        }
-                    }
-
-                    target.player.as_ref().unwrap().request_warp(
-                        warp.map,
-                        warp.coords,
-                        target.map_id == warp.map,
-                        None,
-                    );
                 }
+
+                target.player.as_ref().unwrap().request_warp(
+                    warp.map,
+                    warp.coords,
+                    target.map_id == warp.map,
+                    None,
+                );
 
                 return;
             }

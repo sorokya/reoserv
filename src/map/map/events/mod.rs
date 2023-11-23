@@ -1,3 +1,4 @@
+mod abandon_arena;
 mod act_npcs;
 mod spawn_items;
 mod spawn_npcs;

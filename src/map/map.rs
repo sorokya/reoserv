@@ -27,10 +27,16 @@ pub struct Map {
     pool: Pool,
     quake_ticks: EOInt,
     arena_ticks: EOInt,
-    arena_players: Vec<EOShort>,
+    arena_players: Vec<ArenaPlayer>,
     quake_rate: Option<EOInt>,
     quake_strength: Option<EOInt>,
     has_timed_spikes: bool,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ArenaPlayer {
+    pub player_id: EOShort,
+    pub kills: EOShort,
 }
 
 mod bank;

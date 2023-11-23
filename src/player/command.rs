@@ -21,6 +21,9 @@ pub enum Command {
     },
     CancelTrade,
     Close(String),
+    ArenaDie {
+        spawn_coords: Coords,
+    },
     Die,
     GenerateSessionId {
         respond_to: oneshot::Sender<EOShort>,

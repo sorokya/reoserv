@@ -1,10 +1,10 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{EOChar, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
 };
 
-use crate::{ARENAS, SETTINGS};
+use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
 
 use super::super::Map;
 
@@ -24,7 +24,7 @@ impl Map {
                 return self.send_arena_full();
             }
 
-            let mut queued_characters: Vec<EOShort> = self
+            let mut queued_characters: Vec<ArenaPlayer> = self
                 .characters
                 .values()
                 .into_iter()
@@ -34,7 +34,10 @@ impl Map {
                         .iter()
                         .any(|s| s.from.x == c.coords.x && s.from.y == c.coords.y)
                 })
-                .map(|c| c.player_id.unwrap())
+                .map(|c| ArenaPlayer {
+                    player_id: c.player_id.unwrap(),
+                    kills: 0,
+                })
                 .collect();
 
             if queued_characters.len() == 0
@@ -45,8 +48,8 @@ impl Map {
 
             self.send_arena_launch(queued_characters.len());
 
-            for character_id in &queued_characters {
-                let character = match self.characters.get(character_id) {
+            for arena_player in &queued_characters {
+                let character = match self.characters.get(&arena_player.player_id) {
                     Some(character) => character,
                     None => continue,
                 };

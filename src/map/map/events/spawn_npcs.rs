@@ -31,7 +31,10 @@ impl Map {
                 let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
                     Some(npc) => npc,
                     None => {
-                        error!("Failed to load NPC {}", spawn.id);
+                        error!(
+                            "Failed to load NPC {} (Map: {}, Coords: x: {}, y: {})",
+                            spawn.id, self.id, spawn.x, spawn.y
+                        );
                         continue;
                     }
                 };

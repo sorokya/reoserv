@@ -20,6 +20,7 @@ target/
 /pub/*.enf
 /pub/*.evf
 /pub/*.etf
+/pub/**/*.json
 /maps/*.emf
 /quests/*.txt*
 /quests/*.eqf

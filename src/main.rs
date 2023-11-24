@@ -5,9 +5,8 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{fs::File, io::Read, time::Duration};
+use std::time::Duration;
 
-use bytes::Bytes;
 use lazy_static::lazy_static;
 
 mod arenas;
@@ -29,7 +28,7 @@ mod utils;
 mod world;
 
 use eo::{
-    data::{EOInt, Serializeable, StreamReader},
+    data::EOInt,
     pubs::{
         DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
     },
@@ -39,7 +38,13 @@ use mysql_async::prelude::*;
 use tokio::{net::TcpListener, signal, time};
 use world::WorldHandle;
 
-use crate::player::PlayerHandle;
+use crate::{
+    player::PlayerHandle,
+    utils::{
+        load_class_file, load_drop_file, load_inn_file, load_item_file, load_npc_file,
+        load_shop_file, load_skill_master_file, load_spell_file, load_talk_file,
+    },
+};
 
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
@@ -212,125 +217,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     world.shutdown().await;
 
     Ok(())
-}
-
-fn load_class_file() -> Result<EcfFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dat001.ecf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-
-    let reader = StreamReader::new(bytes);
-
-    let mut ecf_file = EcfFile::default();
-    ecf_file.deserialize(&reader);
-    Ok(ecf_file)
-}
-
-fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dtd001.edf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut drop_file = DropFile::default();
-    drop_file.deserialize(&reader);
-    Ok(drop_file)
-}
-
-fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/din001.eid")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut inn_file = InnFile::default();
-    inn_file.deserialize(&reader);
-    Ok(inn_file)
-}
-
-fn load_item_file() -> Result<EifFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dat001.eif")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut item_file = EifFile::default();
-    item_file.deserialize(&reader);
-    Ok(item_file)
-}
-
-fn load_npc_file() -> Result<EnfFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dtn001.enf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut npc_file = EnfFile::default();
-    npc_file.deserialize(&reader);
-    Ok(npc_file)
-}
-
-fn load_shop_file() -> Result<ShopFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dts001.esf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut shop_file = ShopFile::default();
-    shop_file.deserialize(&reader);
-    Ok(shop_file)
-}
-
-fn load_skill_master_file() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dsm001.emf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut skill_master_file = SkillMasterFile::default();
-    skill_master_file.deserialize(&reader);
-    Ok(skill_master_file)
-}
-
-fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dsl001.esf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut spell_file = EsfFile::default();
-    spell_file.deserialize(&reader);
-    Ok(spell_file)
-}
-
-fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/ttd001.etf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
-
-    let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut talk_file = TalkFile::default();
-    talk_file.deserialize(&reader);
-
-    Ok(talk_file)
 }
 
 fn load_exp_table() -> [EOInt; 254] {

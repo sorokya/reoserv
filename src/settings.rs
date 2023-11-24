@@ -13,6 +13,7 @@ pub struct Server {
     pub min_version: String,
     pub max_version: String,
     pub save_rate: EOInt,
+    pub generate_pub: bool,
 }
 
 #[derive(Debug, Deserialize)]

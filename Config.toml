@@ -33,6 +33,10 @@ max_version = "0.3.29"
 # in minutes, 0 to disable
 save_rate = 5
 
+# Should the server generate pub files from JSON?
+# If false you will need to provide binary pub files yourself
+generate_pub = true
+
 [database]
 host = "127.0.0.1"
 port = "3306"

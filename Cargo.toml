@@ -13,6 +13,7 @@ console = ["console-subscriber"]
 [dependencies]
 bytes = "1.0"
 config = { version = "0.13", features = ["toml", "ron"] }
+crc = "3.0.1"
 chrono = "0.4"
 lazy_static = "1.0"
 log = "0.4"
@@ -21,6 +22,8 @@ pretty_env_logger = "0.5"
 futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
+glob = "0.3.1"
+serde_json = "^1.0.108"
 serde_derive = "^1.0.8"
 serde = "^1.0.189"
 console-subscriber = { version = "0.2", optional = true }

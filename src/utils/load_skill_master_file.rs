@@ -10,6 +10,8 @@ use serde_json::Value;
 
 use crate::SETTINGS;
 
+use super::save_pub_file;
+
 pub fn load_skill_master_file() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
     if SETTINGS.server.generate_pub {
         load_json()
@@ -60,6 +62,8 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
                 .collect(),
         });
     }
+
+    save_pub_file(&skill_master_file, "pub/dsm001.emf")?;
 
     Ok(skill_master_file)
 }

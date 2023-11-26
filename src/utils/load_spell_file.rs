@@ -17,6 +17,8 @@ use eo::{
 
 use crate::SETTINGS;
 
+use super::save_pub_file;
+
 pub const CRC32: Crc<u32> = Crc::<u32>::new(&CRC_32_CKSUM);
 
 pub fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
@@ -108,6 +110,8 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
         decode_number(&encoded[0..=1]) as EOShort,
         decode_number(&encoded[2..=3]) as EOShort,
     ];
+
+    save_pub_file(&esf_file, "pub/dsl001.esf")?;
 
     Ok(esf_file)
 }

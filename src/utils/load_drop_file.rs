@@ -10,6 +10,8 @@ use serde_json::Value;
 
 use crate::SETTINGS;
 
+use super::save_pub_file;
+
 pub fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
     if SETTINGS.server.generate_pub {
         load_json()
@@ -48,6 +50,8 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
             });
         }
     }
+
+    save_pub_file(&drop_file, "pub/dtd001.edf")?;
 
     Ok(drop_file)
 }

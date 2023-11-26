@@ -10,6 +10,8 @@ use serde_json::Value;
 
 use crate::SETTINGS;
 
+use super::save_pub_file;
+
 pub fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
     if SETTINGS.server.generate_pub {
         load_json()
@@ -44,6 +46,8 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
             });
         }
     }
+
+    save_pub_file(&talk_file, "pub/ttd001.etf")?;
 
     Ok(talk_file)
 }

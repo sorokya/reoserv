@@ -10,6 +10,8 @@ use serde_json::Value;
 
 use crate::SETTINGS;
 
+use super::save_pub_file;
+
 pub fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
     if SETTINGS.server.generate_pub {
         load_json()
@@ -51,6 +53,8 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
             answer3: v["answer3"].as_str().unwrap_or_default().to_string(),
         });
     }
+
+    save_pub_file(&inn_file, "pub/din001.eid")?;
 
     Ok(inn_file)
 }

@@ -27,7 +27,7 @@ serde_json = "^1.0.108"
 serde_derive = "^1.0.8"
 serde = "^1.0.193"
 console-subscriber = { version = "0.2", optional = true }
-mysql_common = { version = "0.30", features = ["chrono"] }
+mysql_common = { version = "0.31", features = ["chrono"] }
 mysql_async = { version = "0.32", default-features = false, features = ["default-rustls"] }
 argon2 = "0.5.2"
 eo = { git = "https://github.com/sorokya/eo", features = ["use_serde", "generate_protocol"] }

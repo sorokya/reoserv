@@ -1,4 +1,4 @@
-![Rust](https://github.com/sorokya/reoserv/workflows/Rust/badge.svg)
+[![Rust](https://github.com/sorokya/reoserv/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/sorokya/reoserv/actions/workflows/rust.yml)
 
 # REOSERV
 

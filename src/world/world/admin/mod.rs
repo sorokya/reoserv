@@ -1,2 +1,13 @@
+mod ban_player;
+mod free_player;
+mod freeze_player;
+mod jail_player;
+mod kick_player;
+mod mute_player;
+mod quake;
 mod report_player;
+mod request_player_info;
+mod request_player_inventory;
 mod send_admin_message;
+mod toggle_global;
+mod unfreeze_player;

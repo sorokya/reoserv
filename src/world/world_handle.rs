@@ -62,6 +62,21 @@ impl WorldHandle {
         Ok(())
     }
 
+    pub fn ban_player(
+        &self,
+        victim_name: String,
+        duration: String,
+        admin_name: String,
+        silent: bool,
+    ) {
+        let _ = self.tx.send(Command::BanPlayer {
+            victim_name,
+            duration,
+            admin_name,
+            silent,
+        });
+    }
+
     pub fn broadcast_admin_message(&self, name: String, message: String) {
         let _ = self
             .tx
@@ -154,6 +169,17 @@ impl WorldHandle {
         });
     }
 
+    pub fn free_player(&self, victim_name: String) {
+        let _ = self.tx.send(Command::FreePlayer { victim_name });
+    }
+
+    pub fn freeze_player(&self, victim_name: String, admin_name: String) {
+        let _ = self.tx.send(Command::FreezePlayer {
+            victim_name,
+            admin_name,
+        });
+    }
+
     pub async fn get_character_by_name(
         &self,
         name: String,
@@ -235,6 +261,21 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub fn jail_player(&self, victim_name: String, admin_name: String) {
+        let _ = self.tx.send(Command::JailPlayer {
+            victim_name,
+            admin_name,
+        });
+    }
+
+    pub fn kick_player(&self, victim_name: String, admin_name: String, silent: bool) {
+        let _ = self.tx.send(Command::KickPlayer {
+            victim_name,
+            admin_name,
+            silent,
+        });
+    }
+
     pub async fn load_maps(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::LoadMapFiles {
@@ -252,8 +293,19 @@ impl WorldHandle {
         });
     }
 
+    pub fn mute_player(&self, victim_name: String, admin_name: String) {
+        let _ = self.tx.send(Command::MutePlayer {
+            victim_name,
+            admin_name,
+        });
+    }
+
     pub fn ping_players(&self) {
         let _ = self.tx.send(Command::PingPlayers);
+    }
+
+    pub fn quake(&self, magnitude: EOChar) {
+        let _ = self.tx.send(Command::Quake { magnitude });
     }
 
     pub fn report_player(&self, player_id: EOShort, reportee_name: String, message: String) {
@@ -294,6 +346,20 @@ impl WorldHandle {
         });
     }
 
+    pub fn request_player_info(&self, player_id: EOShort, victim_name: String) {
+        let _ = self.tx.send(Command::RequestPlayerInfo {
+            player_id,
+            victim_name,
+        });
+    }
+
+    pub fn request_player_inventory(&self, player_id: EOShort, victim_name: String) {
+        let _ = self.tx.send(Command::RequestPlayerInventory {
+            player_id,
+            victim_name,
+        });
+    }
+
     pub fn save(&self) {
         let _ = self.tx.send(Command::Save);
     }
@@ -325,6 +391,17 @@ impl WorldHandle {
 
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
+    }
+
+    pub fn toggle_global(&self, admin_name: String) {
+        let _ = self.tx.send(Command::ToggleGlobal { admin_name });
+    }
+
+    pub fn unfreeze_player(&self, victim_name: String, admin_name: String) {
+        let _ = self.tx.send(Command::UnfreezePlayer {
+            victim_name,
+            admin_name,
+        });
     }
 
     pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: EOChar) {

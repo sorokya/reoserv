@@ -23,6 +23,12 @@ pub enum Command {
         player_id: EOShort,
         player: PlayerHandle,
     },
+    BanPlayer {
+        victim_name: String,
+        admin_name: String,
+        duration: String,
+        silent: bool,
+    },
     BroadcastAdminMessage {
         name: String,
         message: String,
@@ -72,6 +78,13 @@ pub enum Command {
         player_id: EOShort,
         session_id: EOShort,
     },
+    FreePlayer {
+        victim_name: String,
+    },
+    FreezePlayer {
+        victim_name: String,
+        admin_name: String,
+    },
     GetCharacterByName {
         name: String,
         respond_to:
@@ -94,12 +107,25 @@ pub enum Command {
     GetOnlineList {
         respond_to: oneshot::Sender<Vec<OnlinePlayers>>,
     },
+    GetPlayerParty {
+        player_id: EOShort,
+        respond_to: oneshot::Sender<Option<Party>>,
+    },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
     IsLoggedIn {
         account_id: EOInt,
         respond_to: oneshot::Sender<bool>,
+    },
+    JailPlayer {
+        victim_name: String,
+        admin_name: String,
+    },
+    KickPlayer {
+        victim_name: String,
+        admin_name: String,
+        silent: bool,
     },
     LoadMapFiles {
         world: WorldHandle,
@@ -110,11 +136,14 @@ pub enum Command {
         name: String,
         password: String,
     },
-    GetPlayerParty {
-        player_id: EOShort,
-        respond_to: oneshot::Sender<Option<Party>>,
+    MutePlayer {
+        victim_name: String,
+        admin_name: String,
     },
     PingPlayers,
+    Quake {
+        magnitude: EOChar,
+    },
     ReportPlayer {
         player_id: EOShort,
         reportee_name: String,
@@ -133,6 +162,14 @@ pub enum Command {
     },
     RequestPartyList {
         player_id: EOShort,
+    },
+    RequestPlayerInfo {
+        player_id: EOShort,
+        victim_name: String,
+    },
+    RequestPlayerInventory {
+        player_id: EOShort,
+        victim_name: String,
     },
     RemovePartyMember {
         player_id: EOShort,
@@ -156,6 +193,13 @@ pub enum Command {
         respond_to: oneshot::Sender<()>,
     },
     Tick,
+    ToggleGlobal {
+        admin_name: String,
+    },
+    UnfreezePlayer {
+        victim_name: String,
+        admin_name: String,
+    },
     UpdatePartyHP {
         player_id: EOShort,
         hp_percentage: EOChar,

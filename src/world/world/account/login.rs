@@ -9,7 +9,9 @@ use mysql_async::{prelude::*, Params, Row};
 
 use crate::{player::ClientState, world::WorldHandle};
 
-use super::{super::World, password_hash::validate_password};
+use super::{
+    super::World, password_hash::validate_password, update_last_login_ip::update_last_login_ip,
+};
 
 use super::{account_exists::account_exists, get_character_list::get_character_list};
 
@@ -91,13 +93,26 @@ impl World {
                 return;
             }
 
-            let characters = get_character_list(&mut conn, account_id).await;
-            if let Err(e) = characters {
-                error!("Error getting character list: {}", e);
+            let player_ip = match player.get_ip_addr().await {
+                Ok(ip) => ip,
+                Err(e) => {
+                    player.close(format!("Error getting player IP: {}", e));
+                    return;
+                }
+            };
+
+            if let Err(e) = update_last_login_ip(&mut conn, account_id, &player_ip).await {
+                player.close(format!("Error updating last login IP: {}", e));
                 return;
             }
 
-            let characters = characters.unwrap();
+            let characters = match get_character_list(&mut conn, account_id).await {
+                Ok(characters) => characters,
+                Err(e) => {
+                    player.close(format!("Error getting character list: {}", e));
+                    return;
+                }
+            };
 
             world.add_logged_in_account(account_id);
             player.set_account_id(account_id);

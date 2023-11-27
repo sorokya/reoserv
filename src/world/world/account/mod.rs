@@ -11,3 +11,4 @@ mod request_account_creation;
 mod request_character_creation;
 mod request_character_deletion;
 mod select_character;
+mod update_last_login_ip;

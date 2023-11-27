@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamReader},
+    data::{EOChar, Serializeable, StreamReader},
     pubs::{TalkFile, TalkNpc},
 };
 use glob::glob;
@@ -24,6 +24,7 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut talk_file = TalkFile::default();
     talk_file.magic = "ETF".to_string();
 
+    let mut npc_id = 1;
     for entry in glob("pub/npcs/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
@@ -32,7 +33,6 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
 
         let v: Value = serde_json::from_str(&json)?;
 
-        let npc_id = v["id"].as_u64().unwrap_or(0) as EOShort;
         let messages = v["talkMessages"].as_array().unwrap();
         if messages.len() > 0 {
             talk_file.npcs.push(TalkNpc {
@@ -45,6 +45,8 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
                     .collect(),
             });
         }
+
+        npc_id += 1;
     }
 
     save_pub_file(&talk_file, "pub/ttd001.etf")?;

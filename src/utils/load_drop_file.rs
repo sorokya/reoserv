@@ -24,6 +24,7 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut drop_file = DropFile::default();
     drop_file.magic = "EDF".to_string();
 
+    let mut npc_id = 1;
     for entry in glob("pub/npcs/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
@@ -32,7 +33,6 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
 
         let v: Value = serde_json::from_str(&json)?;
 
-        let npc_id = v["id"].as_u64().unwrap_or(0) as EOShort;
         let drops = v["drops"].as_array().unwrap();
         if drops.len() > 0 {
             drop_file.npcs.push(DropNpc {
@@ -49,6 +49,7 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
                     .collect(),
             });
         }
+        npc_id += 1;
     }
 
     save_pub_file(&drop_file, "pub/dtd001.edf")?;

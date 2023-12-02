@@ -241,13 +241,21 @@ pub async fn handle_command(
                     }
                     "ban" => world.ban_player(
                         args[0].to_owned(),
-                        args[1].to_owned(),
+                        if args.len() > 1 {
+                            args[1].to_owned()
+                        } else {
+                            "".to_string()
+                        },
                         character.name.to_owned(),
                         false,
                     ),
                     "sban" => world.ban_player(
                         args[0].to_owned(),
-                        args[1].to_owned(),
+                        if args.len() > 1 {
+                            args[1].to_owned()
+                        } else {
+                            "".to_string()
+                        },
                         character.name.to_owned(),
                         true,
                     ),

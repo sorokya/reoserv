@@ -289,7 +289,10 @@ impl World {
                 admin_name,
                 duration,
                 silent,
-            } => self.ban_player(victim_name, admin_name, duration, silent),
+            } => {
+                self.ban_player(victim_name, admin_name, duration, silent)
+                    .await
+            }
 
             Command::FreePlayer { victim_name } => self.free_player(victim_name),
 

@@ -50,6 +50,7 @@ mod arena_die;
 mod cancel_trade;
 mod close;
 mod die;
+mod get_ban_duration;
 mod request_warp;
 
 impl Player {
@@ -114,6 +115,9 @@ impl Player {
                         self.state,
                     )));
                 }
+            }
+            Command::GetBanDuration { respond_to } => {
+                let _ = respond_to.send(self.get_ban_duration().await);
             }
             Command::GetBoardId { respond_to } => {
                 let _ = respond_to.send(self.board_id);

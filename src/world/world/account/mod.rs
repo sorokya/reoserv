@@ -1,3 +1,4 @@
+mod account_banned;
 mod account_exists;
 mod change_password;
 mod create_account;

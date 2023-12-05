@@ -110,9 +110,7 @@ impl World {
                 self.broadcast_party_message(player_id, message);
             }
 
-            Command::_BroadcastServerMessage { message } => {
-                self.broadcast_server_message(&message).await
-            }
+            Command::_BroadcastServerMessage { message } => self.broadcast_server_message(&message),
 
             Command::ChangePassword {
                 player_id,

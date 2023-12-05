@@ -15,8 +15,7 @@ impl World {
             self.broadcast_server_message(&format!(
                 "Attention!! {} has been removed from the game --{} [Ban]",
                 victim_name, admin_name
-            ))
-            .await;
+            ));
         }
 
         if let Some(player_id) = self.characters.get(&victim_name) {

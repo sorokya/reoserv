@@ -13,12 +13,9 @@ use eo::{
     },
 };
 
-use crate::{
-    player::{ClientState, PlayerHandle},
-    world::WorldHandle,
-};
+use crate::player::{ClientState, PlayerHandle};
 
-async fn request(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
+async fn request(reader: StreamReader, player: PlayerHandle) {
     if let Some(duration) = player.get_ban_duration().await {
         let mut builder = StreamBuilder::new();
         builder.add_byte(InitReply::Banned.to_byte());
@@ -80,14 +77,9 @@ async fn request(reader: StreamReader, player: PlayerHandle, world: WorldHandle)
     player.send(PacketAction::Init, PacketFamily::Init, builder.get());
 }
 
-pub async fn init(
-    action: PacketAction,
-    reader: StreamReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
+pub async fn init(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
     match action {
-        PacketAction::Init => request(reader, player, world).await,
+        PacketAction::Init => request(reader, player).await,
         _ => error!("Unhandled packet Init_{:?}", action),
     }
 }

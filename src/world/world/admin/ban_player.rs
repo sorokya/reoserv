@@ -11,16 +11,17 @@ impl World {
         duration: String,
         silent: bool,
     ) {
-        if !silent {
-            self.broadcast_server_message(&format!(
-                "Attention!! {} has been removed from the game --{} [Ban]",
-                victim_name, admin_name
-            ));
+        if let Some(player_id) = self.characters.get(&victim_name) {
+            if let Some(player) = self.players.get(player_id) {
+                player.close("Player banned".to_string());
+            }
         }
 
-        if let Some(player_id) = self.characters.get(&victim_name) {
-            let player = self.players.get(&player_id).unwrap();
-            player.close("Player banned".to_string());
+        if !silent {
+            self.broadcast_server_message(&format!(
+                "Attention!! {} has been removed from the game -{} [banned]",
+                victim_name, admin_name
+            ));
         }
 
         let pool = self.pool.clone();

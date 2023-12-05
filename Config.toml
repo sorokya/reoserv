@@ -65,7 +65,10 @@ home = "Wanderer"
 [jail]
 map = 76
 x = 6
-y = 6
+y = 7
+free_map = 76
+free_x = 9
+free_y = 11
 
 [rescue]
 map = 4

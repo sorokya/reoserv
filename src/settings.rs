@@ -39,6 +39,9 @@ pub struct Jail {
     pub map: EOShort,
     pub x: EOChar,
     pub y: EOChar,
+    pub free_map: EOShort,
+    pub free_x: EOChar,
+    pub free_y: EOChar,
 }
 
 #[derive(Debug, Deserialize)]

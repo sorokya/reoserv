@@ -14,6 +14,7 @@ pub struct Server {
     pub max_version: String,
     pub save_rate: EOInt,
     pub generate_pub: bool,
+    pub lang: String,
 }
 
 #[derive(Debug, Deserialize)]

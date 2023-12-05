@@ -37,6 +37,9 @@ save_rate = 5
 # If false you will need to provide binary pub files yourself
 generate_pub = true
 
+# Server language. Should match a ron file in the lang directory
+lang = "en"
+
 [database]
 host = "127.0.0.1"
 port = "3306"

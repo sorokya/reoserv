@@ -2,6 +2,7 @@ use mysql_async::{params, prelude::Queryable, Row};
 use mysql_common::Value;
 
 use super::super::World;
+use crate::LANG;
 
 impl World {
     pub async fn ban_player(
@@ -18,9 +19,11 @@ impl World {
         }
 
         if !silent {
-            self.broadcast_server_message(&format!(
-                "Attention!! {} has been removed from the game -{} [banned]",
-                victim_name, admin_name
+            self.broadcast_server_message(&get_lang_string!(
+                &LANG.announce_remove,
+                victim = victim_name,
+                name = admin_name,
+                method = "banned"
             ));
         }
 

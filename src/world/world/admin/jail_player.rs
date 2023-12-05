@@ -2,7 +2,7 @@ use eo::protocol::{Coords, WarpAnimation};
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 
-use crate::SETTINGS;
+use crate::{LANG, SETTINGS};
 
 use super::super::World;
 
@@ -24,9 +24,11 @@ impl World {
             }
         }
 
-        self.broadcast_server_message(&format!(
-            "Attention!! {} has been removed from the game -{} [jailed]",
-            victim_name, admin_name
+        self.broadcast_server_message(&get_lang_string!(
+            &LANG.announce_remove,
+            victim = victim_name,
+            name = admin_name,
+            method = "jailed"
         ));
 
         let pool = self.pool.clone();

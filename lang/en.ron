@@ -1,7 +1,7 @@
 (
   announce_freeze: "Attention!! {victim} movement has been frozen -{name}",
   announce_unfreeze: "Attention!! {victim} movement has been released -{name}",
-  announce_remove: "Attention!! {victim} has been removed from the game -{name} [{type}]",
+  announce_remove: "Attention!! {victim} has been removed from the game -{name} [{method}]",
   announce_mute: "Attention!! {victim} has been muted -{name}",
   announce_global: "World communications changed to: {state} -{name}",
   global_locked: "This channel is temporarily disabled"

@@ -1,3 +1,5 @@
+use crate::LANG;
+
 use super::super::World;
 
 impl World {
@@ -15,9 +17,11 @@ impl World {
         player.close("Player kicked".to_string());
 
         if !silent {
-            self.broadcast_server_message(&format!(
-                "Attention!! {} has been removed from the game -{} [jailed]",
-                victim_name, admin_name
+            self.broadcast_server_message(&get_lang_string!(
+                &LANG.announce_remove,
+                victim = victim_name,
+                name = admin_name,
+                method = "kicked"
             ));
         }
     }

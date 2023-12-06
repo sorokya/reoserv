@@ -9,7 +9,10 @@ use mysql_async::{prelude::*, Params, Row};
 
 use crate::{player::ClientState, world::WorldHandle};
 
-use super::{super::World, password_hash::validate_password};
+use super::{
+    super::World, account_banned::account_banned, password_hash::validate_password,
+    update_last_login_ip::update_last_login_ip,
+};
 
 use super::{account_exists::account_exists, get_character_list::get_character_list};
 
@@ -46,9 +49,26 @@ impl World {
 
             if !exists {
                 let mut builder = StreamBuilder::new();
-                builder.add_short(1);
+                builder.add_short(LoginReply::WrongUser.to_short());
                 builder.add_string("NO");
                 player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                return;
+            }
+
+            let banned = match account_banned(&mut conn, &username).await {
+                Ok(banned) => banned,
+                Err(e) => {
+                    error!("Error checking if account is banned: {}", e);
+                    return;
+                }
+            };
+
+            if banned {
+                let mut builder = StreamBuilder::new();
+                builder.add_short(LoginReply::Banned.to_short());
+                builder.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                player.close("Account is banned".to_string());
                 return;
             }
 
@@ -65,7 +85,7 @@ impl World {
                 Err(e) => {
                     error!("Error getting password hash: {}", e);
                     let mut builder = StreamBuilder::new();
-                    builder.add_short(2);
+                    builder.add_short(LoginReply::WrongUserPass.to_short());
                     builder.add_string("NO");
                     player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
                     return;
@@ -76,7 +96,7 @@ impl World {
             let password_hash: String = row.get("password_hash").unwrap();
             if !validate_password(&username, &password, &password_hash) {
                 let mut builder = StreamBuilder::new();
-                builder.add_short(2);
+                builder.add_short(LoginReply::WrongUserPass.to_short());
                 builder.add_string("NO");
                 player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
                 return;
@@ -85,19 +105,32 @@ impl World {
             let account_id: EOInt = row.get("id").unwrap();
             if world.is_logged_in(account_id).await {
                 let mut builder = StreamBuilder::new();
-                builder.add_short(5);
+                builder.add_short(LoginReply::LoggedIn.to_short());
                 builder.add_string("NO");
                 player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
                 return;
             }
 
-            let characters = get_character_list(&mut conn, account_id).await;
-            if let Err(e) = characters {
-                error!("Error getting character list: {}", e);
+            let player_ip = match player.get_ip_addr().await {
+                Ok(ip) => ip,
+                Err(e) => {
+                    player.close(format!("Error getting player IP: {}", e));
+                    return;
+                }
+            };
+
+            if let Err(e) = update_last_login_ip(&mut conn, account_id, &player_ip).await {
+                player.close(format!("Error updating last login IP: {}", e));
                 return;
             }
 
-            let characters = characters.unwrap();
+            let characters = match get_character_list(&mut conn, account_id).await {
+                Ok(characters) => characters,
+                Err(e) => {
+                    player.close(format!("Error getting character list: {}", e));
+                    return;
+                }
+            };
 
             world.add_logged_in_account(account_id);
             player.set_account_id(account_id);

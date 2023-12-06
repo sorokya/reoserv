@@ -1,5 +1,7 @@
 mod capitalize;
 pub use capitalize::capitalize;
+#[macro_use]
+mod get_lang_string;
 mod in_range;
 pub use in_range::{get_distance, in_client_range, in_range};
 mod format_duration;

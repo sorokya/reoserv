@@ -3,17 +3,31 @@ use eo::{
     protocol::{server::talk, PacketAction, PacketFamily},
 };
 
-use crate::player::ClientState;
+use crate::{player::ClientState, LANG};
 
 use super::super::World;
 
 impl World {
+    // TODO: make this sync
     pub async fn broadcast_global_message(
         &self,
         target_player_id: EOShort,
         name: &str,
         message: &str,
     ) {
+        let player = match self.players.get(&target_player_id) {
+            Some(player) => player,
+            None => return,
+        };
+
+        if self.global_locked {
+            let mut builder = StreamBuilder::new();
+            builder.add_break_string("Server");
+            builder.add_string(&LANG.global_locked);
+            player.send(PacketAction::Msg, PacketFamily::Talk, builder.get());
+            return;
+        }
+
         let packet = talk::Msg {
             player_name: name.to_string(),
             message: message.to_string(),

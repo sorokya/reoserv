@@ -31,6 +31,9 @@ pub enum Command {
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
     },
+    GetBanDuration {
+        respond_to: oneshot::Sender<Option<EOInt>>,
+    },
     GetBoardId {
         respond_to: oneshot::Sender<Option<EOShort>>,
     },

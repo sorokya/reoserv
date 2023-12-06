@@ -18,12 +18,14 @@ mod formulas;
 use formulas::Formulas;
 mod errors;
 mod handlers;
+mod lang;
 mod map;
 mod player;
 mod settings;
 use settings::Settings;
 mod sln;
 use sln::ping_sln;
+#[macro_use]
 mod utils;
 mod world;
 
@@ -39,6 +41,7 @@ use tokio::{net::TcpListener, signal, time};
 use world::WorldHandle;
 
 use crate::{
+    lang::Lang,
     player::PlayerHandle,
     utils::{
         load_class_file, load_drop_file, load_inn_file, load_item_file, load_npc_file,
@@ -51,6 +54,7 @@ lazy_static! {
     static ref ARENAS: Arenas = Arenas::new().expect("Failed to load arenas!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
+    static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
     static ref CLASS_DB: EcfFile = load_class_file().expect("Failed to load ECF file!");
     static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
     static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");

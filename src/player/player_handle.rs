@@ -79,6 +79,12 @@ impl PlayerHandle {
         }
     }
 
+    pub async fn get_ban_duration(&self) -> Option<EOInt> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetBanDuration { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn get_board_id(&self) -> Option<EOShort> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetBoardId { respond_to: tx });

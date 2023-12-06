@@ -37,6 +37,9 @@ save_rate = 5
 # If false you will need to provide binary pub files yourself
 generate_pub = true
 
+# Server language. Should match a ron file in the lang directory
+lang = "en"
+
 [database]
 host = "127.0.0.1"
 port = "3306"
@@ -65,7 +68,10 @@ home = "Wanderer"
 [jail]
 map = 76
 x = 6
-y = 6
+y = 7
+free_map = 76
+free_x = 9
+free_y = 11
 
 [rescue]
 map = 4

@@ -26,6 +26,7 @@ pub struct World {
     warp_suck_ticks: EOInt,
     arena_ticks: EOInt,
     door_close_ticks: EOInt,
+    global_locked: bool,
 }
 
 mod account;
@@ -65,6 +66,7 @@ impl World {
             warp_suck_ticks: 0,
             arena_ticks: 0,
             door_close_ticks: 0,
+            global_locked: false,
         }
     }
 
@@ -110,9 +112,7 @@ impl World {
                 self.broadcast_party_message(player_id, message);
             }
 
-            Command::_BroadcastServerMessage { message } => {
-                self.broadcast_server_message(&message).await
-            }
+            Command::_BroadcastServerMessage { message } => self.broadcast_server_message(&message),
 
             Command::ChangePassword {
                 player_id,
@@ -283,6 +283,58 @@ impl World {
                 player_id,
                 hp_percentage,
             } => self.update_party_hp(player_id, hp_percentage),
+
+            Command::BanPlayer {
+                victim_name,
+                admin_name,
+                duration,
+                silent,
+            } => {
+                self.ban_player(victim_name, admin_name, duration, silent)
+                    .await
+            }
+
+            Command::FreePlayer { victim_name } => self.free_player(victim_name),
+
+            Command::FreezePlayer {
+                victim_name,
+                admin_name,
+            } => self.freeze_player(victim_name, admin_name),
+
+            Command::JailPlayer {
+                victim_name,
+                admin_name,
+            } => self.jail_player(victim_name, admin_name),
+
+            Command::KickPlayer {
+                victim_name,
+                admin_name,
+                silent,
+            } => self.kick_player(victim_name, admin_name, silent),
+
+            Command::MutePlayer {
+                victim_name,
+                admin_name,
+            } => self.mute_player(victim_name, admin_name),
+
+            Command::Quake { magnitude } => self.quake(magnitude),
+
+            Command::RequestPlayerInfo {
+                player_id,
+                victim_name,
+            } => self.request_player_info(player_id, victim_name),
+
+            Command::RequestPlayerInventory {
+                player_id,
+                victim_name,
+            } => self.request_player_inventory(player_id, victim_name),
+
+            Command::ToggleGlobal { admin_name } => self.toggle_global(admin_name),
+
+            Command::UnfreezePlayer {
+                victim_name,
+                admin_name,
+            } => self.unfreeze_player(victim_name, admin_name),
         }
     }
 }

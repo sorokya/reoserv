@@ -1,3 +1,4 @@
+mod account_banned;
 mod account_exists;
 mod change_password;
 mod create_account;
@@ -11,3 +12,4 @@ mod request_account_creation;
 mod request_character_creation;
 mod request_character_deletion;
 mod select_character;
+mod update_last_login_ip;

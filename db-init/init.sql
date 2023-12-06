@@ -114,6 +114,30 @@ CREATE TABLE `Character` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `Ban`
+--
+
+DROP TABLE IF EXISTS `Ban`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Account` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `ip` varchar(15) NOT NULL,
+  `duration` int NULL,
+  `created_by` int NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`),
+  KEY `account_id_idx` (`account_id`),
+  CONSTRAINT `ban_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
+  KEY `created_by_idx` (`created_by`),
+  CONSTRAINT `ban_created_by` FOREIGN KEY (`created_by`) REFERENCES `Character` (`id`) 
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
 -- Table structure for table `Guild`
 --
 

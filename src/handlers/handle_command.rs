@@ -43,6 +43,7 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
     }
 }
 
+// TODO: warp player to where you're facing
 async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle) {
     let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
@@ -55,6 +56,7 @@ async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle)
     }
 }
 
+// TODO: Make light guide and guardian warp near player out of site with scroll warp
 async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle) {
     let target_name = (*args[0]).to_string();
     if let Ok(target) = world.get_character_by_name(target_name).await {
@@ -229,6 +231,46 @@ pub async fn handle_command(
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
+                    "jail" => world.jail_player(args[0].to_owned(), character.name.to_owned()),
+                    "free" => world.free_player(args[0].to_owned()),
+                    "kick" => {
+                        world.kick_player(args[0].to_owned(), character.name.to_owned(), false)
+                    }
+                    "skick" => {
+                        world.kick_player(args[0].to_owned(), character.name.to_owned(), true)
+                    }
+                    "ban" => world.ban_player(
+                        args[0].to_owned(),
+                        if args.len() > 1 {
+                            args[1].to_owned()
+                        } else {
+                            "".to_string()
+                        },
+                        character.name.to_owned(),
+                        false,
+                    ),
+                    "sban" => world.ban_player(
+                        args[0].to_owned(),
+                        if args.len() > 1 {
+                            args[1].to_owned()
+                        } else {
+                            "".to_string()
+                        },
+                        character.name.to_owned(),
+                        true,
+                    ),
+                    "quake" => world.quake(args[0].parse::<EOChar>().unwrap()),
+                    "mute" => world.mute_player(args[0].to_owned(), character.name.to_owned()),
+                    "player" => {
+                        world.request_player_info(character.player_id.unwrap(), args[0].to_owned())
+                    }
+                    "inventory" => world
+                        .request_player_inventory(character.player_id.unwrap(), args[0].to_owned()),
+                    "freeze" => world.freeze_player(args[0].to_owned(), character.name.to_owned()),
+                    "unfreeze" => {
+                        world.unfreeze_player(args[0].to_owned(), character.name.to_owned())
+                    }
+                    "global" => world.toggle_global(character.name.to_owned()),
                     _ => {
                         let packet = talk::Server {
                             message: format!("Unimplemented command: {}", command.name),

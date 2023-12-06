@@ -14,6 +14,7 @@ pub struct Server {
     pub max_version: String,
     pub save_rate: EOInt,
     pub generate_pub: bool,
+    pub lang: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,6 +40,9 @@ pub struct Jail {
     pub map: EOShort,
     pub x: EOChar,
     pub y: EOChar,
+    pub free_map: EOShort,
+    pub free_x: EOChar,
+    pub free_y: EOChar,
 }
 
 #[derive(Debug, Deserialize)]

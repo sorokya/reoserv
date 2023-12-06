@@ -136,6 +136,20 @@
             ],
         ),
         (
+            name: "mute",
+            alias: "m",
+            description: "Mute a player",
+            usage: "$mute player",
+            admin_level: "Guardian",
+            args: [
+                (
+                    name: "player",
+                    type: "String",
+                    required: true,
+                ),
+            ],
+        ),
+        (
             name: "kick",
             alias: "k",
             description: "Kick a player",

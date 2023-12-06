@@ -26,6 +26,7 @@ pub struct World {
     warp_suck_ticks: EOInt,
     arena_ticks: EOInt,
     door_close_ticks: EOInt,
+    global_locked: bool,
 }
 
 mod account;
@@ -65,6 +66,7 @@ impl World {
             warp_suck_ticks: 0,
             arena_ticks: 0,
             door_close_ticks: 0,
+            global_locked: false,
         }
     }
 

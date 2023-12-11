@@ -32,7 +32,7 @@ mysql_async = { version = "0.33", default-features = false, features = ["default
 argon2 = "0.5.2"
 eo = { git = "https://github.com/sorokya/eo", features = ["use_serde", "generate_protocol"] }
 rand = "0.8"
-evalexpr = "11.2.0"
+evalexpr = "11.3.0"
 duration-str = "0.7.0"
 
 [target.'cfg(windows)'.build-dependencies]

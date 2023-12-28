@@ -1,5 +1,5 @@
 use eo::{
-    data::EOShort,
+    data::i32,
     protocol::{server::avatar, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -11,10 +11,10 @@ use super::super::Map;
 impl Map {
     pub fn leave(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         warp_animation: Option<WarpAnimation>,
         respond_to: oneshot::Sender<Character>,
-        interact_player_id: Option<EOShort>,
+        interact_player_id: Option<i32>,
     ) {
         if let Some(interact_player_id) = interact_player_id {
             self.cancel_trade(player_id, interact_player_id);

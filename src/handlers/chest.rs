@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::chest::{Add, Open, Take},
         Item, PacketAction,
@@ -8,7 +8,7 @@ use eo::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Add::default();
     packet.deserialize(&reader);
     map.add_chest_item(
@@ -20,13 +20,13 @@ fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     );
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn open(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Open::default();
     packet.deserialize(&reader);
     map.open_chest(player_id, packet.coords);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Take::default();
     packet.deserialize(&reader);
     map.take_chest_item(player_id, packet.take_item_id);

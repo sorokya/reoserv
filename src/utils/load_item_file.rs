@@ -4,7 +4,7 @@ use bytes::Bytes;
 use crc::{Crc, CRC_32_CKSUM};
 use eo::{
     data::{
-        decode_number, encode_number, i32, EOInt, EOShort, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, EOInt, i32, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{EifFile, EifItem, EifItemSize, EifItemSpecial, EifItemSubType, EifItemType},
@@ -40,20 +40,20 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
         let record = EifItem {
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as EOShort,
+            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as i32,
             r#type: EifItemType::from_char(v["type"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
             subtype: EifItemSubType::from_char(v["subType"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
             special: EifItemSpecial::from_char(v["special"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
-            hp: v["hp"].as_u64().unwrap_or(0) as EOShort,
-            tp: v["tp"].as_u64().unwrap_or(0) as EOShort,
-            min_damage: v["minDamage"].as_u64().unwrap_or(0) as EOShort,
-            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as EOShort,
-            accuracy: v["accuracy"].as_u64().unwrap_or(0) as EOShort,
-            evade: v["evade"].as_u64().unwrap_or(0) as EOShort,
-            armor: v["armor"].as_u64().unwrap_or(0) as EOShort,
+            hp: v["hp"].as_u64().unwrap_or(0) as i32,
+            tp: v["tp"].as_u64().unwrap_or(0) as i32,
+            min_damage: v["minDamage"].as_u64().unwrap_or(0) as i32,
+            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as i32,
+            accuracy: v["accuracy"].as_u64().unwrap_or(0) as i32,
+            evade: v["evade"].as_u64().unwrap_or(0) as i32,
+            armor: v["armor"].as_u64().unwrap_or(0) as i32,
             return_damage: v["returnDamage"].as_u64().unwrap_or(0) as i32,
             str: v["str"].as_u64().unwrap_or(0) as i32,
             intl: v["intl"].as_u64().unwrap_or(0) as i32,
@@ -70,14 +70,14 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
             spec1: v["spec1"].as_u64().unwrap_or(0) as EOInt,
             spec2: v["spec2"].as_u64().unwrap_or(0) as i32,
             spec3: v["spec3"].as_u64().unwrap_or(0) as i32,
-            level_req: v["levelReq"].as_u64().unwrap_or(0) as EOShort,
-            class_req: v["classReq"].as_u64().unwrap_or(0) as EOShort,
-            str_req: v["strReq"].as_u64().unwrap_or(0) as EOShort,
-            int_req: v["intReq"].as_u64().unwrap_or(0) as EOShort,
-            wis_req: v["wisReq"].as_u64().unwrap_or(0) as EOShort,
-            agi_req: v["agiReq"].as_u64().unwrap_or(0) as EOShort,
-            con_req: v["conReq"].as_u64().unwrap_or(0) as EOShort,
-            cha_req: v["chaReq"].as_u64().unwrap_or(0) as EOShort,
+            level_req: v["levelReq"].as_u64().unwrap_or(0) as i32,
+            class_req: v["classReq"].as_u64().unwrap_or(0) as i32,
+            str_req: v["strReq"].as_u64().unwrap_or(0) as i32,
+            int_req: v["intReq"].as_u64().unwrap_or(0) as i32,
+            wis_req: v["wisReq"].as_u64().unwrap_or(0) as i32,
+            agi_req: v["agiReq"].as_u64().unwrap_or(0) as i32,
+            con_req: v["conReq"].as_u64().unwrap_or(0) as i32,
+            cha_req: v["chaReq"].as_u64().unwrap_or(0) as i32,
             element: v["element"].as_u64().unwrap_or(0) as i32,
             element_damage: v["elementDamage"].as_u64().unwrap_or(0) as i32,
             weight: v["weight"].as_u64().unwrap_or(0) as i32,
@@ -106,8 +106,8 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
     let encoded = encode_number(checksum);
 
     eif_file.rid = [
-        decode_number(&encoded[0..=1]) as EOShort,
-        decode_number(&encoded[2..=3]) as EOShort,
+        decode_number(&encoded[0..=1]) as i32,
+        decode_number(&encoded[2..=3]) as i32,
     ];
 
     save_pub_file(&eif_file, "pub/dat001.eif")?;

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{client::connection::Accept, PacketAction},
 };
 
@@ -32,8 +32,8 @@ async fn accept(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    if expected_multiples[0] as EOShort != packet.encode_multiple
-        || expected_multiples[1] as EOShort != packet.decode_multiple
+    if expected_multiples[0] as i32 != packet.encode_multiple
+        || expected_multiples[1] as i32 != packet.decode_multiple
     {
         player.close(format!(
             "sending invalid encoding multiples: Got {:?}, expected {:?}.",

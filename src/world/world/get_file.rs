@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamBuilder},
+    data::{i32, i32, Serializeable, StreamBuilder},
     protocol::{server::init, FileType, InitReply, PacketAction, PacketFamily},
 };
 
@@ -10,9 +10,9 @@ use super::World;
 impl World {
     pub async fn get_file(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         file_type: FileType,
-        session_id: EOShort,
+        session_id: i32,
         _file_id: Option<i32>,
         warp: bool,
     ) {

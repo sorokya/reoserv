@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamBuilder},
+    data::{i32, i32, Serializeable, StreamBuilder},
     protocol::{
         server::statskill::Open, CharacterBaseStats, PacketAction, PacketFamily, SkillLearn,
     },
@@ -11,7 +11,7 @@ use crate::{NPC_DB, SKILL_MASTER_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_skill_master(&mut self, player_id: EOShort, npc_index: i32) {
+    pub async fn open_skill_master(&mut self, player_id: i32, npc_index: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,

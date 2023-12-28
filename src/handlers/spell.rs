@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamReader},
+    data::{i32, i32, Serializeable, StreamReader},
     protocol::{
         client::spell::{Request, TargetOther},
         PacketAction, SpellTargetType,
@@ -8,17 +8,17 @@ use eo::{
 
 use crate::{character::SpellTarget, map::MapHandle, player::PlayerHandle};
 
-fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Request::default();
     packet.deserialize(&reader);
     map.start_spell_chant(player_id, packet.spell_id, packet.timestamp);
 }
 
-fn target_self(_reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn target_self(_reader: StreamReader, player_id: i32, map: MapHandle) {
     map.cast_spell(player_id, SpellTarget::Player);
 }
 
-fn target_other(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn target_other(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = TargetOther::default();
     packet.deserialize(&reader);
 
@@ -32,7 +32,7 @@ fn target_other(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     }
 }
 
-fn target_group(_reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn target_group(_reader: StreamReader, player_id: i32, map: MapHandle) {
     map.cast_spell(player_id, SpellTarget::Group);
 }
 

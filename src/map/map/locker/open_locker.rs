@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily, ShortItem},
     pubs::EmfTileSpec,
 };
@@ -7,7 +7,7 @@ use eo::{
 use super::super::Map;
 
 impl Map {
-    pub fn open_locker(&self, player_id: EOShort) {
+    pub fn open_locker(&self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

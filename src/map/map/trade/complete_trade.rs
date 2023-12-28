@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{Emote, PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn complete_trade(&mut self, player_id: EOShort, partner_id: EOShort) {
+    pub async fn complete_trade(&mut self, player_id: i32, partner_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

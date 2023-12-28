@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         server::statskill::{Reply, ReplyData, ReplyWrongClass, Take},
         PacketAction, PacketFamily, SkillMasterReply,
@@ -14,9 +14,9 @@ use super::super::Map;
 impl Map {
     pub async fn learn_skill(
         &mut self,
-        player_id: EOShort,
-        spell_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        spell_id: i32,
+        session_id: i32,
     ) {
         if spell_id == 0 {
             return;
@@ -101,7 +101,7 @@ impl Map {
             let reply = Reply {
                 reply_code: SkillMasterReply::WrongClass,
                 data: ReplyData::WrongClass(ReplyWrongClass {
-                    class_id: character.class as EOShort,
+                    class_id: character.class as i32,
                 }),
             };
 

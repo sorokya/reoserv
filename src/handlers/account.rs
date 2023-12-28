@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::account::{Create, Request},
         PacketAction,
@@ -8,19 +8,19 @@ use eo::{
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn create(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn create(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut create = Create::default();
     create.deserialize(&reader);
     world.create_account(player_id, create.clone());
 }
 
-fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn request(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut request = Request::default();
     request.deserialize(&reader);
     world.request_account_creation(player_id, request.username);
 }
 
-fn agree(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn agree(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let username = reader.get_break_string();
     let current_password = reader.get_break_string();
     let new_password = reader.get_break_string();

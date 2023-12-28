@@ -1,12 +1,12 @@
 use eo::{
-    data::EOShort,
+    data::i32,
     protocol::{server::face, Direction, PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn face(&mut self, player_id: EOShort, direction: Direction) {
+    pub fn face(&mut self, player_id: i32, direction: Direction) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,

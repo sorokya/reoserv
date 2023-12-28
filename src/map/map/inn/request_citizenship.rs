@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -11,8 +11,8 @@ use super::super::Map;
 impl Map {
     pub async fn request_citizenship(
         &mut self,
-        player_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        session_id: i32,
         answers: [String; 3],
     ) {
         let character = match self.characters.get_mut(&player_id) {

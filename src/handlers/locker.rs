@@ -1,11 +1,11 @@
 use eo::{
-    data::{EOShort, StreamReader},
+    data::{i32, StreamReader},
     protocol::{Item, PacketAction},
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
     reader.seek(2);
 
     let item = Item {
@@ -20,15 +20,15 @@ fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.add_locker_item(player_id, item);
 }
 
-fn buy(player_id: EOShort, map: MapHandle) {
+fn buy(player_id: i32, map: MapHandle) {
     map.upgrade_locker(player_id);
 }
 
-fn open(player_id: EOShort, map: MapHandle) {
+fn open(player_id: i32, map: MapHandle) {
     map.open_locker(player_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
     reader.seek(2);
 
     let item_id = reader.get_short();

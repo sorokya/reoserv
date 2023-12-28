@@ -1,11 +1,11 @@
 use eo::{
-    data::{EOShort, StreamReader},
+    data::{i32, StreamReader},
     protocol::PacketAction,
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn create(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn create(reader: StreamReader, player_id: i32, map: MapHandle) {
     let _board_id = reader.get_short();
     reader.seek(1);
     let subject = reader.get_break_string();
@@ -13,18 +13,18 @@ fn create(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.create_board_post(player_id, subject, body);
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn open(reader: StreamReader, player_id: i32, map: MapHandle) {
     let board_id = reader.get_short();
     map.open_board(player_id, board_id + 1);
 }
 
-fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn remove(reader: StreamReader, player_id: i32, map: MapHandle) {
     let _board_id = reader.get_short();
     let post_id = reader.get_short();
     map.remove_board_post(player_id, post_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
     let _board_id = reader.get_short();
     let post_id = reader.get_short();
     map.view_board_post(player_id, post_id);

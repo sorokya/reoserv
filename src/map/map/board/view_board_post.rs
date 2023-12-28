@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::{params, prelude::Queryable, Row};
@@ -9,7 +9,7 @@ use crate::utils::get_board_tile_spec;
 use super::super::Map;
 
 impl Map {
-    pub async fn view_board_post(&self, player_id: EOShort, post_id: EOShort) {
+    pub async fn view_board_post(&self, player_id: i32, post_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

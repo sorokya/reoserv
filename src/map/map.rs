@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eo::{
-    data::{i32, EOInt, EOShort},
+    data::{i32, EOInt, i32},
     protocol::Coords,
     pubs::{EmfFile, EmfTileSpec},
 };
@@ -15,15 +15,15 @@ use super::{Chest, Command, Door, Item, Npc};
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     world: WorldHandle,
-    id: EOShort,
+    id: i32,
     file: EmfFile,
     file_size: EOInt,
     chests: Vec<Chest>,
     doors: Vec<Door>,
-    items: HashMap<EOShort, Item>,
+    items: HashMap<i32, Item>,
     npcs: HashMap<i32, Npc>,
     npcs_initialized: bool,
-    characters: HashMap<EOShort, Character>,
+    characters: HashMap<i32, Character>,
     pool: Pool,
     quake_ticks: EOInt,
     arena_ticks: EOInt,
@@ -35,8 +35,8 @@ pub struct Map {
 
 #[derive(Debug, Copy, Clone)]
 pub struct ArenaPlayer {
-    pub player_id: EOShort,
-    pub kills: EOShort,
+    pub player_id: i32,
+    pub kills: i32,
 }
 
 mod bank;
@@ -53,7 +53,7 @@ mod utils;
 
 impl Map {
     pub fn new(
-        id: EOShort,
+        id: i32,
         file_size: EOInt,
         file: EmfFile,
         pool: Pool,

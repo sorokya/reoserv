@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::statskill::Junk, PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -9,7 +9,7 @@ use crate::NPC_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn reset_character(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn reset_character(&mut self, player_id: i32, session_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,

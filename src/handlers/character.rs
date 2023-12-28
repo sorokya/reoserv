@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::character::{Create, Remove, Request, Take},
         PacketAction,
@@ -8,19 +8,19 @@ use eo::{
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn create(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn create(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut create = Create::default();
     create.deserialize(&reader);
     world.create_character(player_id, create);
 }
 
-fn remove(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn remove(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut remove = Remove::default();
     remove.deserialize(&reader);
     world.delete_character(player_id, remove.session_id, remove.character_id);
 }
 
-fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn request(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut request = Request::default();
     request.deserialize(&reader);
 
@@ -31,7 +31,7 @@ fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     world.request_character_creation(player_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn take(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut take = Take::default();
     take.deserialize(&reader);
     world.request_character_deletion(player_id, take.character_id);

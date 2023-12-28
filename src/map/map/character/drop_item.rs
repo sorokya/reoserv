@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::item, Coords, PacketAction, PacketFamily, ShortItem},
     pubs::EifItemSpecial,
 };
@@ -11,7 +11,7 @@ use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn drop_item(&mut self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
+    pub async fn drop_item(&mut self, target_player_id: i32, item: ShortItem, coords: Coords) {
         if item.amount == 0 {
             return;
         }

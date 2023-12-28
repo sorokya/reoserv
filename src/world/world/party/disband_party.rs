@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::World;
 
 impl World {
-    pub fn disband_party(&mut self, leader_id: EOShort) {
+    pub fn disband_party(&mut self, leader_id: i32) {
         let party_index = match self.parties.iter().position(|p| p.leader == leader_id) {
             Some(index) => index,
             None => return,

@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
     protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -14,7 +14,7 @@ use super::super::Map;
 impl Map {
     pub fn walk(
         &mut self,
-        target_player_id: EOShort,
+        target_player_id: i32,
         direction: Direction,
         _coords: Coords,
         _timestamp: EOInt,

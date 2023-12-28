@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort},
+    data::{i32, i32},
     protocol::Item,
     pubs::EifItemType,
 };
@@ -9,7 +9,7 @@ use crate::ITEM_DB;
 use super::Character;
 
 impl Character {
-    pub fn unequip(&mut self, item_id: EOShort, sub_loc: i32) -> bool {
+    pub fn unequip(&mut self, item_id: i32, sub_loc: i32) -> bool {
         if sub_loc > 1 {
             return false;
         }

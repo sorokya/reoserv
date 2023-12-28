@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOShort, EOThree, StreamBuilder},
+    data::{i32, i32, EOThree, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -12,13 +12,13 @@ use super::super::Map;
 const EFFECT_SPIKE: i32 = 2;
 
 impl Map {
-    pub fn spike_damage(&mut self, player_id: EOShort) {
+    pub fn spike_damage(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };
 
-        let damage = (character.max_hp as f32 * SETTINGS.world.spike_damage).floor() as EOShort;
+        let damage = (character.max_hp as f32 * SETTINGS.world.spike_damage).floor() as i32;
         let damage = cmp::min(damage, character.hp);
 
         character.hp -= damage;

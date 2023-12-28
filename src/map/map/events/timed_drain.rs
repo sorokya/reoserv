@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EmfEffect,
 };
@@ -24,8 +24,8 @@ impl Map {
     }
 
     fn timed_drain_hp(&mut self) {
-        let player_ids: Vec<EOShort> = self.characters.keys().copied().collect();
-        let mut damage_list: Vec<EOShort> = Vec::with_capacity(player_ids.len());
+        let player_ids: Vec<i32> = self.characters.keys().copied().collect();
+        let mut damage_list: Vec<i32> = Vec::with_capacity(player_ids.len());
 
         for player_id in &player_ids {
             let character = match self.characters.get_mut(player_id) {
@@ -38,7 +38,7 @@ impl Map {
 
             let damage = (character.max_hp as f32 * SETTINGS.world.drain_hp_damage).floor() as i32;
             let damage = cmp::min(damage, character.hp as i32 - 1);
-            let damage = cmp::max(damage, 0) as EOShort;
+            let damage = cmp::max(damage, 0) as i32;
 
             character.hp -= damage;
             damage_list.push(damage);
@@ -100,7 +100,7 @@ impl Map {
 
             let damage = (character.max_tp as f32 * SETTINGS.world.drain_tp_damage).floor() as i32;
             let damage = cmp::min(damage, character.tp as i32 - 1);
-            let damage = cmp::max(damage, 0) as EOShort;
+            let damage = cmp::max(damage, 0) as i32;
 
             character.tp -= damage;
 

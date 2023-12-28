@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         server::chair::{Player, Reply},
         Coords, Direction, PacketAction, PacketFamily, SitState,
@@ -12,7 +12,7 @@ use crate::utils::get_distance;
 use super::super::Map;
 
 impl Map {
-    pub fn sit_chair(&mut self, player_id: EOShort, coords: Coords) {
+    pub fn sit_chair(&mut self, player_id: i32, coords: Coords) {
         if self.is_tile_occupied(&coords) {
             return;
         }

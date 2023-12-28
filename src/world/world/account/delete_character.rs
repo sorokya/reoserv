@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
     protocol::{
         server::character::{self, Reply},
         CharacterList, CharacterReply, PacketAction, PacketFamily,
@@ -13,7 +13,7 @@ use super::super::World;
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub fn delete_character(&self, player_id: EOShort, session_id: EOShort, character_id: EOInt) {
+    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: EOInt) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,

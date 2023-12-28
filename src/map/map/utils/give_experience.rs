@@ -1,4 +1,4 @@
-use eo::data::{EOInt, EOShort};
+use eo::data::{EOInt, i32};
 
 use crate::SETTINGS;
 
@@ -7,7 +7,7 @@ use super::super::Map;
 impl Map {
     pub fn give_experience(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         experience: EOInt,
     ) -> (bool, EOInt, EOInt) {
         match self.characters.get_mut(&player_id) {

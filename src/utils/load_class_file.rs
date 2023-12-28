@@ -6,7 +6,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eo::{
     data::{
-        decode_number, encode_number, i32, EOShort, Serializeable, StreamBuilder, StreamReader,
+        decode_number, encode_number, i32, i32, Serializeable, StreamBuilder, StreamReader,
     },
     pubs::{EcfClass, EcfClassType, EcfFile},
 };
@@ -40,12 +40,12 @@ fn load_json() -> Result<EcfFile, Box<dyn std::error::Error>> {
             name: v["name"].as_str().unwrap_or_default().to_string(),
             parent_type: v["parent"].as_u64().unwrap_or(0) as i32,
             r#type: EcfClassType::from_char(v["type"].as_u64().unwrap_or(0) as i32).unwrap(),
-            str: v["str"].as_u64().unwrap_or(0) as EOShort,
-            intl: v["intl"].as_u64().unwrap_or(0) as EOShort,
-            wis: v["wis"].as_u64().unwrap_or(0) as EOShort,
-            agi: v["agi"].as_u64().unwrap_or(0) as EOShort,
-            con: v["con"].as_u64().unwrap_or(0) as EOShort,
-            cha: v["cha"].as_u64().unwrap_or(0) as EOShort,
+            str: v["str"].as_u64().unwrap_or(0) as i32,
+            intl: v["intl"].as_u64().unwrap_or(0) as i32,
+            wis: v["wis"].as_u64().unwrap_or(0) as i32,
+            agi: v["agi"].as_u64().unwrap_or(0) as i32,
+            con: v["con"].as_u64().unwrap_or(0) as i32,
+            cha: v["cha"].as_u64().unwrap_or(0) as i32,
         };
         ecf_file.classes.push(record);
         ecf_file.num_classes += 1;
@@ -69,8 +69,8 @@ fn load_json() -> Result<EcfFile, Box<dyn std::error::Error>> {
     let encoded = encode_number(checksum);
 
     ecf_file.rid = [
-        decode_number(&encoded[0..=1]) as EOShort,
-        decode_number(&encoded[2..=3]) as EOShort,
+        decode_number(&encoded[0..=1]) as i32,
+        decode_number(&encoded[2..=3]) as i32,
     ];
 
     save_pub_file(&ecf_file, "pub/dat001.ecf")?;

@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamBuilder},
+    data::{i32, i32, Serializeable, StreamBuilder},
     protocol::{server::paperdoll, PacketAction, PacketFamily},
     pubs::EifItemType,
 };
@@ -9,7 +9,7 @@ use crate::ITEM_DB;
 use super::Character;
 
 impl Character {
-    pub fn equip(&mut self, item_id: EOShort, sub_loc: i32) -> bool {
+    pub fn equip(&mut self, item_id: i32, sub_loc: i32) -> bool {
         if sub_loc > 1 {
             return false;
         }
@@ -28,7 +28,7 @@ impl Character {
             return false;
         }
 
-        if (self.level as EOShort) < item_record.level_req
+        if (self.level as i32) < item_record.level_req
             || self.adj_strength < item_record.str_req
             || self.adj_intelligence < item_record.int_req
             || self.adj_wisdom < item_record.wis_req
@@ -39,7 +39,7 @@ impl Character {
             return false;
         }
 
-        if item_record.class_req != 0 && item_record.class_req != self.class as EOShort {
+        if item_record.class_req != 0 && item_record.class_req != self.class as i32 {
             let reply = paperdoll::Ping {
                 class_id: self.class,
             };

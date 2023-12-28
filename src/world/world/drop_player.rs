@@ -1,4 +1,4 @@
-use eo::data::{EOInt, EOShort};
+use eo::data::{EOInt, i32};
 use tokio::sync::oneshot;
 
 use super::World;
@@ -6,7 +6,7 @@ use super::World;
 impl World {
     pub fn drop_player(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         account_id: EOInt,
         character_name: &str,
         respond_to: oneshot::Sender<()>,

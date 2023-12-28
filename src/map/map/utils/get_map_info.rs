@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort},
+    data::{i32, i32},
     protocol::{server::range, CharacterMapInfo},
 };
 use tokio::sync::oneshot;
@@ -9,7 +9,7 @@ use super::super::Map;
 impl Map {
     pub fn get_map_info(
         &self,
-        player_ids: Vec<EOShort>,
+        player_ids: Vec<i32>,
         npc_indexes: Vec<i32>,
         respond_to: oneshot::Sender<range::Reply>,
     ) {

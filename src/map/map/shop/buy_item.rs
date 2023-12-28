@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::shop::Buy, Item, PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -9,7 +9,7 @@ use crate::{NPC_DB, SHOP_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn buy_item(&mut self, player_id: EOShort, item: Item, session_id: EOShort) {
+    pub async fn buy_item(&mut self, player_id: i32, item: Item, session_id: i32) {
         if item.amount == 0 {
             return;
         }

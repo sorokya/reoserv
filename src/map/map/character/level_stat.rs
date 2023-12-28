@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::statskill::Player, PacketAction, PacketFamily, StatId},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn level_stat(&mut self, player_id: EOShort, stat_id: StatId) {
+    pub fn level_stat(&mut self, player_id: i32, stat_id: StatId) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {

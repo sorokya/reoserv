@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::statskill::Remove, PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -11,9 +11,9 @@ use super::super::Map;
 impl Map {
     pub async fn forget_skill(
         &mut self,
-        player_id: EOShort,
-        skill_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        skill_id: i32,
+        session_id: i32,
     ) {
         if skill_id == 0 {
             return;

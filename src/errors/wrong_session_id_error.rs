@@ -1,13 +1,13 @@
-use eo::data::EOShort;
+use eo::data::i32;
 
 #[derive(Debug)]
 pub struct WrongSessionIdError {
-    pub expected: EOShort,
-    pub actual: EOShort,
+    pub expected: i32,
+    pub actual: i32,
 }
 
 impl WrongSessionIdError {
-    pub fn new(expected: EOShort, actual: EOShort) -> Self {
+    pub fn new(expected: i32, actual: i32) -> Self {
         Self { expected, actual }
     }
 }

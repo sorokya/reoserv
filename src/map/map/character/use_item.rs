@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
     protocol::{
         server::{
             avatar,
@@ -17,7 +17,7 @@ use crate::{character::PaperdollSlot, ITEM_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn use_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub async fn use_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -80,12 +80,12 @@ impl Map {
                 }
 
                 player.request_warp(
-                    item.spec1 as EOShort,
+                    item.spec1 as i32,
                     Coords {
                         x: item.spec2 as i32,
                         y: item.spec3 as i32,
                     },
-                    character.map_id == item.spec1 as EOShort,
+                    character.map_id == item.spec1 as i32,
                     Some(WarpAnimation::Scroll),
                 );
                 reply.used_item_type = ItemType::Teleport;
@@ -100,7 +100,7 @@ impl Map {
             EifItemType::EffectPotion => {
                 reply.used_item_type = ItemType::EffectPotion;
                 reply.data = ReplyData::EffectPotion(ReplyEffectPotion {
-                    effect_id: item.spec1 as EOShort,
+                    effect_id: item.spec1 as i32,
                 });
                 self.play_effect(player_id, item.spec1);
             }
@@ -109,7 +109,7 @@ impl Map {
                 reply.data = ReplyData::HairDye(ReplyHairDye {
                     hair_color: item.spec1 as i32,
                 });
-                character.hair_color = item.spec1 as EOShort;
+                character.hair_color = item.spec1 as i32;
                 let packet = avatar::Agree {
                     change: AvatarChange {
                         player_id,

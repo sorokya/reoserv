@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, i32, EOThree, StreamBuilder, EO_BREAK_CHAR},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
     pubs::{EifItemSubType, EnfNpcType},
 };
@@ -16,12 +16,12 @@ use super::super::Map;
 
 enum AttackTarget {
     Npc(i32),
-    Player(EOShort),
+    Player(i32),
 }
 
 impl Map {
     // TODO: enforce timestamp
-    pub async fn attack(&mut self, player_id: EOShort, direction: Direction, _timestamp: EOThree) {
+    pub async fn attack(&mut self, player_id: i32, direction: Direction, _timestamp: EOThree) {
         let reply = attack::Player {
             player_id,
             direction,
@@ -56,7 +56,7 @@ impl Map {
         };
     }
 
-    fn get_attack_target(&self, player_id: EOShort, direction: Direction) -> Option<AttackTarget> {
+    fn get_attack_target(&self, player_id: i32, direction: Direction) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
@@ -108,7 +108,7 @@ impl Map {
         None
     }
 
-    async fn attack_npc(&mut self, player_id: EOShort, npc_index: i32, direction: Direction) {
+    async fn attack_npc(&mut self, player_id: i32, npc_index: i32, direction: Direction) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -153,8 +153,8 @@ impl Map {
 
     fn attack_player(
         &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
+        player_id: i32,
+        target_player_id: i32,
         direction: Direction,
     ) {
         if self.arena_players.iter().any(|p| p.player_id == player_id) {
@@ -166,8 +166,8 @@ impl Map {
 
     fn attack_player_arena(
         &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
+        player_id: i32,
+        target_player_id: i32,
         direction: Direction,
     ) {
         if !self

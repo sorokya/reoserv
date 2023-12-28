@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{EOInt, i32, Serializeable, StreamBuilder},
     protocol::{server::item, PacketAction, PacketFamily, ShortItem},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn give_item(&mut self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub fn give_item(&mut self, target_player_id: i32, item_id: i32, amount: EOInt) {
         if let Some(character) = self.characters.get_mut(&target_player_id) {
             character.add_item(item_id, amount);
 

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         client::account::Create,
         server::account::{Reply, ReplyCreated, ReplyData, ReplyExists},
@@ -15,7 +15,7 @@ use super::super::World;
 use super::{account_exists::account_exists, password_hash::generate_password_hash};
 
 impl World {
-    pub async fn create_account(&self, player_id: EOShort, details: Create) {
+    pub async fn create_account(&self, player_id: i32, details: Create) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,

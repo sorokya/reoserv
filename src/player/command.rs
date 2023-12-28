@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{u8, i32, EOInt, EOShort},
+    data::{u8, i32, EOInt, i32},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -16,8 +16,8 @@ use super::{ClientState, PartyRequest};
 #[derive(Debug)]
 pub enum Command {
     AcceptWarp {
-        map_id: EOShort,
-        session_id: EOShort,
+        map_id: i32,
+        session_id: i32,
     },
     CancelTrade,
     Close(String),
@@ -26,7 +26,7 @@ pub enum Command {
     },
     Die,
     GenerateSessionId {
-        respond_to: oneshot::Sender<EOShort>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetAccountId {
         respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
@@ -35,7 +35,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Option<EOInt>>,
     },
     GetBoardId {
-        respond_to: oneshot::Sender<Option<EOShort>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
@@ -56,25 +56,25 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
     },
     GetMapId {
-        respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
+        respond_to: oneshot::Sender<Result<i32, InvalidStateError>>,
     },
     GetPlayerId {
-        respond_to: oneshot::Sender<EOShort>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetPartyRequest {
         respond_to: oneshot::Sender<PartyRequest>,
     },
     GetSessionId {
-        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
+        respond_to: oneshot::Sender<Result<i32, MissingSessionIdError>>,
     },
     GetInteractNpcIndex {
         respond_to: oneshot::Sender<Option<i32>>,
     },
     GetInteractPlayerId {
-        respond_to: oneshot::Sender<Option<EOShort>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetSequenceBytes {
-        respond_to: oneshot::Sender<(EOShort, i32)>,
+        respond_to: oneshot::Sender<(i32, i32)>,
     },
     GetSequenceStart {
         respond_to: oneshot::Sender<EOInt>,
@@ -101,17 +101,17 @@ pub enum Command {
     },
     RequestWarp {
         local: bool,
-        map_id: EOShort,
+        map_id: i32,
         coords: Coords,
         animation: Option<WarpAnimation>,
     },
     Send(PacketAction, PacketFamily, Bytes),
     SetAccountId(EOInt),
-    SetBoardId(EOShort),
+    SetBoardId(i32),
     SetBusy(bool),
     SetCharacter(Box<Character>),
     SetInteractNpcIndex(i32),
-    SetInteractPlayerId(Option<EOShort>),
+    SetInteractPlayerId(Option<i32>),
     SetPartyRequest(PartyRequest),
     SetTradeAccepted(bool),
     SetTrading(bool),
@@ -123,7 +123,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
     TakeSessionId {
-        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
+        respond_to: oneshot::Sender<Result<i32, MissingSessionIdError>>,
     },
     UpdatePartyHP {
         hp_percentage: i32,

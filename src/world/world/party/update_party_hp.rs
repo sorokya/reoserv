@@ -1,12 +1,12 @@
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::World;
 
 impl World {
-    pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: i32) {
+    pub fn update_party_hp(&self, player_id: i32, hp_percentage: i32) {
         if let Some(party) = self.get_player_party(player_id) {
             let mut builder = StreamBuilder::new();
             builder.add_short(player_id);

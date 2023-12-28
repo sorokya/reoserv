@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn send_trade_update(&self, player_id: EOShort) {
+    pub async fn send_trade_update(&self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

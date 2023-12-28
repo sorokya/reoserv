@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -11,7 +11,7 @@ use super::super::Map;
 impl Map {
     pub fn send_packet_near_player<T>(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         packet: T,
@@ -25,7 +25,7 @@ impl Map {
 
     pub fn send_buf_near_player(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         buf: Bytes,

@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::{DateTime, Utc};
 use eo::{
-    data::{i32, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, i32, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
 };
 use evalexpr::{context_map, eval_float_with_context};
@@ -12,7 +12,7 @@ use crate::{FORMULAS, NPC_DB};
 
 #[derive(Debug, Default)]
 pub struct Npc {
-    pub id: EOShort,
+    pub id: i32,
     pub coords: Coords,
     pub direction: Direction,
     pub spawn_index: usize,
@@ -28,7 +28,7 @@ pub struct Npc {
 
 #[derive(Debug, Default)]
 pub struct NpcOpponent {
-    pub player_id: EOShort,
+    pub player_id: i32,
     pub damage_dealt: EOInt,
     pub last_hit: DateTime<Utc>,
 }
@@ -50,7 +50,7 @@ impl Npc {
 
     pub fn damage(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         amount: u16,
         accuracy: u16,
         critical: bool,
@@ -128,7 +128,7 @@ impl Npc {
 
 #[derive(Debug, Default)]
 pub struct NPCBuilder {
-    id: EOShort,
+    id: i32,
     coords: Coords,
     direction: Direction,
     spawn_index: usize,
@@ -146,7 +146,7 @@ impl NPCBuilder {
         Self::default()
     }
 
-    pub fn id(mut self, id: EOShort) -> Self {
+    pub fn id(mut self, id: i32) -> Self {
         self.id = id;
         self
     }

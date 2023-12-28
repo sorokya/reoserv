@@ -1,7 +1,7 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
 use super::{load_maps::load_maps, Command, Party, WorldHandle};
-use eo::data::{EOInt, EOShort};
+use eo::data::{EOInt, i32};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -9,11 +9,11 @@ use tokio::sync::mpsc::UnboundedReceiver;
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
-    players: HashMap<EOShort, PlayerHandle>,
+    players: HashMap<i32, PlayerHandle>,
     accounts: Vec<EOInt>,
-    characters: HashMap<String, EOShort>,
+    characters: HashMap<String, i32>,
     pool: Pool,
-    maps: Option<HashMap<EOShort, MapHandle>>,
+    maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
     npc_act_ticks: EOInt,
     npc_spawn_ticks: EOInt,

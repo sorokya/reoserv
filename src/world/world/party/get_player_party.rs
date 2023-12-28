@@ -1,11 +1,11 @@
-use eo::data::EOShort;
+use eo::data::i32;
 
 use crate::world::Party;
 
 use super::super::World;
 
 impl World {
-    pub fn get_player_party(&self, player_id: EOShort) -> Option<Party> {
+    pub fn get_player_party(&self, player_id: i32) -> Option<Party> {
         self.parties
             .iter()
             .find(|p| p.members.contains(&player_id))

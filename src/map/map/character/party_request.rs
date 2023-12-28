@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -12,7 +12,7 @@ const IN_YOUR_PARTY: i32 = 1;
 const PARTY_FULL: i32 = 2;
 
 impl Map {
-    pub async fn party_request(&self, target_player_id: EOShort, request: PartyRequest) {
+    pub async fn party_request(&self, target_player_id: i32, request: PartyRequest) {
         let player_id = match request {
             PartyRequest::Join(id) => id,
             PartyRequest::Invite(id) => id,

@@ -1,11 +1,11 @@
-use eo::{data::EOShort, protocol::Coords, pubs::EmfTileSpec};
+use eo::{data::i32, protocol::Coords, pubs::EmfTileSpec};
 
 use crate::utils::in_client_range;
 
 use super::super::Map;
 
 impl Map {
-    pub fn player_in_range_of_tile(&self, player_id: EOShort, spec_id: EmfTileSpec) -> bool {
+    pub fn player_in_range_of_tile(&self, player_id: i32, spec_id: EmfTileSpec) -> bool {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return false,

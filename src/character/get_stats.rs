@@ -1,5 +1,5 @@
 use eo::{
-    data::EOShort,
+    data::i32,
     protocol::{
         CharacterBaseStats, CharacterBaseStats2, CharacterSecondaryStats, CharacterStats1,
         CharacterStats2, CharacterStats3, ItemCharacterStats,
@@ -77,7 +77,7 @@ impl Character {
             max_hp: self.max_hp,
             max_tp: self.max_tp,
             max_sp: self.max_sp,
-            max_weight: self.max_weight as EOShort,
+            max_weight: self.max_weight as i32,
             secondary: CharacterSecondaryStats {
                 mindam: self.min_damage,
                 maxdam: self.max_damage,

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::talk, PacketAction, PacketFamily},
 };
 
@@ -11,7 +11,7 @@ impl World {
     // TODO: make this sync
     pub async fn broadcast_global_message(
         &self,
-        target_player_id: EOShort,
+        target_player_id: i32,
         name: &str,
         message: &str,
     ) {

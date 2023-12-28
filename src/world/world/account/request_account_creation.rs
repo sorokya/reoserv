@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamBuilder},
+    data::{i32, i32, Serializeable, StreamBuilder},
     protocol::{
         server::account::{self, Reply},
         AccountReply, PacketAction, PacketFamily,
@@ -11,7 +11,7 @@ use super::account_exists::account_exists;
 use super::super::World;
 
 impl World {
-    pub async fn request_account_creation(&self, player_id: EOShort, username: String) {
+    pub async fn request_account_creation(&self, player_id: i32, username: String) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

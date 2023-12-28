@@ -7,7 +7,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eo::{
     data::{
-        decode_number, encode_number, i32, EOShort, EOThree, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, i32, EOThree, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{
@@ -47,17 +47,17 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
             shout_length: shout.len() as i32,
             name,
             shout,
-            icon_id: v["iconId"].as_u64().unwrap_or(0) as EOShort,
-            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as EOShort,
-            tp_cost: v["tpCost"].as_u64().unwrap_or(0) as EOShort,
-            sp_cost: v["spCost"].as_u64().unwrap_or(0) as EOShort,
+            icon_id: v["iconId"].as_u64().unwrap_or(0) as i32,
+            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as i32,
+            tp_cost: v["tpCost"].as_u64().unwrap_or(0) as i32,
+            sp_cost: v["spCost"].as_u64().unwrap_or(0) as i32,
             cast_time: v["castTime"].as_u64().unwrap_or(0) as i32,
             nature: EsfSkillNature::from_char(v["nature"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
             r#type: EsfSpellType::from_three(v["type"].as_u64().unwrap_or(0) as EOThree)
                 .unwrap_or_default(),
             element: v["element"].as_u64().unwrap_or(0) as i32,
-            element_power: v["elementPower"].as_u64().unwrap_or(0) as EOShort,
+            element_power: v["elementPower"].as_u64().unwrap_or(0) as i32,
             target_restrict: EsfSpellTargetRestrict::from_char(
                 v["targetRestrict"].as_u64().unwrap_or(0) as i32,
             )
@@ -67,22 +67,22 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
             )
             .unwrap_or_default(),
             target_time: v["targetTime"].as_u64().unwrap_or(0) as i32,
-            max_skill_level: v["maxSkillLevel"].as_u64().unwrap_or(0) as EOShort,
-            min_damage: v["minDamage"].as_u64().unwrap_or(0) as EOShort,
-            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as EOShort,
-            accuracy: v["accuracy"].as_u64().unwrap_or(0) as EOShort,
-            evade: v["evade"].as_u64().unwrap_or(0) as EOShort,
-            armor: v["armor"].as_u64().unwrap_or(0) as EOShort,
+            max_skill_level: v["maxSkillLevel"].as_u64().unwrap_or(0) as i32,
+            min_damage: v["minDamage"].as_u64().unwrap_or(0) as i32,
+            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as i32,
+            accuracy: v["accuracy"].as_u64().unwrap_or(0) as i32,
+            evade: v["evade"].as_u64().unwrap_or(0) as i32,
+            armor: v["armor"].as_u64().unwrap_or(0) as i32,
             return_damage: v["returnDamage"].as_u64().unwrap_or(0) as i32,
-            hp_heal: v["healHp"].as_u64().unwrap_or(0) as EOShort,
-            tp_heal: v["healTp"].as_u64().unwrap_or(0) as EOShort,
+            hp_heal: v["healHp"].as_u64().unwrap_or(0) as i32,
+            tp_heal: v["healTp"].as_u64().unwrap_or(0) as i32,
             sp_heal: v["healSp"].as_u64().unwrap_or(0) as i32,
-            str: v["str"].as_u64().unwrap_or(0) as EOShort,
-            intl: v["intl"].as_u64().unwrap_or(0) as EOShort,
-            wis: v["wis"].as_u64().unwrap_or(0) as EOShort,
-            agi: v["agi"].as_u64().unwrap_or(0) as EOShort,
-            con: v["con"].as_u64().unwrap_or(0) as EOShort,
-            cha: v["cha"].as_u64().unwrap_or(0) as EOShort,
+            str: v["str"].as_u64().unwrap_or(0) as i32,
+            intl: v["intl"].as_u64().unwrap_or(0) as i32,
+            wis: v["wis"].as_u64().unwrap_or(0) as i32,
+            agi: v["agi"].as_u64().unwrap_or(0) as i32,
+            con: v["con"].as_u64().unwrap_or(0) as i32,
+            cha: v["cha"].as_u64().unwrap_or(0) as i32,
         };
         esf_file.spells.push(record);
         esf_file.num_spells += 1;
@@ -107,8 +107,8 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
     let encoded = encode_number(checksum);
 
     esf_file.rid = [
-        decode_number(&encoded[0..=1]) as EOShort,
-        decode_number(&encoded[2..=3]) as EOShort,
+        decode_number(&encoded[0..=1]) as i32,
+        decode_number(&encoded[2..=3]) as i32,
     ];
 
     save_pub_file(&esf_file, "pub/dsl001.esf")?;

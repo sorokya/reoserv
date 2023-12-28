@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::warp, Coords, PacketAction, PacketFamily, SitState, WarpType},
 };
 
@@ -11,7 +11,7 @@ use crate::{
 use super::Player;
 
 impl Player {
-    pub async fn accept_warp(&mut self, map_id: EOShort, session_id: EOShort) {
+    pub async fn accept_warp(&mut self, map_id: i32, session_id: i32) {
         let warp_session = match &self.warp_session {
             Some(warp_session) => warp_session,
             None => {

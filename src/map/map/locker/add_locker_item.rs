@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, i32, StreamBuilder},
     protocol::{Coords, Item, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -11,7 +11,7 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub async fn add_locker_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_locker_item(&mut self, player_id: i32, item: Item) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

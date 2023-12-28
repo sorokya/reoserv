@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         server::character::{self, Reply},
         CharacterReply, PacketAction, PacketFamily,
@@ -11,7 +11,7 @@ use super::get_num_of_characters::get_num_of_characters;
 use super::super::World;
 
 impl World {
-    pub async fn request_character_creation(&self, player_id: EOShort) {
+    pub async fn request_character_creation(&self, player_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

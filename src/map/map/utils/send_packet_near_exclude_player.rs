@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
 };
 
@@ -11,7 +11,7 @@ impl Map {
     pub fn send_packet_near_exclude_player<T>(
         &self,
         coords: &Coords,
-        exclude_player_id: EOShort,
+        exclude_player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         packet: T,

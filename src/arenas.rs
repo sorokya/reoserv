@@ -1,9 +1,9 @@
 use config::{Config, ConfigError, File};
-use eo::data::{i32, EOInt, EOShort};
+use eo::data::{i32, EOInt, i32};
 
 #[derive(Debug, Deserialize)]
 pub struct Arena {
-    pub map: EOShort,
+    pub map: i32,
     pub rate: EOInt,
     pub block: i32,
     pub spawns: Vec<ArenaSpawn>,

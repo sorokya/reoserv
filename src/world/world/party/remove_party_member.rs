@@ -1,9 +1,9 @@
-use eo::data::EOShort;
+use eo::data::i32;
 
 use super::super::World;
 
 impl World {
-    pub fn remove_party_member(&mut self, player_id: EOShort, target_player_id: EOShort) {
+    pub fn remove_party_member(&mut self, player_id: i32, target_player_id: i32) {
         let party = match self
             .parties
             .iter_mut()

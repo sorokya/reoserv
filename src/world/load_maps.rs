@@ -9,7 +9,7 @@ use std::{
 
 use bytes::Bytes;
 use eo::{
-    data::{u8, EOInt, EOShort, Serializeable, StreamReader},
+    data::{u8, EOInt, i32, Serializeable, StreamReader},
     pubs::EmfFile,
 };
 use futures::{stream, StreamExt};
@@ -22,13 +22,13 @@ use super::WorldHandle;
 pub async fn load_maps(
     pool: Pool,
     world: WorldHandle,
-) -> Result<HashMap<EOShort, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
-    if SETTINGS.server.num_of_maps > EOShort::MAX.into() {
+) -> Result<HashMap<i32, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
+    if SETTINGS.server.num_of_maps > i32::MAX.into() {
         panic!("Too many maps to load!");
     }
 
-    let max_id = SETTINGS.server.num_of_maps as EOShort;
-    let mut map_files: HashMap<EOShort, MapHandle> = HashMap::with_capacity(max_id as usize);
+    let max_id = SETTINGS.server.num_of_maps as i32;
+    let mut map_files: HashMap<i32, MapHandle> = HashMap::with_capacity(max_id as usize);
     let mut load_handles = vec![];
     for i in 1..=max_id {
         load_handles.push(load_map(i, pool.to_owned(), world.to_owned()));
@@ -51,10 +51,10 @@ pub async fn load_maps(
 }
 
 async fn load_map(
-    id: EOShort,
+    id: i32,
     pool: Pool,
     world: WorldHandle,
-) -> Result<(EOShort, MapHandle), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(i32, MapHandle), Box<dyn std::error::Error + Send + Sync>> {
     let raw_path = format!("maps/{:0>5}.emf", id);
     let path = Path::new(&raw_path);
     let mut file = EmfFile::default();

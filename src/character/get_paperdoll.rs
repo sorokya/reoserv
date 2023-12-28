@@ -1,5 +1,5 @@
 use eo::{
-    data::EOShort,
+    data::i32,
     protocol::{PaperdollB000a0hsw, PaperdollBahws},
 };
 
@@ -13,35 +13,35 @@ impl Character {
             boots: match self.paperdoll.boots {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.boots as usize - 1) {
-                    Some(item) => item.spec1 as EOShort,
+                    Some(item) => item.spec1 as i32,
                     None => 0,
                 },
             },
             armor: match self.paperdoll.armor {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.armor as usize - 1) {
-                    Some(item) => item.spec1 as EOShort,
+                    Some(item) => item.spec1 as i32,
                     None => 0,
                 },
             },
             hat: match self.paperdoll.hat {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.hat as usize - 1) {
-                    Some(item) => item.spec1 as EOShort,
+                    Some(item) => item.spec1 as i32,
                     None => 0,
                 },
             },
             weapon: match self.paperdoll.weapon {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.weapon as usize - 1) {
-                    Some(item) => item.spec1 as EOShort,
+                    Some(item) => item.spec1 as i32,
                     None => 0,
                 },
             },
             shield: match self.paperdoll.shield {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.shield as usize - 1) {
-                    Some(item) => item.spec1 as EOShort,
+                    Some(item) => item.spec1 as i32,
                     None => 0,
                 },
             },
@@ -59,7 +59,7 @@ impl Character {
         }
     }
 
-    pub fn get_paperdoll_array(&self) -> [EOShort; 15] {
+    pub fn get_paperdoll_array(&self) -> [i32; 15] {
         [
             self.paperdoll.boots,
             self.paperdoll.accessory,

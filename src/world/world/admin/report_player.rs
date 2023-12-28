@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{AdminMessageType, PacketAction, PacketFamily},
 };
 use mysql_async::prelude::Queryable;
@@ -9,7 +9,7 @@ use super::super::World;
 use crate::{utils::capitalize, SETTINGS};
 
 impl World {
-    pub async fn report_player(&self, player_id: EOShort, reportee_name: String, message: String) {
+    pub async fn report_player(&self, player_id: i32, reportee_name: String, message: String) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

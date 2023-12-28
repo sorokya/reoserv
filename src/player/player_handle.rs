@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{u8, i32, EOInt, EOShort},
+    data::{u8, i32, EOInt, i32},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use mysql_async::Pool;
@@ -24,7 +24,7 @@ pub struct PlayerHandle {
 }
 
 impl PlayerHandle {
-    pub fn new(id: EOShort, socket: TcpStream, world: WorldHandle, pool: Pool) -> Self {
+    pub fn new(id: i32, socket: TcpStream, world: WorldHandle, pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let player = Player::new(id, socket, rx, world, pool);
         let _ = tokio::task::Builder::new()
@@ -38,7 +38,7 @@ impl PlayerHandle {
         Self { tx }
     }
 
-    pub fn accept_warp(&self, map_id: EOShort, session_id: EOShort) {
+    pub fn accept_warp(&self, map_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
@@ -60,7 +60,7 @@ impl PlayerHandle {
 
     pub async fn generate_session_id(
         &self,
-    ) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
         match rx.await {
@@ -85,7 +85,7 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_board_id(&self) -> Option<EOShort> {
+    pub async fn get_board_id(&self) -> Option<i32> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetBoardId { respond_to: tx });
         match rx.await {
@@ -157,7 +157,7 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_map_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_map_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapId { respond_to: tx });
         match rx.await {
@@ -176,7 +176,7 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_player_id(&self) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_player_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerId { respond_to: tx });
         match rx.await {
@@ -187,7 +187,7 @@ impl PlayerHandle {
 
     pub async fn get_session_id(
         &self,
-    ) -> Result<EOShort, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSessionId { respond_to: tx });
         match rx.await {
@@ -208,7 +208,7 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_interact_player_id(&self) -> Option<EOShort> {
+    pub async fn get_interact_player_id(&self) -> Option<i32> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -221,7 +221,7 @@ impl PlayerHandle {
 
     pub async fn get_sequence_bytes(
         &self,
-    ) -> Result<(EOShort, i32), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(i32, i32), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceBytes { respond_to: tx });
         match rx.await {
@@ -296,7 +296,7 @@ impl PlayerHandle {
 
     pub fn request_warp(
         &self,
-        map_id: EOShort,
+        map_id: i32,
         coords: Coords,
         local: bool,
         animation: Option<WarpAnimation>,
@@ -317,7 +317,7 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetAccountId(account_id));
     }
 
-    pub fn set_board_id(&self, board_id: EOShort) {
+    pub fn set_board_id(&self, board_id: i32) {
         let _ = self.tx.send(Command::SetBoardId(board_id));
     }
 
@@ -337,7 +337,7 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetInteractNpcIndex(index));
     }
 
-    pub fn set_interact_player_id(&self, id: Option<EOShort>) {
+    pub fn set_interact_player_id(&self, id: Option<i32>) {
         let _ = self.tx.send(Command::SetInteractPlayerId(id));
     }
 
@@ -371,7 +371,7 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn take_session_id(&self) -> Result<EOShort, MissingSessionIdError> {
+    pub async fn take_session_id(&self) -> Result<i32, MissingSessionIdError> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::TakeSessionId { respond_to: tx });
         rx.await.unwrap()

@@ -1,6 +1,6 @@
 use crate::{character::Character, errors::WrongSessionIdError};
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamBuilder},
+    data::{i32, i32, Serializeable, StreamBuilder},
     protocol::{
         client::character::Create,
         server::character::{Reply, ReplyData, ReplyExists, ReplyOk},
@@ -14,7 +14,7 @@ use super::super::World;
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub async fn create_character(&self, player_id: EOShort, details: Create) {
+    pub async fn create_character(&self, player_id: i32, details: Create) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,

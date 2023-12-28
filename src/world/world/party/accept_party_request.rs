@@ -1,4 +1,4 @@
-use eo::data::{i32, EOShort};
+use eo::data::{i32, i32};
 
 use crate::player::PartyRequest;
 
@@ -10,8 +10,8 @@ const INVITE: i32 = 1;
 impl World {
     pub async fn accept_party_request(
         &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
+        player_id: i32,
+        target_player_id: i32,
         request_type: i32,
     ) {
         let player = match self.players.get(&player_id) {

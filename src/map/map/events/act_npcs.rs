@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::Utc;
 use eo::{
-    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
     protocol::{
         server::npc, Coords, Direction, NPCUpdateAttack, NPCUpdateChat, NPCUpdatePos, PacketAction,
         PacketFamily, PlayerKilledState, SitState,
@@ -22,7 +22,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    fn act_npc_talk(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdateChat> {
+    fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NPCUpdateChat> {
         let talk_record = match TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id) {
             Some(record) => record,
             None => return None,
@@ -53,7 +53,7 @@ impl Map {
         }
     }
 
-    fn act_npc_move_chase(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdatePos> {
+    fn act_npc_move_chase(&mut self, index: i32, npc_id: i32) -> Option<NPCUpdatePos> {
         let target_coords = match self.npc_get_chase_target_coords(index, npc_id) {
             Some(target_coords) => target_coords,
             None => return self.act_npc_move_idle(index),
@@ -136,7 +136,7 @@ impl Map {
         }
     }
 
-    fn npc_get_chase_target_coords(&self, index: i32, npc_id: EOShort) -> Option<Coords> {
+    fn npc_get_chase_target_coords(&self, index: i32, npc_id: i32) -> Option<Coords> {
         match self.npc_get_chase_target_player_id(index, npc_id) {
             Some(player_id) => self
                 .characters
@@ -147,7 +147,7 @@ impl Map {
     }
 
     // TODO: Party stuff
-    fn npc_get_chase_target_player_id(&self, index: i32, npc_id: EOShort) -> Option<EOShort> {
+    fn npc_get_chase_target_player_id(&self, index: i32, npc_id: i32) -> Option<i32> {
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return None,
@@ -195,7 +195,7 @@ impl Map {
         }
     }
 
-    fn npc_get_attack_target_player_id(&self, index: i32) -> Option<EOShort> {
+    fn npc_get_attack_target_player_id(&self, index: i32) -> Option<i32> {
         let npc = match self.npcs.get(&index) {
             Some(npc) => npc,
             None => return None,
@@ -292,7 +292,7 @@ impl Map {
     fn act_npc_move(
         &mut self,
         index: i32,
-        npc_id: EOShort,
+        npc_id: i32,
         act_rate: EOInt,
         act_ticks: EOInt,
     ) -> Option<NPCUpdatePos> {
@@ -319,7 +319,7 @@ impl Map {
         }
     }
 
-    fn act_npc_attack(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdateAttack> {
+    fn act_npc_attack(&mut self, index: i32, npc_id: i32) -> Option<NPCUpdateAttack> {
         let target_player_id = match self.npc_get_attack_target_player_id(index) {
             Some(player_id) => player_id,
             None => return None,
@@ -362,7 +362,7 @@ impl Map {
                 None => return None,
             };
 
-            character.hp -= damage as EOShort;
+            character.hp -= damage as i32;
 
             let hp_percentage = character.get_hp_percentage();
 

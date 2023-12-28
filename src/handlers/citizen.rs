@@ -1,16 +1,16 @@
 use eo::{
-    data::{i32, EOShort, StreamReader},
+    data::{i32, i32, StreamReader},
     protocol::PacketAction,
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn open(reader: StreamReader, player_id: i32, map: MapHandle) {
     let npc_index = reader.get_short();
     map.open_inn(player_id, npc_index as i32);
 }
 
-fn reply(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn reply(reader: StreamReader, player_id: i32, map: MapHandle) {
     let session_id = reader.get_short();
     reader.get_byte();
     let _behavior_id = reader.get_short();
@@ -24,16 +24,16 @@ fn reply(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.request_citizenship(player_id, session_id, answers);
 }
 
-fn remove(player_id: EOShort, map: MapHandle) {
+fn remove(player_id: i32, map: MapHandle) {
     map.remove_citizenship(player_id);
 }
 
-fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
     let session_id = reader.get_short();
     map.request_sleep(player_id, session_id);
 }
 
-fn accept(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn accept(reader: StreamReader, player_id: i32, map: MapHandle) {
     let session_id = reader.get_short();
     map.sleep(player_id, session_id);
 }

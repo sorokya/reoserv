@@ -1,6 +1,6 @@
 use std::cmp;
 
-use eo::data::{EOInt, EOShort};
+use eo::data::{EOInt, i32};
 use evalexpr::{context_map, eval_float_with_context};
 
 use crate::{CLASS_DB, FORMULAS, ITEM_DB};
@@ -72,12 +72,12 @@ impl Character {
             self.accuracy += item.accuracy;
             self.evasion += item.evade;
             self.armor += item.armor;
-            self.adj_strength += item.str as EOShort;
-            self.adj_intelligence += item.intl as EOShort;
-            self.adj_wisdom += item.wis as EOShort;
-            self.adj_agility += item.agi as EOShort;
-            self.adj_constitution += item.con as EOShort;
-            self.adj_charisma += item.cha as EOShort;
+            self.adj_strength += item.str as i32;
+            self.adj_intelligence += item.intl as i32;
+            self.adj_wisdom += item.wis as i32;
+            self.adj_agility += item.agi as i32;
+            self.adj_constitution += item.con as i32;
+            self.adj_charisma += item.cha as i32;
         }
 
         let context = match context_map! {
@@ -103,7 +103,7 @@ impl Character {
         };
 
         self.max_hp += match eval_float_with_context(&FORMULAS.hp, &context) {
-            Ok(max_hp) => cmp::min(max_hp.floor() as EOShort, 64000),
+            Ok(max_hp) => cmp::min(max_hp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_hp: {}", e);
                 10
@@ -111,7 +111,7 @@ impl Character {
         };
 
         self.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
-            Ok(max_tp) => cmp::min(max_tp.floor() as EOShort, 64000),
+            Ok(max_tp) => cmp::min(max_tp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_tp: {}", e);
                 10
@@ -119,7 +119,7 @@ impl Character {
         };
 
         self.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
-            Ok(max_sp) => cmp::min(max_sp.floor() as EOShort, 64000),
+            Ok(max_sp) => cmp::min(max_sp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_sp: {}", e);
                 20
@@ -136,7 +136,7 @@ impl Character {
 
         let class_formulas = &FORMULAS.classes[class.r#type as usize];
         let damage = match eval_float_with_context(&class_formulas.damage, &context) {
-            Ok(damage) => damage.floor() as EOShort,
+            Ok(damage) => damage.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate damage: {}", e);
                 1
@@ -147,7 +147,7 @@ impl Character {
         self.max_damage += damage;
 
         self.accuracy += match eval_float_with_context(&class_formulas.accuracy, &context) {
-            Ok(accuracy) => accuracy.floor() as EOShort,
+            Ok(accuracy) => accuracy.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate accuracy: {}", e);
                 0
@@ -155,7 +155,7 @@ impl Character {
         };
 
         self.armor += match eval_float_with_context(&class_formulas.defense, &context) {
-            Ok(armor) => armor.floor() as EOShort,
+            Ok(armor) => armor.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate armor: {}", e);
                 0
@@ -163,7 +163,7 @@ impl Character {
         };
 
         self.evasion += match eval_float_with_context(&class_formulas.evade, &context) {
-            Ok(evasion) => evasion.floor() as EOShort,
+            Ok(evasion) => evasion.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate evasion: {}", e);
                 0

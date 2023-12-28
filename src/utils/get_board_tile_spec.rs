@@ -1,6 +1,6 @@
-use eo::{data::EOShort, pubs::EmfTileSpec};
+use eo::{data::i32, pubs::EmfTileSpec};
 
-pub fn get_board_tile_spec(board_id: EOShort) -> Option<EmfTileSpec> {
+pub fn get_board_tile_spec(board_id: i32) -> Option<EmfTileSpec> {
     match board_id {
         1 => Some(EmfTileSpec::Board1),
         2 => Some(EmfTileSpec::Board2),

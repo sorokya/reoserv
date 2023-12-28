@@ -1,4 +1,4 @@
-use eo::data::EOShort;
+use eo::data::i32;
 use tokio::sync::oneshot;
 
 use crate::character::Character;
@@ -8,7 +8,7 @@ use super::super::Map;
 impl Map {
     pub fn get_character(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         respond_to: oneshot::Sender<Option<Box<Character>>>,
     ) {
         if let Some(character) = self.characters.get(&player_id) {

@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, i32},
     protocol::Item,
 };
 
 use super::Character;
 
 impl Character {
-    pub fn add_bank_item(&mut self, item_id: EOShort, amount: EOInt) {
+    pub fn add_bank_item(&mut self, item_id: i32, amount: EOInt) {
         let existing_item = self.bank.iter_mut().find(|item| item.id == item_id);
 
         if let Some(existing_item) = existing_item {

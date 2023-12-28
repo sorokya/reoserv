@@ -1,4 +1,4 @@
-use eo::data::{EOInt, EOShort, Serializeable, StreamBuilder};
+use eo::data::{EOInt, i32, Serializeable, StreamBuilder};
 use eo::protocol::server::welcome::{Reply, ReplyData};
 use eo::protocol::{Coords, PacketAction, PacketFamily, WelcomeReply};
 
@@ -9,7 +9,7 @@ use crate::SETTINGS;
 use super::super::World;
 
 impl World {
-    pub async fn select_character(&mut self, player_id: EOShort, character_id: EOInt) {
+    pub async fn select_character(&mut self, player_id: i32, character_id: EOInt) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

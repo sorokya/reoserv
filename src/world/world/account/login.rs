@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
     protocol::{
         server::login::{self, Reply},
         CharacterList, LoginReply, PacketAction, PacketFamily,
@@ -19,7 +19,7 @@ use super::{account_exists::account_exists, get_character_list::get_character_li
 impl World {
     pub fn login(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         username: String,
         password: String,
         world: WorldHandle,

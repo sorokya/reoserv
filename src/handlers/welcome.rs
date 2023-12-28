@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::welcome::{Agree, AgreeData, Msg, Request},
         PacketAction,
@@ -8,7 +8,7 @@ use eo::{
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn agree(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn agree(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut agree = Agree::default();
     agree.deserialize(&reader);
 
@@ -28,13 +28,13 @@ fn agree(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
     );
 }
 
-fn msg(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn msg(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut msg = Msg::default();
     msg.deserialize(&reader);
-    world.enter_game(player_id, msg.session_id as EOShort);
+    world.enter_game(player_id, msg.session_id as i32);
 }
 
-fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn request(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut request = Request::default();
     request.deserialize(&reader);
     world.select_character(player_id, request.character_id);

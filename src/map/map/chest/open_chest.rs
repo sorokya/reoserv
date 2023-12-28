@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
     pubs::EifItemType,
 };
@@ -9,7 +9,7 @@ use crate::{utils::in_client_range, ITEM_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
+    pub fn open_chest(&self, player_id: i32, coords: Coords) {
         let chest = match self.chests.iter().find(|chest| chest.coords == coords) {
             Some(chest) => chest,
             None => return,
@@ -37,7 +37,7 @@ impl Map {
                     None => return false,
                 };
 
-                item_data.r#type == EifItemType::Key && item_data.spec1 as EOShort == key
+                item_data.r#type == EifItemType::Key && item_data.spec1 as i32 == key
             }) {
                 return;
             }

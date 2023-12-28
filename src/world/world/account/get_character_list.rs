@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, i32},
     protocol::{AdminLevel, CharacterInfo, Gender, PaperdollBahsw, Skin},
 };
 use mysql_async::{prelude::*, Conn, Row};
@@ -17,11 +17,11 @@ pub async fn get_character_list(
                 "account_id" => &account_id,
             },
             |row: Row| {
-                let boots: EOShort = row.get(8).unwrap();
-                let armor: EOShort = row.get(9).unwrap();
-                let hat: EOShort = row.get(10).unwrap();
-                let shield: EOShort = row.get(11).unwrap();
-                let weapon: EOShort = row.get(12).unwrap();
+                let boots: i32 = row.get(8).unwrap();
+                let armor: i32 = row.get(9).unwrap();
+                let hat: i32 = row.get(10).unwrap();
+                let shield: i32 = row.get(11).unwrap();
+                let weapon: i32 = row.get(12).unwrap();
 
                 CharacterInfo {
                     id: row.get(0).unwrap(),
@@ -36,35 +36,35 @@ pub async fn get_character_list(
                         boots: match boots {
                             0 => 0,
                             _ => match ITEM_DB.items.get(boots as usize - 1) {
-                                Some(item) => item.spec1 as EOShort,
+                                Some(item) => item.spec1 as i32,
                                 None => 0,
                             },
                         },
                         armor: match armor {
                             0 => 0,
                             _ => match ITEM_DB.items.get(armor as usize - 1) {
-                                Some(item) => item.spec1 as EOShort,
+                                Some(item) => item.spec1 as i32,
                                 None => 0,
                             },
                         },
                         hat: match hat {
                             0 => 0,
                             _ => match ITEM_DB.items.get(hat as usize - 1) {
-                                Some(item) => item.spec1 as EOShort,
+                                Some(item) => item.spec1 as i32,
                                 None => 0,
                             },
                         },
                         shield: match shield {
                             0 => 0,
                             _ => match ITEM_DB.items.get(shield as usize - 1) {
-                                Some(item) => item.spec1 as EOShort,
+                                Some(item) => item.spec1 as i32,
                                 None => 0,
                             },
                         },
                         weapon: match weapon {
                             0 => 0,
                             _ => match ITEM_DB.items.get(weapon as usize - 1) {
-                                Some(item) => item.spec1 as EOShort,
+                                Some(item) => item.spec1 as i32,
                                 None => 0,
                             },
                         },

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, i32},
     protocol::Item,
 };
 
@@ -8,7 +8,7 @@ use crate::ITEM_DB;
 use super::Character;
 
 impl Character {
-    pub fn add_item(&mut self, item_id: EOShort, amount: EOInt) {
+    pub fn add_item(&mut self, item_id: i32, amount: EOInt) {
         let existing_item = self.items.iter_mut().find(|item| item.id == item_id);
 
         if let Some(existing_item) = existing_item {

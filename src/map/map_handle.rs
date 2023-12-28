@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{i32, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, i32, EOThree},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
@@ -27,7 +27,7 @@ pub struct MapHandle {
 
 impl MapHandle {
     pub fn new(
-        id: EOShort,
+        id: i32,
         file_size: EOInt,
         pool: Pool,
         file: EmfFile,
@@ -42,30 +42,30 @@ impl MapHandle {
         Self { tx }
     }
 
-    pub fn accept_trade(&self, player_id: EOShort) {
+    pub fn accept_trade(&self, player_id: i32) {
         let _ = self.tx.send(Command::AcceptTrade { player_id });
     }
 
-    pub fn accept_trade_request(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub fn accept_trade_request(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::AcceptTradeRequest {
             player_id,
             target_player_id,
         });
     }
 
-    pub fn add_chest_item(&self, player_id: EOShort, item: Item) {
+    pub fn add_chest_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddChestItem { player_id, item });
     }
 
-    pub fn add_locker_item(&self, player_id: EOShort, item: Item) {
+    pub fn add_locker_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddLockerItem { player_id, item });
     }
 
-    pub fn add_trade_item(&self, player_id: EOShort, item: Item) {
+    pub fn add_trade_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddTradeItem { player_id, item });
     }
 
-    pub fn buy_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
+    pub fn buy_item(&self, player_id: i32, item: Item, session_id: i32) {
         let _ = self.tx.send(Command::BuyItem {
             player_id,
             item,
@@ -73,18 +73,18 @@ impl MapHandle {
         });
     }
 
-    pub fn cancel_trade(&self, player_id: EOShort, partner_player_id: EOShort) {
+    pub fn cancel_trade(&self, player_id: i32, partner_player_id: i32) {
         let _ = self.tx.send(Command::CancelTrade {
             player_id,
             partner_player_id,
         });
     }
 
-    pub fn cast_spell(&self, player_id: EOShort, target: SpellTarget) {
+    pub fn cast_spell(&self, player_id: i32, target: SpellTarget) {
         let _ = self.tx.send(Command::CastSpell { player_id, target });
     }
 
-    pub fn craft_item(&self, player_id: EOShort, item_id: EOShort, session_id: EOShort) {
+    pub fn craft_item(&self, player_id: i32, item_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::CraftItem {
             player_id,
             item_id,
@@ -92,7 +92,7 @@ impl MapHandle {
         });
     }
 
-    pub fn create_board_post(&self, player_id: EOShort, subject: String, body: String) {
+    pub fn create_board_post(&self, player_id: i32, subject: String, body: String) {
         let _ = self.tx.send(Command::CreateBoardPost {
             player_id,
             subject,
@@ -100,7 +100,7 @@ impl MapHandle {
         });
     }
 
-    pub fn deposit_gold(&self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+    pub fn deposit_gold(&self, player_id: i32, session_id: EOThree, amount: EOInt) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
             session_id,
@@ -108,7 +108,7 @@ impl MapHandle {
         });
     }
 
-    pub fn drop_item(&self, target_player_id: EOShort, item: ShortItem, coords: Coords) {
+    pub fn drop_item(&self, target_player_id: i32, item: ShortItem, coords: Coords) {
         let _ = self.tx.send(Command::DropItem {
             target_player_id,
             item,
@@ -133,7 +133,7 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
-    pub fn equip(&self, player_id: EOShort, item_id: EOShort, sub_loc: i32) {
+    pub fn equip(&self, player_id: i32, item_id: i32, sub_loc: i32) {
         let _ = self.tx.send(Command::Equip {
             player_id,
             item_id,
@@ -141,14 +141,14 @@ impl MapHandle {
         });
     }
 
-    pub fn face(&self, target_player_id: EOShort, direction: Direction) {
+    pub fn face(&self, target_player_id: i32, direction: Direction) {
         let _ = self.tx.send(Command::Face {
             target_player_id,
             direction,
         });
     }
 
-    pub fn forget_skill(&self, player_id: EOShort, skill_id: EOShort, session_id: EOShort) {
+    pub fn forget_skill(&self, player_id: i32, skill_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::ForgetSkill {
             player_id,
             skill_id,
@@ -156,7 +156,7 @@ impl MapHandle {
         });
     }
 
-    pub async fn get_character(&self, player_id: EOShort) -> Option<Box<Character>> {
+    pub async fn get_character(&self, player_id: i32) -> Option<Box<Character>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter {
             player_id,
@@ -172,7 +172,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub fn get_item(&self, target_player_id: EOShort, item_index: EOShort) {
+    pub fn get_item(&self, target_player_id: i32, item_index: i32) {
         let _ = self.tx.send(Command::GetItem {
             item_index,
             target_player_id,
@@ -181,7 +181,7 @@ impl MapHandle {
 
     pub async fn get_map_info(
         &self,
-        player_ids: Vec<EOShort>,
+        player_ids: Vec<i32>,
         npc_indexes: Vec<i32>,
     ) -> range::Reply {
         let (tx, rx) = oneshot::channel();
@@ -193,7 +193,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_nearby_info(&self, target_player_id: EOShort) -> NearbyInfo {
+    pub async fn get_nearby_info(&self, target_player_id: i32) -> NearbyInfo {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNearbyInfo {
             target_player_id,
@@ -208,13 +208,13 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_rid_and_size(&self) -> ([EOShort; 2], EOInt) {
+    pub async fn get_rid_and_size(&self) -> ([i32; 2], EOInt) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRidAndSize { respond_to: tx });
         rx.await.unwrap()
     }
 
-    pub fn give_item(&self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: EOInt) {
         let _ = self.tx.send(Command::GiveItem {
             target_player_id,
             item_id,
@@ -222,7 +222,7 @@ impl MapHandle {
         });
     }
 
-    pub fn junk_item(&self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: EOInt) {
         let _ = self.tx.send(Command::JunkItem {
             target_player_id,
             item_id,
@@ -230,7 +230,7 @@ impl MapHandle {
         });
     }
 
-    pub async fn has_player(&self, player_id: EOShort) -> bool {
+    pub async fn has_player(&self, player_id: i32) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::HasPlayer {
             player_id,
@@ -239,7 +239,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub fn learn_skill(&self, player_id: EOShort, spell_id: EOShort, session_id: EOShort) {
+    pub fn learn_skill(&self, player_id: i32, spell_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::LearnSkill {
             player_id,
             spell_id,
@@ -249,9 +249,9 @@ impl MapHandle {
 
     pub async fn leave(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         warp_animation: Option<WarpAnimation>,
-        interact_player_id: Option<EOShort>,
+        interact_player_id: Option<i32>,
     ) -> Character {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
@@ -263,54 +263,54 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub fn level_stat(&self, player_id: EOShort, stat_id: StatId) {
+    pub fn level_stat(&self, player_id: i32, stat_id: StatId) {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
-    pub fn open_bank(&self, player_id: EOShort, npc_index: i32) {
+    pub fn open_bank(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenBank {
             player_id,
             npc_index,
         });
     }
 
-    pub fn open_board(&self, player_id: EOShort, board_id: EOShort) {
+    pub fn open_board(&self, player_id: i32, board_id: i32) {
         let _ = self.tx.send(Command::OpenBoard {
             player_id,
             board_id,
         });
     }
 
-    pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
+    pub fn open_chest(&self, player_id: i32, coords: Coords) {
         let _ = self.tx.send(Command::OpenChest { player_id, coords });
     }
 
-    pub fn open_door(&self, target_player_id: EOShort, door_coords: Coords) {
+    pub fn open_door(&self, target_player_id: i32, door_coords: Coords) {
         let _ = self.tx.send(Command::OpenDoor {
             target_player_id,
             door_coords,
         });
     }
 
-    pub fn open_inn(&self, player_id: EOShort, npc_index: i32) {
+    pub fn open_inn(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenInn {
             player_id,
             npc_index,
         });
     }
 
-    pub fn open_locker(&self, player_id: EOShort) {
+    pub fn open_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }
 
-    pub fn open_shop(&self, player_id: EOShort, npc_index: i32) {
+    pub fn open_shop(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenShop {
             player_id,
             npc_index,
         });
     }
 
-    pub fn open_skill_master(&self, player_id: EOShort, npc_index: i32) {
+    pub fn open_skill_master(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenSkillMaster {
             player_id,
             npc_index,
@@ -325,17 +325,17 @@ impl MapHandle {
         let _ = self.tx.send(Command::RecoverPlayers);
     }
 
-    pub fn remove_board_post(&self, player_id: EOShort, post_id: EOShort) {
+    pub fn remove_board_post(&self, player_id: i32, post_id: i32) {
         let _ = self
             .tx
             .send(Command::RemoveBoardPost { player_id, post_id });
     }
 
-    pub fn remove_citizenship(&self, player_id: EOShort) {
+    pub fn remove_citizenship(&self, player_id: i32) {
         let _ = self.tx.send(Command::RemoveCitizenship { player_id });
     }
 
-    pub fn remove_trade_item(&self, player_id: EOShort, item_id: EOShort) {
+    pub fn remove_trade_item(&self, player_id: i32, item_id: i32) {
         let _ = self
             .tx
             .send(Command::RemoveTradeItem { player_id, item_id });
@@ -343,8 +343,8 @@ impl MapHandle {
 
     pub fn request_citizenship(
         &self,
-        player_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        session_id: i32,
         answers: [String; 3],
     ) {
         let _ = self.tx.send(Command::RequestCitizenship {
@@ -354,42 +354,42 @@ impl MapHandle {
         });
     }
 
-    pub fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub fn request_paperdoll(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::RequestPaperdoll {
             player_id,
             target_player_id,
         });
     }
 
-    pub fn request_sleep(&self, player_id: EOShort, session_id: EOShort) {
+    pub fn request_sleep(&self, player_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::RequestSleep {
             player_id,
             session_id,
         });
     }
 
-    pub fn party_request(&self, target_player_id: EOShort, request: PartyRequest) {
+    pub fn party_request(&self, target_player_id: i32, request: PartyRequest) {
         let _ = self.tx.send(Command::PartyRequest {
             target_player_id,
             request,
         });
     }
 
-    pub fn request_trade(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub fn request_trade(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::RequestTrade {
             player_id,
             target_player_id,
         });
     }
 
-    pub fn reset_character(&self, player_id: EOShort, session_id: EOShort) {
+    pub fn reset_character(&self, player_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::ResetCharacter {
             player_id,
             session_id,
         });
     }
 
-    pub fn sell_item(&self, player_id: EOShort, item: Item, session_id: EOShort) {
+    pub fn sell_item(&self, player_id: i32, item: Item, session_id: i32) {
         let _ = self.tx.send(Command::SellItem {
             player_id,
             item,
@@ -397,26 +397,26 @@ impl MapHandle {
         });
     }
 
-    pub fn sit(&self, player_id: EOShort) {
+    pub fn sit(&self, player_id: i32) {
         let _ = self.tx.send(Command::Sit { player_id });
     }
 
-    pub fn sit_chair(&self, player_id: EOShort, coords: Coords) {
+    pub fn sit_chair(&self, player_id: i32, coords: Coords) {
         let _ = self.tx.send(Command::SitChair { player_id, coords });
     }
 
-    pub fn sleep(&self, player_id: EOShort, session_id: EOShort) {
+    pub fn sleep(&self, player_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::Sleep {
             player_id,
             session_id,
         });
     }
 
-    pub fn stand(&self, player_id: EOShort) {
+    pub fn stand(&self, player_id: i32) {
         let _ = self.tx.send(Command::Stand { player_id });
     }
 
-    pub fn start_spell_chant(&self, player_id: EOShort, spell_id: EOShort, timestamp: EOThree) {
+    pub fn start_spell_chant(&self, player_id: i32, spell_id: i32, timestamp: EOThree) {
         let _ = self.tx.send(Command::StartSpellChant {
             player_id,
             spell_id,
@@ -430,7 +430,7 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
-    pub fn send_chat_message(&self, target_player_id: EOShort, message: String) {
+    pub fn send_chat_message(&self, target_player_id: i32, message: String) {
         let _ = self.tx.send(Command::SendChatMessage {
             target_player_id,
             message,
@@ -451,11 +451,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::SpawnNpcs);
     }
 
-    pub fn take_chest_item(&self, player_id: EOShort, item_id: EOShort) {
+    pub fn take_chest_item(&self, player_id: i32, item_id: i32) {
         let _ = self.tx.send(Command::TakeChestItem { player_id, item_id });
     }
 
-    pub fn take_locker_item(&self, player_id: EOShort, item_id: EOShort) {
+    pub fn take_locker_item(&self, player_id: i32, item_id: i32) {
         let _ = self.tx.send(Command::TakeLockerItem { player_id, item_id });
     }
 
@@ -483,7 +483,7 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedWarpSuck);
     }
 
-    pub fn toggle_hidden(&self, player_id: EOShort) {
+    pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }
 
@@ -491,11 +491,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::ActNpcs);
     }
 
-    pub fn unaccept_trade(&self, player_id: EOShort) {
+    pub fn unaccept_trade(&self, player_id: i32) {
         let _ = self.tx.send(Command::UnacceptTrade { player_id });
     }
 
-    pub fn unequip(&self, player_id: EOShort, item_id: EOShort, sub_loc: i32) {
+    pub fn unequip(&self, player_id: i32, item_id: i32, sub_loc: i32) {
         let _ = self.tx.send(Command::Unequip {
             player_id,
             item_id,
@@ -503,21 +503,21 @@ impl MapHandle {
         });
     }
 
-    pub fn upgrade_locker(&self, player_id: EOShort) {
+    pub fn upgrade_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::UpgradeLocker { player_id });
     }
 
-    pub fn use_item(&self, player_id: EOShort, item_id: EOShort) {
+    pub fn use_item(&self, player_id: i32, item_id: i32) {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
     }
 
-    pub fn view_board_post(&self, player_id: EOShort, post_id: EOShort) {
+    pub fn view_board_post(&self, player_id: i32, post_id: i32) {
         let _ = self.tx.send(Command::ViewBoardPost { player_id, post_id });
     }
 
     pub fn walk(
         &self,
-        target_player_id: EOShort,
+        target_player_id: i32,
         direction: Direction,
         coords: Coords,
         timestamp: EOThree,
@@ -530,7 +530,7 @@ impl MapHandle {
         });
     }
 
-    pub fn withdraw_gold(&self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+    pub fn withdraw_gold(&self, player_id: i32, session_id: EOThree, amount: EOInt) {
         let _ = self.tx.send(Command::WithdrawGold {
             player_id,
             session_id,
@@ -538,7 +538,7 @@ impl MapHandle {
         });
     }
 
-    pub fn attack(&self, target_player_id: EOShort, direction: Direction, timestamp: EOThree) {
+    pub fn attack(&self, target_player_id: i32, direction: Direction, timestamp: EOThree) {
         let _ = self.tx.send(Command::Attack {
             target_player_id,
             direction,

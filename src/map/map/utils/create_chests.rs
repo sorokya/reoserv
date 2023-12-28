@@ -1,6 +1,6 @@
 use chrono::Utc;
 use eo::{
-    data::{EOInt, EOShort},
+    data::{EOInt, i32},
     protocol::Coords,
     pubs::{EmfFile, EmfTileSpec},
 };
@@ -9,7 +9,7 @@ use crate::SETTINGS;
 
 use crate::map::chest::{Chest, ChestSpawn};
 
-pub fn create_chests(map_id: EOShort, file: &EmfFile) -> Vec<Chest> {
+pub fn create_chests(map_id: i32, file: &EmfFile) -> Vec<Chest> {
     let mut chests: Vec<Chest> = Vec::new();
     let now = Utc::now();
     for item in &file.items {

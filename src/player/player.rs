@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use eo::{
-    data::{i32, EOInt, EOShort, StreamBuilder, MAX2},
+    data::{i32, EOInt, i32, StreamBuilder, MAX2},
     net::PacketProcessor,
     protocol::{PacketAction, PacketFamily},
 };
@@ -20,7 +20,7 @@ use crate::{
 use super::{packet_bus::PacketBus, ClientState, Command, PartyRequest, WarpSession};
 
 pub struct Player {
-    pub id: EOShort,
+    pub id: i32,
     pub rx: UnboundedReceiver<Command>,
     pub queue: RefCell<VecDeque<Bytes>>,
     pub bus: PacketBus,
@@ -33,10 +33,10 @@ pub struct Player {
     state: ClientState,
     ip: String,
     character: Option<Character>,
-    session_id: Option<EOShort>,
+    session_id: Option<i32>,
     interact_npc_index: Option<i32>,
-    interact_player_id: Option<EOShort>,
-    board_id: Option<EOShort>,
+    interact_player_id: Option<i32>,
+    board_id: Option<i32>,
     chest_index: Option<usize>,
     warp_session: Option<WarpSession>,
     trading: bool,
@@ -55,7 +55,7 @@ mod request_warp;
 
 impl Player {
     pub fn new(
-        id: EOShort,
+        id: i32,
         socket: TcpStream,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
@@ -102,7 +102,7 @@ impl Player {
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();
-                let id = rng.gen_range(1..MAX2) as EOShort;
+                let id = rng.gen_range(1..MAX2) as i32;
                 self.session_id = Some(id);
                 let _ = respond_to.send(id);
             }

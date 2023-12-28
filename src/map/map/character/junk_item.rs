@@ -1,14 +1,14 @@
 use std::cmp;
 
 use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{EOInt, i32, Serializeable, StreamBuilder},
     protocol::{server::item, PacketAction, PacketFamily, ShortItem},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn junk_item(&mut self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub async fn junk_item(&mut self, target_player_id: i32, item_id: i32, amount: EOInt) {
         if amount == 0 {
             return;
         }

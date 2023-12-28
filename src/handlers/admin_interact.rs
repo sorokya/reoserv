@@ -1,17 +1,17 @@
 use eo::{
-    data::{EOShort, StreamReader},
+    data::{i32, StreamReader},
     protocol::PacketAction,
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn report(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn report(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let reportee_name = reader.get_break_string();
     let message = reader.get_break_string();
     world.report_player(player_id, reportee_name, message);
 }
 
-fn tell(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn tell(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let message = reader.get_break_string();
     world.send_admin_message(player_id, message);
 }

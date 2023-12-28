@@ -1,4 +1,4 @@
-use eo::data::{i32, EOShort, Serializeable, StreamBuilder};
+use eo::data::{i32, i32, Serializeable, StreamBuilder};
 use eo::protocol::server::talk;
 use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
 
@@ -8,7 +8,7 @@ use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 use crate::{COMMANDS, ITEM_DB};
 
 async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
-    let map_id = args[0].parse::<EOShort>().unwrap();
+    let map_id = args[0].parse::<i32>().unwrap();
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
             Coords {
@@ -73,7 +73,7 @@ async fn spawn_item(args: &[String], character: &Character) {
     let identifier = (*args[0]).to_string();
 
     let item_id = match identifier.parse::<u32>() {
-        Ok(id) => id as EOShort,
+        Ok(id) => id as i32,
         Err(_) => {
             // find matches from item db where name starts with identifier
             match ITEM_DB
@@ -81,7 +81,7 @@ async fn spawn_item(args: &[String], character: &Character) {
                 .iter()
                 .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
             {
-                Some(index) => index as EOShort + 1,
+                Some(index) => index as i32 + 1,
                 None => {
                     let packet = talk::Server {
                         message: format!("No item found with name \"{}\".", identifier),

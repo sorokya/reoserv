@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, StreamReader},
+    data::{i32, i32, StreamReader},
     protocol::PacketAction,
 };
 
@@ -12,7 +12,7 @@ use crate::{
 const JOIN: i32 = 0;
 const INVITE: i32 = 1;
 
-pub fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+pub fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
     let request_type = reader.get_char();
     let target_player_id = reader.get_short();
 
@@ -23,18 +23,18 @@ pub fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     }
 }
 
-pub fn accept(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+pub fn accept(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let request_type = reader.get_char();
     let target_player_id = reader.get_short();
     world.accept_party_request(player_id, target_player_id, request_type);
 }
 
-pub fn remove(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+pub fn remove(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let target_player_id = reader.get_short();
     world.remove_party_member(player_id, target_player_id);
 }
 
-pub fn take(player_id: EOShort, world: WorldHandle) {
+pub fn take(player_id: i32, world: WorldHandle) {
     world.request_party_list(player_id);
 }
 

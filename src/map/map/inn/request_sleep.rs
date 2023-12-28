@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort, StreamBuilder},
+    data::{EOInt, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -9,7 +9,7 @@ use crate::{INN_DB, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn request_sleep(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn request_sleep(&mut self, player_id: i32, session_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,

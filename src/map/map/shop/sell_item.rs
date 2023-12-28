@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::shop::Sell, Item, PacketAction, PacketFamily, ReverseItem},
     pubs::EnfNpcType,
 };
@@ -11,7 +11,7 @@ use crate::{NPC_DB, SHOP_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn sell_item(&mut self, player_id: EOShort, item: Item, session_id: EOShort) {
+    pub async fn sell_item(&mut self, player_id: i32, item: Item, session_id: i32) {
         if item.amount == 0 {
             return;
         }

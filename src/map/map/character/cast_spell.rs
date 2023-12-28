@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::{EnfNpcType, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
 };
@@ -15,7 +15,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    pub async fn cast_spell(&mut self, player_id: EOShort, target: SpellTarget) {
+    pub async fn cast_spell(&mut self, player_id: i32, target: SpellTarget) {
         let spell_id = match self.get_player_spell_id(player_id) {
             Some(spell_id) => spell_id,
             None => return,
@@ -36,7 +36,7 @@ impl Map {
         }
     }
 
-    fn get_player_spell_id(&self, player_id: EOShort) -> Option<EOShort> {
+    fn get_player_spell_id(&self, player_id: i32) -> Option<i32> {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
@@ -61,8 +61,8 @@ impl Map {
 
     fn cast_heal_spell(
         &mut self,
-        player_id: EOShort,
-        spell_id: EOShort,
+        player_id: i32,
+        spell_id: i32,
         spell: &EsfSpell,
         target: SpellTarget,
     ) {
@@ -80,7 +80,7 @@ impl Map {
         }
     }
 
-    fn cast_heal_self(&mut self, player_id: EOShort, spell_id: EOShort, spell: &EsfSpell) {
+    fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfSpell) {
         if spell.target_type != EsfSpellTargetType::Player {
             return;
         }
@@ -142,13 +142,13 @@ impl Map {
         );
     }
 
-    fn cast_heal_group(&mut self, _player_id: EOShort, _spell: &EsfSpell) {}
+    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfSpell) {}
 
     fn cast_heal_player(
         &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
-        spell_id: EOShort,
+        player_id: i32,
+        target_player_id: i32,
+        spell_id: i32,
         spell: &EsfSpell,
     ) {
         if spell.target_type != EsfSpellTargetType::Other {
@@ -241,8 +241,8 @@ impl Map {
 
     async fn cast_damage_spell(
         &mut self,
-        player_id: EOShort,
-        spell_id: EOShort,
+        player_id: i32,
+        spell_id: i32,
         spell_data: &EsfSpell,
         target: SpellTarget,
     ) {
@@ -264,9 +264,9 @@ impl Map {
 
     async fn cast_damage_npc(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         npc_index: i32,
-        spell_id: EOShort,
+        spell_id: i32,
         spell_data: &EsfSpell,
     ) {
         let character = match self.characters.get(&player_id) {

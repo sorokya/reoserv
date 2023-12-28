@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, Serializeable, StreamBuilder, EO_BREAK_CHAR},
     protocol::{AdminLevel, PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn toggle_hidden(&mut self, player_id: EOShort) {
+    pub fn toggle_hidden(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,

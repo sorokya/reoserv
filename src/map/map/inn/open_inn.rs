@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, i32, EOThree, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -9,7 +9,7 @@ use crate::{utils::in_client_range, INN_DB, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_inn(&self, player_id: EOShort, npc_index: i32) {
+    pub async fn open_inn(&self, player_id: i32, npc_index: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

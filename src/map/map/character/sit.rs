@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::sit, PacketAction, PacketFamily, SitState},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn sit(&mut self, player_id: EOShort) {
+    pub fn sit(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {

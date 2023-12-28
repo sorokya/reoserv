@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::World;
 
 impl World {
-    pub async fn refresh_party(&self, player_id: EOShort) {
+    pub async fn refresh_party(&self, player_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

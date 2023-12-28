@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         server::{chair, sit},
         PacketAction, PacketFamily, SitState,
@@ -11,7 +11,7 @@ use crate::utils::get_next_coords;
 use super::super::Map;
 
 impl Map {
-    pub fn stand(&mut self, player_id: EOShort) {
+    pub fn stand(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {

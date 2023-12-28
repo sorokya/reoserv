@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamReader},
+    data::{i32, i32, Serializeable, StreamReader},
     protocol::{
         client::shop::{Buy, Create, Open, Sell},
         PacketAction,
@@ -21,7 +21,7 @@ async fn buy(reader: StreamReader, player: PlayerHandle) {
     };
 
     if let Ok(map) = player.get_map().await {
-        map.buy_item(player_id, request.buy_item, request.session_id as EOShort);
+        map.buy_item(player_id, request.buy_item, request.session_id as i32);
     }
 }
 
@@ -41,7 +41,7 @@ async fn create(reader: StreamReader, player: PlayerHandle) {
         map.craft_item(
             player_id,
             request.craft_item_id,
-            request.session_id as EOShort,
+            request.session_id as i32,
         );
     }
 }
@@ -76,7 +76,7 @@ async fn sell(reader: StreamReader, player: PlayerHandle) {
     };
 
     if let Ok(map) = player.get_map().await {
-        map.sell_item(player_id, request.sell_item, request.session_id as EOShort);
+        map.sell_item(player_id, request.sell_item, request.session_id as i32);
     }
 }
 

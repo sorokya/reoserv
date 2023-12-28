@@ -1,6 +1,6 @@
 use chrono::Utc;
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
 };
 
@@ -9,7 +9,7 @@ use crate::{map::Chest, utils::get_distance};
 use super::super::Map;
 
 impl Map {
-    pub async fn take_chest_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub async fn take_chest_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

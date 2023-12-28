@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -8,7 +8,7 @@ use crate::utils::in_client_range;
 use super::super::Map;
 
 impl Map {
-    pub async fn accept_trade_request(&mut self, player_id: EOShort, target_player_id: EOShort) {
+    pub async fn accept_trade_request(&mut self, player_id: i32, target_player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

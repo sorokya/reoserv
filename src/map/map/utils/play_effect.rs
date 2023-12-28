@@ -1,14 +1,14 @@
 use std::mem;
 
 use eo::{
-    data::{EOShort, EOThree, Serializeable, StreamBuilder},
+    data::{i32, EOThree, Serializeable, StreamBuilder},
     protocol::{server::effect, PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn play_effect(&mut self, player_id: EOShort, effect_id: EOThree) {
+    pub fn play_effect(&mut self, player_id: i32, effect_id: EOThree) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

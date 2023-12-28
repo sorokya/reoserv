@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -9,7 +9,7 @@ use eo::{
 use super::super::Map;
 
 impl Map {
-    pub fn take_locker_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub fn take_locker_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

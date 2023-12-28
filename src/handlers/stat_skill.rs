@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, Serializeable, StreamReader},
+    data::{i32, i32, Serializeable, StreamReader},
     protocol::{
         client::statskill::{Add, AddData, Junk, Open, Remove, Take},
         PacketAction,
@@ -8,7 +8,7 @@ use eo::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+async fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Add::default();
     packet.deserialize(&reader);
 
@@ -21,28 +21,28 @@ async fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     }
 }
 
-async fn junk(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+async fn junk(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Junk::default();
     packet.deserialize(&reader);
-    map.reset_character(player_id, packet.session_id as EOShort);
+    map.reset_character(player_id, packet.session_id as i32);
 }
 
-async fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+async fn open(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Open::default();
     packet.deserialize(&reader);
     map.open_skill_master(player_id, packet.npc_index as i32);
 }
 
-async fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+async fn remove(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Remove::default();
     packet.deserialize(&reader);
-    map.forget_skill(player_id, packet.spell_id, packet.session_id as EOShort);
+    map.forget_skill(player_id, packet.spell_id, packet.session_id as i32);
 }
 
-async fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+async fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
     let mut packet = Take::default();
     packet.deserialize(&reader);
-    map.learn_skill(player_id, packet.spell_id, packet.session_id as EOShort);
+    map.learn_skill(player_id, packet.spell_id, packet.session_id as i32);
 }
 
 pub async fn stat_skill(action: PacketAction, reader: StreamReader, player: PlayerHandle) {

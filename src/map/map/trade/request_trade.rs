@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -10,7 +10,7 @@ use super::super::Map;
 const MAGIC_NUMBER: i32 = 138;
 
 impl Map {
-    pub fn request_trade(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub fn request_trade(&self, player_id: i32, target_player_id: i32) {
         if self.id == SETTINGS.jail.map {
             return;
         }

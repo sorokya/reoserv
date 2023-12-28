@@ -1,14 +1,14 @@
 use std::cmp;
 
 use eo::{
-    data::{EOInt, EOShort, EOThree, StreamBuilder},
+    data::{EOInt, i32, EOThree, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn withdraw_gold(&mut self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+    pub async fn withdraw_gold(&mut self, player_id: i32, session_id: EOThree, amount: EOInt) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

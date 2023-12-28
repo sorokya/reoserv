@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::paperdoll, PacketAction, PacketFamily, PaperdollInfo},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub async fn request_paperdoll(&self, player_id: i32, target_player_id: i32) {
         let player = match self.characters.get(&player_id) {
             Some(character) => character.player.as_ref().unwrap(),
             None => {

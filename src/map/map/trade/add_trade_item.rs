@@ -1,4 +1,4 @@
-use eo::{data::EOShort, protocol::Item, pubs::EifItemSpecial};
+use eo::{data::i32, protocol::Item, pubs::EifItemSpecial};
 
 use crate::{ITEM_DB, SETTINGS};
 
@@ -7,7 +7,7 @@ use super::super::Map;
 const MAX_TRADE_SLOTS: usize = 10;
 
 impl Map {
-    pub async fn add_trade_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_trade_item(&mut self, player_id: i32, item: Item) {
         if item.amount == 0 || item.amount > SETTINGS.limits.max_trade {
             return;
         }

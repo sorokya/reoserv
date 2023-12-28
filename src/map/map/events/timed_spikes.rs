@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::EOShort,
+    data::i32,
     protocol::{PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -14,7 +14,7 @@ impl Map {
         }
 
         // TODO: only doing this to satisfy the borrow checker..
-        let mut damaged_player_ids: Vec<EOShort> = Vec::new();
+        let mut damaged_player_ids: Vec<i32> = Vec::new();
 
         for character in self.characters.values() {
             if !character.hidden

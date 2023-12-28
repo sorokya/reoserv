@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOInt, EOShort, StreamBuilder},
+    data::{EOInt, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::{prelude::*, Params, Row};
@@ -14,7 +14,7 @@ use super::account_exists::account_exists;
 impl World {
     pub fn change_password(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         username: String,
         current_password: String,
         new_password: String,

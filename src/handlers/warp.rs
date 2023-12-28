@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::warp::{Accept, Take},
         FileType, PacketAction,
@@ -14,7 +14,7 @@ fn accept(reader: StreamReader, player: PlayerHandle) {
     player.accept_warp(accept.map_id, accept.session_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
+fn take(reader: StreamReader, player_id: i32, world: WorldHandle) {
     let mut take = Take::default();
     take.deserialize(&reader);
     world.get_file(player_id, FileType::Map, take.session_id, None, true);

@@ -1,31 +1,31 @@
 use eo::{
-    data::{EOShort, StreamReader},
+    data::{i32, StreamReader},
     protocol::{Item, PacketAction},
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
     reader.get_char();
 
     let target_player_id = reader.get_short();
     map.request_trade(player_id, target_player_id);
 }
 
-fn accept(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn accept(reader: StreamReader, player_id: i32, map: MapHandle) {
     reader.get_char();
 
     let target_player_id = reader.get_short();
     map.accept_trade_request(player_id, target_player_id);
 }
 
-async fn close(player: PlayerHandle, player_id: EOShort, map: MapHandle) {
+async fn close(player: PlayerHandle, player_id: i32, map: MapHandle) {
     if let Some(interact_player_id) = player.get_interact_player_id().await {
         map.cancel_trade(player_id, interact_player_id);
     }
 }
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
     let item_id = reader.get_short();
     let amount = reader.get_int();
     map.add_trade_item(
@@ -37,12 +37,12 @@ fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     );
 }
 
-fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn remove(reader: StreamReader, player_id: i32, map: MapHandle) {
     let item_id = reader.get_short();
     map.remove_trade_item(player_id, item_id);
 }
 
-fn agree(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn agree(reader: StreamReader, player_id: i32, map: MapHandle) {
     let agree = reader.get_char() == 1;
     if agree {
         map.accept_trade(player_id);

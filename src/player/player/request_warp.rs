@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder, MAX2},
+    data::{i32, Serializeable, StreamBuilder, MAX2},
     protocol::{server::warp, Coords, PacketAction, PacketFamily, WarpAnimation, WarpType},
 };
 use rand::Rng;
@@ -11,14 +11,14 @@ use super::Player;
 impl Player {
     pub async fn request_warp(
         &mut self,
-        map_id: EOShort,
+        map_id: i32,
         coords: Coords,
         local: bool,
         animation: Option<WarpAnimation>,
     ) {
         let session_id = {
             let mut rng = rand::thread_rng();
-            let session_id = rng.gen_range(10..MAX2) as EOShort;
+            let session_id = rng.gen_range(10..MAX2) as i32;
             self.session_id = Some(session_id);
             session_id
         };

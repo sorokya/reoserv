@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, i32, EOThree},
     protocol::{
         client::character::Create, AdminLevel, Coords, Direction, Gender, Item, PaperdollFull,
         PaperdollIcon, SitState, Skin, Spell, Weight,
@@ -40,7 +40,7 @@ mod update;
 
 #[derive(Debug, Clone, Default)]
 pub struct Character {
-    pub player_id: Option<EOShort>,
+    pub player_id: Option<i32>,
     pub player: Option<PlayerHandle>,
     pub id: EOInt,
     pub account_id: EOInt,
@@ -53,8 +53,8 @@ pub struct Character {
     pub class: i32,
     pub gender: Gender,
     pub skin: Skin,
-    pub hair_style: EOShort,
-    pub hair_color: EOShort,
+    pub hair_style: i32,
+    pub hair_color: i32,
     pub bank_level: EOInt,
     pub gold_bank: EOInt,
     pub guild_name: Option<String>,
@@ -64,35 +64,35 @@ pub struct Character {
     pub paperdoll: PaperdollFull,
     pub level: i32,
     pub experience: EOInt,
-    pub hp: EOShort,
-    pub max_hp: EOShort,
-    pub tp: EOShort,
-    pub max_tp: EOShort,
-    pub max_sp: EOShort,
+    pub hp: i32,
+    pub max_hp: i32,
+    pub tp: i32,
+    pub max_tp: i32,
+    pub max_sp: i32,
     pub weight: EOInt,
     pub max_weight: EOInt,
-    pub base_strength: EOShort,
-    pub base_intelligence: EOShort,
-    pub base_wisdom: EOShort,
-    pub base_agility: EOShort,
-    pub base_constitution: EOShort,
-    pub base_charisma: EOShort,
-    pub adj_strength: EOShort,
-    pub adj_intelligence: EOShort,
-    pub adj_wisdom: EOShort,
-    pub adj_agility: EOShort,
-    pub adj_constitution: EOShort,
-    pub adj_charisma: EOShort,
-    pub stat_points: EOShort,
-    pub skill_points: EOShort,
-    pub karma: EOShort,
+    pub base_strength: i32,
+    pub base_intelligence: i32,
+    pub base_wisdom: i32,
+    pub base_agility: i32,
+    pub base_constitution: i32,
+    pub base_charisma: i32,
+    pub adj_strength: i32,
+    pub adj_intelligence: i32,
+    pub adj_wisdom: i32,
+    pub adj_agility: i32,
+    pub adj_constitution: i32,
+    pub adj_charisma: i32,
+    pub stat_points: i32,
+    pub skill_points: i32,
+    pub karma: i32,
     pub usage: EOInt,
-    pub min_damage: EOShort,
-    pub max_damage: EOShort,
-    pub accuracy: EOShort,
-    pub evasion: EOShort,
-    pub armor: EOShort,
-    pub map_id: EOShort,
+    pub min_damage: i32,
+    pub max_damage: i32,
+    pub accuracy: i32,
+    pub evasion: i32,
+    pub armor: i32,
+    pub map_id: i32,
     pub coords: Coords,
     pub direction: Direction,
     pub sit_state: SitState,
@@ -123,13 +123,13 @@ impl Character {
         percent.floor() as i32
     }
 
-    pub fn heal(&mut self, amount: EOShort) -> EOShort {
+    pub fn heal(&mut self, amount: i32) -> i32 {
         let amount = cmp::min(amount, self.max_hp - self.hp);
         self.hp += amount;
         amount
     }
 
-    pub fn tp_heal(&mut self, amount: EOShort) -> EOShort {
+    pub fn tp_heal(&mut self, amount: i32) -> i32 {
         let amount = cmp::min(amount, self.max_tp - self.tp);
         self.tp += amount;
         amount
@@ -168,21 +168,21 @@ impl Character {
         }
     }
 
-    pub fn get_item_amount(&self, item_id: EOShort) -> EOInt {
+    pub fn get_item_amount(&self, item_id: i32) -> EOInt {
         match self.items.iter().find(|item| item.id == item_id) {
             Some(item) => item.amount,
             None => 0,
         }
     }
 
-    pub fn get_bank_item_amount(&self, item_id: EOShort) -> EOInt {
+    pub fn get_bank_item_amount(&self, item_id: i32) -> EOInt {
         match self.bank.iter().find(|item| item.id == item_id) {
             Some(item) => item.amount,
             None => 0,
         }
     }
 
-    pub fn add_spell(&mut self, spell_id: EOShort) {
+    pub fn add_spell(&mut self, spell_id: i32) {
         if !self.has_spell(spell_id) {
             self.spells.push(Spell {
                 id: spell_id,
@@ -191,11 +191,11 @@ impl Character {
         }
     }
 
-    pub fn remove_spell(&mut self, spell_id: EOShort) {
+    pub fn remove_spell(&mut self, spell_id: i32) {
         self.spells.retain(|spell| spell.id != spell_id);
     }
 
-    pub fn has_spell(&self, spell_id: EOShort) -> bool {
+    pub fn has_spell(&self, spell_id: i32) -> bool {
         self.spells.iter().any(|spell| spell.id == spell_id)
     }
 
@@ -219,8 +219,8 @@ impl Character {
         // http://archive.today/brypq
         while self.experience > EXP_TABLE[self.level as usize + 1] {
             self.level += 1;
-            self.stat_points += SETTINGS.world.stat_points_per_level as EOShort;
-            self.skill_points += SETTINGS.world.skill_points_per_level as EOShort;
+            self.stat_points += SETTINGS.world.stat_points_per_level as i32;
+            self.skill_points += SETTINGS.world.skill_points_per_level as i32;
             leveled_up = true;
         }
 

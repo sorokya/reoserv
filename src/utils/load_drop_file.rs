@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamReader},
+    data::{EOInt, i32, Serializeable, StreamReader},
     pubs::{Drop, DropFile, DropNpc},
 };
 use glob::glob;
@@ -37,14 +37,14 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
         if drops.len() > 0 {
             drop_file.npcs.push(DropNpc {
                 npc_id,
-                num_of_drops: drops.len() as EOShort,
+                num_of_drops: drops.len() as i32,
                 drops: drops
                     .iter()
                     .map(|v| Drop {
-                        item_id: v["itemId"].as_u64().unwrap_or(0) as EOShort,
+                        item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
                         min: v["min"].as_u64().unwrap_or(0) as EOInt,
                         max: v["max"].as_u64().unwrap_or(0) as EOInt,
-                        rate: v["rate"].as_u64().unwrap_or(0) as EOShort,
+                        rate: v["rate"].as_u64().unwrap_or(0) as i32,
                     })
                     .collect(),
             });

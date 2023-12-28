@@ -1,12 +1,12 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::World;
 
 impl World {
-    pub fn broadcast_party_message(&self, player_id: EOShort, message: String) {
+    pub fn broadcast_party_message(&self, player_id: i32, message: String) {
         let party = match self.parties.iter().find(|p| p.members.contains(&player_id)) {
             Some(party) => party,
             None => return,

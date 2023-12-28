@@ -1,7 +1,7 @@
 use std::{io::Cursor, path::Path};
 
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{
         server::welcome::{Reply, ReplyData, ReplyEnterGame},
         PacketAction, PacketFamily, WelcomeReply,
@@ -17,7 +17,7 @@ use crate::{
 use super::World;
 
 impl World {
-    pub async fn enter_game(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn enter_game(&mut self, player_id: i32, session_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,

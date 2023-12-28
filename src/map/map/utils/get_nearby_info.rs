@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort},
+    data::{i32, i32},
     protocol::NearbyInfo,
 };
 use tokio::sync::oneshot;
@@ -11,7 +11,7 @@ use super::super::Map;
 impl Map {
     pub fn get_nearby_info(
         &self,
-        target_player_id: EOShort,
+        target_player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
     ) {
         let target = self.characters.get(&target_player_id).unwrap();

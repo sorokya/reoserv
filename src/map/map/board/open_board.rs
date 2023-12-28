@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use eo::{
-    data::{i32, EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::{params, prelude::Queryable, Row};
@@ -13,14 +13,14 @@ use crate::{
 use super::super::Map;
 
 struct BoardPost {
-    id: EOShort,
+    id: i32,
     author: String,
     subject: String,
     created_at: NaiveDateTime,
 }
 
 impl Map {
-    pub fn open_board(&mut self, player_id: EOShort, board_id: EOShort) {
+    pub fn open_board(&mut self, player_id: i32, board_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -35,7 +35,7 @@ impl Map {
             return;
         }
 
-        if board_id == SETTINGS.board.admin_board as EOShort && character.admin_level.to_char() < 1
+        if board_id == SETTINGS.board.admin_board as i32 && character.admin_level.to_char() < 1
         {
             return;
         }
@@ -52,7 +52,7 @@ impl Map {
             let mut builder = StreamBuilder::new();
 
             let mut conn = pool.get_conn().await.unwrap();
-            let limit = if board_id == SETTINGS.board.admin_board as EOShort {
+            let limit = if board_id == SETTINGS.board.admin_board as i32 {
                 SETTINGS.board.admin_max_posts
             } else {
                 SETTINGS.board.max_posts

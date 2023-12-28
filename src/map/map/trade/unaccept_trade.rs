@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -8,7 +8,7 @@ use super::super::Map;
 const UNAGREED: i32 = 0;
 
 impl Map {
-    pub async fn unaccept_trade(&mut self, player_id: EOShort) {
+    pub async fn unaccept_trade(&mut self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

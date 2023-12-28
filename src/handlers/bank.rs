@@ -1,11 +1,11 @@
 use eo::{
-    data::{i32, EOShort, StreamReader},
+    data::{i32, i32, StreamReader},
     protocol::PacketAction,
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
     let amount = reader.get_int();
     if amount == 0 {
         return;
@@ -16,12 +16,12 @@ fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     map.deposit_gold(player_id, session_id, amount);
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn open(reader: StreamReader, player_id: i32, map: MapHandle) {
     let npc_index = reader.get_short();
     map.open_bank(player_id, npc_index as i32);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
+fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
     let amount = reader.get_int();
     if amount == 0 {
         return;

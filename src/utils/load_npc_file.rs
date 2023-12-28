@@ -6,7 +6,7 @@ use bytes::Bytes;
 use crc::{Crc, CRC_32_CKSUM};
 use eo::{
     data::{
-        decode_number, encode_number, i32, EOInt, EOShort, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, EOInt, i32, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{EnfFile, EnfNpc, EnfNpcType},
@@ -39,25 +39,25 @@ fn load_json() -> Result<EnfFile, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
         let record = EnfNpc {
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as EOShort,
+            graphic_id: v["graphicId"].as_u64().unwrap_or(0) as i32,
             race: v["race"].as_u64().unwrap_or(0) as i32,
-            boss: v["boss"].as_u64().unwrap_or(0) as EOShort,
-            child: v["child"].as_u64().unwrap_or(0) as EOShort,
-            r#type: EnfNpcType::from_short(v["type"].as_u64().unwrap_or(0) as EOShort)
+            boss: v["boss"].as_u64().unwrap_or(0) as i32,
+            child: v["child"].as_u64().unwrap_or(0) as i32,
+            r#type: EnfNpcType::from_short(v["type"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
-            behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as EOShort,
+            behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
             hp: v["hp"].as_u64().unwrap_or(0) as EOInt,
-            tp: v["tp"].as_u64().unwrap_or(0) as EOShort,
-            min_damage: v["minDamage"].as_u64().unwrap_or(0) as EOShort,
-            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as EOShort,
-            accuracy: v["accuracy"].as_u64().unwrap_or(0) as EOShort,
-            evade: v["evade"].as_u64().unwrap_or(0) as EOShort,
-            armor: v["armor"].as_u64().unwrap_or(0) as EOShort,
+            tp: v["tp"].as_u64().unwrap_or(0) as i32,
+            min_damage: v["minDamage"].as_u64().unwrap_or(0) as i32,
+            max_damage: v["maxDamage"].as_u64().unwrap_or(0) as i32,
+            accuracy: v["accuracy"].as_u64().unwrap_or(0) as i32,
+            evade: v["evade"].as_u64().unwrap_or(0) as i32,
+            armor: v["armor"].as_u64().unwrap_or(0) as i32,
             return_damage: v["returnDamage"].as_u64().unwrap_or(0) as i32,
-            element: v["element"].as_u64().unwrap_or(0) as EOShort,
-            element_damage: v["elementDamage"].as_u64().unwrap_or(0) as EOShort,
-            element_weakness: v["elementWeakness"].as_u64().unwrap_or(0) as EOShort,
-            element_weakness_damage: v["elementWeaknessDamage"].as_u64().unwrap_or(0) as EOShort,
+            element: v["element"].as_u64().unwrap_or(0) as i32,
+            element_damage: v["elementDamage"].as_u64().unwrap_or(0) as i32,
+            element_weakness: v["elementWeakness"].as_u64().unwrap_or(0) as i32,
+            element_weakness_damage: v["elementWeaknessDamage"].as_u64().unwrap_or(0) as i32,
             level: v["level"].as_u64().unwrap_or(0) as i32,
             experience: v["experience"].as_u64().unwrap_or(0) as EOInt,
         };
@@ -83,8 +83,8 @@ fn load_json() -> Result<EnfFile, Box<dyn std::error::Error>> {
     let encoded = encode_number(checksum);
 
     enf_file.rid = [
-        decode_number(&encoded[0..=1]) as EOShort,
-        decode_number(&encoded[2..=3]) as EOShort,
+        decode_number(&encoded[0..=1]) as i32,
+        decode_number(&encoded[2..=3]) as i32,
     ];
 
     save_pub_file(&enf_file, "pub/dtn001.enf")?;

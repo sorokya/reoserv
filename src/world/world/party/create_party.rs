@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -8,7 +8,7 @@ use crate::world::Party;
 use super::super::World;
 
 impl World {
-    pub async fn create_party(&mut self, leader_id: EOShort, member_id: EOShort) {
+    pub async fn create_party(&mut self, leader_id: i32, member_id: i32) {
         let leader = match self.players.get(&leader_id) {
             Some(player) => player,
             None => return,

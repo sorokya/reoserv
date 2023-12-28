@@ -2,7 +2,7 @@ use std::cmp;
 
 use bytes::Bytes;
 use eo::{
-    data::{i32, EOShort, StreamBuilder},
+    data::{i32, i32, StreamBuilder},
     protocol::{Item, PacketAction, PacketFamily},
 };
 
@@ -15,7 +15,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    pub async fn add_chest_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_chest_item(&mut self, player_id: i32, item: Item) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

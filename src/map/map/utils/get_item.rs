@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::item, PacketAction, PacketFamily, ShortItem},
 };
 
@@ -8,7 +8,7 @@ use crate::{utils::get_distance, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub fn get_item(&mut self, target_player_id: EOShort, item_index: EOShort) {
+    pub fn get_item(&mut self, target_player_id: i32, item_index: i32) {
         let (item_id, item_amount, item_coords) = match self.items.get(&item_index) {
             Some(item) => (item.id, item.amount, item.coords),
             None => return,

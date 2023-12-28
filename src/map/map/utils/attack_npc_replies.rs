@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, i32, StreamBuilder},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
 };
 use evalexpr::{context_map, eval_float_with_context};
@@ -12,11 +12,11 @@ use super::super::Map;
 impl Map {
     pub fn attack_npc_reply(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         npc_index: i32,
         direction: Direction,
         damage_dealt: EOInt,
-        spell_id: Option<EOShort>,
+        spell_id: Option<i32>,
     ) {
         if spell_id.is_none() {
             let reply = attack::Player {
@@ -44,9 +44,9 @@ impl Map {
 
         builder.add_short(player_id);
         builder.add_char(direction.to_char());
-        builder.add_short(npc_index as EOShort);
+        builder.add_short(npc_index as i32);
         builder.add_three(damage_dealt);
-        builder.add_short(npc.get_hp_percentage() as EOShort);
+        builder.add_short(npc.get_hp_percentage() as i32);
 
         if spell_id.is_some() {
             let tp = match self.characters.get(&player_id) {
@@ -70,11 +70,11 @@ impl Map {
 
     pub async fn attack_npc_killed_reply(
         &mut self,
-        killer_player_id: EOShort,
+        killer_player_id: i32,
         npc_index: i32,
         direction: Direction,
         damage_dealt: EOInt,
-        spell_id: Option<EOShort>,
+        spell_id: Option<i32>,
     ) {
         let (npc_id, npc_coords) = match self.npcs.get(&npc_index) {
             Some(npc) => (npc.id, npc.coords),
@@ -86,10 +86,10 @@ impl Map {
             None => return,
         };
 
-        let mut exp_gains: Vec<(EOShort, bool, EOInt, EOInt)> = Vec::new();
+        let mut exp_gains: Vec<(i32, bool, EOInt, EOInt)> = Vec::new();
 
         if let Some(party) = self.world.get_player_party(killer_player_id).await {
-            let members_on_map: Vec<&EOShort> = party
+            let members_on_map: Vec<&i32> = party
                 .members
                 .iter()
                 .filter(|id| self.characters.contains_key(id))
@@ -150,7 +150,7 @@ impl Map {
 
             builder.add_short(killer_player_id);
             builder.add_char(direction.to_char());
-            builder.add_short(npc_index as EOShort);
+            builder.add_short(npc_index as i32);
             builder.add_short(drop_index);
             builder.add_short(drop_item_id);
             builder.add_char(npc_coords.x);
@@ -214,7 +214,7 @@ impl Map {
         }
     }
 
-    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(EOShort, bool, EOInt, EOInt)>) {
+    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(i32, bool, EOInt, EOInt)>) {
         for (player_id, leveled_up, _, experience) in exp_gains {
             let character = match self.characters.get(player_id) {
                 Some(character) => character,
@@ -264,7 +264,7 @@ impl Map {
     }
 }
 
-fn get_drop(target_player_id: EOShort, npc_id: EOShort, npc_coords: &Coords) -> Option<Item> {
+fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
     if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc_id) {
         let mut rng = rand::thread_rng();
         let mut drops = drop_npc.drops.clone();

@@ -1,9 +1,6 @@
 use std::mem;
 
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{server::effect, PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{server::EffectPlayerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
@@ -18,14 +15,14 @@ impl Map {
             return;
         }
 
-        let packet = effect::Player {
+        let packet = EffectPlayerServerPacket {
             player_id,
             effect_id,
         };
 
-        let mut builder = StreamBuilder::with_capacity(mem::size_of::<effect::Player>());
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::with_capacity(mem::size_of::<EffectPlayerServerPacket>());
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {
             if let Some(player) = character.player.as_ref() {

@@ -1,11 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{i32, EOInt, i32, i32},
-    protocol::{
-        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
-    },
-    pubs::EmfFile,
-};
+use eolib::protocol::{map::Emf, net::{Item, ThreeItem, server::{WarpEffect, NearbyInfo}, client::{StatId, ByteCoords}}, Coords, Emote, Direction};
 use mysql_async::Pool;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -28,9 +22,9 @@ pub struct MapHandle {
 impl MapHandle {
     pub fn new(
         id: i32,
-        file_size: EOInt,
+        file_size: i32,
         pool: Pool,
-        file: EmfFile,
+        file: Emf,
         world: WorldHandle,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
@@ -63,6 +57,10 @@ impl MapHandle {
 
     pub fn add_trade_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddTradeItem { player_id, item });
+    }
+
+    pub fn agree_trade(&self, player_id: i32) {
+        let _ = self.tx.send(Command::AgreeTrade { player_id });
     }
 
     pub fn buy_item(&self, player_id: i32, item: Item, session_id: i32) {
@@ -100,7 +98,7 @@ impl MapHandle {
         });
     }
 
-    pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: EOInt) {
+    pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: i32) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
             session_id,
@@ -108,7 +106,11 @@ impl MapHandle {
         });
     }
 
-    pub fn drop_item(&self, target_player_id: i32, item: ShortItem, coords: Coords) {
+    pub fn disagree_trade(&self, player_id: i32) {
+        let _ = self.tx.send(Command::DisagreeTrade { player_id });
+    }
+
+    pub fn drop_item(&self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
         let _ = self.tx.send(Command::DropItem {
             target_player_id,
             item,
@@ -116,14 +118,14 @@ impl MapHandle {
         });
     }
 
-    pub fn emote(&self, target_player_id: u16, emote: Emote) {
+    pub fn emote(&self, target_player_id: i32, emote: Emote) {
         let _ = self.tx.send(Command::Emote {
             target_player_id,
             emote,
         });
     }
 
-    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpAnimation>) {
+    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpEffect>) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter {
             character,
@@ -146,6 +148,10 @@ impl MapHandle {
             target_player_id,
             direction,
         });
+    }
+
+    pub fn find_player(&self, player_id: i32, name: String) {
+        let _ = self.tx.send(Command::FindPlayer { player_id, name });
     }
 
     pub fn forget_skill(&self, player_id: i32, skill_id: i32, session_id: i32) {
@@ -179,20 +185,6 @@ impl MapHandle {
         });
     }
 
-    pub async fn get_map_info(
-        &self,
-        player_ids: Vec<i32>,
-        npc_indexes: Vec<i32>,
-    ) -> range::Reply {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetMapInfo {
-            player_ids,
-            npc_indexes,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
-    }
-
     pub async fn get_nearby_info(&self, target_player_id: i32) -> NearbyInfo {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNearbyInfo {
@@ -208,13 +200,13 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_rid_and_size(&self) -> ([i32; 2], EOInt) {
+    pub async fn get_rid_and_size(&self) -> ([i32; 2], i32) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRidAndSize { respond_to: tx });
         rx.await.unwrap()
     }
 
-    pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: EOInt) {
+    pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::GiveItem {
             target_player_id,
             item_id,
@@ -222,7 +214,7 @@ impl MapHandle {
         });
     }
 
-    pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: EOInt) {
+    pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::JunkItem {
             target_player_id,
             item_id,
@@ -250,7 +242,7 @@ impl MapHandle {
     pub async fn leave(
         &self,
         player_id: i32,
-        warp_animation: Option<WarpAnimation>,
+        warp_animation: Option<WarpEffect>,
         interact_player_id: Option<i32>,
     ) -> Character {
         let (tx, rx) = oneshot::channel();
@@ -354,11 +346,37 @@ impl MapHandle {
         });
     }
 
+    pub fn request_npcs(&self, player_id: i32, npc_indexes: Vec<i32>) {
+        let _ = self.tx.send(Command::RequestNpcs {
+            player_id,
+            npc_indexes,
+        });
+    }
+
     pub fn request_paperdoll(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::RequestPaperdoll {
             player_id,
             target_player_id,
         });
+    }
+
+    pub fn request_players(&self, player_id: i32, player_ids: Vec<i32>) {
+        let _ = self.tx.send(Command::RequestPlayers {
+            player_id,
+            player_ids,
+        });
+    }
+
+    pub fn request_players_and_npcs(&self, player_id: i32, player_ids: Vec<i32>, npc_indexes: Vec<i32>) {
+        let _ = self.tx.send(Command::RequestPlayersAndNpcs {
+            player_id,
+            player_ids,
+            npc_indexes,
+        });
+    }
+
+    pub fn request_refresh(&self, player_id: i32) {
+        let _ = self.tx.send(Command::RequestRefresh { player_id });
     }
 
     pub fn request_sleep(&self, player_id: i32, session_id: i32) {
@@ -530,7 +548,7 @@ impl MapHandle {
         });
     }
 
-    pub fn withdraw_gold(&self, player_id: i32, session_id: i32, amount: EOInt) {
+    pub fn withdraw_gold(&self, player_id: i32, session_id: i32, amount: i32) {
         let _ = self.tx.send(Command::WithdrawGold {
             player_id,
             session_id,

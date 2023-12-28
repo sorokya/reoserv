@@ -1,12 +1,4 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::{avatar, paperdoll},
-        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
-        PacketFamily,
-    },
-    pubs::EifItemType,
-};
+use eolib::{protocol::{net::{server::{AvatarChange, AvatarChangeType, AvatarChangeChangeTypeData, AvatarChangeChangeTypeDataEquipment, PaperdollRemoveServerPacket, AvatarAgreeServerPacket}, PacketAction, PacketFamily}, r#pub::ItemType}, data::{EoWriter, EoSerialize}};
 
 use crate::ITEM_DB;
 
@@ -28,26 +20,26 @@ impl Map {
 
         let change = AvatarChange {
             player_id,
-            slot: AvatarSlot::Clothes,
-            sound: 0,
-            data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                paperdoll: target.get_paperdoll_bahws(),
-            }),
+            change_type: AvatarChangeType::Equipment,
+            sound: false,
+            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(AvatarChangeChangeTypeDataEquipment {
+                equipment: target.get_paperdoll_bahws(),
+            })),
         };
 
-        let reply = paperdoll::Remove {
+        let reply = PaperdollRemoveServerPacket {
             change: change.clone(),
             item_id,
             sub_loc,
             stats: target.get_item_character_stats(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
         target.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::Paperdoll,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if target.hidden {
@@ -56,15 +48,15 @@ impl Map {
 
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
-            EifItemType::Armor
-                | EifItemType::Weapon
-                | EifItemType::Shield
-                | EifItemType::Hat
-                | EifItemType::Boots
+            ItemType::Armor
+                | ItemType::Weapon
+                | ItemType::Shield
+                | ItemType::Hat
+                | ItemType::Boots
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = avatar::Agree { change };
+            let reply = AvatarAgreeServerPacket { change };
 
             self.send_packet_near_player(
                 player_id,

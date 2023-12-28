@@ -1,8 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::{Coords, net::{PacketAction, PacketFamily}}};
 
 use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
 
@@ -89,10 +86,10 @@ impl Map {
     }
 
     fn send_arena_launch(&mut self, player_count: usize) {
-        let mut builder = StreamBuilder::new();
-        builder.add_char(player_count as i32);
+        let mut writer = EoWriter::new();
+        writer.add_char(player_count as i32);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
                 PacketAction::Use,

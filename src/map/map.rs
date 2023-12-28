@@ -1,10 +1,6 @@
 use std::collections::HashMap;
 
-use eo::{
-    data::{i32, EOInt, i32},
-    protocol::Coords,
-    pubs::{EmfFile, EmfTileSpec},
-};
+use eolib::protocol::{map::{Emf, MapTileSpec}, Coords};
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -16,8 +12,8 @@ pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     world: WorldHandle,
     id: i32,
-    file: EmfFile,
-    file_size: EOInt,
+    file: Emf,
+    file_size: i32,
     chests: Vec<Chest>,
     doors: Vec<Door>,
     items: HashMap<i32, Item>,
@@ -25,11 +21,11 @@ pub struct Map {
     npcs_initialized: bool,
     characters: HashMap<i32, Character>,
     pool: Pool,
-    quake_ticks: EOInt,
-    arena_ticks: EOInt,
+    quake_ticks: i32,
+    arena_ticks: i32,
     arena_players: Vec<ArenaPlayer>,
-    quake_rate: Option<EOInt>,
-    quake_strength: Option<EOInt>,
+    quake_rate: Option<i32>,
+    quake_strength: Option<i32>,
     has_timed_spikes: bool,
 }
 
@@ -54,16 +50,16 @@ mod utils;
 impl Map {
     pub fn new(
         id: i32,
-        file_size: EOInt,
-        file: EmfFile,
+        file_size: i32,
+        file: Emf,
         pool: Pool,
         world: WorldHandle,
         rx: UnboundedReceiver<Command>,
     ) -> Self {
-        let has_timed_spikes = file.spec_rows.iter().any(|row| {
+        let has_timed_spikes = file.tile_spec_rows.iter().any(|row| {
             row.tiles
                 .iter()
-                .any(|tile| tile.spec == EmfTileSpec::TimedSpikes)
+                .any(|tile| tile.tile_spec == MapTileSpec::TimedSpikes)
         });
 
         let mut doors: Vec<Door> = Vec::new();
@@ -117,6 +113,7 @@ impl Map {
                 self.add_locker_item(player_id, item).await
             }
             Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
+            Command::AgreeTrade { player_id: _ } => todo!(),
             Command::Attack {
                 target_player_id,
                 direction,
@@ -153,6 +150,8 @@ impl Map {
                 session_id,
                 amount,
             } => self.deposit_gold(player_id, session_id, amount).await,
+
+            Command::DisagreeTrade { player_id: _ } => todo!(),
 
             Command::DropItem {
                 target_player_id,
@@ -203,12 +202,6 @@ impl Map {
             } => {
                 self.get_item(target_player_id, item_index);
             }
-
-            Command::GetMapInfo {
-                player_ids,
-                npc_indexes,
-                respond_to,
-            } => self.get_map_info(player_ids, npc_indexes, respond_to),
 
             Command::GetNearbyInfo {
                 target_player_id,
@@ -438,6 +431,11 @@ impl Map {
                 session_id,
                 amount,
             } => self.withdraw_gold(player_id, session_id, amount).await,
+            Command::FindPlayer { player_id: _, name: _ } => todo!(),
+            Command::RequestNpcs { player_id: _, npc_indexes: _ } => todo!(),
+            Command::RequestPlayers { player_id: _, player_ids: _ } => todo!(),
+            Command::RequestPlayersAndNpcs { player_id: _, player_ids: _, npc_indexes: _ } => todo!(),
+            Command::RequestRefresh { player_id: _ } => todo!(),
         }
     }
 }

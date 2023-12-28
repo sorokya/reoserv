@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{Emote, PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::{net::{PacketAction, PacketFamily}, Emote}};
 
 use super::super::Map;
 
@@ -21,14 +18,14 @@ impl Map {
 
         let partner_trade_items = partner_character.trade_items.clone();
 
-        let mut builder = StreamBuilder::new();
+        let mut writer = EoWriter::new();
 
-        builder.add_short(player_id);
+        writer.add_short(player_id);
         let character = self.characters.get_mut(&player_id).unwrap();
         character.trade_items.clear();
         for item in &trade_items {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
+            writer.add_short(item.id);
+            writer.add_int(item.amount);
             character.remove_item(item.id, item.amount);
         }
 
@@ -37,14 +34,14 @@ impl Map {
             character.add_item(item.id, item.amount);
         }
 
-        builder.add_byte(EO_BREAK_CHAR);
+        writer.add_byte(0xff);
 
-        builder.add_short(partner_id);
+        writer.add_short(partner_id);
         let character = self.characters.get_mut(&partner_id).unwrap();
         character.trade_items.clear();
         for item in &partner_trade_items {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
+            writer.add_short(item.id);
+            writer.add_int(item.amount);
             character.remove_item(item.id, item.amount);
         }
 
@@ -58,7 +55,7 @@ impl Map {
         let player = character.player.as_ref().unwrap();
         let partner = partner_character.player.as_ref().unwrap();
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         player.set_trading(false);
         player.set_trade_accepted(false);

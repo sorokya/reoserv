@@ -1,22 +1,37 @@
-use eo::{
-    data::{i32, StreamReader},
-    protocol::{Item, PacketAction},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            TradeAcceptClientPacket, TradeAddClientPacket, TradeAgreeClientPacket,
+            TradeRemoveClientPacket, TradeRequestClientPacket,
+        },
+        PacketAction,
+    },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
-    reader.get_char();
-
-    let target_player_id = reader.get_short();
-    map.request_trade(player_id, target_player_id);
+fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match TradeRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing TradeRequestClientPacket {}", e);
+            return;
+        }
+    };
+    map.request_trade(player_id, request.player_id);
 }
 
-fn accept(reader: StreamReader, player_id: i32, map: MapHandle) {
-    reader.get_char();
+fn accept(reader: EoReader, player_id: i32, map: MapHandle) {
+    let accept = match TradeAcceptClientPacket::deserialize(&reader) {
+        Ok(accept) => accept,
+        Err(e) => {
+            error!("Error deserializing TradeAcceptClientPacket {}", e);
+            return;
+        }
+    };
 
-    let target_player_id = reader.get_short();
-    map.accept_trade_request(player_id, target_player_id);
+    map.accept_trade_request(player_id, accept.player_id);
 }
 
 async fn close(player: PlayerHandle, player_id: i32, map: MapHandle) {
@@ -25,33 +40,47 @@ async fn close(player: PlayerHandle, player_id: i32, map: MapHandle) {
     }
 }
 
-fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
-    let item_id = reader.get_short();
-    let amount = reader.get_int();
-    map.add_trade_item(
-        player_id,
-        Item {
-            id: item_id,
-            amount,
-        },
-    );
+fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+    let add = match TradeAddClientPacket::deserialize(&reader) {
+        Ok(add) => add,
+        Err(e) => {
+            error!("Error deserializing TradeAddClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.add_trade_item(player_id, add.add_item);
 }
 
-fn remove(reader: StreamReader, player_id: i32, map: MapHandle) {
-    let item_id = reader.get_short();
-    map.remove_trade_item(player_id, item_id);
+fn remove(reader: EoReader, player_id: i32, map: MapHandle) {
+    let remove = match TradeRemoveClientPacket::deserialize(&reader) {
+        Ok(remove) => remove,
+        Err(e) => {
+            error!("Error deserializing TradeRemoveClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.remove_trade_item(player_id, remove.item_id);
 }
 
-fn agree(reader: StreamReader, player_id: i32, map: MapHandle) {
-    let agree = reader.get_char() == 1;
-    if agree {
-        map.accept_trade(player_id);
+fn agree(reader: EoReader, player_id: i32, map: MapHandle) {
+    let agree = match TradeAgreeClientPacket::deserialize(&reader) {
+        Ok(agree) => agree,
+        Err(e) => {
+            error!("Error deserializing TradeAgreeClientPacket {}", e);
+            return;
+        }
+    };
+
+    if agree.agree {
+        map.agree_trade(player_id);
     } else {
-        map.unaccept_trade(player_id);
+        map.disagree_trade(player_id);
     }
 }
 
-pub async fn trade(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn trade(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {

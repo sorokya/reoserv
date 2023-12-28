@@ -1,7 +1,4 @@
-use eo::{
-    data::{EOInt, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 use mysql_async::{prelude::*, Params, Row};
 
 use super::{
@@ -43,10 +40,10 @@ impl World {
             };
 
             if !exists {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(5);
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(5);
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
                 return;
             }
 
@@ -62,10 +59,10 @@ impl World {
                 Ok(row) => row,
                 Err(e) => {
                     error!("Error getting password hash: {}", e);
-                    let mut builder = StreamBuilder::new();
-                    builder.add_short(5);
-                    builder.add_string("NO");
-                    player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+                    let mut writer = EoWriter::new();
+                    writer.add_short(5);
+                    writer.add_string("NO");
+                    player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
                     return;
                 }
             }
@@ -73,14 +70,14 @@ impl World {
 
             let password_hash: String = row.get("password_hash").unwrap();
             if !validate_password(&username, &current_password, &password_hash) {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(5);
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(5);
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
                 return;
             }
 
-            let account_id: EOInt = row.get("id").unwrap();
+            let account_id: i32 = row.get("id").unwrap();
 
             let password_hash = generate_password_hash(&username, &new_password);
             if let Err(e) = conn
@@ -97,10 +94,10 @@ impl World {
                 return;
             }
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(6);
-            builder.add_string("NO");
-            player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+            let mut writer = EoWriter::new();
+            writer.add_short(6);
+            writer.add_string("NO");
+            player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
         });
     }
 }

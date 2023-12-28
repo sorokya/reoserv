@@ -1,46 +1,38 @@
 use chrono::Utc;
-use eo::{
-    data::{EOInt, i32},
-    protocol::Coords,
-    pubs::{EmfFile, EmfTileSpec},
-};
+use eolib::protocol::Coords;
+use eolib::protocol::map::{Emf, MapTileSpec};
 
 use crate::SETTINGS;
 
 use crate::map::chest::{Chest, ChestSpawn};
 
-pub fn create_chests(map_id: i32, file: &EmfFile) -> Vec<Chest> {
+pub fn create_chests(map_id: i32, file: &Emf) -> Vec<Chest> {
     let mut chests: Vec<Chest> = Vec::new();
     let now = Utc::now();
     for item in &file.items {
-        let item_coords = Coords {
-            x: item.x,
-            y: item.y,
-        };
-
         if file
-            .spec_rows
+            .tile_spec_rows
             .iter()
-            .find(|row| row.y == item.y)
+            .find(|row| row.y == item.coords.y)
             .and_then(|row| {
                 row.tiles
                     .iter()
-                    .find(|tile| tile.spec == EmfTileSpec::Chest && tile.x == item.x)
+                    .find(|tile| tile.tile_spec == MapTileSpec::Chest && tile.x == item.coords.x)
             })
             .is_none()
         {
             continue;
         }
 
-        if let Some(chest) = chests.iter_mut().find(|chest| chest.coords == item_coords) {
-            if chest.key.is_none() && item.key_required != 0 {
-                chest.key = Some(item.key_required);
+        if let Some(chest) = chests.iter_mut().find(|chest| chest.coords == item.coords) {
+            if chest.key.is_none() && item.key != 0 {
+                chest.key = Some(item.key);
             }
 
-            if item.chest_slot as EOInt + 1 > SETTINGS.chest.slots {
+            if item.chest_slot + 1 > SETTINGS.chest.slots {
                 warn!(
                     "Chest at map {} ({:?}) has too many slots",
-                    map_id, item_coords
+                    map_id, item.coords
                 );
                 continue;
             }
@@ -48,22 +40,22 @@ pub fn create_chests(map_id: i32, file: &EmfFile) -> Vec<Chest> {
             chest.spawns.push(ChestSpawn {
                 slot: item.chest_slot + 1,
                 item_id: item.item_id,
-                amount: item.item_amount,
+                amount: item.amount,
                 spawn_time: item.spawn_time,
                 last_taken: now,
             });
         } else {
             chests.push(Chest {
-                coords: item_coords,
+                coords: item.coords,
                 items: Vec::new(),
                 spawns: vec![ChestSpawn {
                     slot: item.chest_slot + 1,
                     item_id: item.item_id,
-                    amount: item.item_amount,
+                    amount: item.amount,
                     spawn_time: item.spawn_time,
                     last_taken: now,
                 }],
-                key: match item.key_required {
+                key: match item.key {
                     0 => None,
                     key => Some(key),
                 },
@@ -72,9 +64,9 @@ pub fn create_chests(map_id: i32, file: &EmfFile) -> Vec<Chest> {
     }
 
     // For any chests that don't have spawns
-    for row in &file.spec_rows {
+    for row in &file.tile_spec_rows {
         for tile in &row.tiles {
-            if tile.spec == EmfTileSpec::Chest
+            if tile.tile_spec == MapTileSpec::Chest
                 && !chests
                     .iter()
                     .any(|chest| chest.coords.y == row.y && chest.coords.x == tile.x)

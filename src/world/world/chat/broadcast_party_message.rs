@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use super::super::World;
 
@@ -12,11 +9,11 @@ impl World {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_string(&message);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_string(&message);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for member_id in &party.members {
             if *member_id == player_id {

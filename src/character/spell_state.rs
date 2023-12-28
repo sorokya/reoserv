@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use eo::data::{i32, i32};
 
 #[derive(Clone, Debug)]
 pub enum SpellState {

@@ -1,10 +1,6 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, EOInt, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::{EnfNpcType, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
-};
+use eolib::{protocol::{r#pub::{SkillType, EsfRecord, SkillTargetRestrict, SkillTargetType, NpcType}, net::{PacketAction, PacketFamily}}, data::EoWriter};
 use rand::Rng;
 
 use crate::{
@@ -21,18 +17,19 @@ impl Map {
             None => return,
         };
 
-        let spell_data = match SPELL_DB.spells.get(spell_id as usize - 1) {
+        let spell_data = match SPELL_DB.skills.get(spell_id as usize - 1) {
             Some(spell_data) => spell_data,
             None => return,
         };
 
         match spell_data.r#type {
-            EsfSpellType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target),
-            EsfSpellType::Damage => {
+            SkillType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target),
+            SkillType::Attack => {
                 self.cast_damage_spell(player_id, spell_id, spell_data, target)
                     .await
             }
-            EsfSpellType::Bard => {}
+            SkillType::Bard => {}
+            _ => {}
         }
     }
 
@@ -63,10 +60,10 @@ impl Map {
         &mut self,
         player_id: i32,
         spell_id: i32,
-        spell: &EsfSpell,
+        spell: &EsfRecord,
         target: SpellTarget,
     ) {
-        if spell.target_restrict != EsfSpellTargetRestrict::Friendly {
+        if spell.target_restrict != SkillTargetRestrict::Friendly {
             return;
         }
 
@@ -80,8 +77,8 @@ impl Map {
         }
     }
 
-    fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfSpell) {
-        if spell.target_type != EsfSpellTargetType::Player {
+    fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
+        if spell.target_type != SkillTargetType::SELF {
             return;
         }
 
@@ -114,44 +111,44 @@ impl Map {
                 .update_party_hp(hp_percentage);
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(hp_percentage);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_short(spell_id);
+        writer.add_int(spell.hp_heal);
+        writer.add_char(hp_percentage);
 
         self.send_buf_near_player(
             player_id,
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(hp_percentage);
-        builder.add_short(character.hp);
-        builder.add_short(character.tp);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_short(spell_id);
+        writer.add_int(spell.hp_heal);
+        writer.add_char(hp_percentage);
+        writer.add_short(character.hp);
+        writer.add_short(character.tp);
 
         character.player.as_ref().unwrap().send(
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 
-    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfSpell) {}
+    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfRecord) {}
 
     fn cast_heal_player(
         &mut self,
         player_id: i32,
         target_player_id: i32,
         spell_id: i32,
-        spell: &EsfSpell,
+        spell: &EsfRecord,
     ) {
-        if spell.target_type != EsfSpellTargetType::Other {
+        if spell.target_type != SkillTargetType::Normal {
             return;
         }
 
@@ -198,44 +195,44 @@ impl Map {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_short(player_id);
-        builder.add_char(character.direction.to_char());
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(target.get_hp_percentage());
+        let mut writer = EoWriter::new();
+        writer.add_short(target_player_id);
+        writer.add_short(player_id);
+        writer.add_char(i32::from(character.direction));
+        writer.add_short(spell_id);
+        writer.add_int(spell.hp_heal);
+        writer.add_char(target.get_hp_percentage());
 
         self.send_buf_near_player(
             target_player_id,
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_short(player_id);
-        builder.add_char(character.direction.to_char());
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(target.get_hp_percentage());
-        builder.add_short(target.hp);
+        let mut writer = EoWriter::new();
+        writer.add_short(target_player_id);
+        writer.add_short(player_id);
+        writer.add_char(i32::from(character.direction));
+        writer.add_short(spell_id);
+        writer.add_int(spell.hp_heal);
+        writer.add_char(target.get_hp_percentage());
+        writer.add_short(target.hp);
 
         target.player.as_ref().unwrap().send(
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(character.hp);
-        builder.add_short(character.tp);
+        let mut writer = EoWriter::new();
+        writer.add_short(character.hp);
+        writer.add_short(character.tp);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 
@@ -243,11 +240,11 @@ impl Map {
         &mut self,
         player_id: i32,
         spell_id: i32,
-        spell_data: &EsfSpell,
+        spell_data: &EsfRecord,
         target: SpellTarget,
     ) {
-        if spell_data.target_restrict == EsfSpellTargetRestrict::Friendly
-            || spell_data.target_type != EsfSpellTargetType::Other
+        if spell_data.target_restrict == SkillTargetRestrict::Friendly
+            || spell_data.target_type != SkillTargetType::Normal
         {
             return;
         }
@@ -267,7 +264,7 @@ impl Map {
         player_id: i32,
         npc_index: i32,
         spell_id: i32,
-        spell_data: &EsfSpell,
+        spell_data: &EsfRecord,
     ) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
@@ -292,7 +289,7 @@ impl Map {
 
         if !matches!(
             npc_data.r#type,
-            EnfNpcType::Passive | EnfNpcType::Aggressive
+            NpcType::Passive | NpcType::Aggressive
         ) {
             return;
         }

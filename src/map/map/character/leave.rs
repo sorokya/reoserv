@@ -1,7 +1,4 @@
-use eo::{
-    data::i32,
-    protocol::{server::avatar, PacketAction, PacketFamily, WarpAnimation},
-};
+use eolib::protocol::net::{server::{WarpEffect, AvatarRemoveServerPacket}, PacketAction, PacketFamily};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, ARENAS};
@@ -12,7 +9,7 @@ impl Map {
     pub fn leave(
         &mut self,
         player_id: i32,
-        warp_animation: Option<WarpAnimation>,
+        warp_animation: Option<WarpEffect>,
         respond_to: oneshot::Sender<Character>,
         interact_player_id: Option<i32>,
     ) {
@@ -37,9 +34,9 @@ impl Map {
         }
 
         if !target.hidden {
-            let packet = avatar::Remove {
+            let packet = AvatarRemoveServerPacket {
                 player_id,
-                animation: warp_animation,
+                warp_effect: warp_animation,
             };
 
             self.send_packet_near(

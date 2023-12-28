@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, i32, i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
-    pubs::{EifItemSubType, EnfNpcType},
-};
+use eolib::{protocol::{Direction, net::{server::AttackPlayerServerPacket, PacketAction, PacketFamily}, Coords, r#pub::{NpcType, ItemSubtype}}, data::EoWriter};
 use rand::Rng;
 
 use crate::{
@@ -22,7 +18,7 @@ enum AttackTarget {
 impl Map {
     // TODO: enforce timestamp
     pub async fn attack(&mut self, player_id: i32, direction: Direction, _timestamp: i32) {
-        let reply = attack::Player {
+        let reply = AttackPlayerServerPacket {
             player_id,
             direction,
         };
@@ -126,7 +122,7 @@ impl Map {
 
         if !matches!(
             npc_data.r#type,
-            EnfNpcType::Passive | EnfNpcType::Aggressive
+            NpcType::Passive | NpcType::Aggressive
         ) {
             return;
         }
@@ -137,7 +133,7 @@ impl Map {
         };
 
         let attacker_facing_npc =
-            ((npc.direction.to_char() as i32) - (attacker.direction.to_char() as i32)).abs() != 2;
+            (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
 
         let critical = npc.hp == npc.max_hp || attacker_facing_npc;
 
@@ -223,17 +219,18 @@ impl Map {
             );
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_char(direction.to_char());
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_short(arena_player.kills);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&character.name);
-        builder.add_string(&target_character.name);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_byte(0xff);
+        writer.add_char(i32::from(direction));
+        writer.add_byte(0xff);
+        writer.add_short(arena_player.kills);
+        writer.add_byte(0xff);
+        writer.add_string(&character.name);
+        writer.add_byte(0xff);
+        writer.add_string(&target_character.name);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
@@ -247,14 +244,16 @@ impl Map {
     fn arena_end(&mut self, arena_player: &ArenaPlayer, winner_name: String, target_name: String) {
         self.arena_players.clear();
 
-        let mut builder = StreamBuilder::new();
-        builder.add_break_string(&winner_name);
-        builder.add_short(arena_player.kills);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&winner_name);
-        builder.add_string(&target_name);
+        let mut writer = EoWriter::new();
+        writer.add_string(&winner_name);
+        writer.add_byte(0xff);
+        writer.add_short(arena_player.kills);
+        writer.add_byte(0xff);
+        writer.add_string(&winner_name);
+        writer.add_byte(0xff);
+        writer.add_string(&target_name);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
@@ -289,7 +288,7 @@ fn can_attack(character: &Character) -> bool {
             None => return false,
         };
 
-        return shield_data.subtype == EifItemSubType::Arrows;
+        return shield_data.subtype == ItemSubtype::Arrows;
     }
 
     true

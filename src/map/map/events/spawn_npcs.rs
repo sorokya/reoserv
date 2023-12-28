@@ -1,10 +1,7 @@
 use std::cmp;
 
 use chrono::Duration;
-use eo::{
-    data::i32,
-    protocol::{Coords, Direction},
-};
+use eolib::protocol::{Coords, Direction};
 use rand::Rng;
 
 use crate::{map::NPCBuilder, NPC_DB, SETTINGS};
@@ -32,8 +29,8 @@ impl Map {
                     Some(npc) => npc,
                     None => {
                         error!(
-                            "Failed to load NPC {} (Map: {}, Coords: x: {}, y: {})",
-                            spawn.id, self.id, spawn.x, spawn.y
+                            "Failed to load NPC {} (Map: {}, Coords: {:?})",
+                            spawn.id, self.id, spawn.coords,
                         );
                         continue;
                     }
@@ -69,10 +66,7 @@ impl Map {
                             npc.alive,
                             spawn.spawn_time,
                             npc.dead_since,
-                            Coords {
-                                x: spawn.x,
-                                y: spawn.y,
-                            },
+                            spawn.coords,
                             spawn.spawn_type,
                         )
                     }
@@ -91,15 +85,15 @@ impl Map {
                 Coords {
                     x: cmp::max(
                         cmp::min(
-                            spawn_coords.x as i32 + rng.gen_range(-2..=2),
-                            self.file.width as i32,
+                            spawn_coords.x + rng.gen_range(-2..=2),
+                            self.file.width,
                         ),
                         0,
                     ) as i32,
                     y: cmp::max(
                         cmp::min(
-                            spawn_coords.y as i32 + rng.gen_range(-2..=2),
-                            self.file.height as i32,
+                            spawn_coords.y + rng.gen_range(-2..=2),
+                            self.file.height,
                         ),
                         0,
                     ) as i32,
@@ -112,15 +106,15 @@ impl Map {
             {
                 let x = cmp::max(
                     cmp::min(
-                        file_spawn_coords.x as i32 + rng.gen_range(-2..=2),
-                        self.file.width as i32,
+                        file_spawn_coords.x + rng.gen_range(-2..=2),
+                        self.file.width,
                     ),
                     0,
                 );
                 let y = cmp::max(
                     cmp::min(
-                        file_spawn_coords.y as i32 + rng.gen_range(-2..=2),
-                        self.file.height as i32,
+                        file_spawn_coords.y + rng.gen_range(-2..=2),
+                        self.file.height,
                     ),
                     0,
                 );
@@ -145,7 +139,7 @@ impl Map {
             npc.hp = npc.max_hp;
             npc.coords = spawn_coords;
             npc.direction = if spawn_type == 7 {
-                Direction::from_char(spawn_type & 0x03).unwrap()
+                Direction::from(spawn_type & 0x03)
             } else {
                 match rand::random::<u8>() % 4 {
                     0 => Direction::Down,

@@ -1,8 +1,5 @@
 use chrono::NaiveDateTime;
-use eo::{
-    data::{i32, i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::{
@@ -35,7 +32,7 @@ impl Map {
             return;
         }
 
-        if board_id == SETTINGS.board.admin_board as i32 && character.admin_level.to_char() < 1
+        if board_id == SETTINGS.board.admin_board && i32::from(character.admin_level) < 1
         {
             return;
         }
@@ -49,10 +46,10 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
 
             let mut conn = pool.get_conn().await.unwrap();
-            let limit = if board_id == SETTINGS.board.admin_board as i32 {
+            let limit = if board_id == SETTINGS.board.admin_board {
                 SETTINGS.board.admin_max_posts
             } else {
                 SETTINGS.board.max_posts
@@ -75,8 +72,8 @@ impl Map {
                 .await
                 .unwrap();
 
-            builder.add_char(board_id as i32);
-            builder.add_char(posts.len() as i32);
+            writer.add_char(board_id);
+            writer.add_char(posts.len() as i32);
 
             for post in posts {
                 let subject = if SETTINGS.board.date_posts {
@@ -85,13 +82,15 @@ impl Map {
                     post.subject
                 };
 
-                builder.add_short(post.id);
-                builder.add_byte(EO_BREAK_CHAR);
-                builder.add_break_string(&post.author);
-                builder.add_break_string(&subject);
+                writer.add_short(post.id);
+                writer.add_byte(0xff);
+                writer.add_string(&post.author);
+                writer.add_byte(0xff);
+                writer.add_string(&subject);
+                writer.add_byte(0xff);
             }
 
-            player.send(PacketAction::Open, PacketFamily::Board, builder.get());
+            player.send(PacketAction::Open, PacketFamily::Board, writer.to_byte_array());
         });
     }
 }

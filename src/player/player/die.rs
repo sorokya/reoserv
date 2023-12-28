@@ -1,4 +1,4 @@
-use eo::protocol::{Coords, WarpAnimation};
+use eolib::protocol::Coords;
 
 use super::Player;
 
@@ -8,7 +8,7 @@ impl Player {
             .map
             .as_ref()
             .unwrap()
-            .leave(self.id, Some(WarpAnimation::None), self.interact_player_id)
+            .leave(self.id, None, self.interact_player_id)
             .await;
         character.map_id = 0;
         character.coords = Coords { x: 0, y: 0 };
@@ -20,7 +20,7 @@ impl Player {
             character.get_spawn_map(),
             character.get_spawn_coords(),
             false,
-            Some(WarpAnimation::None),
+            None,
         )
         .await;
     }

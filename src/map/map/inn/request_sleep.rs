@@ -1,8 +1,4 @@
-use eo::{
-    data::{EOInt, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{PacketAction, PacketFamily}}, data::EoWriter};
 
 use crate::{INN_DB, NPC_DB};
 
@@ -44,14 +40,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn) => inn,
             None => return,
@@ -63,10 +59,10 @@ impl Map {
 
         let cost = (character.max_hp - character.hp) + (character.max_tp - character.tp);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(cost as EOInt);
+        let mut writer = EoWriter::new();
+        writer.add_int(cost);
 
-        player.set_sleep_cost(cost as EOInt);
-        player.send(PacketAction::Request, PacketFamily::Citizen, builder.get());
+        player.set_sleep_cost(cost);
+        player.send(PacketAction::Request, PacketFamily::Citizen, writer.to_byte_array());
     }
 }

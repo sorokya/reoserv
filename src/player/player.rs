@@ -1,11 +1,7 @@
 use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
-use eo::{
-    data::{i32, EOInt, i32, StreamBuilder, MAX2},
-    net::PacketProcessor,
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::{SHORT_MAX, EoWriter, EoSerialize}, packet::{generate_sequence_start, get_ping_sequence_bytes}, protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily}};
 use mysql_async::Pool;
 use rand::Rng;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
@@ -28,7 +24,7 @@ pub struct Player {
     // TODO: just use character's map?
     pub map: Option<MapHandle>,
     pub busy: bool,
-    account_id: EOInt,
+    account_id: i32,
     pool: Pool,
     state: ClientState,
     ip: String,
@@ -41,14 +37,16 @@ pub struct Player {
     warp_session: Option<WarpSession>,
     trading: bool,
     trade_accepted: bool,
-    sleep_cost: Option<EOInt>,
+    sleep_cost: Option<i32>,
     party_request: PartyRequest,
 }
 
 mod accept_warp;
 mod arena_die;
+mod begin_handshake;
 mod cancel_trade;
 mod close;
+mod complete_handshake;
 mod die;
 mod get_ban_duration;
 mod request_warp;
@@ -93,16 +91,18 @@ impl Player {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }
+            Command::BeginHandshake { challenge, hdid, version } => self.begin_handshake(challenge, hdid, version).await,
             Command::CancelTrade => self.cancel_trade().await,
             Command::Close(reason) => {
                 self.close(reason).await;
                 return false;
             }
+            Command::CompleteHandshake { player_id, client_encryption_multiple, server_encryption_multiple } => self.complete_handshake(player_id, client_encryption_multiple, server_encryption_multiple).await,
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let mut rng = rand::thread_rng();
-                let id = rng.gen_range(1..MAX2) as i32;
+                let id = rng.gen_range(1..SHORT_MAX) as i32;
                 self.session_id = Some(id);
                 let _ = respond_to.send(id);
             }
@@ -139,23 +139,6 @@ impl Player {
             Command::GetChestIndex { respond_to } => {
                 let _ = respond_to.send(self.chest_index);
             }
-            Command::GenEncodingMultiples { respond_to } => {
-                self.bus.packet_processor = PacketProcessor::new();
-                respond_to
-                    .send([
-                        self.bus.packet_processor.encode_multiple,
-                        self.bus.packet_processor.decode_multiple,
-                    ])
-                    .unwrap();
-            }
-            Command::GetEncodingMultiples { respond_to } => {
-                respond_to
-                    .send([
-                        self.bus.packet_processor.encode_multiple,
-                        self.bus.packet_processor.decode_multiple,
-                    ])
-                    .unwrap();
-            }
             Command::GetIpAddr { respond_to } => {
                 let _ = respond_to.send(self.ip.clone());
             }
@@ -187,11 +170,6 @@ impl Player {
             Command::GetPartyRequest { respond_to } => {
                 let _ = respond_to.send(self.party_request);
             }
-            Command::GetSequenceBytes { respond_to } => {
-                respond_to
-                    .send(self.bus.sequencer.get_init_sequence_bytes())
-                    .unwrap();
-            }
             Command::GetSessionId { respond_to } => {
                 if let Some(session_id) = self.session_id {
                     let _ = respond_to.send(Ok(session_id));
@@ -206,7 +184,7 @@ impl Player {
                 let _ = respond_to.send(self.interact_player_id);
             }
             Command::GetSequenceStart { respond_to } => {
-                let _ = respond_to.send(self.bus.sequencer.get_sequence_start());
+                let _ = respond_to.send(self.bus.sequencer.get_start());
             }
             Command::GetSleepCost { respond_to } => {
                 let _ = respond_to.send(self.sleep_cost);
@@ -221,7 +199,7 @@ impl Player {
                 let _ = respond_to.send(self.trading);
             }
             Command::GenSequence { respond_to } => {
-                let sequence = self.bus.sequencer.gen_sequence();
+                let sequence = self.bus.sequencer.next_sequence();
                 let _ = respond_to.send(sequence);
             }
             Command::Ping => {
@@ -233,17 +211,21 @@ impl Player {
                     info!("player {} connection closed: ping timeout", self.id);
                     return false;
                 } else {
-                    self.bus.sequencer.ping_new_sequence();
-                    let sequence = self.bus.sequencer.get_update_sequence_bytes();
-                    let mut builder = StreamBuilder::with_capacity(3);
-                    builder.add_short(sequence.0);
-                    builder.add_char(sequence.1);
+                    let start = generate_sequence_start();
+                    self.bus.sequencer.set_start(start);
+                    let mut writer = EoWriter::with_capacity(3);
+                    let sequence_bytes = get_ping_sequence_bytes(start);
+                    let packet = ConnectionPlayerServerPacket {
+                        seq1: sequence_bytes[0],
+                        seq2: sequence_bytes[1],
+                    };
+                    packet.serialize(&mut writer);
                     self.bus.need_pong = true;
                     self.bus
                         .send(
                             PacketAction::Player,
                             PacketFamily::Connection,
-                            builder.get(),
+                            writer.to_byte_array(),
                         )
                         .await
                         .unwrap();
@@ -253,7 +235,7 @@ impl Player {
                 self.bus.need_pong = false;
             }
             Command::PongNewSequence { respond_to } => {
-                self.bus.sequencer.pong_new_sequence();
+                self.bus.sequencer.set_start(generate_sequence_start());
                 let _ = respond_to.send(());
             }
             Command::RequestWarp {

@@ -1,91 +1,85 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamReader},
-    protocol::{
-        client::shop::{Buy, Create, Open, Sell},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            ShopBuyClientPacket, ShopCreateClientPacket, ShopOpenClientPacket, ShopSellClientPacket,
+        },
         PacketAction,
     },
 };
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn buy(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Buy::default();
-    request.deserialize(&reader);
-
-    let player_id = match player.get_player_id().await {
-        Ok(id) => id,
+fn buy(reader: EoReader, player_id: i32, map: MapHandle) {
+    let buy = match ShopBuyClientPacket::deserialize(&reader) {
+        Ok(buy) => buy,
         Err(e) => {
-            error!("Failed to get player id {}", e);
+            error!("Error deserializing ShopBuyClientPacket {}", e);
             return;
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        map.buy_item(player_id, request.buy_item, request.session_id as i32);
-    }
+    map.buy_item(player_id, buy.buy_item, buy.session_id);
 }
 
-async fn create(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Create::default();
-    request.deserialize(&reader);
-
-    let player_id = match player.get_player_id().await {
-        Ok(id) => id,
+fn create(reader: EoReader, player_id: i32, map: MapHandle) {
+    let create = match ShopCreateClientPacket::deserialize(&reader) {
+        Ok(create) => create,
         Err(e) => {
-            error!("Failed to get player id {}", e);
+            error!("Error deserializing ShopCreateClientPacket {}", e);
             return;
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        map.craft_item(
-            player_id,
-            request.craft_item_id,
-            request.session_id as i32,
-        );
-    }
+    map.craft_item(player_id, create.craft_item_id, create.session_id);
 }
 
-async fn open(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Open::default();
-    request.deserialize(&reader);
-
-    let player_id = match player.get_player_id().await {
-        Ok(id) => id,
+fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+    let open = match ShopOpenClientPacket::deserialize(&reader) {
+        Ok(open) => open,
         Err(e) => {
-            error!("Failed to get player id {}", e);
+            error!("Error deserializing ShopCreateClientPacket {}", e);
             return;
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        map.open_shop(player_id, request.npc_index as i32);
-    }
+    map.open_shop(player_id, open.npc_index);
 }
 
-async fn sell(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Sell::default();
-    request.deserialize(&reader);
-
-    let player_id = match player.get_player_id().await {
-        Ok(id) => id,
+fn sell(reader: EoReader, player_id: i32, map: MapHandle) {
+    let sell = match ShopSellClientPacket::deserialize(&reader) {
+        Ok(sell) => sell,
         Err(e) => {
-            error!("Failed to get player id {}", e);
+            error!("Error deserializing ShopSellClientPacket {}", e);
             return;
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        map.sell_item(player_id, request.sell_item, request.session_id as i32);
-    }
+    map.sell_item(player_id, sell.sell_item, sell.session_id);
 }
 
-pub async fn shop(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn shop(action: PacketAction, reader: EoReader, player: PlayerHandle) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Buy => buy(reader, player).await,
-        PacketAction::Create => create(reader, player).await,
-        PacketAction::Open => open(reader, player).await,
-        PacketAction::Sell => sell(reader, player).await,
+        PacketAction::Buy => buy(reader, player_id, map),
+        PacketAction::Create => create(reader, player_id, map),
+        PacketAction::Open => open(reader, player_id, map),
+        PacketAction::Sell => sell(reader, player_id, map),
         _ => error!("Unhandled packet Shop_{:?}", action),
     }
 }

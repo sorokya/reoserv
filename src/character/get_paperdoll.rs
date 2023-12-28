@@ -1,56 +1,53 @@
-use eo::{
-    data::i32,
-    protocol::{PaperdollB000a0hsw, PaperdollBahws},
-};
+use eolib::protocol::net::server::{EquipmentMapInfo, EquipmentChange};
 
 use crate::ITEM_DB;
 
 use super::Character;
 
 impl Character {
-    pub fn get_paperdoll_bahws(&self) -> PaperdollBahws {
-        PaperdollBahws {
+    pub fn get_paperdoll_bahws(&self) -> EquipmentChange {
+        EquipmentChange {
             boots: match self.paperdoll.boots {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.boots as usize - 1) {
-                    Some(item) => item.spec1 as i32,
+                    Some(item) => item.spec1,
                     None => 0,
                 },
             },
             armor: match self.paperdoll.armor {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.armor as usize - 1) {
-                    Some(item) => item.spec1 as i32,
+                    Some(item) => item.spec1,
                     None => 0,
                 },
             },
             hat: match self.paperdoll.hat {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.hat as usize - 1) {
-                    Some(item) => item.spec1 as i32,
+                    Some(item) => item.spec1,
                     None => 0,
                 },
             },
             weapon: match self.paperdoll.weapon {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.weapon as usize - 1) {
-                    Some(item) => item.spec1 as i32,
+                    Some(item) => item.spec1,
                     None => 0,
                 },
             },
             shield: match self.paperdoll.shield {
                 0 => 0,
                 _ => match ITEM_DB.items.get(self.paperdoll.shield as usize - 1) {
-                    Some(item) => item.spec1 as i32,
+                    Some(item) => item.spec1,
                     None => 0,
                 },
             },
         }
     }
 
-    pub fn get_paperdoll_b000a0hsw(&self) -> PaperdollB000a0hsw {
+    pub fn get_paperdoll_b000a0hsw(&self) -> EquipmentMapInfo {
         let paperdoll = self.get_paperdoll_bahws();
-        PaperdollB000a0hsw {
+        EquipmentMapInfo {
             boots: paperdoll.boots,
             armor: paperdoll.armor,
             hat: paperdoll.hat,

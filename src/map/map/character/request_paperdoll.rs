@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::paperdoll, PacketAction, PacketFamily, PaperdollInfo},
-};
+use eolib::{protocol::net::{server::{PaperdollReplyServerPacket, CharacterDetails}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
@@ -29,10 +26,11 @@ impl Map {
             .await
             .is_some();
 
-        let reply = paperdoll::Reply {
-            info: PaperdollInfo {
+        let reply = PaperdollReplyServerPacket {
+            details: CharacterDetails {
                 name: target.name.clone(),
                 home: target.home.clone(),
+                admin: target.admin_level,
                 partner: match &target.partner {
                     Some(partner) => partner.clone(),
                     None => "".to_string(),
@@ -53,13 +51,13 @@ impl Map {
                 class_id: target.class,
                 gender: target.gender,
             },
-            paperdoll: target.paperdoll.clone(),
-            paperdoll_icon: target.get_icon(in_party),
+            equipment: target.paperdoll.clone(),
+            icon: target.get_icon(in_party),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
-        player.send(PacketAction::Reply, PacketFamily::Paperdoll, builder.get());
+        player.send(PacketAction::Reply, PacketFamily::Paperdoll, writer.to_byte_array());
     }
 }

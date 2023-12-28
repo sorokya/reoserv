@@ -1,14 +1,11 @@
-use eo::{
-    data::{EOInt, i32},
-    protocol::Coords,
-};
+use eolib::protocol::Coords;
 
 #[derive(Debug)]
 pub struct Door {
     pub coords: Coords,
     pub key: i32,
     pub open: bool,
-    pub open_ticks: EOInt,
+    pub open_ticks: i32,
 }
 
 impl Door {

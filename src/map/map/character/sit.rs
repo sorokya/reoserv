@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::sit, PacketAction, PacketFamily, SitState},
-};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::{SitState, SitReplyServerPacket}}};
 
 use super::super::Map;
 
@@ -21,19 +18,19 @@ impl Map {
 
         character.sit_state = SitState::Floor;
 
-        let reply = sit::Reply {
+        let reply = SitReplyServerPacket {
             player_id,
             coords: character.coords,
             direction: character.direction,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Sit,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if !character.hidden {

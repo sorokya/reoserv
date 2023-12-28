@@ -1,8 +1,8 @@
-use eo::{data::StreamReader, protocol::PacketAction};
+use eolib::{protocol::net::PacketAction, data::EoReader};
 
 use crate::player::PlayerHandle;
 
-pub async fn global(action: PacketAction, _reader: StreamReader, _player: PlayerHandle) {
+pub fn global(action: PacketAction, _reader: EoReader, _player: PlayerHandle) {
     match action {
         PacketAction::Open | PacketAction::Close => {} // no-op
         _ => error!("Unhandled packet Global_{:?}", action),

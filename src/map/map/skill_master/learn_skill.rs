@@ -1,11 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::statskill::{Reply, ReplyData, ReplyWrongClass, Take},
-        PacketAction, PacketFamily, SkillMasterReply,
-    },
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{server::{StatSkillReplyServerPacket, SkillMasterReply, StatSkillReplyServerPacketReplyCodeData, StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket}, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
 
@@ -60,14 +53,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         let skill_master = match SKILL_MASTER_DB
             .skill_masters
             .iter()
-            .find(|skill_master| skill_master.vendor_id == npc_data.behavior_id)
+            .find(|skill_master| skill_master.behavior_id == npc_data.behavior_id)
         {
             Some(skill_master) => skill_master,
             None => return,
@@ -83,35 +76,35 @@ impl Map {
         };
 
         if character.get_item_amount(1) < skill.price
-            || character.adj_strength < skill.str_req
-            || character.adj_intelligence < skill.int_req
-            || character.adj_wisdom < skill.wis_req
-            || character.adj_agility < skill.agi_req
-            || character.adj_constitution < skill.con_req
-            || character.adj_charisma < skill.cha_req
-            || (skill.skill_id_req1 > 0 && !character.has_spell(skill.skill_id_req1))
-            || (skill.skill_id_req2 > 0 && !character.has_spell(skill.skill_id_req2))
-            || (skill.skill_id_req3 > 0 && !character.has_spell(skill.skill_id_req3))
-            || (skill.skill_id_req4 > 0 && !character.has_spell(skill.skill_id_req4))
+            || character.adj_strength < skill.str_requirement
+            || character.adj_intelligence < skill.int_requirement
+            || character.adj_wisdom < skill.wis_requirement
+            || character.adj_agility < skill.agi_requirement
+            || character.adj_constitution < skill.con_requirement
+            || character.adj_charisma < skill.cha_requirement
+            || (skill.skill_id_requirement1 > 0 && !character.has_spell(skill.skill_id_requirement1))
+            || (skill.skill_id_requirement2 > 0 && !character.has_spell(skill.skill_id_requirement2))
+            || (skill.skill_id_requirement3 > 0 && !character.has_spell(skill.skill_id_requirement3))
+            || (skill.skill_id_requirement4 > 0 && !character.has_spell(skill.skill_id_requirement4))
         {
             return;
         }
 
-        if skill.class_req > 0 && character.class != skill.class_req {
-            let reply = Reply {
+        if skill.class_requirement > 0 && character.class != skill.class_requirement {
+            let reply = StatSkillReplyServerPacket {
                 reply_code: SkillMasterReply::WrongClass,
-                data: ReplyData::WrongClass(ReplyWrongClass {
-                    class_id: character.class as i32,
-                }),
+                reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(StatSkillReplyServerPacketReplyCodeDataWrongClass {
+                    class_id: character.class,
+                })),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+            reply.serialize(&mut writer);
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::StatSkill,
-                builder.get(),
+                writer.to_byte_array(),
             );
 
             return;
@@ -120,18 +113,18 @@ impl Map {
         character.remove_item(1, skill.price);
         character.add_spell(skill.skill_id);
 
-        let reply = Take {
+        let reply = StatSkillTakeServerPacket {
             spell_id,
             gold_amount: character.get_item_amount(1),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Take,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

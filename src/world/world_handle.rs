@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, EOInt, i32},
-    protocol::{client, FileType, OnlinePlayers},
-};
+use eolib::protocol::net::{client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType}, server::OnlinePlayer, PartyRequestType};
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
@@ -34,7 +31,7 @@ impl WorldHandle {
         &self,
         player_id: i32,
         target_player_id: i32,
-        request_type: i32,
+        request_type: PartyRequestType,
     ) {
         let _ = self.tx.send(Command::AcceptPartyRequest {
             player_id,
@@ -43,7 +40,7 @@ impl WorldHandle {
         });
     }
 
-    pub fn add_logged_in_account(&self, account_id: EOInt) {
+    pub fn add_logged_in_account(&self, account_id: i32) {
         let _ = self.tx.send(Command::AddLoggedInAccount { account_id });
     }
 
@@ -127,17 +124,17 @@ impl WorldHandle {
         });
     }
 
-    pub fn create_account(&self, player_id: i32, details: client::account::Create) {
+    pub fn create_account(&self, player_id: i32, details: AccountCreateClientPacket) {
         let _ = self.tx.send(Command::CreateAccount { player_id, details });
     }
 
-    pub fn create_character(&self, player_id: i32, details: client::character::Create) {
+    pub fn create_character(&self, player_id: i32, details: CharacterCreateClientPacket) {
         let _ = self
             .tx
             .send(Command::CreateCharacter { player_id, details });
     }
 
-    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: EOInt) {
+    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: i32) {
         let _ = self.tx.send(Command::DeleteCharacter {
             player_id,
             session_id,
@@ -148,7 +145,7 @@ impl WorldHandle {
     pub async fn drop_player(
         &self,
         player_id: i32,
-        account_id: EOInt,
+        account_id: i32,
         character_name: String,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
@@ -229,7 +226,7 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_online_list(&self) -> Vec<OnlinePlayers> {
+    pub async fn get_online_list(&self) -> Vec<OnlinePlayer> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetOnlineList { respond_to: tx });
         rx.await.unwrap()
@@ -252,7 +249,7 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
-    pub async fn is_logged_in(&self, account_id: EOInt) -> bool {
+    pub async fn is_logged_in(&self, account_id: i32) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsLoggedIn {
             account_id,
@@ -328,7 +325,7 @@ impl WorldHandle {
             .send(Command::RequestCharacterCreation { player_id });
     }
 
-    pub fn request_character_deletion(&self, player_id: i32, character_id: EOInt) {
+    pub fn request_character_deletion(&self, player_id: i32, character_id: i32) {
         let _ = self.tx.send(Command::RequestCharacterDeletion {
             player_id,
             character_id,
@@ -360,11 +357,19 @@ impl WorldHandle {
         });
     }
 
+    pub fn request_player_name_list(&self, player_id: i32) {
+        let _ = self.tx.send(Command::RequestPlayerNameList { player_id });
+    }
+
+    pub fn request_player_list(&self, player_id: i32) {
+        let _ = self.tx.send(Command::RequestPlayerList { player_id });
+    }
+
     pub fn save(&self) {
         let _ = self.tx.send(Command::Save);
     }
 
-    pub fn select_character(&self, player_id: i32, character_id: EOInt) {
+    pub fn select_character(&self, player_id: i32, character_id: i32) {
         let _ = self.tx.send(Command::SelectCharacter {
             player_id,
             character_id,

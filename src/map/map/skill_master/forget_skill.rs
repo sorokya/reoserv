@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Remove, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::NPC_DB;
 
@@ -61,21 +57,21 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         character.remove_spell(skill_id);
 
-        let reply = Remove { spell_id: skill_id };
+        let reply = StatSkillRemoveServerPacket { spell_id: skill_id };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

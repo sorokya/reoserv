@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
-};
+use eolib::{protocol::{Coords, net::{PacketAction, PacketFamily}}, data::{EoSerialize, EoWriter}};
 
 use crate::utils::in_range;
 
@@ -16,11 +13,11 @@ impl Map {
         family: PacketFamily,
         packet: T,
     ) where
-        T: Serializeable,
+        T: EoSerialize,
     {
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         for (player_id, character) in self.characters.iter() {
             if *player_id != exclude_player_id && in_range(coords, &character.coords) {
                 character

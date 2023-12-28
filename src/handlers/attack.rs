@@ -1,34 +1,36 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::{client::attack::Use, PacketAction},
-};
+use eolib::{data::{EoReader, EoSerialize}, protocol::net::{client::AttackUseClientPacket, PacketAction}};
 
 use crate::player::PlayerHandle;
 
-async fn r#use(reader: StreamReader, player: PlayerHandle) {
-    let mut packet = Use::default();
-    packet.deserialize(&reader);
+async fn r#use(reader: EoReader, player: PlayerHandle) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
 
-    let player_id = player.get_player_id().await;
-    if let Err(e) = player_id {
-        error!("Error getting player id {}", e);
-        return;
-    }
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
 
-    let player_id = player_id.unwrap();
-
-    let map = player.get_map().await;
-    if let Err(e) = map {
-        error!("Error getting map {}", e);
-        return;
-    }
-
-    let map = map.unwrap();
+    let packet = match AttackUseClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing AttackUseClientPacket {}", e);
+            return;
+        }
+    };
 
     map.attack(player_id, packet.direction, packet.timestamp);
 }
 
-pub async fn attack(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn attack(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
         PacketAction::Use => r#use(reader, player).await,
         _ => error!("Unhandled packet Attack_{:?}", action),

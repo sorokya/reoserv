@@ -1,14 +1,11 @@
 use std::cmp;
 
-use eo::{
-    data::{EOInt, i32, Serializeable, StreamBuilder},
-    protocol::{server::item, PacketAction, PacketFamily, ShortItem},
-};
+use eolib::{protocol::net::{server::ItemJunkServerPacket, ThreeItem, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn junk_item(&mut self, target_player_id: i32, item_id: i32, amount: EOInt) {
+    pub async fn junk_item(&mut self, target_player_id: i32, item_id: i32, amount: i32) {
         if amount == 0 {
             return;
         }
@@ -37,21 +34,21 @@ impl Map {
         }
 
         let character = self.characters.get(&target_player_id).unwrap();
-        let reply = item::Junk {
-            junked_item: ShortItem {
+        let reply = ItemJunkServerPacket {
+            junked_item: ThreeItem {
                 id: item_id,
                 amount: amount_to_junk,
             },
-            junked_item_amount: match character.items.iter().find(|i| i.id == item_id) {
+            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item.amount,
                 None => 0,
             },
             weight: character.get_weight(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         character
             .player
             .as_ref()

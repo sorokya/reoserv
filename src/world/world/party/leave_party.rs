@@ -1,8 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{PacketAction, PacketFamily}, data::EoWriter};
 
 use super::super::World;
 
@@ -27,13 +24,13 @@ impl World {
         player.send(
             PacketAction::Close,
             PacketFamily::Party,
-            Bytes::from_static(&[EO_BREAK_CHAR]),
+            Bytes::from_static(&[0xff]),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for member_id in &party.members {
             let member = match self.players.get(member_id) {

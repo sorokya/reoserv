@@ -1,29 +1,41 @@
-use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
-    protocol::{client::playerrange::Request, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{client::PlayerRangeRequestClientPacket, PacketAction},
 };
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn request(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
-
-    if let Ok(map) = player.get_map().await {
-        // TODO: Consider just doing this from inside the map itself
-        // e.g map.player_range_request(player_id, player_ids);
-        let reply = map.get_map_info(request.player_ids, Vec::default()).await;
-        if !reply.nearby.characters.is_empty() {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Range, builder.get());
+fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match PlayerRangeRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing PlayerRangeRequestClientPacket {}", e);
+            return;
         }
-    }
+    };
+
+    map.request_players(player_id, request.player_ids);
 }
 
-pub async fn player_range(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn player_range(action: PacketAction, reader: EoReader, player: PlayerHandle) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Request => request(reader, player).await,
+        PacketAction::Request => request(reader, player_id, map),
         _ => error!("Unhandled packet PlayerRange_{:?}", action),
     }
 }

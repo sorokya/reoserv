@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use crate::utils::in_client_range;
 
@@ -46,18 +43,22 @@ impl Map {
         player.set_trading(true);
         target_player.set_trading(true);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_break_string(&target_character.name);
-        builder.add_short(player_id);
-        builder.add_break_string(&character.name);
-        player.send(PacketAction::Open, PacketFamily::Trade, builder.get());
+        let mut writer = EoWriter::new();
+        writer.add_short(target_player_id);
+        writer.add_string(&target_character.name);
+        writer.add_byte(0xff);
+        writer.add_short(player_id);
+        writer.add_string(&character.name);
+        writer.add_byte(0xff);
+        player.send(PacketAction::Open, PacketFamily::Trade, writer.to_byte_array());
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_break_string(&character.name);
-        builder.add_short(target_player_id);
-        builder.add_break_string(&target_character.name);
-        target_player.send(PacketAction::Open, PacketFamily::Trade, builder.get());
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_string(&character.name);
+        writer.add_byte(0xff);
+        writer.add_short(target_player_id);
+        writer.add_string(&target_character.name);
+        writer.add_byte(0xff);
+        target_player.send(PacketAction::Open, PacketFamily::Trade, writer.to_byte_array());
     }
 }

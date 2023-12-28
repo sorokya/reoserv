@@ -1,10 +1,6 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::shop::Sell, Item, PacketAction, PacketFamily, ReverseItem},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{net::{Item, server::{ShopSellServerPacket, ShopSoldItem}, PacketAction, PacketFamily}, r#pub::NpcType}, data::{EoWriter, EoSerialize}};
 
 use crate::{NPC_DB, SHOP_DB};
 
@@ -58,14 +54,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Shop {
+        if npc_data.r#type != NpcType::Shop {
             return;
         }
 
         let shop = match SHOP_DB
             .shops
             .iter()
-            .find(|shop| shop.vendor_id == npc_data.behavior_id)
+            .find(|shop| shop.behavior_id == npc_data.behavior_id)
         {
             Some(shop) => shop,
             None => return,
@@ -91,22 +87,22 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_item(1, price);
 
-        let reply = Sell {
+        let reply = ShopSellServerPacket {
             gold_amount: character.get_item_amount(1),
-            sold_item: ReverseItem {
+            sold_item: ShopSoldItem {
                 id: item.id,
                 amount: character.get_item_amount(item.id),
             },
             weight: character.get_weight(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Sell,
             PacketFamily::Shop,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

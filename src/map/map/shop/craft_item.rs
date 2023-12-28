@@ -1,8 +1,4 @@
-use eo::{
-    data::{EOInt, i32, Serializeable, StreamBuilder},
-    protocol::{server::shop::Create, Item, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::{NPC_DB, SHOP_DB};
 
@@ -48,14 +44,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Shop {
+        if npc_data.r#type != NpcType::Shop {
             return;
         }
 
         let shop = match SHOP_DB
             .shops
             .iter()
-            .find(|shop| shop.vendor_id == npc_data.behavior_id)
+            .find(|shop| shop.behavior_id == npc_data.behavior_id)
         {
             Some(shop) => shop,
             None => return,
@@ -66,82 +62,82 @@ impl Map {
             None => return,
         };
 
-        if craft.ingredient1_item_id > 0
-            && character.get_item_amount(craft.ingredient1_item_id)
-                < craft.ingredient1_amount as EOInt
+        if craft.ingredient1_id > 0
+            && character.get_item_amount(craft.ingredient1_id)
+                < craft.ingredient1_amount
         {
             return;
         }
 
-        if craft.ingredient2_item_id > 0
-            && character.get_item_amount(craft.ingredient2_item_id)
-                < craft.ingredient2_amount as EOInt
+        if craft.ingredient2_id > 0
+            && character.get_item_amount(craft.ingredient2_id)
+                < craft.ingredient2_amount
         {
             return;
         }
 
-        if craft.ingredient3_item_id > 0
-            && character.get_item_amount(craft.ingredient3_item_id)
-                < craft.ingredient3_amount as EOInt
+        if craft.ingredient3_id > 0
+            && character.get_item_amount(craft.ingredient3_id)
+                < craft.ingredient3_amount
         {
             return;
         }
 
-        if craft.ingredient4_item_id > 0
-            && character.get_item_amount(craft.ingredient4_item_id)
-                < craft.ingredient4_amount as EOInt
+        if craft.ingredient4_id > 0
+            && character.get_item_amount(craft.ingredient4_id)
+                < craft.ingredient4_amount
         {
             return;
         }
 
-        if craft.ingredient1_item_id > 0 {
-            character.remove_item(craft.ingredient1_item_id, craft.ingredient1_amount as EOInt);
+        if craft.ingredient1_id > 0 {
+            character.remove_item(craft.ingredient1_id, craft.ingredient1_amount);
         }
 
-        if craft.ingredient2_item_id > 0 {
-            character.remove_item(craft.ingredient2_item_id, craft.ingredient2_amount as EOInt);
+        if craft.ingredient2_id > 0 {
+            character.remove_item(craft.ingredient2_id, craft.ingredient2_amount);
         }
 
-        if craft.ingredient3_item_id > 0 {
-            character.remove_item(craft.ingredient3_item_id, craft.ingredient3_amount as EOInt);
+        if craft.ingredient3_id > 0 {
+            character.remove_item(craft.ingredient3_id, craft.ingredient3_amount);
         }
 
-        if craft.ingredient4_item_id > 0 {
-            character.remove_item(craft.ingredient4_item_id, craft.ingredient4_amount as EOInt);
+        if craft.ingredient4_id > 0 {
+            character.remove_item(craft.ingredient4_id, craft.ingredient4_amount);
         }
 
         character.add_item(item_id, 1);
 
-        let reply = Create {
+        let reply = ShopCreateServerPacket {
             craft_item_id: item_id,
             weight: character.get_weight(),
             ingredients: [
                 Item {
-                    id: craft.ingredient1_item_id,
-                    amount: character.get_item_amount(craft.ingredient1_item_id),
+                    id: craft.ingredient1_id,
+                    amount: character.get_item_amount(craft.ingredient1_id),
                 },
                 Item {
-                    id: craft.ingredient2_item_id,
-                    amount: character.get_item_amount(craft.ingredient2_item_id),
+                    id: craft.ingredient2_id,
+                    amount: character.get_item_amount(craft.ingredient2_id),
                 },
                 Item {
-                    id: craft.ingredient3_item_id,
-                    amount: character.get_item_amount(craft.ingredient3_item_id),
+                    id: craft.ingredient3_id,
+                    amount: character.get_item_amount(craft.ingredient3_id),
                 },
                 Item {
-                    id: craft.ingredient4_item_id,
-                    amount: character.get_item_amount(craft.ingredient4_item_id),
+                    id: craft.ingredient4_id,
+                    amount: character.get_item_amount(craft.ingredient4_id),
                 },
             ],
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Create,
             PacketFamily::Shop,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

@@ -1,8 +1,5 @@
 use chrono::Utc;
-use eo::{
-    data::{i32, i32},
-    protocol::{server::spell::Request, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::SpellRequestServerPacket, PacketAction, PacketFamily};
 
 use crate::character::SpellState;
 
@@ -33,7 +30,7 @@ impl Map {
             return;
         }
 
-        let packet = Request {
+        let packet = SpellRequestServerPacket {
             player_id,
             spell_id,
         };

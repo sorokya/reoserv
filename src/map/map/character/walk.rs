@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
-    protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
-    pubs::EmfTileSpec,
-};
+use eolib::{protocol::{Direction, Coords, net::{server::{WalkReplyServerPacket, WalkPlayerServerPacket}, PacketAction, PacketFamily}, map::MapTileSpec}, data::{EoWriter, EoSerialize}};
 
 use crate::utils::{get_next_coords, in_client_range};
 
@@ -17,7 +13,7 @@ impl Map {
         target_player_id: i32,
         direction: Direction,
         _coords: Coords,
-        _timestamp: EOInt,
+        _timestamp: i32,
     ) {
         if let Some((target_previous_coords, target_coords, target_player, target_hidden)) = {
             let (coords, admin_level, player, hidden) = match self.characters.get(&target_player_id)
@@ -33,7 +29,7 @@ impl Map {
 
             let previous_coords = coords;
             let coords = get_next_coords(&coords, direction, self.file.width, self.file.height);
-            let is_tile_walkable = admin_level as i32 >= 1
+            let is_tile_walkable = i32::from(admin_level) >= 1
                 || (self.is_tile_walkable(&coords) && !self.is_tile_occupied(&coords));
             if !self.is_in_bounds(coords) || !is_tile_walkable {
                 return;
@@ -69,9 +65,9 @@ impl Map {
                 }
 
                 target.player.as_ref().unwrap().request_warp(
-                    warp.map,
-                    warp.coords,
-                    target.map_id == warp.map,
+                    warp.destination_map,
+                    warp.destination_coords,
+                    target.map_id == warp.destination_map,
                     None,
                 );
 
@@ -79,7 +75,7 @@ impl Map {
             }
 
             let packet = {
-                let mut packet = walk::Reply::default();
+                let mut packet = WalkReplyServerPacket::default();
 
                 for (player_id, character) in self.characters.iter() {
                     if *player_id != target_player_id
@@ -107,16 +103,16 @@ impl Map {
                 packet
             };
 
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+            packet.serialize(&mut writer);
             target_player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Walk,
-                builder.get(),
+                writer.to_byte_array(),
             );
 
             if !target_hidden {
-                let walk_packet = walk::Player {
+                let walk_packet = WalkPlayerServerPacket {
                     player_id: target_player_id,
                     direction,
                     coords: target_coords,
@@ -130,7 +126,7 @@ impl Map {
                 );
 
                 if let Some(tile) = self.get_tile(&target_coords) {
-                    if matches!(tile, EmfTileSpec::Spikes | EmfTileSpec::HiddenSpikes) {
+                    if matches!(tile, MapTileSpec::Spikes | MapTileSpec::HiddenSpikes) {
                         self.spike_damage(target_player_id)
                     }
                 }

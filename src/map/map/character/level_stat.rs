@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Player, PacketAction, PacketFamily, StatId},
-};
+use eolib::{protocol::net::{client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
@@ -37,24 +34,25 @@ impl Map {
             StatId::Cha => {
                 character.base_charisma += 1;
             }
+            _ => return,
         }
 
         character.stat_points -= 1;
 
         character.calculate_stats();
 
-        let reply = Player {
+        let reply = StatSkillPlayerServerPacket {
             stat_points: character.stat_points,
             stats: character.get_character_stats_3(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

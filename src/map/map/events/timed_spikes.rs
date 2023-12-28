@@ -1,9 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::i32,
-    protocol::{PacketAction, PacketFamily},
-    pubs::EmfTileSpec,
-};
+use eolib::protocol::{map::MapTileSpec, net::{PacketAction, PacketFamily}};
 
 use super::super::Map;
 
@@ -18,7 +14,7 @@ impl Map {
 
         for character in self.characters.values() {
             if !character.hidden
-                && self.get_tile(&character.coords).unwrap_or_default() == EmfTileSpec::TimedSpikes
+                && self.get_tile(&character.coords).unwrap_or_default() == MapTileSpec::TimedSpikes
             {
                 damaged_player_ids.push(character.player_id.unwrap());
             } else {

@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32, StreamReader},
-    protocol::PacketAction,
-};
+use eolib::{data::{EoReader, EoSerialize}, protocol::net::{client::{PartyRequestClientPacket, PartyAcceptClientPacket, PartyRemoveClientPacket}, PartyRequestType, PacketAction}};
 
 use crate::{
     map::MapHandle,
@@ -9,29 +6,44 @@ use crate::{
     world::WorldHandle,
 };
 
-const JOIN: i32 = 0;
-const INVITE: i32 = 1;
+pub fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match PartyRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing PartyRequestClientPacket {}", e);
+            return;
+        }
+    };
 
-pub fn request(reader: StreamReader, player_id: i32, map: MapHandle) {
-    let request_type = reader.get_char();
-    let target_player_id = reader.get_short();
-
-    match request_type {
-        JOIN => map.party_request(target_player_id, PartyRequest::Join(player_id)),
-        INVITE => map.party_request(target_player_id, PartyRequest::Invite(player_id)),
+    match request.request_type {
+        PartyRequestType::Join => map.party_request(request.player_id, PartyRequest::Join(player_id)),
+        PartyRequestType::Invite => map.party_request(request.player_id, PartyRequest::Invite(player_id)),
         _ => {}
     }
 }
 
-pub fn accept(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let request_type = reader.get_char();
-    let target_player_id = reader.get_short();
-    world.accept_party_request(player_id, target_player_id, request_type);
+pub fn accept(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let accept = match PartyAcceptClientPacket::deserialize(&reader) {
+        Ok(accept) => accept,
+        Err(e) => {
+            error!("Error deserializing PartyAcceptClientPacket {}", e);
+            return;
+        }
+    };
+
+    world.accept_party_request(player_id, accept.inviter_player_id, accept.request_type);
 }
 
-pub fn remove(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let target_player_id = reader.get_short();
-    world.remove_party_member(player_id, target_player_id);
+pub fn remove(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let remove = match PartyRemoveClientPacket::deserialize(&reader) {
+        Ok(remove) => remove,
+        Err(e) => {
+            error!("Error deserializing PartyRemoveClientPacket {}", e);
+            return;
+        }
+    };
+
+    world.remove_party_member(player_id, remove.player_id);
 }
 
 pub fn take(player_id: i32, world: WorldHandle) {
@@ -40,7 +52,7 @@ pub fn take(player_id: i32, world: WorldHandle) {
 
 pub async fn party(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {

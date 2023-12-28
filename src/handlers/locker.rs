@@ -1,23 +1,24 @@
-use eo::{
-    data::{i32, StreamReader},
-    protocol::{Item, PacketAction},
-};
+use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{LockerAddClientPacket, LockerTakeClientPacket}, Item}};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: i32, map: MapHandle) {
-    reader.seek(2);
-
-    let item = Item {
-        id: reader.get_short(),
-        amount: reader.get_three(),
+fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+    let add = match LockerAddClientPacket::deserialize(&reader) {
+        Ok(add) => add,
+        Err(e) => {
+            error!("Error deserializing LockerAddClientPacket {}", e);
+            return;
+        }
     };
 
-    if item.id <= 1 || item.amount == 0 {
+    if add.deposit_item.id <= 1 || add.deposit_item.amount == 0 {
         return;
     }
 
-    map.add_locker_item(player_id, item);
+    map.add_locker_item(player_id, Item {
+        id: add.deposit_item.id,
+        amount: add.deposit_item.amount,
+    });
 }
 
 fn buy(player_id: i32, map: MapHandle) {
@@ -28,15 +29,19 @@ fn open(player_id: i32, map: MapHandle) {
     map.open_locker(player_id);
 }
 
-fn take(reader: StreamReader, player_id: i32, map: MapHandle) {
-    reader.seek(2);
+fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+    let take = match LockerTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing LockerTakeClientPacket {}", e);
+            return;
+        }
+    };
 
-    let item_id = reader.get_short();
-
-    map.take_locker_item(player_id, item_id);
+    map.take_locker_item(player_id, take.take_item_id);
 }
 
-pub async fn locker(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn locker(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {

@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, i32, i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{PacketAction, PacketFamily}}, data::EoWriter};
 
 use crate::{utils::in_client_range, INN_DB, NPC_DB};
 
@@ -29,14 +25,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn_data) => inn_data,
             None => return,
@@ -62,15 +58,18 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_three(inn_data.vendor_id as i32 + 1);
-        builder.add_char(current_inn_data.vendor_id as i32 - 1);
-        builder.add_short(session_id);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&inn_data.question1);
-        builder.add_break_string(&inn_data.question2);
-        builder.add_break_string(&inn_data.question3);
+        let mut writer = EoWriter::new();
+        writer.add_three(inn_data.behavior_id + 1);
+        writer.add_char(current_inn_data.behavior_id - 1);
+        writer.add_short(session_id);
+        writer.add_byte(0xff);
+        writer.add_string(&inn_data.question1);
+        writer.add_byte(0xff);
+        writer.add_string(&inn_data.question2);
+        writer.add_byte(0xff);
+        writer.add_string(&inn_data.question3);
+        writer.add_byte(0xff);
 
-        player.send(PacketAction::Open, PacketFamily::Citizen, builder.get());
+        player.send(PacketAction::Open, PacketFamily::Citizen, writer.to_byte_array());
     }
 }

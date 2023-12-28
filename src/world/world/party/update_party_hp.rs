@@ -1,18 +1,15 @@
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{PacketAction, PacketFamily}, data::EoWriter};
 
 use super::super::World;
 
 impl World {
     pub fn update_party_hp(&self, player_id: i32, hp_percentage: i32) {
         if let Some(party) = self.get_player_party(player_id) {
-            let mut builder = StreamBuilder::new();
-            builder.add_short(player_id);
-            builder.add_char(hp_percentage);
+            let mut writer = EoWriter::new();
+            writer.add_short(player_id);
+            writer.add_char(hp_percentage);
 
-            let buf = builder.get();
+            let buf = writer.to_byte_array();
 
             for member_id in &party.members {
                 let member = match self.players.get(member_id) {

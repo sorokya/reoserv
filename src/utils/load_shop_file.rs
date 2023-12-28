@@ -1,10 +1,7 @@
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eo::{
-    data::{i32, EOInt, i32, Serializeable, StreamReader},
-    pubs::{Craft, Shop, ShopFile, Trade},
-};
+use eolib::{protocol::r#pub::server::{ShopFile, ShopRecord, Trade, Craft}, data::{EoReader, EoSerialize}};
 use glob::glob;
 use serde_json::Value;
 
@@ -22,7 +19,6 @@ pub fn load_shop_file() -> Result<ShopFile, Box<dyn std::error::Error>> {
 
 fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
     let mut shop_file = ShopFile::default();
-    shop_file.magic = "ESF".to_string();
 
     for entry in glob("pub/shops/*.json")? {
         let path = entry?;
@@ -35,20 +31,18 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
         let trades = v["trades"].as_array().unwrap();
         let crafts = v["crafts"].as_array().unwrap();
 
-        shop_file.shops.push(Shop {
-            vendor_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
+        shop_file.shops.push(ShopRecord {
+            behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
             name: v["name"].as_str().unwrap_or_default().to_string(),
             min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
             max_level: v["maxLevel"].as_u64().unwrap_or(0) as i32,
-            class_req: v["classReq"].as_u64().unwrap_or(0) as i32,
-            num_trades: trades.len() as i32,
-            num_crafts: crafts.len() as i32,
+            class_requirement: v["classRequirement"].as_u64().unwrap_or(0) as i32,
             trades: trades
                 .iter()
                 .map(|v| Trade {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                    buy_price: v["buyPrice"].as_u64().unwrap_or(0) as EOInt,
-                    sell_price: v["sellPrice"].as_u64().unwrap_or(0) as EOInt,
+                    buy_price: v["buyPrice"].as_u64().unwrap_or(0) as i32,
+                    sell_price: v["sellPrice"].as_u64().unwrap_or(0) as i32,
                     max_amount: v["maxBuyAmount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
@@ -56,13 +50,13 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                 .iter()
                 .map(|v| Craft {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                    ingredient1_item_id: v["ingredient1ItemId"].as_u64().unwrap_or(0) as i32,
+                    ingredient1_id: v["ingredient1Id"].as_u64().unwrap_or(0) as i32,
                     ingredient1_amount: v["ingredient1Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient2_item_id: v["ingredient2ItemId"].as_u64().unwrap_or(0) as i32,
+                    ingredient2_id: v["ingredient2Id"].as_u64().unwrap_or(0) as i32,
                     ingredient2_amount: v["ingredient2Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient3_item_id: v["ingredient3ItemId"].as_u64().unwrap_or(0) as i32,
+                    ingredient3_id: v["ingredient3Id"].as_u64().unwrap_or(0) as i32,
                     ingredient3_amount: v["ingredient3Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient4_item_id: v["ingredient4ItemId"].as_u64().unwrap_or(0) as i32,
+                    ingredient4_id: v["ingredient4Id"].as_u64().unwrap_or(0) as i32,
                     ingredient4_amount: v["ingredient4Amount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
@@ -80,9 +74,6 @@ fn load_pub() -> Result<ShopFile, Box<dyn std::error::Error>> {
     file.read_to_end(&mut buf)?;
 
     let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut shop_file = ShopFile::default();
-    shop_file.deserialize(&reader);
-    Ok(shop_file)
+    let reader = EoReader::new(bytes);
+    Ok(ShopFile::deserialize(&reader)?)
 }

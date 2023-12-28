@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::talk, PacketAction, PacketFamily},
-};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::TalkMsgServerPacket}};
 
 use crate::{player::ClientState, LANG};
 
@@ -21,20 +18,21 @@ impl World {
         };
 
         if self.global_locked {
-            let mut builder = StreamBuilder::new();
-            builder.add_break_string("Server");
-            builder.add_string(&LANG.global_locked);
-            player.send(PacketAction::Msg, PacketFamily::Talk, builder.get());
+            let mut writer = EoWriter::new();
+            writer.add_string("Server");
+            writer.add_byte(0xff);
+            writer.add_string(&LANG.global_locked);
+            player.send(PacketAction::Msg, PacketFamily::Talk, writer.to_byte_array());
             return;
         }
 
-        let packet = talk::Msg {
+        let packet = TalkMsgServerPacket {
             player_name: name.to_string(),
             message: message.to_string(),
         };
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         for player in self.players.values() {
             let state = player.get_state().await;
 

@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use super::super::World;
 
@@ -14,10 +11,10 @@ impl World {
 
         let party = self.parties.remove(party_index);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(leader_id);
+        let mut writer = EoWriter::new();
+        writer.add_short(leader_id);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for member_id in &party.members {
             let member = match self.players.get(member_id) {

@@ -1,9 +1,6 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use crate::SETTINGS;
 
@@ -25,11 +22,11 @@ impl Map {
 
         let hp_percentage = character.get_hp_percentage();
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(EFFECT_SPIKE);
-        builder.add_short(damage);
-        builder.add_short(character.hp);
-        builder.add_short(character.max_hp);
+        let mut writer = EoWriter::new();
+        writer.add_char(EFFECT_SPIKE);
+        writer.add_short(damage);
+        writer.add_short(character.hp);
+        writer.add_short(character.max_hp);
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
@@ -39,20 +36,20 @@ impl Map {
         character.player.as_ref().unwrap().send(
             PacketAction::Spec,
             PacketFamily::Effect,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_char(hp_percentage);
-        builder.add_char(if character.hp == 0 { 1 } else { 0 });
-        builder.add_three(damage as i32);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_char(hp_percentage);
+        writer.add_char(if character.hp == 0 { 1 } else { 0 });
+        writer.add_three(damage as i32);
 
         self.send_buf_near_player(
             player_id,
             PacketAction::Admin,
             PacketFamily::Effect,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if character.hp == 0 {

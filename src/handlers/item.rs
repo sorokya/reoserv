@@ -1,64 +1,60 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::{
-        client::item::{Drop, Get, Junk, Use},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            ItemDropClientPacket, ItemGetClientPacket, ItemJunkClientPacket, ItemUseClientPacket,
+        },
         PacketAction,
     },
 };
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn drop(reader: StreamReader, player: PlayerHandle) {
-    let mut packet = Drop::default();
-    packet.deserialize(&reader);
-
-    let player_id = player.get_player_id().await;
-
-    if let Err(e) = player_id {
-        error!("Failed to get player id: {}", e);
-        return;
-    }
-
-    let player_id = player_id.unwrap();
-
-    let map = player.get_map().await;
-
-    if let Err(e) = map {
-        error!("Failed to get map: {}", e);
-        return;
-    }
-
-    map.unwrap()
-        .drop_item(player_id, packet.drop_item, packet.coords);
+fn drop(reader: EoReader, player_id: i32, map: MapHandle) {
+    let drop = match ItemDropClientPacket::deserialize(&reader) {
+        Ok(drop) => drop,
+        Err(e) => {
+            error!("Error deserializing ItemDropClientPacket {}", e);
+            return;
+        }
+    };
+    map.drop_item(player_id, drop.item, drop.coords);
 }
 
-async fn get(reader: StreamReader, player: PlayerHandle) {
-    let mut packet = Get::default();
-    packet.deserialize(&reader);
-
-    let player_id = player.get_player_id().await;
-
-    if let Err(e) = player_id {
-        error!("Failed to get player id: {}", e);
-        return;
-    }
-
-    let player_id = player_id.unwrap();
-
-    let map = player.get_map().await;
-
-    if let Err(e) = map {
-        error!("Failed to get map: {}", e);
-        return;
-    }
-
-    map.unwrap().get_item(player_id, packet.take_item_index);
+fn get(reader: EoReader, player_id: i32, map: MapHandle) {
+    let get = match ItemGetClientPacket::deserialize(&reader) {
+        Ok(get) => get,
+        Err(e) => {
+            error!("Error deserializing ItemGetClientPacket {}", e);
+            return;
+        }
+    };
+    map.get_item(player_id, get.item_index);
 }
 
-async fn junk(reader: StreamReader, player: PlayerHandle) {
-    let mut packet = Junk::default();
-    packet.deserialize(&reader);
+fn junk(reader: EoReader, player_id: i32, map: MapHandle) {
+    let junk = match ItemJunkClientPacket::deserialize(&reader) {
+        Ok(junk) => junk,
+        Err(e) => {
+            error!("Error deserializing ItemJunkClientPacket {}", e);
+            return;
+        }
+    };
+    map.junk_item(player_id, junk.item.id, junk.item.amount);
+}
 
+fn r#use(reader: EoReader, player_id: i32, map: MapHandle) {
+    let packet = match ItemUseClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing ItemUseClientPacket {}", e);
+            return;
+        }
+    };
+    map.use_item(player_id, packet.item_id);
+}
+
+pub async fn item(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
@@ -75,38 +71,11 @@ async fn junk(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    map.junk_item(player_id, packet.junk_item.id, packet.junk_item.amount);
-}
-
-async fn r#use(reader: StreamReader, player: PlayerHandle) {
-    let mut packet = Use::default();
-    packet.deserialize(&reader);
-
-    let player_id = match player.get_player_id().await {
-        Ok(id) => id,
-        Err(e) => {
-            error!("Failed to get player id: {}", e);
-            return;
-        }
-    };
-
-    let map = match player.get_map().await {
-        Ok(map) => map,
-        Err(e) => {
-            error!("Failed to get map: {}", e);
-            return;
-        }
-    };
-
-    map.use_item(player_id, packet.use_item_id);
-}
-
-pub async fn item(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
     match action {
-        PacketAction::Drop => drop(reader, player).await,
-        PacketAction::Get => get(reader, player).await,
-        PacketAction::Junk => junk(reader, player).await,
-        PacketAction::Use => r#use(reader, player).await,
+        PacketAction::Drop => drop(reader, player_id, map),
+        PacketAction::Get => get(reader, player_id, map),
+        PacketAction::Junk => junk(reader, player_id, map),
+        PacketAction::Use => r#use(reader, player_id, map),
         _ => error!("Unhandled packet Item_{:?}", action),
     }
 }

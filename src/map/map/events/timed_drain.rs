@@ -1,10 +1,6 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EmfEffect,
-};
+use eolib::{protocol::{net::{PacketAction, PacketFamily}, map::MapTimedEffect}, data::EoWriter};
 
 use crate::{utils::in_client_range, SETTINGS};
 
@@ -14,11 +10,11 @@ const EFFECT_DRAIN: i32 = 1;
 
 impl Map {
     pub fn timed_drain(&mut self) {
-        if self.file.effect == EmfEffect::HPDrain {
+        if self.file.timed_effect == MapTimedEffect::HpDrain {
             self.timed_drain_hp();
         }
 
-        if self.file.effect == EmfEffect::TPDrain {
+        if self.file.timed_effect == MapTimedEffect::TpDrain {
             self.timed_drain_tp();
         }
     }
@@ -37,7 +33,7 @@ impl Map {
             };
 
             let damage = (character.max_hp as f32 * SETTINGS.world.drain_hp_damage).floor() as i32;
-            let damage = cmp::min(damage, character.hp as i32 - 1);
+            let damage = cmp::min(damage, character.hp - 1);
             let damage = cmp::max(damage, 0) as i32;
 
             character.hp -= damage;
@@ -55,10 +51,10 @@ impl Map {
                 None => continue,
             };
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(damage);
-            builder.add_short(character.hp);
-            builder.add_short(character.max_hp);
+            let mut writer = EoWriter::new();
+            writer.add_short(damage);
+            writer.add_short(character.hp);
+            writer.add_short(character.max_hp);
 
             for (other_index, other_player_id) in player_ids.iter().enumerate() {
                 if other_player_id == player_id {
@@ -79,15 +75,15 @@ impl Map {
                     None => 0,
                 };
 
-                builder.add_short(*other_player_id);
-                builder.add_char(other.get_hp_percentage());
-                builder.add_short(other_damage);
+                writer.add_short(*other_player_id);
+                writer.add_char(other.get_hp_percentage());
+                writer.add_short(other_damage);
             }
 
             character.player.as_ref().unwrap().send(
                 PacketAction::TargetOther,
                 PacketFamily::Effect,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }
@@ -99,21 +95,21 @@ impl Map {
             }
 
             let damage = (character.max_tp as f32 * SETTINGS.world.drain_tp_damage).floor() as i32;
-            let damage = cmp::min(damage, character.tp as i32 - 1);
+            let damage = cmp::min(damage, character.tp - 1);
             let damage = cmp::max(damage, 0) as i32;
 
             character.tp -= damage;
 
-            let mut builder = StreamBuilder::new();
-            builder.add_char(EFFECT_DRAIN);
-            builder.add_short(damage);
-            builder.add_short(character.tp);
-            builder.add_short(character.max_tp);
+            let mut writer = EoWriter::new();
+            writer.add_char(EFFECT_DRAIN);
+            writer.add_short(damage);
+            writer.add_short(character.tp);
+            writer.add_short(character.max_tp);
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Effect,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }

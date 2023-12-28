@@ -1,10 +1,8 @@
-use eo::data::EOInt;
-
 use crate::SETTINGS;
 
 use super::World;
 
-const ONE_SECOND: EOInt = 8;
+const ONE_SECOND: i32 = 8;
 
 impl World {
     pub async fn tick(&mut self) {

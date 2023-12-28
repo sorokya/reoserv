@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{server::paperdoll, PacketAction, PacketFamily},
-    pubs::EifItemType,
-};
+use eolib::{protocol::{r#pub::ItemType, net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::ITEM_DB;
 
@@ -24,105 +20,105 @@ impl Character {
             None => return false,
         };
 
-        if item_record.r#type == EifItemType::Armor && item_record.spec2 != self.gender.to_char() {
+        if item_record.r#type == ItemType::Armor && item_record.spec2 != i32::from(self.gender) {
             return false;
         }
 
-        if (self.level as i32) < item_record.level_req
-            || self.adj_strength < item_record.str_req
-            || self.adj_intelligence < item_record.int_req
-            || self.adj_wisdom < item_record.wis_req
-            || self.adj_agility < item_record.agi_req
-            || self.adj_constitution < item_record.con_req
-            || self.adj_charisma < item_record.cha_req
+        if self.level < item_record.level_requirement
+            || self.adj_strength < item_record.str_requirement
+            || self.adj_intelligence < item_record.int_requirement
+            || self.adj_wisdom < item_record.wis_requirement
+            || self.adj_agility < item_record.agi_requirement
+            || self.adj_constitution < item_record.con_requirement
+            || self.adj_charisma < item_record.cha_requirement
         {
             return false;
         }
 
-        if item_record.class_req != 0 && item_record.class_req != self.class as i32 {
-            let reply = paperdoll::Ping {
+        if item_record.class_requirement != 0 && item_record.class_requirement != self.class {
+            let reply = PaperdollPingServerPacket {
                 class_id: self.class,
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+            reply.serialize(&mut writer);
 
             self.player.as_ref().unwrap().send(
                 PacketAction::Ping,
                 PacketFamily::Paperdoll,
-                builder.get(),
+                writer.to_byte_array(),
             );
             return false;
         }
 
         match item_record.r#type {
-            EifItemType::Weapon => {
+            ItemType::Weapon => {
                 if self.paperdoll.weapon != 0 {
                     return false;
                 }
                 self.paperdoll.weapon = item_id
             }
-            EifItemType::Shield => {
+            ItemType::Shield => {
                 if self.paperdoll.shield != 0 {
                     return false;
                 }
                 self.paperdoll.shield = item_id
             }
-            EifItemType::Armor => {
+            ItemType::Armor => {
                 if self.paperdoll.armor != 0 {
                     return false;
                 }
                 self.paperdoll.armor = item_id
             }
-            EifItemType::Hat => {
+            ItemType::Hat => {
                 if self.paperdoll.hat != 0 {
                     return false;
                 }
                 self.paperdoll.hat = item_id
             }
-            EifItemType::Boots => {
+            ItemType::Boots => {
                 if self.paperdoll.boots != 0 {
                     return false;
                 }
                 self.paperdoll.boots = item_id
             }
-            EifItemType::Gloves => {
+            ItemType::Gloves => {
                 if self.paperdoll.gloves != 0 {
                     return false;
                 }
                 self.paperdoll.gloves = item_id
             }
-            EifItemType::Accessory => {
+            ItemType::Accessory => {
                 if self.paperdoll.accessory != 0 {
                     return false;
                 }
                 self.paperdoll.accessory = item_id
             }
-            EifItemType::Belt => {
+            ItemType::Belt => {
                 if self.paperdoll.belt != 0 {
                     return false;
                 }
                 self.paperdoll.belt = item_id
             }
-            EifItemType::Necklace => {
+            ItemType::Necklace => {
                 if self.paperdoll.necklace != 0 {
                     return false;
                 }
                 self.paperdoll.necklace = item_id
             }
-            EifItemType::Ring => {
+            ItemType::Ring => {
                 if self.paperdoll.ring[sub_loc as usize] != 0 {
                     return false;
                 }
                 self.paperdoll.ring[sub_loc as usize] = item_id
             }
-            EifItemType::Armlet => {
+            ItemType::Armlet => {
                 if self.paperdoll.armlet[sub_loc as usize] != 0 {
                     return false;
                 }
                 self.paperdoll.armlet[sub_loc as usize] = item_id
             }
-            EifItemType::Bracer => {
+            ItemType::Bracer => {
                 if self.paperdoll.bracer[sub_loc as usize] != 0 {
                     return false;
                 }

@@ -1,8 +1,4 @@
-use eo::{
-    data::i32,
-    protocol::{server::door, Coords, PacketAction, PacketFamily},
-    pubs::EifItemType,
-};
+use eolib::protocol::{Coords, net::{server::DoorOpenServerPacket, PacketAction, PacketFamily}, r#pub::ItemType};
 
 use crate::{utils::in_client_range, ITEM_DB};
 
@@ -24,7 +20,7 @@ impl Map {
             None => return,
         };
 
-        if !in_client_range(&character.coords, &door_coords) {
+        if door.open || !in_client_range(&character.coords, &door_coords) {
             return;
         }
 
@@ -36,7 +32,7 @@ impl Map {
                     None => return false,
                 };
 
-                item_data.r#type == EifItemType::Key && item_data.spec1 as i32 == door.key
+                item_data.r#type == ItemType::Key && item_data.spec1 == door.key
             })
         {
             return;
@@ -44,7 +40,7 @@ impl Map {
 
         door.open = true;
 
-        let packet = door::Open {
+        let packet = DoorOpenServerPacket {
             coords: door_coords,
         };
 

@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use crate::{utils::in_client_range, SETTINGS};
 
@@ -50,11 +47,11 @@ impl Map {
         if in_client_range(&character.coords, &target.coords) {
             player.set_interact_player_id(Some(target_player_id));
 
-            let mut builder = StreamBuilder::new();
-            builder.add_char(MAGIC_NUMBER);
-            builder.add_short(player_id);
-            builder.add_string(&character.name);
-            target_player.send(PacketAction::Request, PacketFamily::Trade, builder.get());
+            let mut writer = EoWriter::new();
+            writer.add_char(MAGIC_NUMBER);
+            writer.add_short(player_id);
+            writer.add_string(&character.name);
+            target_player.send(PacketAction::Request, PacketFamily::Trade, writer.to_byte_array());
         }
     }
 }

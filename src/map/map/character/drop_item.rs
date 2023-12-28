@@ -1,17 +1,13 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::item, Coords, PacketAction, PacketFamily, ShortItem},
-    pubs::EifItemSpecial,
-};
+use eolib::{protocol::{net::{ThreeItem, server::{ItemDropServerPacket, ItemAddServerPacket}, PacketAction, PacketFamily, client::ByteCoords}, Coords, r#pub::ItemSpecial}, data::{EoWriter, EoSerialize}};
 
 use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn drop_item(&mut self, target_player_id: i32, item: ShortItem, coords: Coords) {
+    pub async fn drop_item(&mut self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
         if item.amount == 0 {
             return;
         }
@@ -21,7 +17,7 @@ impl Map {
             None => return,
         };
 
-        if item_record.special == EifItemSpecial::Lore {
+        if item_record.special == ItemSpecial::Lore {
             return;
         }
 
@@ -40,8 +36,11 @@ impl Map {
             }
 
             let coords = match coords {
-                Coords { x: 0xFE, y: 0xFE } => character.coords,
-                coords => coords,
+                ByteCoords { x: 0xFF, y: 0xFF } => character.coords,
+                coords => Coords {
+                    x: coords.x as i32 - 1,
+                    y: coords.y as i32 - 1,
+                },
             };
 
             let distance = get_distance(&coords, &character.coords);
@@ -73,11 +72,13 @@ impl Map {
         let character = self.characters.get(&target_player_id).unwrap();
         let weight = character.get_weight();
 
-        let reply = item::Drop {
-            item_id: item.id,
-            amount_dropped: amount_to_drop,
+        let reply = ItemDropServerPacket {
+            dropped_item: ThreeItem {
+                id: item.id,
+                amount: amount_to_drop,
+            },
             item_index,
-            amount_remaining: match character.items.iter().find(|i| i.id == item.id) {
+            remaining_amount: match character.items.iter().find(|i| i.id == item.id) {
                 Some(item) => item.amount,
                 None => 0,
             },
@@ -85,9 +86,9 @@ impl Map {
             weight,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         character
             .player
             .as_ref()
@@ -104,7 +105,7 @@ impl Map {
             },
         );
 
-        let reply = item::Add {
+        let reply = ItemAddServerPacket {
             item_id: item.id,
             item_index,
             item_amount: amount_to_drop,

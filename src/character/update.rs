@@ -1,7 +1,4 @@
-use eo::{
-    data::EOInt,
-    protocol::{Item, Spell},
-};
+use eolib::protocol::net::{Item, Spell};
 use mysql_async::{prelude::*, Conn, Row, TxOpts};
 
 use super::Character;
@@ -60,10 +57,10 @@ impl Character {
                 "home" => &self.home,
                 "fiance" => &self.fiance,
                 "partner" => &self.partner,
-                "admin_level" => self.admin_level as u32,
+                "admin_level" => i32::from(self.admin_level),
                 "class" => self.class as u32,
-                "gender" => self.gender as u32,
-                "race" => self.skin as u32,
+                "gender" => i32::from(self.gender),
+                "race" => self.skin,
                 "hair_style" => self.hair_style as u32,
                 "hair_color" => self.hair_color as u32,
                 "bank_level" => self.bank_level,
@@ -102,9 +99,9 @@ impl Character {
                 "map_id" => self.map_id as u32,
                 "x" => self.coords.x as u32,
                 "y" => self.coords.y as u32,
-                "direction" => self.direction as u32,
-                "sitting" => self.sit_state as u32,
-                "hidden" => EOInt::from(self.hidden),
+                "direction" => i32::from(self.direction),
+                "sitting" => i32::from(self.sit_state),
+                "hidden" => i32::from(self.hidden),
             },
         )
         .await?;

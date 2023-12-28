@@ -1,45 +1,59 @@
-use eo::{
-    data::{i32, Serializeable, StreamReader},
-    protocol::{
-        client::character::{Create, Remove, Request, Take},
-        PacketAction,
-    },
-};
+use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{CharacterCreateClientPacket, CharacterRemoveClientPacket, CharacterRequestClientPacket, CharacterTakeClientPacket}}};
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn create(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let mut create = Create::default();
-    create.deserialize(&reader);
+fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let create = match CharacterCreateClientPacket::deserialize(&reader) {
+        Ok(create) => create,
+        Err(e) => {
+            error!("Error deserializing CharacterCreateClientPacket {}", e);
+            return;
+        }
+    };
     world.create_character(player_id, create);
 }
 
-fn remove(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let mut remove = Remove::default();
-    remove.deserialize(&reader);
+fn remove(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let remove = match CharacterRemoveClientPacket::deserialize(&reader) {
+        Ok(remove) => remove,
+        Err(e) => {
+            error!("Error deserializing CharacterRemoveClientPacket {}", e);
+            return;
+        }
+    };
     world.delete_character(player_id, remove.session_id, remove.character_id);
 }
 
-fn request(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
+fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let request = match CharacterRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing CharacterRemoveClientPacket {}", e);
+            return;
+        }
+    };
 
-    if request.new != "NEW" {
+    if request.request_string != "NEW" {
         return;
     }
 
     world.request_character_creation(player_id);
 }
 
-fn take(reader: StreamReader, player_id: i32, world: WorldHandle) {
-    let mut take = Take::default();
-    take.deserialize(&reader);
+fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let take = match CharacterTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing CharacterTakeClientPacket {}", e);
+            return;
+        }
+    };
     world.request_character_deletion(player_id, take.character_id);
 }
 
 pub async fn character(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {

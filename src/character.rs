@@ -1,14 +1,6 @@
 use std::cmp;
-
-use eo::{
-    data::{i32, EOInt, i32, i32},
-    protocol::{
-        client::character::Create, AdminLevel, Coords, Direction, Gender, Item, PaperdollFull,
-        PaperdollIcon, SitState, Skin, Spell, Weight,
-    },
-};
-
 use chrono::prelude::*;
+use eolib::protocol::{Coords, Direction, net::{server::{SitState, EquipmentPaperdoll, CharacterIcon}, Item, Spell, client::CharacterCreateClientPacket, Weight}, Gender, AdminLevel};
 use mysql_async::Conn;
 
 use crate::{player::PlayerHandle, EXP_TABLE, SETTINGS};
@@ -42,8 +34,8 @@ mod update;
 pub struct Character {
     pub player_id: Option<i32>,
     pub player: Option<PlayerHandle>,
-    pub id: EOInt,
-    pub account_id: EOInt,
+    pub id: i32,
+    pub account_id: i32,
     pub name: String,
     pub title: Option<String>,
     pub home: String,
@@ -52,25 +44,25 @@ pub struct Character {
     pub admin_level: AdminLevel,
     pub class: i32,
     pub gender: Gender,
-    pub skin: Skin,
+    pub skin: i32,
     pub hair_style: i32,
     pub hair_color: i32,
-    pub bank_level: EOInt,
-    pub gold_bank: EOInt,
+    pub bank_level: i32,
+    pub gold_bank: i32,
     pub guild_name: Option<String>,
     pub guild_tag: Option<String>,
     pub guild_rank_id: Option<i32>,
     pub guild_rank_string: Option<String>,
-    pub paperdoll: PaperdollFull,
+    pub paperdoll: EquipmentPaperdoll,
     pub level: i32,
-    pub experience: EOInt,
+    pub experience: i32,
     pub hp: i32,
     pub max_hp: i32,
     pub tp: i32,
     pub max_tp: i32,
     pub max_sp: i32,
-    pub weight: EOInt,
-    pub max_weight: EOInt,
+    pub weight: i32,
+    pub max_weight: i32,
     pub base_strength: i32,
     pub base_intelligence: i32,
     pub base_wisdom: i32,
@@ -86,7 +78,7 @@ pub struct Character {
     pub stat_points: i32,
     pub skill_points: i32,
     pub karma: i32,
-    pub usage: EOInt,
+    pub usage: i32,
     pub min_damage: i32,
     pub max_damage: i32,
     pub accuracy: i32,
@@ -106,12 +98,12 @@ pub struct Character {
 }
 
 impl Character {
-    pub fn from_creation(account_id: EOInt, create: &Create) -> Self {
+    pub fn from_creation(account_id: i32, create: &CharacterCreateClientPacket) -> Self {
         Character {
             account_id,
             gender: create.gender,
-            hair_style: create.hairstyle,
-            hair_color: create.haircolor,
+            hair_style: create.hair_style,
+            hair_color: create.hair_color,
             skin: create.skin,
             name: create.name.clone(),
             ..Default::default()
@@ -137,45 +129,45 @@ impl Character {
 
     pub fn get_weight(&self) -> Weight {
         Weight {
-            current: cmp::min(self.weight, 250) as i32,
-            max: self.max_weight as i32,
+            current: cmp::min(self.weight, 250),
+            max: self.max_weight,
         }
     }
 
-    pub fn get_icon(&self, in_party: bool) -> PaperdollIcon {
+    pub fn get_icon(&self, in_party: bool) -> CharacterIcon {
         match self.admin_level {
-            AdminLevel::Player | AdminLevel::Spy | AdminLevel::LightGuide => {
-                if in_party {
-                    PaperdollIcon::Party
-                } else {
-                    PaperdollIcon::Player
-                }
-            }
             AdminLevel::Guardian | AdminLevel::GameMaster => {
                 if in_party {
-                    PaperdollIcon::GmParty
+                    CharacterIcon::GmParty
                 } else {
-                    PaperdollIcon::Gm
+                    CharacterIcon::Gm
                 }
             }
             AdminLevel::HighGameMaster => {
                 if in_party {
-                    PaperdollIcon::HgmParty
+                    CharacterIcon::HgmParty
                 } else {
-                    PaperdollIcon::Hgm
+                    CharacterIcon::Hgm
+                }
+            }
+            _ => {
+                if in_party {
+                    CharacterIcon::Party
+                } else {
+                    CharacterIcon::Player
                 }
             }
         }
     }
 
-    pub fn get_item_amount(&self, item_id: i32) -> EOInt {
+    pub fn get_item_amount(&self, item_id: i32) -> i32 {
         match self.items.iter().find(|item| item.id == item_id) {
             Some(item) => item.amount,
             None => 0,
         }
     }
 
-    pub fn get_bank_item_amount(&self, item_id: i32) -> EOInt {
+    pub fn get_bank_item_amount(&self, item_id: i32) -> i32 {
         match self.bank.iter().find(|item| item.id == item_id) {
             Some(item) => item.amount,
             None => 0,
@@ -219,8 +211,8 @@ impl Character {
         // http://archive.today/brypq
         while self.experience > EXP_TABLE[self.level as usize + 1] {
             self.level += 1;
-            self.stat_points += SETTINGS.world.stat_points_per_level as i32;
-            self.skill_points += SETTINGS.world.skill_points_per_level as i32;
+            self.stat_points += SETTINGS.world.stat_points_per_level;
+            self.skill_points += SETTINGS.world.skill_points_per_level;
             leveled_up = true;
         }
 

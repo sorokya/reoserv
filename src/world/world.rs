@@ -1,7 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
 use super::{load_maps::load_maps, Command, Party, WorldHandle};
-use eo::data::{EOInt, i32};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -10,22 +9,22 @@ use tokio::sync::mpsc::UnboundedReceiver;
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: HashMap<i32, PlayerHandle>,
-    accounts: Vec<EOInt>,
+    accounts: Vec<i32>,
     characters: HashMap<String, i32>,
     pool: Pool,
     maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
-    npc_act_ticks: EOInt,
-    npc_spawn_ticks: EOInt,
-    item_spawn_ticks: EOInt,
-    player_recover_ticks: EOInt,
-    npc_recover_ticks: EOInt,
-    quake_ticks: EOInt,
-    spike_ticks: EOInt,
-    drain_ticks: EOInt,
-    warp_suck_ticks: EOInt,
-    arena_ticks: EOInt,
-    door_close_ticks: EOInt,
+    npc_act_ticks: i32,
+    npc_spawn_ticks: i32,
+    item_spawn_ticks: i32,
+    player_recover_ticks: i32,
+    npc_recover_ticks: i32,
+    quake_ticks: i32,
+    spike_ticks: i32,
+    drain_ticks: i32,
+    warp_suck_ticks: i32,
+    arena_ticks: i32,
+    door_close_ticks: i32,
     global_locked: bool,
 }
 
@@ -335,6 +334,8 @@ impl World {
                 victim_name,
                 admin_name,
             } => self.unfreeze_player(victim_name, admin_name),
+            Command::RequestPlayerList { player_id: _ } => todo!(),
+            Command::RequestPlayerNameList { player_id: _ } => todo!(),
         }
     }
 }

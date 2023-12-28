@@ -1,12 +1,5 @@
 use std::{io::Cursor, path::Path};
-
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::welcome::{Reply, ReplyData, ReplyEnterGame},
-        PacketAction, PacketFamily, WelcomeReply,
-    },
-};
+use eolib::{protocol::net::{server::{WelcomeReplyServerPacket, WelcomeCode, WelcomeReplyServerPacketWelcomeCodeData, WelcomeReplyServerPacketWelcomeCodeDataEnterGame}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 use crate::{
@@ -79,20 +72,20 @@ impl World {
 
                 map.enter(character, None).await;
                 let nearby_info = map.get_nearby_info(player_id).await;
-                let reply = Reply {
-                    reply_code: WelcomeReply::EnterGame,
-                    data: ReplyData::EnterGame(ReplyEnterGame {
+                let reply = WelcomeReplyServerPacket {
+                    welcome_code: WelcomeCode::EnterGame,
+                    welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
                         news: get_news().await,
                         weight,
                         items,
                         spells,
                         nearby: nearby_info,
-                    }),
+                    })),
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
-                player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
+                let mut writer = EoWriter::new();
+                reply.serialize(&mut writer);
+                player.send(PacketAction::Reply, PacketFamily::Welcome, writer.to_byte_array());
             } else {
                 player.close(format!(
                     "{}",

@@ -1,7 +1,4 @@
-use eo::{
-    data::i32,
-    protocol::{server::talk, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::TalkPlayerServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -16,7 +13,7 @@ impl Map {
             return;
         }
 
-        let packet = talk::Player {
+        let packet = TalkPlayerServerPacket {
             player_id: target_player_id,
             message,
         };

@@ -1,4 +1,4 @@
-use eo::protocol::{Coords, WarpAnimation};
+use eolib::protocol::{net::server::WarpEffect, Coords};
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 
@@ -10,7 +10,7 @@ impl World {
     pub fn jail_player(&mut self, victim_name: String, admin_name: String) {
         let mut player_online = false;
         if let Some(player_id) = self.characters.get(&victim_name) {
-            if let Some(player) = self.players.get(&player_id) {
+            if let Some(player) = self.players.get(player_id) {
                 player_online = true;
                 player.request_warp(
                     SETTINGS.jail.map,
@@ -19,7 +19,7 @@ impl World {
                         y: SETTINGS.jail.y,
                     },
                     false,
-                    Some(WarpAnimation::Admin),
+                    Some(WarpEffect::Admin),
                 );
             }
         }

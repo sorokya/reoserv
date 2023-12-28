@@ -1,6 +1,15 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder, MAX2},
-    protocol::{server::warp, Coords, PacketAction, PacketFamily, WarpAnimation, WarpType},
+use eolib::{
+    data::{EoWriter, SHORT_MAX, EoSerialize},
+    protocol::{
+        net::{
+            server::{
+                WarpEffect, WarpRequestServerPacket, WarpRequestServerPacketWarpTypeData,
+                WarpRequestServerPacketWarpTypeDataMapSwitch, WarpType,
+            },
+            PacketAction, PacketFamily,
+        },
+        Coords,
+    },
 };
 use rand::Rng;
 
@@ -14,11 +23,11 @@ impl Player {
         map_id: i32,
         coords: Coords,
         local: bool,
-        animation: Option<WarpAnimation>,
+        animation: Option<WarpEffect>,
     ) {
         let session_id = {
             let mut rng = rand::thread_rng();
-            let session_id = rng.gen_range(10..MAX2) as i32;
+            let session_id = rng.gen_range(10..SHORT_MAX) as i32;
             self.session_id = Some(session_id);
             session_id
         };
@@ -30,24 +39,26 @@ impl Player {
         };
 
         let request = if local {
-            warp::Request {
+            WarpRequestServerPacket {
                 warp_type: WarpType::Local,
                 map_id,
                 session_id,
-                data: warp::RequestData::None,
+                warp_type_data: None,
             }
         } else {
             match self.world.get_map(map_id).await {
                 Ok(map) => {
-                    let (map_rid, map_filesize) = map.get_rid_and_size().await;
-                    warp::Request {
+                    let (map_rid, map_file_size) = map.get_rid_and_size().await;
+                    WarpRequestServerPacket {
                         warp_type: WarpType::MapSwitch,
                         map_id,
                         session_id,
-                        data: warp::RequestData::MapSwitch(warp::RequestMapSwitch {
-                            map_rid,
-                            map_filesize,
-                        }),
+                        warp_type_data: Some(WarpRequestServerPacketWarpTypeData::MapSwitch(
+                            WarpRequestServerPacketWarpTypeDataMapSwitch {
+                                map_rid,
+                                map_file_size,
+                            },
+                        )),
                     }
                 }
                 Err(err) => {
@@ -59,12 +70,16 @@ impl Player {
 
         self.warp_session = Some(warp_session);
 
-        let mut builder = StreamBuilder::new();
-        request.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        request.serialize(&mut writer);
 
         let _ = self
             .bus
-            .send(PacketAction::Request, PacketFamily::Warp, builder.get())
+            .send(
+                PacketAction::Request,
+                PacketFamily::Warp,
+                writer.to_byte_array(),
+            )
             .await;
     }
 }

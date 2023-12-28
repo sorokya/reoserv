@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 use super::World;
 
 impl World {

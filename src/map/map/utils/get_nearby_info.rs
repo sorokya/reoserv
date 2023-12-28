@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32},
-    protocol::NearbyInfo,
-};
+use eolib::protocol::net::server::NearbyInfo;
 use tokio::sync::oneshot;
 
 use crate::utils::in_client_range;
@@ -36,7 +33,6 @@ impl Map {
             }
         }
         let _ = respond_to.send(NearbyInfo {
-            num_characters: nearby_characters.len() as i32,
             items: nearby_items,
             npcs: nearby_npcs,
             characters: nearby_characters,

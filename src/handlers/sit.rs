@@ -1,14 +1,30 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::{client::sit::Request, PacketAction, SitAction},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{SitAction, SitRequestClientPacket},
+        PacketAction,
+    },
 };
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn request(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
+fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match SitRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing SitRequestClientPacket {}", e);
+            return;
+        }
+    };
 
+    match request.sit_action {
+        SitAction::Sit => map.sit(player_id),
+        SitAction::Stand => map.stand(player_id),
+        _ => {}
+    }
+}
+
+pub async fn sit(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
@@ -17,17 +33,16 @@ async fn request(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        match request.sit_action {
-            SitAction::Sit => map.sit(player_id),
-            SitAction::Stand => map.stand(player_id),
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Failed to get map {}", e);
+            return;
         }
-    }
-}
+    };
 
-pub async fn sit(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
     match action {
-        PacketAction::Request => request(reader, player).await,
+        PacketAction::Request => request(reader, player_id, map),
         _ => error!("Unhandled packet Sit_{:?}", action),
     }
 }

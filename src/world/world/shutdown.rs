@@ -1,7 +1,4 @@
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{server::message, PacketAction, PacketFamily},
-};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::MessageCloseServerPacket}};
 use tokio::sync::oneshot;
 
 use super::World;
@@ -10,10 +7,10 @@ impl World {
     pub async fn shutdown(&mut self, respond_to: oneshot::Sender<()>) {
         self.save().await;
 
-        let packet = message::Close::new();
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let packet = MessageCloseServerPacket::new();
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         for player in self.players.values() {
             player.send(PacketAction::Close, PacketFamily::Message, buf.clone());
         }

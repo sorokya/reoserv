@@ -1,12 +1,4 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::{avatar, paperdoll},
-        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
-        PacketFamily,
-    },
-    pubs::EifItemType,
-};
+use eolib::{protocol::{net::{server::{AvatarChange, AvatarChangeType, AvatarChangeChangeTypeData, AvatarChangeChangeTypeDataEquipment, PaperdollAgreeServerPacket, AvatarAgreeServerPacket}, PacketAction, PacketFamily}, r#pub::ItemType}, data::{EoWriter, EoSerialize}};
 
 use crate::ITEM_DB;
 
@@ -40,17 +32,17 @@ impl Map {
 
         let change = AvatarChange {
             player_id,
-            slot: AvatarSlot::Clothes,
-            sound: 0,
-            data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                paperdoll: character.get_paperdoll_bahws(),
-            }),
+            change_type: AvatarChangeType::Equipment,
+            sound: false,
+            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(AvatarChangeChangeTypeDataEquipment {
+                equipment: character.get_paperdoll_bahws(),
+            })),
         };
 
-        let reply = paperdoll::Agree {
+        let reply = PaperdollAgreeServerPacket {
             change: change.clone(),
             item_id,
-            item_amount_remaining: match character.items.iter().find(|i| i.id == item_id) {
+            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item.amount,
                 None => 0,
             },
@@ -58,12 +50,12 @@ impl Map {
             stats: character.get_item_character_stats(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Paperdoll,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if character.hidden {
@@ -72,15 +64,15 @@ impl Map {
 
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
-            EifItemType::Armor
-                | EifItemType::Weapon
-                | EifItemType::Shield
-                | EifItemType::Hat
-                | EifItemType::Boots
+            ItemType::Armor
+                | ItemType::Weapon
+                | ItemType::Shield
+                | ItemType::Hat
+                | ItemType::Boots
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = avatar::Agree { change };
+            let reply = AvatarAgreeServerPacket { change };
 
             self.send_packet_near_player(
                 player_id,

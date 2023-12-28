@@ -1,6 +1,9 @@
-use eo::data::{EOInt, i32, Serializeable, StreamBuilder};
-use eo::protocol::server::welcome::{Reply, ReplyData};
-use eo::protocol::{Coords, PacketAction, PacketFamily, WelcomeReply};
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+};
+use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::protocol::Coords;
 
 use crate::character::Character;
 use crate::errors::DataNotFoundError;
@@ -9,7 +12,7 @@ use crate::SETTINGS;
 use super::super::World;
 
 impl World {
-    pub async fn select_character(&mut self, player_id: i32, character_id: EOInt) {
+    pub async fn select_character(&mut self, player_id: i32, character_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -89,13 +92,19 @@ impl World {
             .insert(character.name.to_string(), player_id);
         player.set_character(Box::new(character));
 
-        let reply = Reply {
-            reply_code: WelcomeReply::SelectCharacter,
-            data: ReplyData::SelectCharacter(select_character),
+        let reply = WelcomeReplyServerPacket {
+            welcome_code: WelcomeCode::SelectCharacter,
+            welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::SelectCharacter(
+                select_character,
+            )),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Welcome,
+            writer.to_byte_array(),
+        );
     }
 }

@@ -1,14 +1,13 @@
 use std::time::Duration;
 
 use chrono::{NaiveDateTime, Utc};
-use eo::data::EOInt;
 use mysql_async::prelude::*;
 use mysql_common::{params, Row};
 
 use super::Player;
 
 impl Player {
-    pub async fn get_ban_duration(&mut self) -> Option<EOInt> {
+    pub async fn get_ban_duration(&mut self) -> Option<i32> {
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(err) => {
@@ -30,7 +29,7 @@ impl Player {
             _ => return None,
         };
 
-        let duration: EOInt = row.take("duration").unwrap();
+        let duration: i32 = row.take("duration").unwrap();
         // 0 = permanent
         if duration == 0 {
             return Some(0);
@@ -45,6 +44,6 @@ impl Player {
             return None;
         }
 
-        Some(diff.num_minutes() as EOInt)
+        Some(diff.num_minutes() as i32)
     }
 }

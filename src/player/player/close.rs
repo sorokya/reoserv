@@ -12,7 +12,7 @@ impl Player {
                     let mut conn = pool.get_conn().await.unwrap();
                     if let Some(logged_in_at) = character.logged_in_at {
                         let now = chrono::Utc::now();
-                        character.usage += (now.timestamp() - logged_in_at.timestamp()) as u32 / 60;
+                        character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
                     }
                     character.save(&mut conn).await.unwrap();
                 });

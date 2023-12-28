@@ -1,19 +1,11 @@
 use crc::{Crc, CRC_32_CKSUM};
+use eolib::{protocol::r#pub::{Esf, EsfRecord, SkillNature, SkillType, SkillTargetRestrict, SkillTargetType, Element}, data::{EoWriter, encode_number, decode_number, EoReader, EoSerialize}};
 use glob::glob;
 use serde_json::Value;
 
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eo::{
-    data::{
-        decode_number, encode_number, i32, i32, i32, Serializeable, StreamBuilder,
-        StreamReader,
-    },
-    pubs::{
-        EsfFile, EsfSkillNature, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType,
-    },
-};
 
 use crate::SETTINGS;
 
@@ -21,7 +13,7 @@ use super::save_pub_file;
 
 pub const CRC32: Crc<u32> = Crc::<u32>::new(&CRC_32_CKSUM);
 
-pub fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
+pub fn load_spell_file() -> Result<Esf, Box<dyn std::error::Error>> {
     if SETTINGS.server.generate_pub {
         load_json()
     } else {
@@ -29,9 +21,8 @@ pub fn load_spell_file() -> Result<EsfFile, Box<dyn std::error::Error>> {
     }
 }
 
-fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
-    let mut esf_file = EsfFile::default();
-    esf_file.magic = "ESF".to_string();
+fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
+    let mut esf_file = Esf::default();
 
     for entry in glob("pub/spells/*.json")? {
         let path = entry?;
@@ -40,32 +31,24 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
         file.read_to_string(&mut json)?;
 
         let v: Value = serde_json::from_str(&json)?;
-        let name = v["name"].as_str().unwrap_or_default().to_string();
-        let shout = v["shout"].as_str().unwrap_or_default().to_string();
-        let record = EsfSpell {
-            name_length: name.len() as i32,
-            shout_length: shout.len() as i32,
-            name,
-            shout,
+        let record = EsfRecord {
+            name: v["name"].as_str().unwrap_or_default().to_string(),
+            chant: v["chant"].as_str().unwrap_or_default().to_string(),
             icon_id: v["iconId"].as_u64().unwrap_or(0) as i32,
             graphic_id: v["graphicId"].as_u64().unwrap_or(0) as i32,
             tp_cost: v["tpCost"].as_u64().unwrap_or(0) as i32,
             sp_cost: v["spCost"].as_u64().unwrap_or(0) as i32,
             cast_time: v["castTime"].as_u64().unwrap_or(0) as i32,
-            nature: EsfSkillNature::from_char(v["nature"].as_u64().unwrap_or(0) as i32)
-                .unwrap_or_default(),
-            r#type: EsfSpellType::from_three(v["type"].as_u64().unwrap_or(0) as i32)
-                .unwrap_or_default(),
-            element: v["element"].as_u64().unwrap_or(0) as i32,
+            nature: SkillNature::from(v["nature"].as_u64().unwrap_or(0) as i32),
+            r#type: SkillType::from(v["type"].as_u64().unwrap_or(0) as i32),
+            element: Element::from(v["element"].as_u64().unwrap_or(0) as i32),
             element_power: v["elementPower"].as_u64().unwrap_or(0) as i32,
-            target_restrict: EsfSpellTargetRestrict::from_char(
+            target_restrict: SkillTargetRestrict::from(
                 v["targetRestrict"].as_u64().unwrap_or(0) as i32,
-            )
-            .unwrap_or_default(),
-            target_type: EsfSpellTargetType::from_char(
+            ),
+            target_type: SkillTargetType::from(
                 v["targetType"].as_u64().unwrap_or(0) as i32
-            )
-            .unwrap_or_default(),
+            ),
             target_time: v["targetTime"].as_u64().unwrap_or(0) as i32,
             max_skill_level: v["maxSkillLevel"].as_u64().unwrap_or(0) as i32,
             min_damage: v["minDamage"].as_u64().unwrap_or(0) as i32,
@@ -84,27 +67,24 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
             con: v["con"].as_u64().unwrap_or(0) as i32,
             cha: v["cha"].as_u64().unwrap_or(0) as i32,
         };
-        esf_file.spells.push(record);
-        esf_file.num_spells += 1;
+        esf_file.skills.push(record);
     }
 
-    esf_file.spells.push(EsfSpell {
-        name_length: 3,
+    esf_file.skills.push(EsfRecord {
         name: "eof".to_string(),
         ..Default::default()
     });
-    esf_file.num_spells += 1;
 
-    let mut builder = StreamBuilder::new();
-    esf_file.serialize(&mut builder);
-    let buf = builder.get();
+    let mut writer = EoWriter::new();
+    esf_file.serialize(&mut writer);
+    let buf = writer.to_byte_array();
 
     let mut digest = CRC32.digest();
     digest.update(&buf[7..]);
 
     let checksum = digest.finalize();
 
-    let encoded = encode_number(checksum);
+    let encoded = encode_number(checksum as i32);
 
     esf_file.rid = [
         decode_number(&encoded[0..=1]) as i32,
@@ -116,15 +96,12 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
     Ok(esf_file)
 }
 
-fn load_pub() -> Result<EsfFile, Box<dyn std::error::Error>> {
+fn load_pub() -> Result<Esf, Box<dyn std::error::Error>> {
     let mut file = File::open("pub/dsl001.esf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 
     let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut spell_file = EsfFile::default();
-    spell_file.deserialize(&reader);
-    Ok(spell_file)
+    let reader = EoReader::new(bytes);
+    Ok(Esf::deserialize(&reader)?)
 }

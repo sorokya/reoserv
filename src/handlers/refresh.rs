@@ -1,30 +1,30 @@
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::protocol::net::PacketAction;
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn request(player: PlayerHandle) {
+fn request(player_id: i32, map: MapHandle) {
+    map.request_refresh(player_id);
+}
+
+pub async fn refresh(action: PacketAction, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
-        Ok(id) => id,
+        Ok(player_id) => player_id,
         Err(e) => {
-            error!("Failed to get player id: {}", e);
+            error!("Error getting player id {}", e);
             return;
         }
     };
 
-    if let Ok(map) = player.get_map().await {
-        let nearby_info = map.get_nearby_info(player_id).await;
-        let mut builder = StreamBuilder::new();
-        nearby_info.serialize(&mut builder);
-        player.send(PacketAction::Reply, PacketFamily::Refresh, builder.get());
-    }
-}
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
 
-pub async fn refresh(action: PacketAction, player: PlayerHandle) {
     match action {
-        PacketAction::Request => request(player).await,
+        PacketAction::Request => request(player_id, map),
         _ => error!("Unhandled packet Refresh_{:?}", action),
     }
 }

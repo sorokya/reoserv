@@ -1,4 +1,3 @@
-use eo::data::i32;
 use tokio::sync::oneshot;
 
 use super::super::Map;

@@ -1,8 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{PacketAction, PacketFamily}, data::{EoSerialize, EoWriter}};
 
 use crate::utils::in_range;
 
@@ -16,11 +13,11 @@ impl Map {
         family: PacketFamily,
         packet: T,
     ) where
-        T: Serializeable,
+        T: EoSerialize,
     {
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        self.send_buf_near_player(player_id, action, family, builder.get());
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        self.send_buf_near_player(player_id, action, family, writer.to_byte_array());
     }
 
     pub fn send_buf_near_player(

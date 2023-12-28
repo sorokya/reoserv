@@ -1,8 +1,5 @@
 use chrono::{DateTime, Utc};
-use eo::{
-    data::{i32, i32, i32},
-    protocol::Coords,
-};
+use eolib::protocol::Coords;
 
 #[derive(Debug, Default)]
 pub struct Chest {

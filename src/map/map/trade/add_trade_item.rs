@@ -1,4 +1,4 @@
-use eo::{data::i32, protocol::Item, pubs::EifItemSpecial};
+use eolib::protocol::{net::Item, r#pub::ItemSpecial};
 
 use crate::{ITEM_DB, SETTINGS};
 
@@ -32,7 +32,7 @@ impl Map {
             None => return,
         };
 
-        if item_data.special == EifItemSpecial::Lore {
+        if item_data.special == ItemSpecial::Lore {
             return;
         }
 

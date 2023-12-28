@@ -1,10 +1,7 @@
 use std::cmp;
 
 use chrono::{DateTime, Utc};
-use eo::{
-    data::{i32, EOInt, i32, i32},
-    protocol::{Coords, Direction, NPCMapInfo},
-};
+use eolib::protocol::{Coords, Direction, net::server::NpcMapInfo};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
@@ -18,9 +15,9 @@ pub struct Npc {
     pub spawn_index: usize,
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
-    pub act_ticks: EOInt,
+    pub act_ticks: i32,
     pub talk_ticks: i32,
-    pub walk_idle_for: Option<EOInt>,
+    pub walk_idle_for: Option<i32>,
     pub hp: i32,
     pub max_hp: i32,
     pub opponents: Vec<NpcOpponent>,
@@ -29,7 +26,7 @@ pub struct Npc {
 #[derive(Debug, Default)]
 pub struct NpcOpponent {
     pub player_id: i32,
-    pub damage_dealt: EOInt,
+    pub damage_dealt: i32,
     pub last_hit: DateTime<Utc>,
 }
 
@@ -39,8 +36,8 @@ impl Npc {
         percent.floor() as i32
     }
 
-    pub fn to_map_info(&self, index: &i32) -> NPCMapInfo {
-        NPCMapInfo {
+    pub fn to_map_info(&self, index: &i32) -> NpcMapInfo {
+        NpcMapInfo {
             index: *index,
             id: self.id,
             coords: self.coords,
@@ -51,10 +48,10 @@ impl Npc {
     pub fn damage(
         &mut self,
         player_id: i32,
-        amount: u16,
-        accuracy: u16,
+        amount: i32,
+        accuracy: i32,
         critical: bool,
-    ) -> EOInt {
+    ) -> i32 {
         let npc_data = match NPC_DB.npcs.get(self.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => {
@@ -92,7 +89,7 @@ impl Npc {
             0
         } else {
             match eval_float_with_context(&FORMULAS.damage, &context) {
-                Ok(amount) => amount.floor() as EOInt,
+                Ok(amount) => amount.floor() as i32,
                 Err(e) => {
                     error!("Failed to calculate damage: {}", e);
                     0
@@ -134,9 +131,9 @@ pub struct NPCBuilder {
     spawn_index: usize,
     alive: bool,
     dead_since: DateTime<Utc>,
-    act_ticks: EOInt,
+    act_ticks: i32,
     talk_ticks: i32,
-    walk_idle_for: Option<EOInt>,
+    walk_idle_for: Option<i32>,
     hp: i32,
     max_hp: i32,
 }

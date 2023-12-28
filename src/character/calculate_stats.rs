@@ -1,6 +1,5 @@
 use std::cmp;
 
-use eo::data::{EOInt, i32};
 use evalexpr::{context_map, eval_float_with_context};
 
 use crate::{CLASS_DB, FORMULAS, ITEM_DB};
@@ -37,7 +36,7 @@ impl Character {
             }
 
             let record = &ITEM_DB.items[(item.id - 1) as usize];
-            self.weight += record.weight as EOInt * item.amount;
+            self.weight += record.weight * item.amount;
         }
 
         let paperdoll_items = vec![
@@ -64,7 +63,7 @@ impl Character {
             }
 
             let item = &ITEM_DB.items[(item_id - 1) as usize];
-            self.weight += item.weight as EOInt;
+            self.weight += item.weight;
             self.max_hp += item.hp;
             self.max_tp += item.tp;
             self.min_damage += item.min_damage;
@@ -72,12 +71,12 @@ impl Character {
             self.accuracy += item.accuracy;
             self.evasion += item.evade;
             self.armor += item.armor;
-            self.adj_strength += item.str as i32;
-            self.adj_intelligence += item.intl as i32;
-            self.adj_wisdom += item.wis as i32;
-            self.adj_agility += item.agi as i32;
-            self.adj_constitution += item.con as i32;
-            self.adj_charisma += item.cha as i32;
+            self.adj_strength += item.str;
+            self.adj_intelligence += item.intl;
+            self.adj_wisdom += item.wis;
+            self.adj_agility += item.agi;
+            self.adj_constitution += item.con;
+            self.adj_charisma += item.cha;
         }
 
         let context = match context_map! {
@@ -127,14 +126,14 @@ impl Character {
         };
 
         self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
-            Ok(max_weight) => cmp::min(max_weight.floor() as EOInt, 250),
+            Ok(max_weight) => cmp::min(max_weight.floor() as i32, 250),
             Err(e) => {
                 error!("Failed to calculate max_weight: {}", e);
                 70
             }
         };
 
-        let class_formulas = &FORMULAS.classes[class.r#type as usize];
+        let class_formulas = &FORMULAS.classes[class.stat_group as usize];
         let damage = match eval_float_with_context(&class_formulas.damage, &context) {
             Ok(damage) => damage.floor() as i32,
             Err(e) => {

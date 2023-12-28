@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EmfEffect,
-};
+use eolib::{protocol::{net::{PacketAction, PacketFamily}, map::MapTimedEffect}, data::EoWriter};
 use rand::{thread_rng, Rng};
 
 use crate::SETTINGS;
@@ -14,17 +10,17 @@ const EFFECT_QUAKE: i32 = 1;
 impl Map {
     pub fn timed_quake(&mut self) {
         if !matches!(
-            self.file.effect,
-            EmfEffect::Quake1 | EmfEffect::Quake2 | EmfEffect::Quake3 | EmfEffect::Quake4
+            self.file.timed_effect,
+            MapTimedEffect::Quake1 | MapTimedEffect::Quake2 | MapTimedEffect::Quake3 | MapTimedEffect::Quake4
         ) {
             return;
         }
 
-        let config = match self.file.effect {
-            EmfEffect::Quake1 => &SETTINGS.map.quakes[0],
-            EmfEffect::Quake2 => &SETTINGS.map.quakes[1],
-            EmfEffect::Quake3 => &SETTINGS.map.quakes[2],
-            EmfEffect::Quake4 => &SETTINGS.map.quakes[3],
+        let config = match self.file.timed_effect {
+            MapTimedEffect::Quake1 => &SETTINGS.map.quakes[0],
+            MapTimedEffect::Quake2 => &SETTINGS.map.quakes[1],
+            MapTimedEffect::Quake3 => &SETTINGS.map.quakes[2],
+            MapTimedEffect::Quake4 => &SETTINGS.map.quakes[3],
             _ => return,
         };
 
@@ -50,11 +46,11 @@ impl Map {
 
         self.quake_ticks += 1;
         if self.quake_ticks >= rate {
-            let mut builder = StreamBuilder::new();
-            builder.add_char(EFFECT_QUAKE);
-            builder.add_char(strength as i32);
+            let mut writer = EoWriter::new();
+            writer.add_char(EFFECT_QUAKE);
+            writer.add_char(strength as i32);
 
-            let buf = builder.get();
+            let buf = writer.to_byte_array();
 
             for character in self.characters.values() {
                 character.player.as_ref().unwrap().send(

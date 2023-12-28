@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, EOInt, i32, StreamBuilder},
-    protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
-};
+use eolib::{protocol::{Direction, net::{server::AttackPlayerServerPacket, PacketAction, PacketFamily}, Coords}, data::EoWriter};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
@@ -15,11 +12,11 @@ impl Map {
         player_id: i32,
         npc_index: i32,
         direction: Direction,
-        damage_dealt: EOInt,
+        damage_dealt: i32,
         spell_id: Option<i32>,
     ) {
         if spell_id.is_none() {
-            let reply = attack::Player {
+            let reply = AttackPlayerServerPacket {
                 player_id,
                 direction,
             };
@@ -37,23 +34,23 @@ impl Map {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
+        let mut writer = EoWriter::new();
         if let Some(spell_id) = spell_id {
-            builder.add_short(spell_id);
+            writer.add_short(spell_id);
         }
 
-        builder.add_short(player_id);
-        builder.add_char(direction.to_char());
-        builder.add_short(npc_index as i32);
-        builder.add_three(damage_dealt);
-        builder.add_short(npc.get_hp_percentage() as i32);
+        writer.add_short(player_id);
+        writer.add_char(i32::from(direction));
+        writer.add_short(npc_index);
+        writer.add_three(damage_dealt);
+        writer.add_short(npc.get_hp_percentage());
 
         if spell_id.is_some() {
             let tp = match self.characters.get(&player_id) {
                 Some(character) => character.tp,
                 None => 0,
             };
-            builder.add_short(tp);
+            writer.add_short(tp);
         }
 
         self.send_buf_near(
@@ -64,7 +61,7 @@ impl Map {
             } else {
                 PacketFamily::Npc
             },
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 
@@ -73,7 +70,7 @@ impl Map {
         killer_player_id: i32,
         npc_index: i32,
         direction: Direction,
-        damage_dealt: EOInt,
+        damage_dealt: i32,
         spell_id: Option<i32>,
     ) {
         let (npc_id, npc_coords) = match self.npcs.get(&npc_index) {
@@ -86,7 +83,7 @@ impl Map {
             None => return,
         };
 
-        let mut exp_gains: Vec<(i32, bool, EOInt, EOInt)> = Vec::new();
+        let mut exp_gains: Vec<(i32, bool, i32, i32)> = Vec::new();
 
         if let Some(party) = self.world.get_player_party(killer_player_id).await {
             let members_on_map: Vec<&i32> = party
@@ -108,7 +105,7 @@ impl Map {
                 };
 
                 match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
-                    Ok(experience) => experience as EOInt,
+                    Ok(experience) => experience as i32,
                     Err(e) => {
                         error!("Failed to calculate party experience share: {}", e);
                         1
@@ -143,34 +140,34 @@ impl Map {
         };
 
         for (player_id, character) in self.characters.iter() {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
             if let Some(spell_id) = spell_id {
-                builder.add_short(spell_id);
+                writer.add_short(spell_id);
             }
 
-            builder.add_short(killer_player_id);
-            builder.add_char(direction.to_char());
-            builder.add_short(npc_index as i32);
-            builder.add_short(drop_index);
-            builder.add_short(drop_item_id);
-            builder.add_char(npc_coords.x);
-            builder.add_char(npc_coords.y);
-            builder.add_int(drop_amount);
-            builder.add_three(damage_dealt);
+            writer.add_short(killer_player_id);
+            writer.add_char(i32::from(direction));
+            writer.add_short(npc_index);
+            writer.add_short(drop_index);
+            writer.add_short(drop_item_id);
+            writer.add_char(npc_coords.x);
+            writer.add_char(npc_coords.y);
+            writer.add_int(drop_amount);
+            writer.add_three(damage_dealt);
 
             if spell_id.is_some() {
                 let tp = match self.characters.get(&killer_player_id) {
                     Some(character) => character.tp,
                     None => 0,
                 };
-                builder.add_short(tp);
+                writer.add_short(tp);
             }
 
             let leveled_up = if let Some((_, leveled_up, total_experience, _)) =
                 exp_gains.iter().find(|(id, _, _, _)| id == player_id)
             {
                 if exp_gains.len() == 1 {
-                    builder.add_int(*total_experience);
+                    writer.add_int(*total_experience);
 
                     if *leveled_up {
                         let character = match self.characters.get(&killer_player_id) {
@@ -178,12 +175,12 @@ impl Map {
                             None => return,
                         };
 
-                        builder.add_char(character.level);
-                        builder.add_short(character.stat_points);
-                        builder.add_short(character.skill_points);
-                        builder.add_short(character.max_hp);
-                        builder.add_short(character.max_tp);
-                        builder.add_short(character.max_sp);
+                        writer.add_char(character.level);
+                        writer.add_short(character.stat_points);
+                        writer.add_short(character.skill_points);
+                        writer.add_short(character.max_hp);
+                        writer.add_short(character.max_tp);
+                        writer.add_short(character.max_sp);
                     }
                 }
 
@@ -206,7 +203,7 @@ impl Map {
                 .player
                 .as_ref()
                 .unwrap()
-                .send(action, family, builder.get());
+                .send(action, family, writer.to_byte_array());
         }
 
         if exp_gains.len() > 1 {
@@ -214,7 +211,7 @@ impl Map {
         }
     }
 
-    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(i32, bool, EOInt, EOInt)>) {
+    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(i32, bool, i32, i32)>) {
         for (player_id, leveled_up, _, experience) in exp_gains {
             let character = match self.characters.get(player_id) {
                 Some(character) => character,
@@ -222,43 +219,43 @@ impl Map {
             };
 
             if *leveled_up {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(character.stat_points);
-                builder.add_short(character.skill_points);
-                builder.add_short(character.max_hp);
-                builder.add_short(character.max_tp);
-                builder.add_short(character.max_sp);
+                let mut writer = EoWriter::new();
+                writer.add_short(character.stat_points);
+                writer.add_short(character.skill_points);
+                writer.add_short(character.max_hp);
+                writer.add_short(character.max_tp);
+                writer.add_short(character.max_sp);
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::TargetGroup,
                     PacketFamily::Recover,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
-                let mut builder = StreamBuilder::new();
-                builder.add_int(character.experience);
-                builder.add_short(character.karma);
-                builder.add_char(1);
-                builder.add_short(character.stat_points);
-                builder.add_short(character.skill_points);
+                let mut writer = EoWriter::new();
+                writer.add_int(character.experience);
+                writer.add_short(character.karma);
+                writer.add_char(1);
+                writer.add_short(character.stat_points);
+                writer.add_short(character.skill_points);
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Recover,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
             }
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(*player_id);
-            builder.add_int(*experience);
-            builder.add_char(if *leveled_up { 1 } else { 0 });
+            let mut writer = EoWriter::new();
+            writer.add_short(*player_id);
+            writer.add_int(*experience);
+            writer.add_char(if *leveled_up { 1 } else { 0 });
 
             self.send_buf_near(
                 &character.coords,
                 PacketAction::TargetGroup,
                 PacketFamily::Party,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }
@@ -273,7 +270,7 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
         for drop in drops {
             let roll = rng.gen_range(0..=64000);
             if roll <= drop.rate {
-                let amount = rng.gen_range(drop.min..=drop.max);
+                let amount = rng.gen_range(drop.min_amount..=drop.max_amount);
                 return Some(Item {
                     id: drop.item_id,
                     amount,

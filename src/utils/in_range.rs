@@ -1,4 +1,4 @@
-use eo::{data::i32, protocol::Coords};
+use eolib::protocol::Coords;
 
 pub fn get_distance(a: &Coords, b: &Coords) -> i32 {
     let dx = (a.x as f64 - b.x as f64).abs();

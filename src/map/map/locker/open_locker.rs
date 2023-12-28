@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily, ShortItem},
-    pubs::EmfTileSpec,
-};
+use eolib::{protocol::{Coords, map::MapTileSpec, net::{server::LockerOpenServerPacket, ThreeItem, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
@@ -33,28 +29,28 @@ impl Map {
         ];
 
         if adjacent_tiles.iter().any(|tile| match tile {
-            Some(tile) => *tile == EmfTileSpec::BankVault,
+            Some(tile) => *tile == MapTileSpec::BankVault,
             None => false,
         }) {
-            let packet = eo::protocol::server::locker::Open {
+            let packet = LockerOpenServerPacket {
                 locker_coords: character.coords,
                 locker_items: character
                     .bank
                     .iter()
-                    .map(|item| ShortItem {
+                    .map(|item| ThreeItem {
                         id: item.id,
                         amount: item.amount,
                     })
                     .collect(),
             };
 
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+            packet.serialize(&mut writer);
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Open,
                 PacketFamily::Locker,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }

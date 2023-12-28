@@ -1,8 +1,5 @@
 use chrono::Utc;
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
-};
+use eolib::{protocol::net::{ThreeItem, server::{ChestGetServerPacket, ChestAgreeServerPacket}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use crate::{map::Chest, utils::get_distance};
 
@@ -58,10 +55,10 @@ impl Map {
             spawn.last_taken = Utc::now();
         }
 
-        let remaining_items: Vec<ShortItem> = chest
+        let remaining_items: Vec<ThreeItem> = chest
             .items
             .iter()
-            .map(|item| ShortItem {
+            .map(|item| ThreeItem {
                 id: item.item_id,
                 amount: item.amount,
             })
@@ -69,8 +66,8 @@ impl Map {
 
         character.add_item(item.item_id, item.amount);
 
-        let reply = chest::Get {
-            taken_item: ShortItem {
+        let reply = ChestGetServerPacket {
+            taken_item: ThreeItem {
                 id: item.item_id,
                 amount: item.amount,
             },
@@ -78,21 +75,21 @@ impl Map {
             items: remaining_items.clone(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Chest,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let packet = chest::Agree {
+        let packet = ChestAgreeServerPacket {
             items: remaining_items,
         };
 
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {
             let distance = get_distance(&character.coords, &chest.coords);

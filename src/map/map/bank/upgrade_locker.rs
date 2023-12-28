@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use crate::SETTINGS;
 
@@ -33,14 +30,14 @@ impl Map {
         character.remove_item(1, cost);
         character.bank_level += 1;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.get_item_amount(1));
-        builder.add_char(character.bank_level as i32);
+        let mut writer = EoWriter::new();
+        writer.add_int(character.get_item_amount(1));
+        writer.add_char(character.bank_level);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,
             PacketFamily::Locker,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

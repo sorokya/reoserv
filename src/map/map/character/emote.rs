@@ -1,7 +1,4 @@
-use eo::{
-    data::i32,
-    protocol::{server::emote, Emote, PacketAction, PacketFamily},
-};
+use eolib::protocol::{Emote, net::{server::EmotePlayerServerPacket, PacketAction, PacketFamily}};
 
 use super::super::Map;
 
@@ -16,7 +13,7 @@ impl Map {
             return;
         }
 
-        let packet = emote::Player {
+        let packet = EmotePlayerServerPacket {
             player_id: target_player_id,
             emote,
         };

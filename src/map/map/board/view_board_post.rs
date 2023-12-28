@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::utils::get_board_tile_spec;
@@ -36,7 +33,7 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
 
             let mut conn = pool.get_conn().await.unwrap();
 
@@ -55,10 +52,10 @@ impl Map {
                 _ => return,
             };
 
-            builder.add_short(post_id);
-            builder.add_string(&row.take::<String, &str>("body").unwrap());
+            writer.add_short(post_id);
+            writer.add_string(&row.take::<String, &str>("body").unwrap());
 
-            player.send(PacketAction::Player, PacketFamily::Board, builder.get());
+            player.send(PacketAction::Player, PacketFamily::Board, writer.to_byte_array());
         });
     }
 }

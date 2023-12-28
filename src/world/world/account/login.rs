@@ -1,10 +1,6 @@
-use eo::{
-    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::login::{self, Reply},
-        CharacterList, LoginReply, PacketAction, PacketFamily,
-    },
-};
+use eolib::data::{EoWriter, EoSerialize};
+use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::protocol::net::server::{LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData, LoginReplyServerPacketReplyCodeDataOk};
 use mysql_async::{prelude::*, Params, Row};
 
 use crate::{player::ClientState, world::WorldHandle};
@@ -48,10 +44,10 @@ impl World {
             };
 
             if !exists {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::WrongUser.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(i32::from(LoginReply::WrongUser));
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
                 return;
             }
 
@@ -64,10 +60,10 @@ impl World {
             };
 
             if banned {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::Banned.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(i32::from(LoginReply::Banned));
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
                 player.close("Account is banned".to_string());
                 return;
             }
@@ -84,10 +80,10 @@ impl World {
                 Ok(row) => row,
                 Err(e) => {
                     error!("Error getting password hash: {}", e);
-                    let mut builder = StreamBuilder::new();
-                    builder.add_short(LoginReply::WrongUserPass.to_short());
-                    builder.add_string("NO");
-                    player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                    let mut writer = EoWriter::new();
+                    writer.add_short(i32::from(LoginReply::WrongUserPassword));
+                    writer.add_string("NO");
+                    player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
                     return;
                 }
             }
@@ -95,19 +91,19 @@ impl World {
 
             let password_hash: String = row.get("password_hash").unwrap();
             if !validate_password(&username, &password, &password_hash) {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::WrongUserPass.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(i32::from(LoginReply::WrongUserPassword));
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
                 return;
             }
 
-            let account_id: EOInt = row.get("id").unwrap();
+            let account_id: i32 = row.get("id").unwrap();
             if world.is_logged_in(account_id).await {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::LoggedIn.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let mut writer = EoWriter::new();
+                writer.add_short(i32::from(LoginReply::LoggedIn));
+                writer.add_string("NO");
+                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
                 return;
             }
 
@@ -136,19 +132,16 @@ impl World {
             player.set_account_id(account_id);
             player.set_state(ClientState::LoggedIn);
 
-            let reply = Reply {
-                reply_code: LoginReply::Ok,
-                data: login::ReplyData::Ok(login::ReplyOk {
-                    character_list: CharacterList {
-                        num_characters: characters.len() as i32,
-                        characters,
-                    },
-                }),
+            let reply = LoginReplyServerPacket {
+                reply_code: LoginReply::OK,
+                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(LoginReplyServerPacketReplyCodeDataOk {
+                    characters
+                })),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+            let mut writer = EoWriter::new();
+            reply.serialize(&mut writer);
+            player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
         });
     }
 }

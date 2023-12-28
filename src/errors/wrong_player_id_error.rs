@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 #[derive(Debug)]
 pub struct WrongPlayerIdError {
     pub expected: i32,

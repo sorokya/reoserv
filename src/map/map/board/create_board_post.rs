@@ -1,4 +1,3 @@
-use eo::data::{EOInt, i32};
 use mysql_async::{params, prelude::Queryable, Conn, Row};
 
 use crate::{errors::DataNotFoundError, utils::get_board_tile_spec, SETTINGS};
@@ -83,9 +82,9 @@ impl Map {
 async fn get_board_post_counts(
     conn: &mut Conn,
     board_id: i32,
-    character_id: EOInt,
-) -> Result<(EOInt, EOInt), Box<dyn std::error::Error>> {
-    let limit = if board_id == SETTINGS.board.admin_board as i32 {
+    character_id: i32,
+) -> Result<(i32, i32), Box<dyn std::error::Error>> {
+    let limit = if board_id == SETTINGS.board.admin_board {
         SETTINGS.board.admin_max_posts
     } else {
         SETTINGS.board.max_posts
@@ -106,7 +105,7 @@ async fn get_board_post_counts(
         Ok(None) => {
             return Err(Box::new(DataNotFoundError {
                 kind: "BoardPost".to_string(),
-                id: character_id as i32,
+                id: character_id,
             }))
         }
         Err(e) => {
@@ -115,7 +114,7 @@ async fn get_board_post_counts(
         }
     };
 
-    let recent_posts: EOInt = row.take("recent_posts").unwrap_or(0);
+    let recent_posts: i32 = row.take("recent_posts").unwrap_or(0);
 
     let mut row: Row = match conn
         .exec_first(
@@ -132,7 +131,7 @@ async fn get_board_post_counts(
         Ok(None) => {
             return Err(Box::new(DataNotFoundError {
                 kind: "BoardPost".to_string(),
-                id: character_id as i32,
+                id: character_id,
             }))
         }
         Err(e) => {
@@ -141,7 +140,7 @@ async fn get_board_post_counts(
         }
     };
 
-    let total_posts: EOInt = row.take("total_posts").unwrap_or(0);
+    let total_posts: i32 = row.take("total_posts").unwrap_or(0);
 
     Ok((recent_posts, total_posts))
 }
@@ -149,7 +148,7 @@ async fn get_board_post_counts(
 async fn insert_post(
     conn: &mut Conn,
     board_id: i32,
-    character_id: EOInt,
+    character_id: i32,
     subject: String,
     body: String,
 ) -> Result<(), mysql_async::Error> {

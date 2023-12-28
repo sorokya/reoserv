@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, EOInt, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use crate::{player::PartyRequest, utils::in_client_range, SETTINGS};
 
@@ -35,7 +32,7 @@ impl Map {
 
         // Check if player already in a party
         if let Some(party) = self.world.get_player_party(target_player_id).await {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
 
             let reply = match request {
                 PartyRequest::Join(_) => {
@@ -56,12 +53,12 @@ impl Map {
             };
 
             if let Some(reply) = reply {
-                builder.add_char(reply);
-                builder.add_string(&target_character.name);
+                writer.add_char(reply);
+                writer.add_string(&target_character.name);
                 character.player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Party,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 return;
@@ -78,13 +75,13 @@ impl Map {
             })
             .await
         {
-            if party.members.len() as EOInt >= SETTINGS.limits.max_party_size {
-                let mut builder = StreamBuilder::new();
-                builder.add_char(PARTY_FULL);
+            if party.members.len() as i32 >= SETTINGS.limits.max_party_size {
+                let mut writer = EoWriter::new();
+                writer.add_char(PARTY_FULL);
                 character.player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Party,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 return;
@@ -98,15 +95,15 @@ impl Map {
 
         target.set_party_request(request);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(match request {
+        let mut writer = EoWriter::new();
+        writer.add_char(match request {
             PartyRequest::Invite(_) => 1,
             PartyRequest::Join(_) => 0,
             _ => return,
         });
-        builder.add_short(player_id);
-        builder.add_string(&character.name);
+        writer.add_short(player_id);
+        writer.add_string(&character.name);
 
-        target.send(PacketAction::Request, PacketFamily::Party, builder.get());
+        target.send(PacketAction::Request, PacketFamily::Party, writer.to_byte_array());
     }
 }

@@ -1,99 +1,56 @@
-use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
-    protocol::{
-        server::init::{Init, InitData, InitFriendListPlayers, InitPlayers},
-        InitReply, PacketAction, PacketFamily,
-    },
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{client::PlayersAcceptClientPacket, PacketAction},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::{map::MapHandle, player::PlayerHandle, world::WorldHandle};
 
-pub async fn accept(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
-    let name = reader.get_break_string();
-
-    let mut builder = StreamBuilder::new();
-    builder.add_string(&name);
-
-    let character = match world.get_character_by_name(name).await {
-        Ok(character) => character,
-        Err(_) => {
-            player.send(PacketAction::Ping, PacketFamily::Players, builder.get());
+pub fn accept(reader: EoReader, player_id: i32, map: MapHandle) {
+    let accept = match PlayersAcceptClientPacket::deserialize(&reader) {
+        Ok(accept) => accept,
+        Err(e) => {
+            error!("Error deserializing PlayersAcceptClientPacket {}", e);
             return;
         }
     };
 
-    if character.hidden {
-        player.send(PacketAction::Ping, PacketFamily::Players, builder.get());
-        return;
-    }
-
-    let map = match player.get_map().await {
-        Ok(map) => map,
-        Err(_) => {
-            player.send(PacketAction::Ping, PacketFamily::Players, builder.get());
-            return;
-        }
-    };
-
-    let player_id = match character.player_id {
-        Some(player_id) => player_id,
-        None => {
-            player.send(PacketAction::Ping, PacketFamily::Players, builder.get());
-            return;
-        }
-    };
-
-    let action = if map.has_player(player_id).await {
-        PacketAction::Pong
-    } else {
-        PacketAction::Net3
-    };
-
-    player.send(action, PacketFamily::Players, builder.get());
+    map.find_player(player_id, accept.name);
 }
 
-pub async fn list(player: PlayerHandle, world: WorldHandle) {
-    let players = world.get_online_list().await;
-
-    let reply = Init {
-        reply_code: InitReply::FriendListPlayers,
-        data: InitData::FriendListPlayers(InitFriendListPlayers {
-            num_online: players.len() as u16,
-            list: players.iter().map(|p| p.name.to_owned()).collect(),
-        }),
-    };
-
-    let mut builder = StreamBuilder::new();
-    reply.serialize(&mut builder);
-    player.send(PacketAction::Init, PacketFamily::Init, builder.get());
+pub fn list(player_id: i32, world: WorldHandle) {
+    world.request_player_name_list(player_id);
 }
 
-pub async fn request(player: PlayerHandle, world: WorldHandle) {
-    let players = world.get_online_list().await;
-
-    let reply = Init {
-        reply_code: InitReply::Players,
-        data: InitData::Players(InitPlayers {
-            num_online: players.len() as u16,
-            list: players,
-        }),
-    };
-
-    let mut builder = StreamBuilder::new();
-    reply.serialize(&mut builder);
-    player.send(PacketAction::Init, PacketFamily::Init, builder.get());
+pub fn request(player_id: i32, world: WorldHandle) {
+    world.request_player_list(player_id);
 }
 
 pub async fn players(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Accept => accept(reader, player, world).await,
-        PacketAction::List => list(player, world).await,
-        PacketAction::Request => request(player, world).await,
+        PacketAction::Accept => accept(reader, player_id, map),
+        PacketAction::List => list(player_id, world),
+        PacketAction::Request => request(player_id, world),
         _ => error!("Unhandled packet Players_{:?}", action),
     }
 }

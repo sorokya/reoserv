@@ -1,6 +1,15 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{server::init, FileType, InitReply, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoWriter, EoSerialize},
+    protocol::net::{
+        client::FileType,
+        server::{
+            InitInitServerPacket, InitInitServerPacketReplyCodeData,
+            InitInitServerPacketReplyCodeDataFileEcf, InitInitServerPacketReplyCodeDataFileEif,
+            InitInitServerPacketReplyCodeDataFileEmf, InitInitServerPacketReplyCodeDataFileEnf,
+            InitInitServerPacketReplyCodeDataFileEsf, InitInitServerPacketReplyCodeDataWarpMap,
+            InitReply, MapFile, PubFile,
+        }, PacketAction, PacketFamily,
+    },
 };
 
 use crate::{errors::WrongSessionIdError, CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB};
@@ -37,8 +46,8 @@ impl World {
             return;
         }
 
-        let reply = match file_type {
-            FileType::Map => {
+        let reply: InitInitServerPacket = match file_type {
+            FileType::Emf => {
                 let map_id = match player.get_map_id().await {
                     Ok(map_id) => map_id,
                     Err(_) => {
@@ -47,7 +56,7 @@ impl World {
                     }
                 };
 
-                let mut reply = init::Init::default();
+                let mut reply = InitInitServerPacket::new();
                 let maps = self.maps.as_ref().expect("Maps not loaded");
                 let map = match maps.get(&map_id) {
                     Some(map) => map,
@@ -57,69 +66,98 @@ impl World {
                     }
                 };
                 reply.reply_code = if warp {
-                    InitReply::WarpFileEmf
+                    InitReply::WarpMap
                 } else {
                     InitReply::FileEmf
                 };
-                reply.data = if warp {
-                    init::InitData::WarpFileEmf(init::InitWarpFileEmf {
-                        content: map.serialize().await.to_vec(),
-                    })
+                reply.reply_code_data = Some(if warp {
+                    InitInitServerPacketReplyCodeData::WarpMap(
+                        InitInitServerPacketReplyCodeDataWarpMap {
+                            map_file: MapFile {
+                                content: map.serialize().await.to_vec(),
+                            },
+                        },
+                    )
                 } else {
-                    init::InitData::FileEmf(init::InitFileEmf {
-                        content: map.serialize().await.to_vec(),
-                    })
-                };
+                    InitInitServerPacketReplyCodeData::FileEmf(
+                        InitInitServerPacketReplyCodeDataFileEmf {
+                            map_file: MapFile {
+                                content: map.serialize().await.to_vec(),
+                            },
+                        },
+                    )
+                });
                 reply
             }
-            FileType::Item => {
-                let mut builder = StreamBuilder::new();
-                ITEM_DB.serialize(&mut builder);
-                init::Init {
+            FileType::Eif => {
+                let mut writer = EoWriter::new();
+                ITEM_DB.serialize(&mut writer);
+                InitInitServerPacket {
                     reply_code: InitReply::FileEif,
-                    data: init::InitData::FileEif(init::InitFileEif {
-                        file_id: 1, // TODO: Pub splitting
-                        content: builder.get().to_vec(),
-                    }),
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEif(
+                        InitInitServerPacketReplyCodeDataFileEif {
+                            pub_file: PubFile {
+                                file_id: 1, // TODO: Pub splitting
+                                content: writer.to_byte_array().to_vec(),
+                            },
+                        },
+                    )),
                 }
             }
-            FileType::Npc => {
-                let mut builder = StreamBuilder::new();
-                NPC_DB.serialize(&mut builder);
-                init::Init {
+            FileType::Enf => {
+                let mut writer = EoWriter::new();
+                NPC_DB.serialize(&mut writer);
+                InitInitServerPacket {
                     reply_code: InitReply::FileEnf,
-                    data: init::InitData::FileEnf(init::InitFileEnf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: builder.get().to_vec(),
-                    }),
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEnf(
+                        InitInitServerPacketReplyCodeDataFileEnf {
+                            pub_file: PubFile {
+                                file_id: 1, // TODO: Pub splitting
+                                content: writer.to_byte_array().to_vec(),
+                            },
+                        },
+                    )),
                 }
             }
-            FileType::Spell => {
-                let mut builder = StreamBuilder::new();
-                SPELL_DB.serialize(&mut builder);
-                init::Init {
+            FileType::Esf => {
+                let mut writer = EoWriter::new();
+                SPELL_DB.serialize(&mut writer);
+                InitInitServerPacket {
                     reply_code: InitReply::FileEsf,
-                    data: init::InitData::FileEsf(init::InitFileEsf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: builder.get().to_vec(),
-                    }),
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEsf(
+                        InitInitServerPacketReplyCodeDataFileEsf {
+                            pub_file: PubFile {
+                                file_id: 1, // TODO: Pub splitting
+                                content: writer.to_byte_array().to_vec(),
+                            },
+                        },
+                    )),
                 }
             }
-            FileType::Class => {
-                let mut builder = StreamBuilder::new();
-                CLASS_DB.serialize(&mut builder);
-                init::Init {
+            FileType::Ecf => {
+                let mut writer = EoWriter::new();
+                CLASS_DB.serialize(&mut writer);
+                InitInitServerPacket {
                     reply_code: InitReply::FileEcf,
-                    data: init::InitData::FileEcf(init::InitFileEcf {
-                        file_id: 1, // TODO: Pub splitting
-                        content: builder.get().to_vec(),
-                    }),
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEcf(
+                        InitInitServerPacketReplyCodeDataFileEcf {
+                            pub_file: PubFile {
+                                file_id: 1, // TODO: Pub splitting
+                                content: writer.to_byte_array().to_vec(),
+                            },
+                        },
+                    )),
                 }
             }
+            _ => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Init, PacketFamily::Init, builder.get());
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
+        player.send(
+            PacketAction::Init,
+            PacketFamily::Init,
+            writer.to_byte_array(),
+        );
     }
 }

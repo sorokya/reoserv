@@ -1,10 +1,6 @@
 use std::cmp;
 
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
-    pubs::EmfTileSpec,
-};
+use eolib::{protocol::{Coords, map::MapTileSpec, net::{PacketAction, PacketFamily}}, data::EoWriter};
 
 use super::super::Map;
 
@@ -35,7 +31,7 @@ impl Map {
         ];
 
         if !adjacent_tiles.iter().any(|tile| match tile {
-            Some(tile) => *tile == EmfTileSpec::BankVault,
+            Some(tile) => *tile == MapTileSpec::BankVault,
             None => false,
         }) {
             return;
@@ -59,23 +55,23 @@ impl Map {
         character.remove_bank_item(item_id, amount);
         character.add_item(item_id, amount);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(item_id);
-        builder.add_three(character.get_item_amount(item_id));
+        let mut writer = EoWriter::new();
+        writer.add_short(item_id);
+        writer.add_three(character.get_item_amount(item_id));
 
         let weight = character.get_weight();
-        builder.add_char(weight.current);
-        builder.add_char(weight.max);
+        writer.add_char(weight.current);
+        writer.add_char(weight.max);
 
         for item in &character.bank {
-            builder.add_short(item.id);
-            builder.add_three(item.amount);
+            writer.add_short(item.id);
+            writer.add_three(item.amount);
         }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Locker,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

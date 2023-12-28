@@ -1,8 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{u8, i32, EOInt, i32},
-    protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
-};
+use eolib::protocol::{Coords, net::{server::WarpEffect, PacketAction, PacketFamily, Version}};
 use tokio::sync::oneshot;
 
 use crate::{
@@ -19,20 +16,30 @@ pub enum Command {
         map_id: i32,
         session_id: i32,
     },
+    BeginHandshake {
+        challenge: i32,
+        hdid: String,
+        version: Version,
+    },
     CancelTrade,
     Close(String),
     ArenaDie {
         spawn_coords: Coords,
+    },
+    CompleteHandshake {
+        player_id: i32,
+        client_encryption_multiple: i32,
+        server_encryption_multiple: i32,
     },
     Die,
     GenerateSessionId {
         respond_to: oneshot::Sender<i32>,
     },
     GetAccountId {
-        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
+        respond_to: oneshot::Sender<Result<i32, InvalidStateError>>,
     },
     GetBanDuration {
-        respond_to: oneshot::Sender<Option<EOInt>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetBoardId {
         respond_to: oneshot::Sender<Option<i32>>,
@@ -42,12 +49,6 @@ pub enum Command {
     },
     GetChestIndex {
         respond_to: oneshot::Sender<Option<usize>>,
-    },
-    GenEncodingMultiples {
-        respond_to: oneshot::Sender<[u8; 2]>,
-    },
-    GetEncodingMultiples {
-        respond_to: oneshot::Sender<[u8; 2]>,
     },
     GetIpAddr {
         respond_to: oneshot::Sender<String>,
@@ -73,17 +74,14 @@ pub enum Command {
     GetInteractPlayerId {
         respond_to: oneshot::Sender<Option<i32>>,
     },
-    GetSequenceBytes {
-        respond_to: oneshot::Sender<(i32, i32)>,
-    },
     GetSequenceStart {
-        respond_to: oneshot::Sender<EOInt>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetState {
         respond_to: oneshot::Sender<ClientState>,
     },
     GetSleepCost {
-        respond_to: oneshot::Sender<Option<EOInt>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     IsTradeAccepted {
         respond_to: oneshot::Sender<bool>,
@@ -92,7 +90,7 @@ pub enum Command {
         respond_to: oneshot::Sender<bool>,
     },
     GenSequence {
-        respond_to: oneshot::Sender<EOInt>,
+        respond_to: oneshot::Sender<i32>,
     },
     Ping,
     Pong,
@@ -103,10 +101,10 @@ pub enum Command {
         local: bool,
         map_id: i32,
         coords: Coords,
-        animation: Option<WarpAnimation>,
+        animation: Option<WarpEffect>,
     },
     Send(PacketAction, PacketFamily, Bytes),
-    SetAccountId(EOInt),
+    SetAccountId(i32),
     SetBoardId(i32),
     SetBusy(bool),
     SetCharacter(Box<Character>),
@@ -117,7 +115,7 @@ pub enum Command {
     SetTrading(bool),
     SetChestIndex(usize),
     SetMap(MapHandle),
-    SetSleepCost(EOInt),
+    SetSleepCost(i32),
     SetState(ClientState),
     TakeCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,

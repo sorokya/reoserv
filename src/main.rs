@@ -7,6 +7,7 @@ extern crate serde_derive;
 
 use std::time::Duration;
 
+use eolib::protocol::r#pub::{Ecf, server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile}, Eif, Enf, Esf};
 use lazy_static::lazy_static;
 
 mod arenas;
@@ -28,13 +29,6 @@ use sln::ping_sln;
 #[macro_use]
 mod utils;
 mod world;
-
-use eo::{
-    data::EOInt,
-    pubs::{
-        DropFile, EcfFile, EifFile, EnfFile, EsfFile, InnFile, ShopFile, SkillMasterFile, TalkFile,
-    },
-};
 use mysql_async::prelude::*;
 
 use tokio::{net::TcpListener, signal, time};
@@ -55,17 +49,17 @@ lazy_static! {
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
-    static ref CLASS_DB: EcfFile = load_class_file().expect("Failed to load ECF file!");
+    static ref CLASS_DB: Ecf = load_class_file().expect("Failed to load ECF file!");
     static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
     static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");
-    static ref ITEM_DB: EifFile = load_item_file().expect("Failed to load EIF file!");
-    static ref NPC_DB: EnfFile = load_npc_file().expect("Failed to load ENF file!");
+    static ref ITEM_DB: Eif = load_item_file().expect("Failed to load EIF file!");
+    static ref NPC_DB: Enf = load_npc_file().expect("Failed to load ENF file!");
     static ref SHOP_DB: ShopFile = load_shop_file().expect("Failed to load Shop file!");
     static ref SKILL_MASTER_DB: SkillMasterFile =
         load_skill_master_file().expect("Failed to load Skill Master file!");
-    static ref SPELL_DB: EsfFile = load_spell_file().expect("Failed to load ESF file!");
+    static ref SPELL_DB: Esf = load_spell_file().expect("Failed to load ESF file!");
     static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
-    static ref EXP_TABLE: [EOInt; 254] = load_exp_table();
+    static ref EXP_TABLE: [i32; 254] = load_exp_table();
 }
 
 #[tokio::main]
@@ -125,10 +119,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
     }
 
-    info!("Classes: {}", CLASS_DB.num_classes);
-    info!("Items: {}", ITEM_DB.num_items);
-    info!("NPCs: {}", NPC_DB.num_npcs);
-    info!("Spells: {}", SPELL_DB.num_spells);
+    info!("Classes: {}", CLASS_DB.classes.len());
+    info!("Items: {}", ITEM_DB.items.len());
+    info!("NPCs: {}", NPC_DB.npcs.len());
+    info!("Skills: {}", SPELL_DB.skills.len());
 
     let world = WorldHandle::new(pool.clone());
     {
@@ -136,7 +130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         world.load_maps().await;
     }
 
-    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate.into()));
+    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate as u64));
     let ping_timer_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -145,7 +139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate.into()));
+    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
     let tick_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -223,11 +217,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn load_exp_table() -> [EOInt; 254] {
+fn load_exp_table() -> [i32; 254] {
     let mut exp_table = [0; 254];
 
     for (i, exp) in exp_table.iter_mut().enumerate() {
-        *exp = ((i as f64).powf(3.0) * 133.1).round() as EOInt;
+        *exp = ((i as f64).powf(3.0) * 133.1).round() as i32;
     }
 
     exp_table

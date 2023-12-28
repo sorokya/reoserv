@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 #[derive(Debug, Clone)]
 pub struct Party {
     pub members: Vec<i32>,

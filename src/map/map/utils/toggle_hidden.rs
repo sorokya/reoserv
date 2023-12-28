@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{AdminLevel, PacketAction, PacketFamily},
-};
+use eolib::{protocol::{AdminLevel, net::{PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use super::super::Map;
 
@@ -12,7 +9,7 @@ impl Map {
             None => return,
         };
 
-        if character.admin_level.to_char() < AdminLevel::Guardian.to_char() {
+        if i32::from(character.admin_level) < i32::from(AdminLevel::Guardian) {
             return;
         }
 
@@ -24,28 +21,28 @@ impl Map {
                 None => return,
             };
 
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
             let number_of_characters = 1;
-            builder.add_char(number_of_characters);
-            builder.add_byte(EO_BREAK_CHAR);
+            writer.add_char(number_of_characters);
+            writer.add_byte(0xff);
 
             let map_info = character.to_map_info();
-            map_info.serialize(&mut builder);
+            map_info.serialize(&mut writer);
 
             self.send_buf_near(
                 &character.coords,
                 PacketAction::Agree,
                 PacketFamily::Players,
-                builder.get(),
+                writer.to_byte_array(),
             );
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(player_id);
+            let mut writer = EoWriter::new();
+            writer.add_short(player_id);
             self.send_buf_near(
                 &character.coords,
                 PacketAction::Agree,
                 PacketFamily::AdminInteract,
-                builder.get(),
+                writer.to_byte_array(),
             );
         } else {
             character.hidden = true;
@@ -55,14 +52,14 @@ impl Map {
                 None => return,
             };
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(player_id);
+            let mut writer = EoWriter::new();
+            writer.add_short(player_id);
 
             self.send_buf_near(
                 &character.coords,
                 PacketAction::Remove,
                 PacketFamily::AdminInteract,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }

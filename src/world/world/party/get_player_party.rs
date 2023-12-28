@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 use crate::world::Party;
 
 use super::super::World;

@@ -1,11 +1,8 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::{client::emote::Report, PacketAction},
-};
+use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::EmoteReportClientPacket}};
 
 use crate::player::PlayerHandle;
 
-async fn report(reader: StreamReader, player: PlayerHandle) {
+async fn report(reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
@@ -14,15 +11,20 @@ async fn report(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    let mut report = Report::default();
-    report.deserialize(&reader);
+    let report = match EmoteReportClientPacket::deserialize(&reader) {
+        Ok(report) => report,
+        Err(e) => {
+            error!("Error deserializing EmoteReportClientPacket {}", e);
+            return;
+        }
+    };
 
     if let Ok(map) = player.get_map().await {
         map.emote(player_id, report.emote);
     }
 }
 
-pub async fn emote(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn emote(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
         PacketAction::Report => report(reader, player).await,
         _ => error!("Unhandled packet Emote_{:?}", action),

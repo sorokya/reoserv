@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, Coords, net::{PacketAction, PacketFamily}}, data::EoWriter};
 
 use crate::{INN_DB, NPC_DB};
 
@@ -45,14 +41,14 @@ impl Map {
                 None => return,
             };
 
-            if npc_data.r#type != EnfNpcType::Inn {
+            if npc_data.r#type != NpcType::Inn {
                 return;
             }
 
             let inn_data = match INN_DB
                 .inns
                 .iter()
-                .find(|inn| inn.vendor_id == npc_data.behavior_id)
+                .find(|inn| inn.behavior_id == npc_data.behavior_id)
             {
                 Some(inn) => inn,
                 None => return,
@@ -94,13 +90,13 @@ impl Map {
         character.hp = character.max_hp;
         character.tp = character.max_tp;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.get_item_amount(1));
+        let mut writer = EoWriter::new();
+        writer.add_int(character.get_item_amount(1));
 
         character.player.as_ref().unwrap().send(
             PacketAction::Accept,
             PacketFamily::Citizen,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         character.player.as_ref().unwrap().request_warp(

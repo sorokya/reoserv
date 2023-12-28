@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, EOInt, i32},
-    protocol::{client, FileType, OnlinePlayers},
-};
+use eolib::protocol::net::{client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType}, server::OnlinePlayer, PartyRequestType};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
@@ -13,10 +10,10 @@ pub enum Command {
     AcceptPartyRequest {
         player_id: i32,
         target_player_id: i32,
-        request_type: i32,
+        request_type: PartyRequestType,
     },
     AddLoggedInAccount {
-        account_id: EOInt,
+        account_id: i32,
     },
     AddPlayer {
         respond_to: oneshot::Sender<()>,
@@ -57,20 +54,20 @@ pub enum Command {
     },
     CreateAccount {
         player_id: i32,
-        details: client::account::Create,
+        details: AccountCreateClientPacket,
     },
     CreateCharacter {
         player_id: i32,
-        details: client::character::Create,
+        details: CharacterCreateClientPacket,
     },
     DeleteCharacter {
         player_id: i32,
         session_id: i32,
-        character_id: EOInt,
+        character_id: i32,
     },
     DropPlayer {
         player_id: i32,
-        account_id: EOInt,
+        account_id: i32,
         character_name: String,
         respond_to: oneshot::Sender<()>,
     },
@@ -105,7 +102,7 @@ pub enum Command {
         respond_to: oneshot::Sender<i32>,
     },
     GetOnlineList {
-        respond_to: oneshot::Sender<Vec<OnlinePlayers>>,
+        respond_to: oneshot::Sender<Vec<OnlinePlayer>>,
     },
     GetPlayerParty {
         player_id: i32,
@@ -115,7 +112,7 @@ pub enum Command {
         respond_to: oneshot::Sender<usize>,
     },
     IsLoggedIn {
-        account_id: EOInt,
+        account_id: i32,
         respond_to: oneshot::Sender<bool>,
     },
     JailPlayer {
@@ -158,7 +155,7 @@ pub enum Command {
     },
     RequestCharacterDeletion {
         player_id: i32,
-        character_id: EOInt,
+        character_id: i32,
     },
     RequestPartyList {
         player_id: i32,
@@ -166,6 +163,12 @@ pub enum Command {
     RequestPlayerInfo {
         player_id: i32,
         victim_name: String,
+    },
+    RequestPlayerList {
+        player_id: i32,
+    },
+    RequestPlayerNameList {
+        player_id: i32,
     },
     RequestPlayerInventory {
         player_id: i32,
@@ -178,7 +181,7 @@ pub enum Command {
     Save,
     SelectCharacter {
         player_id: i32,
-        character_id: EOInt,
+        character_id: i32,
     },
     SendAdminMessage {
         player_id: i32,

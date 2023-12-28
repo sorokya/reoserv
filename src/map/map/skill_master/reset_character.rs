@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Junk, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::NPC_DB;
 
@@ -48,23 +44,23 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         character.reset();
 
-        let reply = Junk {
+        let reply = StatSkillJunkServerPacket {
             stats: character.get_character_stats_1(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Junk,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

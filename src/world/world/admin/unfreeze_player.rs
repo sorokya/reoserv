@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use eo::protocol::{PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily};
 
 use crate::LANG;
 

@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 #[derive(Debug)]
 pub struct WrongSessionIdError {
     pub expected: i32,

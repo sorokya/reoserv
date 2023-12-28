@@ -1,4 +1,3 @@
-use eo::data::i32;
 use mysql_async::{params, prelude::Queryable, Conn};
 
 use crate::utils::get_board_tile_spec;
@@ -17,7 +16,7 @@ impl Map {
             None => return,
         };
 
-        if character.admin_level.to_char() < 1 {
+        if i32::from(character.admin_level) < 1 {
             return self.open_board(player_id, board_id);
         }
 

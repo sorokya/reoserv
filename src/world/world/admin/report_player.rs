@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{AdminMessageType, PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{server::AdminMessageType, PacketAction, PacketFamily}};
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 
@@ -23,19 +20,22 @@ impl World {
             }
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(AdminMessageType::Report.to_char());
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&character.name);
-        builder.add_break_string(&message);
-        builder.add_break_string(&reportee_name);
+        let mut writer = EoWriter::new();
+        writer.add_char(i32::from(AdminMessageType::Report));
+        writer.add_byte(0xff);
+        writer.add_string(&character.name);
+        writer.add_byte(0xff);
+        writer.add_string(&message);
+        writer.add_byte(0xff);
+        writer.add_string(&reportee_name);
+        writer.add_byte(0xff);
 
         let from_name = character.name;
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
-                if character.name != from_name && character.admin_level as i32 >= 1 {
+                if character.name != from_name && i32::from(character.admin_level) >= 1 {
                     player.send(
                         PacketAction::Reply,
                         PacketFamily::AdminInteract,

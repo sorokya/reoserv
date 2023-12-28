@@ -1,4 +1,3 @@
-use eo::data::EOInt;
 use mysql_async::{prelude::*, Conn, TxOpts};
 
 use crate::SETTINGS;
@@ -18,15 +17,15 @@ impl Character {
                 "account_id" => &self.account_id,
                 "name" => &self.name,
                 "home" => &SETTINGS.new_character.home,
-                "gender" => &(self.gender as u32),
-                "race" => &(self.skin as u32),
+                "gender" => &(i32::from(self.gender)),
+                "race" => &self.skin,
                 "hair_style" => &(self.hair_style as u32),
                 "hair_color" => &(self.hair_color as u32),
             },
         )
         .await?;
 
-        self.id = tx.last_insert_id().unwrap() as EOInt;
+        self.id = tx.last_insert_id().unwrap() as i32;
 
         tx.exec_drop(
             r"INSERT INTO `Paperdoll` (

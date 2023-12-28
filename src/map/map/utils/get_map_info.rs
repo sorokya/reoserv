@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32},
-    protocol::{server::range, CharacterMapInfo},
-};
+use eolib::protocol::net::server::{RangeReplyServerPacket, CharacterMapInfo};
 use tokio::sync::oneshot;
 
 use super::super::Map;
@@ -11,9 +8,9 @@ impl Map {
         &self,
         player_ids: Vec<i32>,
         npc_indexes: Vec<i32>,
-        respond_to: oneshot::Sender<range::Reply>,
+        respond_to: oneshot::Sender<RangeReplyServerPacket>,
     ) {
-        let mut reply = range::Reply::default();
+        let mut reply = RangeReplyServerPacket::default();
         if !player_ids.is_empty() {
             for player_id in player_ids {
                 if let Some(character) = self.characters.get(&player_id) {
@@ -21,9 +18,8 @@ impl Map {
                         .nearby
                         .characters
                         .iter()
-                        .any(|c: &CharacterMapInfo| c.id == player_id)
+                        .any(|c: &CharacterMapInfo| c.player_id == player_id)
                     {
-                        reply.nearby.num_characters += 1;
                         reply.nearby.characters.push(character.to_map_info());
                     }
                 }

@@ -1,7 +1,4 @@
-use eo::{
-    data::EOInt,
-    protocol::{AdminLevel, Direction, Gender, Item, SitState, Skin, Spell},
-};
+use eolib::protocol::{AdminLevel, Gender, Direction, net::{server::SitState, Item, Spell}};
 use mysql_async::{prelude::*, Conn, Params, Row};
 
 use super::Character;
@@ -9,7 +6,7 @@ use super::Character;
 impl Character {
     pub async fn load(
         conn: &mut Conn,
-        id: EOInt,
+        id: i32,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let mut character = Character::default();
         let mut row = match conn
@@ -37,10 +34,10 @@ impl Character {
         character.home = row.take("home").unwrap();
         character.fiance = row.take("fiance").unwrap();
         character.partner = row.take("partner").unwrap();
-        character.admin_level = AdminLevel::from_char(row.take("admin_level").unwrap()).unwrap();
+        character.admin_level = AdminLevel::from(row.take::<i32, &str>("admin_level").unwrap());
         character.class = row.take("class").unwrap();
-        character.gender = Gender::from_char(row.take("gender").unwrap()).unwrap();
-        character.skin = Skin::from_char(row.take("race").unwrap()).unwrap();
+        character.gender = Gender::from(row.take::<i32, &str>("gender").unwrap());
+        character.skin = row.take("race").unwrap();
         character.hair_style = row.take("hair_style").unwrap();
         character.hair_color = row.take("hair_color").unwrap();
         character.bank_level = row.take("bank_level").unwrap();
@@ -79,8 +76,8 @@ impl Character {
         character.map_id = row.take("map").unwrap();
         character.coords.x = row.take("x").unwrap();
         character.coords.y = row.take("y").unwrap();
-        character.direction = Direction::from_char(row.take("direction").unwrap()).unwrap();
-        character.sit_state = SitState::from_char(row.take("sitting").unwrap()).unwrap();
+        character.direction = Direction::from(row.take::<i32, &str>("direction").unwrap());
+        character.sit_state = SitState::from(row.take::<i32, &str>("sitting").unwrap());
         character.hidden = row.take::<u32, &str>("hidden").unwrap() == 1;
         character.guild_name = row.take("guild_name").unwrap();
         character.guild_tag = row.take("tag").unwrap();

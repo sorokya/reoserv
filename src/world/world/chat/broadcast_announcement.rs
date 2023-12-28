@@ -1,19 +1,16 @@
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{server::talk, PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{server::TalkAnnounceServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use super::super::World;
 
 impl World {
     pub async fn broadcast_announcement(&self, name: &str, message: &str) {
-        let packet = talk::Announce {
+        let packet = TalkAnnounceServerPacket {
             player_name: name.to_string(),
             message: message.to_string(),
         };
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+        packet.serialize(&mut writer);
+        let buf = writer.to_byte_array();
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
                 if character.name != name {

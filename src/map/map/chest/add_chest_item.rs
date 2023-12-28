@@ -1,10 +1,7 @@
 use std::cmp;
 
 use bytes::Bytes;
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{Item, PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{Item, PacketAction, PacketFamily}, data::EoWriter};
 
 use crate::{
     map::{chest::ChestItem, Chest},
@@ -106,31 +103,31 @@ impl Map {
             return;
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(item.id);
-        builder.add_int(character.get_item_amount(item.id));
+        let mut writer = EoWriter::new();
+        writer.add_short(item.id);
+        writer.add_int(character.get_item_amount(item.id));
         let weight = character.get_weight();
-        builder.add_char(weight.current);
-        builder.add_char(weight.max);
+        writer.add_char(weight.current);
+        writer.add_char(weight.max);
 
         for item in chest.items.iter() {
-            builder.add_short(item.item_id);
-            builder.add_three(item.amount);
+            writer.add_short(item.item_id);
+            writer.add_three(item.amount);
         }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Chest,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
+        let mut writer = EoWriter::new();
         for item in chest.items.iter() {
-            builder.add_short(item.item_id);
-            builder.add_three(item.amount);
+            writer.add_short(item.item_id);
+            writer.add_three(item.amount);
         }
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {
             let distance = get_distance(&character.coords, &chest.coords);

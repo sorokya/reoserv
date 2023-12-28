@@ -1,8 +1,5 @@
 use chrono::{Duration, Utc};
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
-};
+use eolib::{protocol::net::{server::ChestAgreeServerPacket, ThreeItem, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 use rand::seq::SliceRandom;
 
 use crate::{map::chest::ChestItem, utils::get_distance};
@@ -59,20 +56,20 @@ impl Map {
                 }
 
                 if spawned_item {
-                    let packet = chest::Agree {
+                    let packet = ChestAgreeServerPacket {
                         items: chest
                             .items
                             .iter()
-                            .map(|item| ShortItem {
+                            .map(|item| ThreeItem {
                                 id: item.item_id,
                                 amount: item.amount,
                             })
                             .collect(),
                     };
 
-                    let mut builder = StreamBuilder::new();
-                    packet.serialize(&mut builder);
-                    let buf = builder.get();
+                    let mut writer = EoWriter::new();
+                    packet.serialize(&mut writer);
+                    let buf = writer.to_byte_array();
 
                     for character in self.characters.values() {
                         let distance = get_distance(&character.coords, &chest.coords);

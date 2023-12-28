@@ -1,10 +1,6 @@
-use eo::{
-    data::{i32, EOInt, i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::character::{self, Reply},
-        CharacterList, CharacterReply, PacketAction, PacketFamily,
-    },
-};
+use eolib::data::{EoWriter, EoSerialize};
+use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::protocol::net::server::{CharacterReplyServerPacket, CharacterReply, CharacterReplyServerPacketReplyCodeData, CharacterReplyServerPacketReplyCodeDataDeleted};
 
 use crate::{character::Character, errors::WrongSessionIdError};
 
@@ -13,7 +9,7 @@ use super::super::World;
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: EOInt) {
+    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,
@@ -86,19 +82,16 @@ impl World {
 
             let characters = characters.unwrap();
 
-            let reply = Reply {
+            let reply = CharacterReplyServerPacket {
                 reply_code: CharacterReply::Deleted,
-                data: character::ReplyData::Deleted(character::ReplyDeleted {
-                    character_list: CharacterList {
-                        num_characters: characters.len() as i32,
-                        characters,
-                    },
-                }),
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(CharacterReplyServerPacketReplyCodeDataDeleted {
+                    characters,
+                })),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+            let mut writer = EoWriter::new();
+            reply.serialize(&mut writer);
+            player.send(PacketAction::Reply, PacketFamily::Character, writer.to_byte_array());
         });
     }
 }

@@ -1,10 +1,4 @@
-use eo::{
-    data::{i32, i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::shop, PacketAction, PacketFamily, ShopCraftItem, ShopTradeItem, VeryShortItem,
-    },
-    pubs::EnfNpcType,
-};
+use eolib::{protocol::{r#pub::NpcType, net::{server::{ShopOpenServerPacket, ShopTradeItem, ShopCraftItem}, CharItem, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
 
 use crate::{NPC_DB, SHOP_DB};
 
@@ -22,14 +16,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Shop {
+        if npc_data.r#type != NpcType::Shop {
             return;
         }
 
         let shop = match SHOP_DB
             .shops
             .iter()
-            .find(|shop| shop.vendor_id == npc_data.behavior_id)
+            .find(|shop| shop.behavior_id == npc_data.behavior_id)
         {
             Some(shop) => shop,
             None => return,
@@ -57,7 +51,7 @@ impl Map {
 
         // TODO: stupid that I have to map over the shop data here
         // they should be compatible in protocol
-        let reply = shop::Open {
+        let reply = ShopOpenServerPacket {
             session_id,
             shop_name: shop.name.clone(),
             trade_items: shop
@@ -76,20 +70,20 @@ impl Map {
                 .map(|craft| ShopCraftItem {
                     item_id: craft.item_id,
                     ingredients: [
-                        VeryShortItem {
-                            id: craft.ingredient1_item_id,
+                        CharItem {
+                            id: craft.ingredient1_id,
                             amount: craft.ingredient1_amount,
                         },
-                        VeryShortItem {
-                            id: craft.ingredient2_item_id,
+                        CharItem {
+                            id: craft.ingredient2_id,
                             amount: craft.ingredient2_amount,
                         },
-                        VeryShortItem {
-                            id: craft.ingredient3_item_id,
+                        CharItem {
+                            id: craft.ingredient3_id,
                             amount: craft.ingredient3_amount,
                         },
-                        VeryShortItem {
-                            id: craft.ingredient4_item_id,
+                        CharItem {
+                            id: craft.ingredient4_id,
                             amount: craft.ingredient4_amount,
                         },
                     ],
@@ -97,8 +91,8 @@ impl Map {
                 .collect(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Open, PacketFamily::Shop, builder.get());
+        let mut writer = EoWriter::new();
+        reply.serialize(&mut writer);
+        player.send(PacketAction::Open, PacketFamily::Shop, writer.to_byte_array());
     }
 }

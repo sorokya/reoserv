@@ -1,30 +1,38 @@
-use eo::{
-    data::{Serializeable, StreamBuilder, StreamReader},
-    protocol::{client::range::Request, PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{client::RangeRequestClientPacket, PacketAction}, data::{EoSerialize, EoReader}};
 
-use crate::player::PlayerHandle;
+use crate::{player::PlayerHandle, map::MapHandle};
 
-async fn request(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
-
-    if let Ok(map) = player.get_map().await {
-        let reply = map
-            .get_map_info(request.player_ids, request.npc_indexes)
-            .await;
-
-        if !reply.nearby.characters.is_empty() || !reply.nearby.npcs.is_empty() {
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Range, builder.get());
+fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match RangeRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing RangeRequestClientPacket {}", e);
+            return;
         }
-    }
+    };
+
+    map.request_players_and_npcs(player_id, request.player_ids, request.npc_indexes);
 }
 
-pub async fn range(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn range(action: PacketAction, reader: EoReader, player: PlayerHandle) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Request => request(reader, player).await,
+        PacketAction::Request => request(reader, player_id, map),
         _ => error!("Unhandled packet Range_{:?}", action),
     }
 }

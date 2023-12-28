@@ -1,9 +1,9 @@
-use eo::protocol::OnlinePlayers;
+use eolib::protocol::net::server::OnlinePlayer;
 
 use super::World;
 
 impl World {
-    pub async fn get_online_list(&self) -> Vec<OnlinePlayers> {
+    pub async fn get_online_list(&self) -> Vec<OnlinePlayer> {
         let mut online_list = Vec::new();
         for (player_id, player) in self.players.iter() {
             if let Ok(character) = player.get_character().await {
@@ -11,7 +11,7 @@ impl World {
                     continue;
                 }
 
-                let mut entry = OnlinePlayers::new();
+                let mut entry = OnlinePlayer::new();
                 entry.name = character.name.to_string();
                 entry.class_id = character.class;
                 entry.guild_tag = character.guild_tag.clone().unwrap_or_default();

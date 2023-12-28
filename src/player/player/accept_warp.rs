@@ -1,7 +1,7 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{server::warp, Coords, PacketAction, PacketFamily, SitState, WarpType},
-};
+use eolib::{protocol::{net::{server::{
+    SitState, WarpAgreeServerPacket, WarpAgreeServerPacketWarpTypeData,
+    WarpAgreeServerPacketWarpTypeDataMapSwitch, WarpEffect, WarpType,
+}, PacketAction, PacketFamily}, Coords}, data::{EoWriter, EoSerialize}};
 
 use crate::{
     errors::{MissingSessionIdError, WrongSessionIdError},
@@ -73,9 +73,9 @@ impl Player {
                 .enter(Box::new(character), warp_session.animation)
                 .await;
             let nearby_info = current_map.get_nearby_info(self.id).await;
-            warp::Agree {
+            WarpAgreeServerPacket {
                 warp_type: WarpType::Local,
-                data: warp::AgreeData::None,
+                warp_type_data: None,
                 nearby: nearby_info,
             }
         } else if let Ok(new_map) = self.world.get_map(map_id).await {
@@ -85,14 +85,14 @@ impl Player {
             let nearby_info = new_map.get_nearby_info(self.id).await;
             self.map = Some(new_map);
 
-            warp::Agree {
+            WarpAgreeServerPacket {
                 warp_type: WarpType::MapSwitch,
-                data: warp::AgreeData::MapSwitch(warp::AgreeMapSwitch {
-                    map_id,
-                    warp_anim: warp_session
-                        .animation
-                        .unwrap_or(eo::protocol::WarpAnimation::None),
-                }),
+                warp_type_data: Some(WarpAgreeServerPacketWarpTypeData::MapSwitch(
+                    WarpAgreeServerPacketWarpTypeDataMapSwitch {
+                        map_id,
+                        warp_effect: warp_session.animation.unwrap_or(WarpEffect::None),
+                    },
+                )),
                 nearby: nearby_info,
             }
         } else {
@@ -114,24 +114,28 @@ impl Player {
             let nearby_info = map.get_nearby_info(self.id).await;
             self.map = Some(map);
 
-            warp::Agree {
+            WarpAgreeServerPacket {
                 warp_type: WarpType::MapSwitch,
-                data: warp::AgreeData::MapSwitch(warp::AgreeMapSwitch {
-                    map_id: SETTINGS.rescue.map,
-                    warp_anim: warp_session
-                        .animation
-                        .unwrap_or(eo::protocol::WarpAnimation::None),
-                }),
+                warp_type_data: Some(WarpAgreeServerPacketWarpTypeData::MapSwitch(
+                    WarpAgreeServerPacketWarpTypeDataMapSwitch {
+                        map_id: SETTINGS.rescue.map,
+                        warp_effect: warp_session.animation.unwrap_or(WarpEffect::None),
+                    },
+                )),
                 nearby: nearby_info,
             }
         };
 
-        let mut builder = StreamBuilder::new();
-        agree.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        agree.serialize(&mut writer);
 
         let _ = self
             .bus
-            .send(PacketAction::Agree, PacketFamily::Warp, builder.get())
+            .send(
+                PacketAction::Agree,
+                PacketFamily::Warp,
+                writer.to_byte_array(),
+            )
             .await;
     }
 }

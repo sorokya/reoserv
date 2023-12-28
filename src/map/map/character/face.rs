@@ -1,7 +1,4 @@
-use eo::{
-    data::i32,
-    protocol::{server::face, Direction, PacketAction, PacketFamily},
-};
+use eolib::protocol::{Direction, net::{server::FacePlayerServerPacket, PacketAction, PacketFamily}};
 
 use super::super::Map;
 
@@ -18,7 +15,7 @@ impl Map {
             return;
         }
 
-        let packet = face::Player {
+        let packet = FacePlayerServerPacket {
             player_id,
             direction,
         };

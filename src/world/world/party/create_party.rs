@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{protocol::net::{PacketAction, PacketFamily}, data::EoWriter};
 
 use crate::world::Party;
 
@@ -31,19 +28,20 @@ impl World {
 
         self.parties.push(Party::new(leader_id, member_id));
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(leader_id);
-        builder.add_char(1);
-        builder.add_char(leader_character.level);
-        builder.add_char(leader_character.get_hp_percentage());
-        builder.add_break_string(&leader_character.name);
-        builder.add_short(member_id);
-        builder.add_char(0);
-        builder.add_char(member_character.level);
-        builder.add_char(member_character.get_hp_percentage());
-        builder.add_string(&member_character.name);
+        let mut writer = EoWriter::new();
+        writer.add_short(leader_id);
+        writer.add_char(1);
+        writer.add_char(leader_character.level);
+        writer.add_char(leader_character.get_hp_percentage());
+        writer.add_string(&leader_character.name);
+        writer.add_byte(0xff);
+        writer.add_short(member_id);
+        writer.add_char(0);
+        writer.add_char(member_character.level);
+        writer.add_char(member_character.get_hp_percentage());
+        writer.add_string(&member_character.name);
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         leader.send(PacketAction::Create, PacketFamily::Party, buf.clone());
         member.send(PacketAction::Create, PacketFamily::Party, buf);

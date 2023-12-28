@@ -1,12 +1,9 @@
-use eo::{
-    data::{EOInt, i32},
-    protocol::{Coords, ItemMapInfo},
-};
+use eolib::protocol::{Coords, net::server::ItemMapInfo};
 
 #[derive(Debug, Default)]
 pub struct Item {
     pub id: i32,
-    pub amount: EOInt,
+    pub amount: i32,
     pub coords: Coords,
     pub owner: i32,
     // TODO: unprotect timer

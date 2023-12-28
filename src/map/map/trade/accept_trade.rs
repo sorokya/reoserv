@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use super::super::Map;
 
@@ -49,14 +46,14 @@ impl Map {
             return;
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(AGREED);
+        let mut writer = EoWriter::new();
+        writer.add_char(AGREED);
 
-        player.send(PacketAction::Spec, PacketFamily::Trade, builder.get());
+        player.send(PacketAction::Spec, PacketFamily::Trade, writer.to_byte_array());
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_char(AGREED);
-        partner.send(PacketAction::Agree, PacketFamily::Trade, builder.get());
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
+        writer.add_char(AGREED);
+        partner.send(PacketAction::Agree, PacketFamily::Trade, writer.to_byte_array());
     }
 }

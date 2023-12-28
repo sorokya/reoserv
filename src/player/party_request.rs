@@ -1,5 +1,3 @@
-use eo::data::i32;
-
 #[derive(Debug, Copy, Clone)]
 pub enum PartyRequest {
     None,

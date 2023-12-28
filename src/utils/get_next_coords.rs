@@ -1,4 +1,4 @@
-use eo::{data::i32, protocol::Coords, protocol::Direction};
+use eolib::protocol::{Coords, Direction};
 
 pub fn get_next_coords(
     coords: &Coords,
@@ -47,5 +47,6 @@ pub fn get_next_coords(
                 }
             }
         }
+        _ => *coords,
     }
 }

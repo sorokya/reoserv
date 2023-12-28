@@ -1,10 +1,4 @@
-use eo::{
-    data::{i32, Serializeable, StreamBuilder},
-    protocol::{
-        server::{chair, sit},
-        PacketAction, PacketFamily, SitState,
-    },
-};
+use eolib::{protocol::net::{server::{SitState, SitCloseServerPacket, ChairCloseServerPacket}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 
 use crate::utils::get_next_coords;
 
@@ -24,18 +18,18 @@ impl Map {
             SitState::Floor => {
                 character.sit_state = SitState::Stand;
 
-                let reply = sit::Close {
+                let reply = SitCloseServerPacket {
                     player_id,
                     coords: character.coords,
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
+                let mut writer = EoWriter::new();
+                reply.serialize(&mut writer);
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Sit,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 if !character.hidden {
@@ -57,18 +51,18 @@ impl Map {
                     self.file.height,
                 );
 
-                let reply = chair::Close {
+                let reply = ChairCloseServerPacket {
                     player_id,
                     coords: character.coords,
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
+                let mut writer = EoWriter::new();
+                reply.serialize(&mut writer);
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Chair,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 if !character.hidden {

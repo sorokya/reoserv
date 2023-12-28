@@ -1,18 +1,15 @@
-use eo::data::{i32, i32};
+use eolib::protocol::net::PartyRequestType;
 
 use crate::player::PartyRequest;
 
 use super::super::World;
-
-const JOIN: i32 = 0;
-const INVITE: i32 = 1;
 
 impl World {
     pub async fn accept_party_request(
         &mut self,
         player_id: i32,
         target_player_id: i32,
-        request_type: i32,
+        request_type: PartyRequestType,
     ) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
@@ -21,7 +18,7 @@ impl World {
 
         match player.get_party_request().await {
             PartyRequest::Invite(actual_player_id) => {
-                if request_type != INVITE || actual_player_id != target_player_id {
+                if request_type != PartyRequestType::Invite || actual_player_id != target_player_id {
                     return;
                 }
 
@@ -32,7 +29,7 @@ impl World {
                 }
             }
             PartyRequest::Join(actual_player_id) => {
-                if request_type != JOIN || actual_player_id != target_player_id {
+                if request_type != PartyRequestType::Join || actual_player_id != target_player_id {
                     return;
                 }
 

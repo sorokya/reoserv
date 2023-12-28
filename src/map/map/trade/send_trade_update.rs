@@ -1,7 +1,4 @@
-use eo::{
-    data::{i32, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use super::super::Map;
 
@@ -34,20 +31,20 @@ impl Map {
 
         let partner_accepted = partner.is_trade_accepted().await;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
+        let mut writer = EoWriter::new();
+        writer.add_short(player_id);
         for item in character.trade_items.iter() {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
+            writer.add_short(item.id);
+            writer.add_int(item.amount);
         }
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_short(partner_id);
+        writer.add_byte(0xff);
+        writer.add_short(partner_id);
         for item in partner_character.trade_items.iter() {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
+            writer.add_short(item.id);
+            writer.add_int(item.amount);
         }
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         player.send(PacketAction::Reply, PacketFamily::Trade, buf.clone());
         partner.send(

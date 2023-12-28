@@ -1,10 +1,5 @@
 use bytes::Bytes;
-use eo::{
-    data::{i32, EOInt, i32, i32},
-    protocol::{
-        server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
-    },
-};
+use eolib::protocol::{net::{Item, ThreeItem, server::{WarpEffect, NearbyInfo}, client::{StatId, ByteCoords}}, Direction, Coords, Emote};
 use tokio::sync::oneshot;
 
 use crate::{
@@ -32,6 +27,9 @@ pub enum Command {
     AddTradeItem {
         player_id: i32,
         item: Item,
+    },
+    AgreeTrade {
+        player_id: i32,
     },
     Attack {
         target_player_id: i32,
@@ -64,12 +62,15 @@ pub enum Command {
     DepositGold {
         player_id: i32,
         session_id: i32,
-        amount: EOInt,
+        amount: i32,
+    },
+    DisagreeTrade {
+        player_id: i32,
     },
     DropItem {
         target_player_id: i32,
-        item: ShortItem,
-        coords: Coords,
+        item: ThreeItem,
+        coords: ByteCoords,
     },
     Emote {
         target_player_id: i32,
@@ -77,7 +78,7 @@ pub enum Command {
     },
     Enter {
         character: Box<Character>,
-        warp_animation: Option<WarpAnimation>,
+        warp_animation: Option<WarpEffect>,
         respond_to: oneshot::Sender<()>,
     },
     Equip {
@@ -88,6 +89,10 @@ pub enum Command {
     Face {
         target_player_id: i32,
         direction: Direction,
+    },
+    FindPlayer {
+        player_id: i32,
+        name: String,
     },
     ForgetSkill {
         player_id: i32,
@@ -105,11 +110,6 @@ pub enum Command {
         target_player_id: i32,
         item_index: i32,
     },
-    GetMapInfo {
-        player_ids: Vec<i32>,
-        npc_indexes: Vec<i32>,
-        respond_to: oneshot::Sender<range::Reply>,
-    },
     GetNearbyInfo {
         target_player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
@@ -118,12 +118,12 @@ pub enum Command {
         respond_to: oneshot::Sender<Option<Coords>>,
     },
     GetRidAndSize {
-        respond_to: oneshot::Sender<([i32; 2], EOInt)>,
+        respond_to: oneshot::Sender<([i32; 2], i32)>,
     },
     GiveItem {
         target_player_id: i32,
         item_id: i32,
-        amount: EOInt,
+        amount: i32,
     },
     HasPlayer {
         player_id: i32,
@@ -132,7 +132,7 @@ pub enum Command {
     JunkItem {
         target_player_id: i32,
         item_id: i32,
-        amount: EOInt,
+        amount: i32,
     },
     LearnSkill {
         player_id: i32,
@@ -141,7 +141,7 @@ pub enum Command {
     },
     Leave {
         player_id: i32,
-        warp_animation: Option<WarpAnimation>,
+        warp_animation: Option<WarpEffect>,
         interact_player_id: Option<i32>,
         respond_to: oneshot::Sender<Character>,
     },
@@ -198,9 +198,25 @@ pub enum Command {
         session_id: i32,
         answers: [String; 3],
     },
+    RequestNpcs {
+        player_id: i32,
+        npc_indexes: Vec<i32>,
+    },
     RequestPaperdoll {
         player_id: i32,
         target_player_id: i32,
+    },
+    RequestPlayers {
+        player_id: i32,
+        player_ids: Vec<i32>,
+    },
+    RequestPlayersAndNpcs {
+        player_id: i32,
+        player_ids: Vec<i32>,
+        npc_indexes: Vec<i32>,
+    },
+    RequestRefresh {
+        player_id: i32,
     },
     RequestSleep {
         player_id: i32,
@@ -297,7 +313,7 @@ pub enum Command {
     WithdrawGold {
         player_id: i32,
         session_id: i32,
-        amount: EOInt,
+        amount: i32,
     },
     SpawnItems,
     SpawnNpcs,

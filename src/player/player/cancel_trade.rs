@@ -1,7 +1,4 @@
-use eo::{
-    data::StreamBuilder,
-    protocol::{PacketAction, PacketFamily},
-};
+use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
 
 use super::Player;
 
@@ -16,11 +13,11 @@ impl Player {
         self.trading = false;
         self.trade_accepted = false;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(interact_player_id);
+        let mut writer = EoWriter::new();
+        writer.add_short(interact_player_id);
         let _ = self
             .bus
-            .send(PacketAction::Close, PacketFamily::Trade, builder.get())
+            .send(PacketAction::Close, PacketFamily::Trade, writer.to_byte_array())
             .await;
     }
 }

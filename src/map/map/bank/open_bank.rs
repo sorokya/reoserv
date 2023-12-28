@@ -1,8 +1,4 @@
-use eo::{
-    data::{i32, i32, i32, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
-};
+use eolib::{data::EoWriter, protocol::{net::{PacketAction, PacketFamily}, r#pub::NpcType}};
 
 use crate::NPC_DB;
 
@@ -20,7 +16,7 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Bank {
+        if npc_data.r#type != NpcType::Bank {
             return;
         }
 
@@ -44,10 +40,10 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.gold_bank);
-        builder.add_three(session_id as i32);
-        builder.add_char(character.bank_level as i32);
-        player.send(PacketAction::Open, PacketFamily::Bank, builder.get());
+        let mut writer = EoWriter::new();
+        writer.add_int(character.gold_bank);
+        writer.add_three(session_id as i32);
+        writer.add_char(character.bank_level);
+        player.send(PacketAction::Open, PacketFamily::Bank, writer.to_byte_array());
     }
 }

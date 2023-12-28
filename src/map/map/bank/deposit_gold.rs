@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOInt, i32, EOThree, StreamBuilder},
+    data::{EOInt, i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -10,7 +10,7 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub async fn deposit_gold(&mut self, player_id: i32, session_id: EOThree, amount: EOInt) {
+    pub async fn deposit_gold(&mut self, player_id: i32, session_id: i32, amount: EOInt) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -26,7 +26,7 @@ impl Map {
         }
 
         let actual_session_id = match player.get_session_id().await {
-            Ok(session_id) => session_id as EOThree,
+            Ok(session_id) => session_id as i32,
             Err(_) => return,
         };
 

@@ -1,6 +1,6 @@
 use chrono::Utc;
 use eo::{
-    data::{i32, EOThree},
+    data::{i32, i32},
     protocol::{server::spell::Request, PacketAction, PacketFamily},
 };
 
@@ -9,7 +9,7 @@ use crate::character::SpellState;
 use super::super::Map;
 
 impl Map {
-    pub fn start_spell_chant(&mut self, player_id: i32, spell_id: i32, timestamp: EOThree) {
+    pub fn start_spell_chant(&mut self, player_id: i32, spell_id: i32, timestamp: i32) {
         if spell_id == 0 {
             return;
         }

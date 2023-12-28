@@ -7,7 +7,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eo::{
     data::{
-        decode_number, encode_number, i32, i32, EOThree, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, i32, i32, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{
@@ -54,7 +54,7 @@ fn load_json() -> Result<EsfFile, Box<dyn std::error::Error>> {
             cast_time: v["castTime"].as_u64().unwrap_or(0) as i32,
             nature: EsfSkillNature::from_char(v["nature"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
-            r#type: EsfSpellType::from_three(v["type"].as_u64().unwrap_or(0) as EOThree)
+            r#type: EsfSpellType::from_three(v["type"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
             element: v["element"].as_u64().unwrap_or(0) as i32,
             element_power: v["elementPower"].as_u64().unwrap_or(0) as i32,

@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, EOInt, i32, EOThree},
+    data::{i32, EOInt, i32, i32},
     protocol::{
         client::character::Create, AdminLevel, Coords, Direction, Gender, Item, PaperdollFull,
         PaperdollIcon, SitState, Skin, Spell, Weight,
@@ -210,7 +210,7 @@ impl Character {
         }
     }
 
-    pub fn add_experience(&mut self, experience: EOThree) -> bool {
+    pub fn add_experience(&mut self, experience: i32) -> bool {
         self.experience += experience;
 
         let mut leveled_up = false;

@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, i32, EOThree, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, i32, i32, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -63,7 +63,7 @@ impl Map {
         player.set_interact_npc_index(npc_index);
 
         let mut builder = StreamBuilder::new();
-        builder.add_three(inn_data.vendor_id as EOThree + 1);
+        builder.add_three(inn_data.vendor_id as i32 + 1);
         builder.add_char(current_inn_data.vendor_id as i32 - 1);
         builder.add_short(session_id);
         builder.add_byte(EO_BREAK_CHAR);

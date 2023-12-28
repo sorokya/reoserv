@@ -1,5 +1,5 @@
 use eo::{
-    data::{i32, i32, EOThree, StreamBuilder},
+    data::{i32, i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -46,7 +46,7 @@ impl Map {
 
         let mut builder = StreamBuilder::new();
         builder.add_int(character.gold_bank);
-        builder.add_three(session_id as EOThree);
+        builder.add_three(session_id as i32);
         builder.add_char(character.bank_level as i32);
         player.send(PacketAction::Open, PacketFamily::Bank, builder.get());
     }

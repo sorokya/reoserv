@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{i32, EOInt, i32, EOThree},
+    data::{i32, EOInt, i32, i32},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
@@ -100,7 +100,7 @@ impl MapHandle {
         });
     }
 
-    pub fn deposit_gold(&self, player_id: i32, session_id: EOThree, amount: EOInt) {
+    pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: EOInt) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
             session_id,
@@ -416,7 +416,7 @@ impl MapHandle {
         let _ = self.tx.send(Command::Stand { player_id });
     }
 
-    pub fn start_spell_chant(&self, player_id: i32, spell_id: i32, timestamp: EOThree) {
+    pub fn start_spell_chant(&self, player_id: i32, spell_id: i32, timestamp: i32) {
         let _ = self.tx.send(Command::StartSpellChant {
             player_id,
             spell_id,
@@ -520,7 +520,7 @@ impl MapHandle {
         target_player_id: i32,
         direction: Direction,
         coords: Coords,
-        timestamp: EOThree,
+        timestamp: i32,
     ) {
         let _ = self.tx.send(Command::Walk {
             target_player_id,
@@ -530,7 +530,7 @@ impl MapHandle {
         });
     }
 
-    pub fn withdraw_gold(&self, player_id: i32, session_id: EOThree, amount: EOInt) {
+    pub fn withdraw_gold(&self, player_id: i32, session_id: i32, amount: EOInt) {
         let _ = self.tx.send(Command::WithdrawGold {
             player_id,
             session_id,
@@ -538,7 +538,7 @@ impl MapHandle {
         });
     }
 
-    pub fn attack(&self, target_player_id: i32, direction: Direction, timestamp: EOThree) {
+    pub fn attack(&self, target_player_id: i32, direction: Direction, timestamp: i32) {
         let _ = self.tx.send(Command::Attack {
             target_player_id,
             direction,

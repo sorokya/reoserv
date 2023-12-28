@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{i32, EOInt, i32, EOThree},
+    data::{i32, EOInt, i32, i32},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
@@ -36,7 +36,7 @@ pub enum Command {
     Attack {
         target_player_id: i32,
         direction: Direction,
-        timestamp: EOThree,
+        timestamp: i32,
     },
     BuyItem {
         player_id: i32,
@@ -63,7 +63,7 @@ pub enum Command {
     },
     DepositGold {
         player_id: i32,
-        session_id: EOThree,
+        session_id: i32,
         amount: EOInt,
     },
     DropItem {
@@ -250,7 +250,7 @@ pub enum Command {
     StartSpellChant {
         player_id: i32,
         spell_id: i32,
-        timestamp: EOThree,
+        timestamp: i32,
     },
     TakeChestItem {
         player_id: i32,
@@ -292,11 +292,11 @@ pub enum Command {
         target_player_id: i32,
         direction: Direction,
         coords: Coords,
-        timestamp: EOThree,
+        timestamp: i32,
     },
     WithdrawGold {
         player_id: i32,
-        session_id: EOThree,
+        session_id: i32,
         amount: EOInt,
     },
     SpawnItems,

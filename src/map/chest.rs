@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use eo::{
-    data::{i32, i32, EOThree},
+    data::{i32, i32, i32},
     protocol::Coords,
 };
 
@@ -16,7 +16,7 @@ pub struct Chest {
 pub struct ChestSpawn {
     pub slot: i32,
     pub item_id: i32,
-    pub amount: EOThree,
+    pub amount: i32,
     pub spawn_time: i32,
     pub last_taken: DateTime<Utc>,
 }
@@ -25,5 +25,5 @@ pub struct ChestSpawn {
 pub struct ChestItem {
     pub slot: i32,
     pub item_id: i32,
-    pub amount: EOThree,
+    pub amount: i32,
 }

@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::{DateTime, Utc};
 use eo::{
-    data::{i32, EOInt, i32, EOThree},
+    data::{i32, EOInt, i32, i32},
     protocol::{Coords, Direction, NPCMapInfo},
 };
 use evalexpr::{context_map, eval_float_with_context};
@@ -21,8 +21,8 @@ pub struct Npc {
     pub act_ticks: EOInt,
     pub talk_ticks: i32,
     pub walk_idle_for: Option<EOInt>,
-    pub hp: EOThree,
-    pub max_hp: EOThree,
+    pub hp: i32,
+    pub max_hp: i32,
     pub opponents: Vec<NpcOpponent>,
 }
 
@@ -100,7 +100,7 @@ impl Npc {
             }
         };
 
-        self.hp -= cmp::min(damage, self.hp) as EOThree;
+        self.hp -= cmp::min(damage, self.hp) as i32;
         if self.hp > 0 {
             match self.opponents.iter().position(|o| o.player_id == player_id) {
                 Some(index) => {
@@ -137,8 +137,8 @@ pub struct NPCBuilder {
     act_ticks: EOInt,
     talk_ticks: i32,
     walk_idle_for: Option<EOInt>,
-    hp: EOThree,
-    max_hp: EOThree,
+    hp: i32,
+    max_hp: i32,
 }
 
 impl NPCBuilder {
@@ -176,12 +176,12 @@ impl NPCBuilder {
         self
     }
 
-    pub fn hp(mut self, hp: EOThree) -> Self {
+    pub fn hp(mut self, hp: i32) -> Self {
         self.hp = hp;
         self
     }
 
-    pub fn max_hp(mut self, max_hp: EOThree) -> Self {
+    pub fn max_hp(mut self, max_hp: i32) -> Self {
         self.max_hp = max_hp;
         self
     }

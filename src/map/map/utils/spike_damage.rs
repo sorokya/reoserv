@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{i32, i32, EOThree, StreamBuilder},
+    data::{i32, i32, i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -46,7 +46,7 @@ impl Map {
         builder.add_short(player_id);
         builder.add_char(hp_percentage);
         builder.add_char(if character.hp == 0 { 1 } else { 0 });
-        builder.add_three(damage as EOThree);
+        builder.add_three(damage as i32);
 
         self.send_buf_near_player(
             player_id,

@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::{EnfNpcType, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
 };
@@ -265,7 +265,7 @@ impl Map {
     async fn cast_damage_npc(
         &mut self,
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
         spell_id: EOShort,
         spell_data: &EsfSpell,
     ) {

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     protocol::{
         client::talk::{Admin, Announce, Msg, Report, Tell},
         AdminLevel, PacketAction,
@@ -15,7 +15,7 @@ async fn admin(reader: StreamReader, player: PlayerHandle, world: WorldHandle) {
     admin.deserialize(&reader);
 
     if let Ok(character) = player.get_character().await {
-        if character.admin_level as EOChar >= AdminLevel::Guardian as EOChar {
+        if character.admin_level as i32 >= AdminLevel::Guardian as i32 {
             world.broadcast_admin_message(character.name, admin.message);
         }
     }
@@ -26,7 +26,7 @@ async fn announce(reader: StreamReader, player: PlayerHandle, world: WorldHandle
     announce.deserialize(&reader);
 
     if let Ok(character) = player.get_character().await {
-        if character.admin_level as EOChar >= AdminLevel::Guardian as EOChar {
+        if character.admin_level as i32 >= AdminLevel::Guardian as i32 {
             world.broadcast_announcement(character.name, announce.message);
         }
     }

@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{u8, EOChar, EOInt, EOShort},
+    data::{u8, i32, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -68,13 +68,13 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
     GetInteractNpcIndex {
-        respond_to: oneshot::Sender<Option<EOChar>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetInteractPlayerId {
         respond_to: oneshot::Sender<Option<EOShort>>,
     },
     GetSequenceBytes {
-        respond_to: oneshot::Sender<(EOShort, EOChar)>,
+        respond_to: oneshot::Sender<(EOShort, i32)>,
     },
     GetSequenceStart {
         respond_to: oneshot::Sender<EOInt>,
@@ -110,7 +110,7 @@ pub enum Command {
     SetBoardId(EOShort),
     SetBusy(bool),
     SetCharacter(Box<Character>),
-    SetInteractNpcIndex(EOChar),
+    SetInteractNpcIndex(i32),
     SetInteractPlayerId(Option<EOShort>),
     SetPartyRequest(PartyRequest),
     SetTradeAccepted(bool),
@@ -126,6 +126,6 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
     },
     UpdatePartyHP {
-        hp_percentage: EOChar,
+        hp_percentage: i32,
     },
 }

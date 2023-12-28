@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamReader},
+    data::{i32, EOShort, StreamReader},
     protocol::PacketAction,
 };
 
@@ -7,7 +7,7 @@ use crate::{map::MapHandle, player::PlayerHandle};
 
 fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let npc_index = reader.get_short();
-    map.open_inn(player_id, npc_index as EOChar);
+    map.open_inn(player_id, npc_index as i32);
 }
 
 fn reply(reader: StreamReader, player_id: EOShort, map: MapHandle) {

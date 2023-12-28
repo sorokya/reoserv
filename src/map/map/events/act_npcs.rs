@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::Utc;
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::npc, Coords, Direction, NPCUpdateAttack, NPCUpdateChat, NPCUpdatePos, PacketAction,
         PacketFamily, PlayerKilledState, SitState,
@@ -22,7 +22,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    fn act_npc_talk(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdateChat> {
+    fn act_npc_talk(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdateChat> {
         let talk_record = match TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id) {
             Some(record) => record,
             None => return None,
@@ -45,7 +45,7 @@ impl Map {
             let message_index = rng.gen_range(0..talk_record.messages.len());
             Some(NPCUpdateChat {
                 npc_index: index,
-                message_length: talk_record.messages[message_index].len() as EOChar,
+                message_length: talk_record.messages[message_index].len() as i32,
                 message: talk_record.messages[message_index].to_string(),
             })
         } else {
@@ -53,7 +53,7 @@ impl Map {
         }
     }
 
-    fn act_npc_move_chase(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdatePos> {
+    fn act_npc_move_chase(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdatePos> {
         let target_coords = match self.npc_get_chase_target_coords(index, npc_id) {
             Some(target_coords) => target_coords,
             None => return self.act_npc_move_idle(index),
@@ -136,7 +136,7 @@ impl Map {
         }
     }
 
-    fn npc_get_chase_target_coords(&self, index: EOChar, npc_id: EOShort) -> Option<Coords> {
+    fn npc_get_chase_target_coords(&self, index: i32, npc_id: EOShort) -> Option<Coords> {
         match self.npc_get_chase_target_player_id(index, npc_id) {
             Some(player_id) => self
                 .characters
@@ -147,7 +147,7 @@ impl Map {
     }
 
     // TODO: Party stuff
-    fn npc_get_chase_target_player_id(&self, index: EOChar, npc_id: EOShort) -> Option<EOShort> {
+    fn npc_get_chase_target_player_id(&self, index: i32, npc_id: EOShort) -> Option<EOShort> {
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return None,
@@ -167,7 +167,7 @@ impl Map {
                 };
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
-                    && distance <= SETTINGS.npcs.chase_distance as EOChar
+                    && distance <= SETTINGS.npcs.chase_distance as i32
                     && now.signed_duration_since(opponent.last_hit).num_seconds()
                         < SETTINGS.npcs.bored_timer as i64
             });
@@ -182,7 +182,7 @@ impl Map {
                 .iter()
                 .filter(|(_, character)| {
                     let distance = get_distance(&npc.coords, &character.coords);
-                    !character.hidden && distance <= SETTINGS.npcs.chase_distance as EOChar
+                    !character.hidden && distance <= SETTINGS.npcs.chase_distance as i32
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -195,7 +195,7 @@ impl Map {
         }
     }
 
-    fn npc_get_attack_target_player_id(&self, index: EOChar) -> Option<EOShort> {
+    fn npc_get_attack_target_player_id(&self, index: i32) -> Option<EOShort> {
         let npc = match self.npcs.get(&index) {
             Some(npc) => npc,
             None => return None,
@@ -245,7 +245,7 @@ impl Map {
         }
     }
 
-    fn act_npc_move_idle(&mut self, index: EOChar) -> Option<NPCUpdatePos> {
+    fn act_npc_move_idle(&mut self, index: i32) -> Option<NPCUpdatePos> {
         let (direction, coords) = match self.npcs.get(&index) {
             Some(npc) => (npc.direction, npc.coords),
             None => return None,
@@ -291,7 +291,7 @@ impl Map {
 
     fn act_npc_move(
         &mut self,
-        index: EOChar,
+        index: i32,
         npc_id: EOShort,
         act_rate: EOInt,
         act_ticks: EOInt,
@@ -319,7 +319,7 @@ impl Map {
         }
     }
 
-    fn act_npc_attack(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdateAttack> {
+    fn act_npc_attack(&mut self, index: i32, npc_id: EOShort) -> Option<NPCUpdateAttack> {
         let target_player_id = match self.npc_get_attack_target_player_id(index) {
             Some(player_id) => player_id,
             None => return None,
@@ -405,7 +405,7 @@ impl Map {
 
     fn act_npc(
         &mut self,
-        index: EOChar,
+        index: i32,
     ) -> (
         Option<NPCUpdatePos>,
         Option<NPCUpdateChat>,
@@ -474,7 +474,7 @@ impl Map {
                         .iter()
                         .filter(|(_, npc)| npc.spawn_index == spawn_index && npc.id == spawn.id)
                         .map(|(index, _)| *index)
-                        .collect::<Vec<EOChar>>()
+                        .collect::<Vec<i32>>()
                         .clone()
                 };
 
@@ -490,7 +490,7 @@ impl Map {
         let mut position_updates: Vec<NPCUpdatePos> = Vec::with_capacity(self.npcs.len());
         let mut talk_updates: Vec<NPCUpdateChat> = Vec::with_capacity(self.npcs.len());
 
-        let indexes = self.npcs.keys().cloned().collect::<Vec<EOChar>>();
+        let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
         for index in indexes {
             let (move_update, chat_updatee, attack_update) = self.act_npc(index);
             if let Some(attack_update) = attack_update {
@@ -508,7 +508,7 @@ impl Map {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
 
-                let in_range_npc_indexes: Vec<EOChar> = self
+                let in_range_npc_indexes: Vec<i32> = self
                     .npcs
                     .iter()
                     .filter(|(_, n)| in_range(&character.coords, &n.coords))

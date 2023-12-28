@@ -6,7 +6,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eo::{
     data::{
-        decode_number, encode_number, EOChar, EOShort, Serializeable, StreamBuilder, StreamReader,
+        decode_number, encode_number, i32, EOShort, Serializeable, StreamBuilder, StreamReader,
     },
     pubs::{EcfClass, EcfClassType, EcfFile},
 };
@@ -38,8 +38,8 @@ fn load_json() -> Result<EcfFile, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
         let record = EcfClass {
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            parent_type: v["parent"].as_u64().unwrap_or(0) as EOChar,
-            r#type: EcfClassType::from_char(v["type"].as_u64().unwrap_or(0) as EOChar).unwrap(),
+            parent_type: v["parent"].as_u64().unwrap_or(0) as i32,
+            r#type: EcfClassType::from_char(v["type"].as_u64().unwrap_or(0) as i32).unwrap(),
             str: v["str"].as_u64().unwrap_or(0) as EOShort,
             intl: v["intl"].as_u64().unwrap_or(0) as EOShort,
             wis: v["wis"].as_u64().unwrap_or(0) as EOShort,

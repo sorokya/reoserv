@@ -1,11 +1,11 @@
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
-const AGREED: EOChar = 1;
+const AGREED: i32 = 1;
 
 impl Map {
     pub async fn accept_trade(&mut self, player_id: EOShort) {

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamReader},
+    data::{i32, EOShort, Serializeable, StreamReader},
     protocol::{
         client::shop::{Buy, Create, Open, Sell},
         PacketAction,
@@ -59,7 +59,7 @@ async fn open(reader: StreamReader, player: PlayerHandle) {
     };
 
     if let Ok(map) = player.get_map().await {
-        map.open_shop(player_id, request.npc_index as EOChar);
+        map.open_shop(player_id, request.npc_index as i32);
     }
 }
 

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::account::{self, Reply},
         AccountReply, PacketAction, PacketFamily,
@@ -68,7 +68,7 @@ impl World {
             reply_code: AccountReply::SessionId(session_id),
             data: account::ReplyData::SessionId(account::ReplySessionId {
                 ok: "OK".to_string(),
-                sequence_start: sequence_start as EOChar,
+                sequence_start: sequence_start as i32,
             }),
         };
 

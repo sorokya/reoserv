@@ -4,7 +4,7 @@ use bytes::Bytes;
 use crc::{Crc, CRC_32_CKSUM};
 use eo::{
     data::{
-        decode_number, encode_number, EOChar, EOInt, EOShort, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, EOInt, EOShort, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{EifFile, EifItem, EifItemSize, EifItemSpecial, EifItemSubType, EifItemType},
@@ -41,11 +41,11 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
         let record = EifItem {
             name: v["name"].as_str().unwrap_or_default().to_string(),
             graphic_id: v["graphicId"].as_u64().unwrap_or(0) as EOShort,
-            r#type: EifItemType::from_char(v["type"].as_u64().unwrap_or(0) as EOChar)
+            r#type: EifItemType::from_char(v["type"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
-            subtype: EifItemSubType::from_char(v["subType"].as_u64().unwrap_or(0) as EOChar)
+            subtype: EifItemSubType::from_char(v["subType"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
-            special: EifItemSpecial::from_char(v["special"].as_u64().unwrap_or(0) as EOChar)
+            special: EifItemSpecial::from_char(v["special"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
             hp: v["hp"].as_u64().unwrap_or(0) as EOShort,
             tp: v["tp"].as_u64().unwrap_or(0) as EOShort,
@@ -54,22 +54,22 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
             accuracy: v["accuracy"].as_u64().unwrap_or(0) as EOShort,
             evade: v["evade"].as_u64().unwrap_or(0) as EOShort,
             armor: v["armor"].as_u64().unwrap_or(0) as EOShort,
-            return_damage: v["returnDamage"].as_u64().unwrap_or(0) as EOChar,
-            str: v["str"].as_u64().unwrap_or(0) as EOChar,
-            intl: v["intl"].as_u64().unwrap_or(0) as EOChar,
-            wis: v["wis"].as_u64().unwrap_or(0) as EOChar,
-            agi: v["agi"].as_u64().unwrap_or(0) as EOChar,
-            con: v["con"].as_u64().unwrap_or(0) as EOChar,
-            cha: v["cha"].as_u64().unwrap_or(0) as EOChar,
-            light_resistance: v["lightResistance"].as_u64().unwrap_or(0) as EOChar,
-            dark_resistance: v["darkResistance"].as_u64().unwrap_or(0) as EOChar,
-            earth_resistance: v["earthResistance"].as_u64().unwrap_or(0) as EOChar,
-            air_resistance: v["airResistance"].as_u64().unwrap_or(0) as EOChar,
-            water_resistance: v["waterResistance"].as_u64().unwrap_or(0) as EOChar,
-            fire_resistance: v["fireResistance"].as_u64().unwrap_or(0) as EOChar,
+            return_damage: v["returnDamage"].as_u64().unwrap_or(0) as i32,
+            str: v["str"].as_u64().unwrap_or(0) as i32,
+            intl: v["intl"].as_u64().unwrap_or(0) as i32,
+            wis: v["wis"].as_u64().unwrap_or(0) as i32,
+            agi: v["agi"].as_u64().unwrap_or(0) as i32,
+            con: v["con"].as_u64().unwrap_or(0) as i32,
+            cha: v["cha"].as_u64().unwrap_or(0) as i32,
+            light_resistance: v["lightResistance"].as_u64().unwrap_or(0) as i32,
+            dark_resistance: v["darkResistance"].as_u64().unwrap_or(0) as i32,
+            earth_resistance: v["earthResistance"].as_u64().unwrap_or(0) as i32,
+            air_resistance: v["airResistance"].as_u64().unwrap_or(0) as i32,
+            water_resistance: v["waterResistance"].as_u64().unwrap_or(0) as i32,
+            fire_resistance: v["fireResistance"].as_u64().unwrap_or(0) as i32,
             spec1: v["spec1"].as_u64().unwrap_or(0) as EOInt,
-            spec2: v["spec2"].as_u64().unwrap_or(0) as EOChar,
-            spec3: v["spec3"].as_u64().unwrap_or(0) as EOChar,
+            spec2: v["spec2"].as_u64().unwrap_or(0) as i32,
+            spec3: v["spec3"].as_u64().unwrap_or(0) as i32,
             level_req: v["levelReq"].as_u64().unwrap_or(0) as EOShort,
             class_req: v["classReq"].as_u64().unwrap_or(0) as EOShort,
             str_req: v["strReq"].as_u64().unwrap_or(0) as EOShort,
@@ -78,10 +78,10 @@ fn load_json() -> Result<EifFile, Box<dyn std::error::Error>> {
             agi_req: v["agiReq"].as_u64().unwrap_or(0) as EOShort,
             con_req: v["conReq"].as_u64().unwrap_or(0) as EOShort,
             cha_req: v["chaReq"].as_u64().unwrap_or(0) as EOShort,
-            element: v["element"].as_u64().unwrap_or(0) as EOChar,
-            element_damage: v["elementDamage"].as_u64().unwrap_or(0) as EOChar,
-            weight: v["weight"].as_u64().unwrap_or(0) as EOChar,
-            size: EifItemSize::from_char(v["size"].as_u64().unwrap_or(0) as EOChar)
+            element: v["element"].as_u64().unwrap_or(0) as i32,
+            element_damage: v["elementDamage"].as_u64().unwrap_or(0) as i32,
+            weight: v["weight"].as_u64().unwrap_or(0) as i32,
+            size: EifItemSize::from_char(v["size"].as_u64().unwrap_or(0) as i32)
                 .unwrap_or_default(),
         };
         eif_file.items.push(record);

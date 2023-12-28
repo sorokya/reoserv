@@ -2,7 +2,7 @@ use std::cmp;
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{Item, PacketAction, PacketFamily},
 };
 
@@ -60,7 +60,7 @@ impl Map {
         };
 
         let user_items = chest.items.iter().filter(|i| i.slot == 0).count();
-        let mut chest_slots: Vec<EOChar> = vec![];
+        let mut chest_slots: Vec<i32> = vec![];
 
         for spawn in chest.spawns.iter() {
             if !chest_slots.contains(&spawn.slot) {

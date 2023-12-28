@@ -1,5 +1,5 @@
 use config::{Config, ConfigError, File};
-use eo::data::{EOChar, EOInt, EOShort};
+use eo::data::{i32, EOInt, EOShort};
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
@@ -29,33 +29,33 @@ pub struct Database {
 #[derive(Debug, Deserialize)]
 pub struct NewCharacter {
     pub spawn_map: EOShort,
-    pub spawn_x: EOChar,
-    pub spawn_y: EOChar,
-    pub spawn_direction: EOChar,
+    pub spawn_x: i32,
+    pub spawn_y: i32,
+    pub spawn_direction: i32,
     pub home: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Jail {
     pub map: EOShort,
-    pub x: EOChar,
-    pub y: EOChar,
+    pub x: i32,
+    pub y: i32,
     pub free_map: EOShort,
-    pub free_x: EOChar,
-    pub free_y: EOChar,
+    pub free_x: i32,
+    pub free_y: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Rescue {
     pub map: EOShort,
-    pub x: EOChar,
-    pub y: EOChar,
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct World {
-    pub see_distance: EOChar,
-    pub drop_distance: EOChar,
+    pub see_distance: i32,
+    pub drop_distance: i32,
     pub recover_rate: EOInt,
     pub npc_recover_rate: EOInt,
     pub chest_spawn_rate: EOInt,
@@ -131,7 +131,7 @@ pub struct Combat {
 #[derive(Debug, Deserialize)]
 pub struct WeaponRange {
     pub weapon: EOShort,
-    pub range: EOChar,
+    pub range: i32,
     pub arrows: bool,
 }
 

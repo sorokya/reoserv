@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{server::init, FileType, InitReply, PacketAction, PacketFamily},
 };
 
@@ -13,7 +13,7 @@ impl World {
         player_id: EOShort,
         file_type: FileType,
         session_id: EOShort,
-        _file_id: Option<EOChar>,
+        _file_id: Option<i32>,
         warp: bool,
     ) {
         let player = match self.players.get(&player_id) {

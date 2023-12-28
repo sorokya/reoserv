@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{u8, EOChar, EOInt, EOShort},
+    data::{u8, i32, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use mysql_async::Pool;
@@ -197,7 +197,7 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_interact_npc_index(&self) -> Option<EOChar> {
+    pub async fn get_interact_npc_index(&self) -> Option<i32> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -221,7 +221,7 @@ impl PlayerHandle {
 
     pub async fn get_sequence_bytes(
         &self,
-    ) -> Result<(EOShort, EOChar), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(EOShort, i32), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSequenceBytes { respond_to: tx });
         match rx.await {
@@ -333,7 +333,7 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetCharacter(character));
     }
 
-    pub fn set_interact_npc_index(&self, index: EOChar) {
+    pub fn set_interact_npc_index(&self, index: i32) {
         let _ = self.tx.send(Command::SetInteractNpcIndex(index));
     }
 
@@ -377,7 +377,7 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub fn update_party_hp(&self, hp_percentage: EOChar) {
+    pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
     }
 }

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamReader},
+    data::{i32, EOShort, Serializeable, StreamReader},
     protocol::{
         client::statskill::{Add, AddData, Junk, Open, Remove, Take},
         PacketAction,
@@ -30,7 +30,7 @@ async fn junk(reader: StreamReader, player_id: EOShort, map: MapHandle) {
 async fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let mut packet = Open::default();
     packet.deserialize(&reader);
-    map.open_skill_master(player_id, packet.npc_index as EOChar);
+    map.open_skill_master(player_id, packet.npc_index as i32);
 }
 
 async fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {

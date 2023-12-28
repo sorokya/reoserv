@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -80,7 +80,7 @@ impl Map {
         }
 
         let mut builder = StreamBuilder::new();
-        builder.add_char(wrong_answers as EOChar);
+        builder.add_char(wrong_answers as i32);
 
         player.send(PacketAction::Reply, PacketFamily::Citizen, builder.get());
     }

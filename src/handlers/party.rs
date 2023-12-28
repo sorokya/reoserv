@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamReader},
+    data::{i32, EOShort, StreamReader},
     protocol::PacketAction,
 };
 
@@ -9,8 +9,8 @@ use crate::{
     world::WorldHandle,
 };
 
-const JOIN: EOChar = 0;
-const INVITE: EOChar = 1;
+const JOIN: i32 = 0;
+const INVITE: i32 = 1;
 
 pub fn request(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let request_type = reader.get_char();

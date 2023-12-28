@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::{avatar, paperdoll},
         AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
@@ -13,7 +13,7 @@ use crate::ITEM_DB;
 use super::super::Map;
 
 impl Map {
-    pub fn unequip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub fn unequip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: i32) {
         let target = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {

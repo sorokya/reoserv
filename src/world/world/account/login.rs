@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::login::{self, Reply},
         CharacterList, LoginReply, PacketAction, PacketFamily,
@@ -140,7 +140,7 @@ impl World {
                 reply_code: LoginReply::Ok,
                 data: login::ReplyData::Ok(login::ReplyOk {
                     character_list: CharacterList {
-                        num_characters: characters.len() as EOChar,
+                        num_characters: characters.len() as i32,
                         characters,
                     },
                 }),

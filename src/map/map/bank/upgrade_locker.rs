@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -35,7 +35,7 @@ impl Map {
 
         let mut builder = StreamBuilder::new();
         builder.add_int(character.get_item_amount(1));
-        builder.add_char(character.bank_level as EOChar);
+        builder.add_char(character.bank_level as i32);
 
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,

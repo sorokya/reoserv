@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
     pubs::{EifItemSubType, EnfNpcType},
 };
@@ -15,7 +15,7 @@ use crate::{
 use super::super::Map;
 
 enum AttackTarget {
-    Npc(EOChar),
+    Npc(i32),
     Player(EOShort),
 }
 
@@ -108,7 +108,7 @@ impl Map {
         None
     }
 
-    async fn attack_npc(&mut self, player_id: EOShort, npc_index: EOChar, direction: Direction) {
+    async fn attack_npc(&mut self, player_id: EOShort, npc_index: i32, direction: Direction) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -295,7 +295,7 @@ fn can_attack(character: &Character) -> bool {
     true
 }
 
-fn get_weapon_range(character: &Character) -> EOChar {
+fn get_weapon_range(character: &Character) -> i32 {
     let weapon = character.paperdoll.weapon;
     if weapon == 0 {
         return 1;

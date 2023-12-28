@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::shop, PacketAction, PacketFamily, ShopCraftItem, ShopTradeItem, VeryShortItem,
     },
@@ -11,7 +11,7 @@ use crate::{NPC_DB, SHOP_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_shop(&mut self, player_id: EOShort, npc_index: EOChar) {
+    pub async fn open_shop(&mut self, player_id: EOShort, npc_index: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,

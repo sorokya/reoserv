@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamReader},
+    data::{i32, EOShort, StreamReader},
     protocol::PacketAction,
 };
 
@@ -18,7 +18,7 @@ fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
 
 fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
     let npc_index = reader.get_short();
-    map.open_bank(player_id, npc_index as EOChar);
+    map.open_bank(player_id, npc_index as i32);
 }
 
 fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {

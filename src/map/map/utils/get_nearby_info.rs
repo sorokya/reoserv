@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort},
+    data::{i32, EOShort},
     protocol::NearbyInfo,
 };
 use tokio::sync::oneshot;
@@ -36,7 +36,7 @@ impl Map {
             }
         }
         let _ = respond_to.send(NearbyInfo {
-            num_characters: nearby_characters.len() as EOChar,
+            num_characters: nearby_characters.len() as i32,
             items: nearby_items,
             npcs: nearby_npcs,
             characters: nearby_characters,

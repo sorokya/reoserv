@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EmfEffect,
 };
@@ -9,7 +9,7 @@ use crate::SETTINGS;
 
 use super::super::Map;
 
-const EFFECT_QUAKE: EOChar = 1;
+const EFFECT_QUAKE: i32 = 1;
 
 impl Map {
     pub fn timed_quake(&mut self) {
@@ -52,7 +52,7 @@ impl Map {
         if self.quake_ticks >= rate {
             let mut builder = StreamBuilder::new();
             builder.add_char(EFFECT_QUAKE);
-            builder.add_char(strength as EOChar);
+            builder.add_char(strength as i32);
 
             let buf = builder.get();
 

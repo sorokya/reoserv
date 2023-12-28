@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{i32, EOInt, EOShort},
     protocol::{client, FileType, OnlinePlayers},
 };
 use mysql_async::Pool;
@@ -34,7 +34,7 @@ impl WorldHandle {
         &self,
         player_id: EOShort,
         target_player_id: EOShort,
-        request_type: EOChar,
+        request_type: i32,
     ) {
         let _ = self.tx.send(Command::AcceptPartyRequest {
             player_id,
@@ -197,7 +197,7 @@ impl WorldHandle {
         player_id: EOShort,
         file_type: FileType,
         session_id: EOShort,
-        file_id: Option<EOChar>,
+        file_id: Option<i32>,
         warp: bool,
     ) {
         let _ = self.tx.send(Command::GetFile {
@@ -304,7 +304,7 @@ impl WorldHandle {
         let _ = self.tx.send(Command::PingPlayers);
     }
 
-    pub fn quake(&self, magnitude: EOChar) {
+    pub fn quake(&self, magnitude: i32) {
         let _ = self.tx.send(Command::Quake { magnitude });
     }
 
@@ -404,7 +404,7 @@ impl WorldHandle {
         });
     }
 
-    pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: EOChar) {
+    pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP {
             player_id,
             hp_percentage,

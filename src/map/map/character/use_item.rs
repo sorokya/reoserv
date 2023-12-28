@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{
         server::{
             avatar,
@@ -82,8 +82,8 @@ impl Map {
                 player.request_warp(
                     item.spec1 as EOShort,
                     Coords {
-                        x: item.spec2 as EOChar,
-                        y: item.spec3 as EOChar,
+                        x: item.spec2 as i32,
+                        y: item.spec3 as i32,
                     },
                     character.map_id == item.spec1 as EOShort,
                     Some(WarpAnimation::Scroll),
@@ -107,7 +107,7 @@ impl Map {
             EifItemType::HairDye => {
                 reply.used_item_type = ItemType::HairDye;
                 reply.data = ReplyData::HairDye(ReplyHairDye {
-                    hair_color: item.spec1 as EOChar,
+                    hair_color: item.spec1 as i32,
                 });
                 character.hair_color = item.spec1 as EOShort;
                 let packet = avatar::Agree {
@@ -116,7 +116,7 @@ impl Map {
                         slot: AvatarSlot::HairColor,
                         sound: 0,
                         data: AvatarChangeData::HairColor(AvatarChangeHairColor {
-                            color: item.spec1 as EOChar,
+                            color: item.spec1 as i32,
                         }),
                     },
                 };

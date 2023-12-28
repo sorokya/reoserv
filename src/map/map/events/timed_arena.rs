@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, StreamBuilder},
+    data::{i32, StreamBuilder},
     protocol::{Coords, PacketAction, PacketFamily},
 };
 
@@ -20,7 +20,7 @@ impl Map {
         if self.arena_ticks >= config.rate {
             self.arena_ticks = 0;
 
-            if self.arena_players.len() as EOChar >= config.block {
+            if self.arena_players.len() as i32 >= config.block {
                 return self.send_arena_full();
             }
 
@@ -90,7 +90,7 @@ impl Map {
 
     fn send_arena_launch(&mut self, player_count: usize) {
         let mut builder = StreamBuilder::new();
-        builder.add_char(player_count as EOChar);
+        builder.add_char(player_count as i32);
 
         let buf = builder.get();
         for character in self.characters.values() {

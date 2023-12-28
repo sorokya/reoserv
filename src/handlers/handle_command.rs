@@ -1,4 +1,4 @@
-use eo::data::{EOChar, EOShort, Serializeable, StreamBuilder};
+use eo::data::{i32, EOShort, Serializeable, StreamBuilder};
 use eo::protocol::server::talk;
 use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
 
@@ -12,8 +12,8 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
             Coords {
-                x: args[1].parse::<EOChar>().unwrap(),
-                y: args[2].parse::<EOChar>().unwrap(),
+                x: args[1].parse::<i32>().unwrap(),
+                y: args[2].parse::<i32>().unwrap(),
             }
         } else {
             let map_size = map.get_dimensions().await;
@@ -222,7 +222,7 @@ pub async fn handle_command(
                 }
             }
 
-            if character.admin_level as EOChar >= command.admin_level as EOChar
+            if character.admin_level as i32 >= command.admin_level as i32
                 && validate_args(&args, command, &player)
             {
                 match command.name.as_str() {
@@ -259,7 +259,7 @@ pub async fn handle_command(
                         character.name.to_owned(),
                         true,
                     ),
-                    "quake" => world.quake(args[0].parse::<EOChar>().unwrap()),
+                    "quake" => world.quake(args[0].parse::<i32>().unwrap()),
                     "mute" => world.mute_player(args[0].to_owned(), character.name.to_owned()),
                     "player" => {
                         world.request_player_info(character.player_id.unwrap(), args[0].to_owned())

@@ -1,10 +1,10 @@
-use eo::{data::EOChar, protocol::Coords};
+use eo::{data::i32, protocol::Coords};
 
-pub fn get_distance(a: &Coords, b: &Coords) -> EOChar {
+pub fn get_distance(a: &Coords, b: &Coords) -> i32 {
     let dx = (a.x as f64 - b.x as f64).abs();
     let dy = (a.y as f64 - b.y as f64).abs();
 
-    (dx + dy) as EOChar
+    (dx + dy) as i32
 }
 
 pub fn in_range(observer: &Coords, other: &Coords) -> bool {

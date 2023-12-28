@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{i32, EOInt, EOShort},
     protocol::Coords,
     pubs::{EmfFile, EmfTileSpec},
 };
@@ -21,7 +21,7 @@ pub struct Map {
     chests: Vec<Chest>,
     doors: Vec<Door>,
     items: HashMap<EOShort, Item>,
-    npcs: HashMap<EOChar, Npc>,
+    npcs: HashMap<i32, Npc>,
     npcs_initialized: bool,
     characters: HashMap<EOShort, Character>,
     pool: Pool,

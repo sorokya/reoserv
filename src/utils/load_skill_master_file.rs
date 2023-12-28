@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamReader},
+    data::{i32, EOInt, EOShort, Serializeable, StreamReader},
     pubs::{Skill, SkillMaster, SkillMasterFile},
 };
 use glob::glob;
@@ -37,16 +37,16 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
         skill_master_file.skill_masters.push(SkillMaster {
             vendor_id: v["behaviorId"].as_u64().unwrap_or(0) as EOShort,
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            min_level: v["minLevel"].as_u64().unwrap_or(0) as EOChar,
-            max_level: v["maxLevel"].as_u64().unwrap_or(0) as EOChar,
-            class_req: v["classReq"].as_u64().unwrap_or(0) as EOChar,
+            min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
+            max_level: v["maxLevel"].as_u64().unwrap_or(0) as i32,
+            class_req: v["classReq"].as_u64().unwrap_or(0) as i32,
             num_skills: skills.len() as EOShort,
             skills: skills
                 .iter()
                 .map(|v| Skill {
                     skill_id: v["id"].as_u64().unwrap_or(0) as EOShort,
-                    min_level: v["minLevel"].as_u64().unwrap_or(0) as EOChar,
-                    class_req: v["classReq"].as_u64().unwrap_or(0) as EOChar,
+                    min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
+                    class_req: v["classReq"].as_u64().unwrap_or(0) as i32,
                     price: v["price"].as_u64().unwrap_or(0) as EOInt,
                     skill_id_req1: v["skillIdReq1"].as_u64().unwrap_or(0) as EOShort,
                     skill_id_req2: v["skillIdReq2"].as_u64().unwrap_or(0) as EOShort,

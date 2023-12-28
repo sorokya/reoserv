@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamReader},
+    data::{i32, EOInt, EOShort, Serializeable, StreamReader},
     pubs::{Craft, Shop, ShopFile, Trade},
 };
 use glob::glob;
@@ -38,18 +38,18 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
         shop_file.shops.push(Shop {
             vendor_id: v["behaviorId"].as_u64().unwrap_or(0) as EOShort,
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            min_level: v["minLevel"].as_u64().unwrap_or(0) as EOChar,
-            max_level: v["maxLevel"].as_u64().unwrap_or(0) as EOChar,
-            class_req: v["classReq"].as_u64().unwrap_or(0) as EOChar,
+            min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
+            max_level: v["maxLevel"].as_u64().unwrap_or(0) as i32,
+            class_req: v["classReq"].as_u64().unwrap_or(0) as i32,
             num_trades: trades.len() as EOShort,
-            num_crafts: crafts.len() as EOChar,
+            num_crafts: crafts.len() as i32,
             trades: trades
                 .iter()
                 .map(|v| Trade {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as EOShort,
                     buy_price: v["buyPrice"].as_u64().unwrap_or(0) as EOInt,
                     sell_price: v["sellPrice"].as_u64().unwrap_or(0) as EOInt,
-                    max_amount: v["maxBuyAmount"].as_u64().unwrap_or(0) as EOChar,
+                    max_amount: v["maxBuyAmount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
             crafts: crafts
@@ -57,13 +57,13 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                 .map(|v| Craft {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as EOShort,
                     ingredient1_item_id: v["ingredient1ItemId"].as_u64().unwrap_or(0) as EOShort,
-                    ingredient1_amount: v["ingredient1Amount"].as_u64().unwrap_or(0) as EOChar,
+                    ingredient1_amount: v["ingredient1Amount"].as_u64().unwrap_or(0) as i32,
                     ingredient2_item_id: v["ingredient2ItemId"].as_u64().unwrap_or(0) as EOShort,
-                    ingredient2_amount: v["ingredient2Amount"].as_u64().unwrap_or(0) as EOChar,
+                    ingredient2_amount: v["ingredient2Amount"].as_u64().unwrap_or(0) as i32,
                     ingredient3_item_id: v["ingredient3ItemId"].as_u64().unwrap_or(0) as EOShort,
-                    ingredient3_amount: v["ingredient3Amount"].as_u64().unwrap_or(0) as EOChar,
+                    ingredient3_amount: v["ingredient3Amount"].as_u64().unwrap_or(0) as i32,
                     ingredient4_item_id: v["ingredient4ItemId"].as_u64().unwrap_or(0) as EOShort,
-                    ingredient4_amount: v["ingredient4Amount"].as_u64().unwrap_or(0) as EOChar,
+                    ingredient4_amount: v["ingredient4Amount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
         });

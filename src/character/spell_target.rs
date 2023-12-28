@@ -1,9 +1,9 @@
-use eo::data::{EOChar, EOShort};
+use eo::data::{i32, EOShort};
 
 #[derive(Debug)]
 pub enum SpellTarget {
     Player,
     Group,
     OtherPlayer(EOShort),
-    Npc(EOChar),
+    Npc(i32),
 }

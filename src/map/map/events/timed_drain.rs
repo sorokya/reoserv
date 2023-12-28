@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EmfEffect,
 };
@@ -10,7 +10,7 @@ use crate::{utils::in_client_range, SETTINGS};
 
 use super::super::Map;
 
-const EFFECT_DRAIN: EOChar = 1;
+const EFFECT_DRAIN: i32 = 1;
 
 impl Map {
     pub fn timed_drain(&mut self) {

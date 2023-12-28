@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder},
+    data::{i32, EOShort, EOThree, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
     pubs::EnfNpcType,
 };
@@ -9,7 +9,7 @@ use crate::NPC_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn open_bank(&mut self, player_id: EOShort, npc_index: EOChar) {
+    pub async fn open_bank(&mut self, player_id: EOShort, npc_index: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,
@@ -47,7 +47,7 @@ impl Map {
         let mut builder = StreamBuilder::new();
         builder.add_int(character.gold_bank);
         builder.add_three(session_id as EOThree);
-        builder.add_char(character.bank_level as EOChar);
+        builder.add_char(character.bank_level as i32);
         player.send(PacketAction::Open, PacketFamily::Bank, builder.get());
     }
 }

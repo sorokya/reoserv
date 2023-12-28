@@ -6,7 +6,7 @@ use bytes::Bytes;
 use crc::{Crc, CRC_32_CKSUM};
 use eo::{
     data::{
-        decode_number, encode_number, EOChar, EOInt, EOShort, Serializeable, StreamBuilder,
+        decode_number, encode_number, i32, EOInt, EOShort, Serializeable, StreamBuilder,
         StreamReader,
     },
     pubs::{EnfFile, EnfNpc, EnfNpcType},
@@ -40,7 +40,7 @@ fn load_json() -> Result<EnfFile, Box<dyn std::error::Error>> {
         let record = EnfNpc {
             name: v["name"].as_str().unwrap_or_default().to_string(),
             graphic_id: v["graphicId"].as_u64().unwrap_or(0) as EOShort,
-            race: v["race"].as_u64().unwrap_or(0) as EOChar,
+            race: v["race"].as_u64().unwrap_or(0) as i32,
             boss: v["boss"].as_u64().unwrap_or(0) as EOShort,
             child: v["child"].as_u64().unwrap_or(0) as EOShort,
             r#type: EnfNpcType::from_short(v["type"].as_u64().unwrap_or(0) as EOShort)
@@ -53,12 +53,12 @@ fn load_json() -> Result<EnfFile, Box<dyn std::error::Error>> {
             accuracy: v["accuracy"].as_u64().unwrap_or(0) as EOShort,
             evade: v["evade"].as_u64().unwrap_or(0) as EOShort,
             armor: v["armor"].as_u64().unwrap_or(0) as EOShort,
-            return_damage: v["returnDamage"].as_u64().unwrap_or(0) as EOChar,
+            return_damage: v["returnDamage"].as_u64().unwrap_or(0) as i32,
             element: v["element"].as_u64().unwrap_or(0) as EOShort,
             element_damage: v["elementDamage"].as_u64().unwrap_or(0) as EOShort,
             element_weakness: v["elementWeakness"].as_u64().unwrap_or(0) as EOShort,
             element_weakness_damage: v["elementWeaknessDamage"].as_u64().unwrap_or(0) as EOShort,
-            level: v["level"].as_u64().unwrap_or(0) as EOChar,
+            level: v["level"].as_u64().unwrap_or(0) as i32,
             experience: v["experience"].as_u64().unwrap_or(0) as EOInt,
         };
         enf_file.npcs.push(record);

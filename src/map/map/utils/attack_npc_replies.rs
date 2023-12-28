@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, EOShort, StreamBuilder},
     protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
 };
 use evalexpr::{context_map, eval_float_with_context};
@@ -13,7 +13,7 @@ impl Map {
     pub fn attack_npc_reply(
         &mut self,
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
         direction: Direction,
         damage_dealt: EOInt,
         spell_id: Option<EOShort>,
@@ -71,7 +71,7 @@ impl Map {
     pub async fn attack_npc_killed_reply(
         &mut self,
         killer_player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
         direction: Direction,
         damage_dealt: EOInt,
         spell_id: Option<EOShort>,

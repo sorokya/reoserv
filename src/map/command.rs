@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, EOShort, EOThree},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
@@ -83,7 +83,7 @@ pub enum Command {
     Equip {
         player_id: EOShort,
         item_id: EOShort,
-        sub_loc: EOChar,
+        sub_loc: i32,
     },
     Face {
         target_player_id: EOShort,
@@ -99,7 +99,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Option<Box<Character>>>,
     },
     GetDimensions {
-        respond_to: oneshot::Sender<(EOChar, EOChar)>,
+        respond_to: oneshot::Sender<(i32, i32)>,
     },
     GetItem {
         target_player_id: EOShort,
@@ -107,7 +107,7 @@ pub enum Command {
     },
     GetMapInfo {
         player_ids: Vec<EOShort>,
-        npc_indexes: Vec<EOChar>,
+        npc_indexes: Vec<i32>,
         respond_to: oneshot::Sender<range::Reply>,
     },
     GetNearbyInfo {
@@ -151,7 +151,7 @@ pub enum Command {
     },
     OpenBank {
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
     },
     OpenBoard {
         player_id: EOShort,
@@ -167,18 +167,18 @@ pub enum Command {
     },
     OpenInn {
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
     },
     OpenLocker {
         player_id: EOShort,
     },
     OpenShop {
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
     },
     OpenSkillMaster {
         player_id: EOShort,
-        npc_index: EOChar,
+        npc_index: i32,
     },
     RecoverNpcs,
     RecoverPlayers,
@@ -275,7 +275,7 @@ pub enum Command {
     Unequip {
         player_id: EOShort,
         item_id: EOShort,
-        sub_loc: EOChar,
+        sub_loc: i32,
     },
     UpgradeLocker {
         player_id: EOShort,

@@ -1,5 +1,5 @@
 use eo::{
-    data::EOChar,
+    data::i32,
     protocol::{BigCoords, CharacterMapInfo},
 };
 
@@ -23,8 +23,8 @@ impl Character {
             },
             level: self.level,
             gender: self.gender,
-            hairstyle: self.hair_style as EOChar,
-            haircolor: self.hair_color as EOChar,
+            hairstyle: self.hair_style as i32,
+            haircolor: self.hair_color as i32,
             skin_id: self.skin,
             max_hp: self.max_hp,
             hp: self.hp,
@@ -32,7 +32,7 @@ impl Character {
             tp: self.tp,
             paperdoll: self.get_paperdoll_b000a0hsw(),
             sit_state: self.sit_state,
-            invisible: EOChar::from(self.hidden),
+            invisible: i32::from(self.hidden),
             animation: None,
         }
     }

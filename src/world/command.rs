@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort},
+    data::{i32, EOInt, EOShort},
     protocol::{client, FileType, OnlinePlayers},
 };
 use tokio::sync::oneshot;
@@ -13,7 +13,7 @@ pub enum Command {
     AcceptPartyRequest {
         player_id: EOShort,
         target_player_id: EOShort,
-        request_type: EOChar,
+        request_type: i32,
     },
     AddLoggedInAccount {
         account_id: EOInt,
@@ -94,7 +94,7 @@ pub enum Command {
         player_id: EOShort,
         file_type: FileType,
         session_id: EOShort,
-        file_id: Option<EOChar>,
+        file_id: Option<i32>,
         warp: bool,
     },
     GetMap {
@@ -142,7 +142,7 @@ pub enum Command {
     },
     PingPlayers,
     Quake {
-        magnitude: EOChar,
+        magnitude: i32,
     },
     ReportPlayer {
         player_id: EOShort,
@@ -202,6 +202,6 @@ pub enum Command {
     },
     UpdatePartyHP {
         player_id: EOShort,
-        hp_percentage: EOChar,
+        hp_percentage: i32,
     },
 }

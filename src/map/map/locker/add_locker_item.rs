@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, EOShort, StreamBuilder},
     protocol::{Coords, Item, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -24,7 +24,7 @@ impl Map {
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as EOInt >= bank_size {
             let mut builder = StreamBuilder::new();
-            builder.add_char(bank_size as EOChar);
+            builder.add_char(bank_size as i32);
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Locker,

@@ -1,6 +1,6 @@
 use crate::{character::Character, errors::WrongSessionIdError};
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{
         client::character::Create,
         server::character::{Reply, ReplyData, ReplyExists, ReplyOk},
@@ -104,7 +104,7 @@ impl World {
                 reply_code: CharacterReply::Ok,
                 data: ReplyData::Ok(ReplyOk {
                     character_list: CharacterList {
-                        num_characters: characters.len() as EOChar,
+                        num_characters: characters.len() as i32,
                         characters,
                     },
                 }),

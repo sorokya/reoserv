@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOShort, Serializeable, StreamBuilder},
     protocol::{server::paperdoll, PacketAction, PacketFamily},
     pubs::EifItemType,
 };
@@ -9,7 +9,7 @@ use crate::ITEM_DB;
 use super::Character;
 
 impl Character {
-    pub fn equip(&mut self, item_id: EOShort, sub_loc: EOChar) -> bool {
+    pub fn equip(&mut self, item_id: EOShort, sub_loc: i32) -> bool {
         if sub_loc > 1 {
             return false;
         }

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamBuilder, StreamReader},
+    data::{i32, Serializeable, StreamBuilder, StreamReader},
     protocol::{client::npcrange::Request, server::npc, PacketAction, PacketFamily},
 };
 
@@ -13,7 +13,7 @@ async fn request(reader: StreamReader, player: PlayerHandle) {
         let map_info = map.get_map_info(Vec::default(), request.npc_indexes).await;
         if !map_info.nearby.npcs.is_empty() {
             let reply = npc::Agree {
-                num_npcs: map_info.nearby.npcs.len() as EOChar,
+                num_npcs: map_info.nearby.npcs.len() as i32,
                 npcs: map_info.nearby.npcs,
             };
 

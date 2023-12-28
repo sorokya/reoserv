@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, Serializeable, StreamBuilder},
+    data::{i32, Serializeable, StreamBuilder},
     protocol::{server::talk, AdminLevel, PacketAction, PacketFamily},
 };
 
@@ -17,7 +17,7 @@ impl World {
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
                 if character.name != name
-                    && character.admin_level as EOChar >= AdminLevel::Guardian as EOChar
+                    && character.admin_level as i32 >= AdminLevel::Guardian as i32
                 {
                     player.send(PacketAction::Admin, PacketFamily::Talk, buf.clone());
                 }

@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort},
+    data::{i32, EOShort},
     protocol::{server::range, CharacterMapInfo},
 };
 use tokio::sync::oneshot;
@@ -10,7 +10,7 @@ impl Map {
     pub fn get_map_info(
         &self,
         player_ids: Vec<EOShort>,
-        npc_indexes: Vec<EOChar>,
+        npc_indexes: Vec<i32>,
         respond_to: oneshot::Sender<range::Reply>,
     ) {
         let mut reply = range::Reply::default();

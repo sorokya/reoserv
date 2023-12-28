@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::{DateTime, Utc};
 use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, EOShort, EOThree},
     protocol::{Coords, Direction, NPCMapInfo},
 };
 use evalexpr::{context_map, eval_float_with_context};
@@ -34,12 +34,12 @@ pub struct NpcOpponent {
 }
 
 impl Npc {
-    pub fn get_hp_percentage(&self) -> EOChar {
+    pub fn get_hp_percentage(&self) -> i32 {
         let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
-        percent.floor() as EOChar
+        percent.floor() as i32
     }
 
-    pub fn to_map_info(&self, index: &EOChar) -> NPCMapInfo {
+    pub fn to_map_info(&self, index: &i32) -> NPCMapInfo {
         NPCMapInfo {
             index: *index,
             id: self.id,

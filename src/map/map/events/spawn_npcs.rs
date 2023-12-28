@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::Duration;
 use eo::{
-    data::EOChar,
+    data::i32,
     protocol::{Coords, Direction},
 };
 use rand::Rng;
@@ -19,7 +19,7 @@ impl Map {
 
         let now = chrono::Utc::now();
         if self.npcs.is_empty() {
-            let mut npc_index: EOChar = 0;
+            let mut npc_index: i32 = 0;
 
             let dead_since = if SETTINGS.npcs.instant_spawn {
                 now - Duration::days(1)
@@ -59,7 +59,7 @@ impl Map {
         }
 
         let mut rng = rand::thread_rng();
-        let indexes = self.npcs.keys().cloned().collect::<Vec<EOChar>>();
+        let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
         for index in indexes {
             let (alive, spawn_time, dead_since, spawn_coords, spawn_type) = {
                 match self.npcs.get(&index) {
@@ -95,14 +95,14 @@ impl Map {
                             self.file.width as i32,
                         ),
                         0,
-                    ) as EOChar,
+                    ) as i32,
                     y: cmp::max(
                         cmp::min(
                             spawn_coords.y as i32 + rng.gen_range(-2..=2),
                             self.file.height as i32,
                         ),
                         0,
-                    ) as EOChar,
+                    ) as i32,
                 }
             };
 
@@ -125,8 +125,8 @@ impl Map {
                     0,
                 );
                 spawn_coords = Coords {
-                    x: x as EOChar,
-                    y: y as EOChar,
+                    x: x as i32,
+                    y: y as i32,
                 };
 
                 i += 1;

@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, EOShort, StreamBuilder, EO_BREAK_CHAR},
     protocol::{PacketAction, PacketFamily},
 };
 use mysql_async::{params, prelude::Queryable, Row};
@@ -75,8 +75,8 @@ impl Map {
                 .await
                 .unwrap();
 
-            builder.add_char(board_id as EOChar);
-            builder.add_char(posts.len() as EOChar);
+            builder.add_char(board_id as i32);
+            builder.add_char(posts.len() as i32);
 
             for post in posts {
                 let subject = if SETTINGS.board.date_posts {

@@ -1,10 +1,10 @@
-use eo::{data::EOChar, protocol::Coords, protocol::Direction};
+use eo::{data::i32, protocol::Coords, protocol::Direction};
 
 pub fn get_next_coords(
     coords: &Coords,
     direction: Direction,
-    map_width: EOChar,
-    map_height: EOChar,
+    map_width: i32,
+    map_height: i32,
 ) -> Coords {
     match direction {
         Direction::Down => {

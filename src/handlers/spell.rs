@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamReader},
+    data::{i32, EOShort, Serializeable, StreamReader},
     protocol::{
         client::spell::{Request, TargetOther},
         PacketAction, SpellTargetType,
@@ -27,7 +27,7 @@ fn target_other(reader: StreamReader, player_id: EOShort, map: MapHandle) {
             map.cast_spell(player_id, SpellTarget::OtherPlayer(packet.victim_id))
         }
         SpellTargetType::Npc => {
-            map.cast_spell(player_id, SpellTarget::Npc(packet.victim_id as EOChar))
+            map.cast_spell(player_id, SpellTarget::Npc(packet.victim_id as i32))
         }
     }
 }

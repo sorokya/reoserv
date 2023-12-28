@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, EOShort, EOThree},
     protocol::{
         client::character::Create, AdminLevel, Coords, Direction, Gender, Item, PaperdollFull,
         PaperdollIcon, SitState, Skin, Spell, Weight,
@@ -50,7 +50,7 @@ pub struct Character {
     pub fiance: Option<String>,
     pub partner: Option<String>,
     pub admin_level: AdminLevel,
-    pub class: EOChar,
+    pub class: i32,
     pub gender: Gender,
     pub skin: Skin,
     pub hair_style: EOShort,
@@ -59,10 +59,10 @@ pub struct Character {
     pub gold_bank: EOInt,
     pub guild_name: Option<String>,
     pub guild_tag: Option<String>,
-    pub guild_rank_id: Option<EOChar>,
+    pub guild_rank_id: Option<i32>,
     pub guild_rank_string: Option<String>,
     pub paperdoll: PaperdollFull,
-    pub level: EOChar,
+    pub level: i32,
     pub experience: EOInt,
     pub hp: EOShort,
     pub max_hp: EOShort,
@@ -118,9 +118,9 @@ impl Character {
         }
     }
 
-    pub fn get_hp_percentage(&self) -> EOChar {
+    pub fn get_hp_percentage(&self) -> i32 {
         let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
-        percent.floor() as EOChar
+        percent.floor() as i32
     }
 
     pub fn heal(&mut self, amount: EOShort) -> EOShort {
@@ -137,8 +137,8 @@ impl Character {
 
     pub fn get_weight(&self) -> Weight {
         Weight {
-            current: cmp::min(self.weight, 250) as EOChar,
-            max: self.max_weight as EOChar,
+            current: cmp::min(self.weight, 250) as i32,
+            max: self.max_weight as i32,
         }
     }
 

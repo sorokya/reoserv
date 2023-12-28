@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
+    data::{i32, EOInt, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -7,9 +7,9 @@ use crate::{player::PartyRequest, utils::in_client_range, SETTINGS};
 
 use super::super::Map;
 
-const IN_OTHER_PARTY: EOChar = 0;
-const IN_YOUR_PARTY: EOChar = 1;
-const PARTY_FULL: EOChar = 2;
+const IN_OTHER_PARTY: i32 = 0;
+const IN_YOUR_PARTY: i32 = 1;
+const PARTY_FULL: i32 = 2;
 
 impl Map {
     pub async fn party_request(&self, target_player_id: EOShort, request: PartyRequest) {

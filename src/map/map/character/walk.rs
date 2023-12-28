@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+    data::{i32, EOInt, EOShort, Serializeable, StreamBuilder},
     protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
     pubs::EmfTileSpec,
 };
@@ -33,7 +33,7 @@ impl Map {
 
             let previous_coords = coords;
             let coords = get_next_coords(&coords, direction, self.file.width, self.file.height);
-            let is_tile_walkable = admin_level as EOChar >= 1
+            let is_tile_walkable = admin_level as i32 >= 1
                 || (self.is_tile_walkable(&coords) && !self.is_tile_occupied(&coords));
             if !self.is_in_bounds(coords) || !is_tile_walkable {
                 return;

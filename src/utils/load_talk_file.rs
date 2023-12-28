@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, Serializeable, StreamReader},
+    data::{i32, Serializeable, StreamReader},
     pubs::{TalkFile, TalkNpc},
 };
 use glob::glob;
@@ -37,8 +37,8 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
         if messages.len() > 0 {
             talk_file.npcs.push(TalkNpc {
                 npc_id,
-                rate: v["talkRate"].as_u64().unwrap_or(0) as EOChar,
-                num_messages: messages.len() as EOChar,
+                rate: v["talkRate"].as_u64().unwrap_or(0) as i32,
+                num_messages: messages.len() as i32,
                 messages: messages
                     .iter()
                     .map(|v| v.as_str().unwrap_or_default().to_string())

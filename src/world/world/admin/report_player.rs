@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
+    data::{i32, EOShort, StreamBuilder, EO_BREAK_CHAR},
     protocol::{AdminMessageType, PacketAction, PacketFamily},
 };
 use mysql_async::prelude::Queryable;
@@ -35,7 +35,7 @@ impl World {
 
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
-                if character.name != from_name && character.admin_level as EOChar >= 1 {
+                if character.name != from_name && character.admin_level as i32 >= 1 {
                     player.send(
                         PacketAction::Reply,
                         PacketFamily::AdminInteract,

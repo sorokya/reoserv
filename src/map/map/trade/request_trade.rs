@@ -1,5 +1,5 @@
 use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
+    data::{i32, EOShort, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -7,7 +7,7 @@ use crate::{utils::in_client_range, SETTINGS};
 
 use super::super::Map;
 
-const MAGIC_NUMBER: EOChar = 138;
+const MAGIC_NUMBER: i32 = 138;
 
 impl Map {
     pub fn request_trade(&self, player_id: EOShort, target_player_id: EOShort) {

@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder},
+    data::{i32, EOShort, EOThree, StreamBuilder},
     protocol::{PacketAction, PacketFamily},
 };
 
@@ -9,7 +9,7 @@ use crate::SETTINGS;
 
 use super::super::Map;
 
-const EFFECT_SPIKE: EOChar = 2;
+const EFFECT_SPIKE: i32 = 2;
 
 impl Map {
     pub fn spike_damage(&mut self, player_id: EOShort) {

@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
+    data::{i32, EOInt, EOShort, EOThree},
     protocol::{
         server::range, Coords, Direction, Emote, Item, NearbyInfo, ShortItem, StatId, WarpAnimation,
     },
@@ -133,7 +133,7 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
-    pub fn equip(&self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub fn equip(&self, player_id: EOShort, item_id: EOShort, sub_loc: i32) {
         let _ = self.tx.send(Command::Equip {
             player_id,
             item_id,
@@ -166,7 +166,7 @@ impl MapHandle {
     }
 
     // TODO: use coords!
-    pub async fn get_dimensions(&self) -> (EOChar, EOChar) {
+    pub async fn get_dimensions(&self) -> (i32, i32) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
         rx.await.unwrap()
@@ -182,7 +182,7 @@ impl MapHandle {
     pub async fn get_map_info(
         &self,
         player_ids: Vec<EOShort>,
-        npc_indexes: Vec<EOChar>,
+        npc_indexes: Vec<i32>,
     ) -> range::Reply {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMapInfo {
@@ -267,7 +267,7 @@ impl MapHandle {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
-    pub fn open_bank(&self, player_id: EOShort, npc_index: EOChar) {
+    pub fn open_bank(&self, player_id: EOShort, npc_index: i32) {
         let _ = self.tx.send(Command::OpenBank {
             player_id,
             npc_index,
@@ -292,7 +292,7 @@ impl MapHandle {
         });
     }
 
-    pub fn open_inn(&self, player_id: EOShort, npc_index: EOChar) {
+    pub fn open_inn(&self, player_id: EOShort, npc_index: i32) {
         let _ = self.tx.send(Command::OpenInn {
             player_id,
             npc_index,
@@ -303,14 +303,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }
 
-    pub fn open_shop(&self, player_id: EOShort, npc_index: EOChar) {
+    pub fn open_shop(&self, player_id: EOShort, npc_index: i32) {
         let _ = self.tx.send(Command::OpenShop {
             player_id,
             npc_index,
         });
     }
 
-    pub fn open_skill_master(&self, player_id: EOShort, npc_index: EOChar) {
+    pub fn open_skill_master(&self, player_id: EOShort, npc_index: i32) {
         let _ = self.tx.send(Command::OpenSkillMaster {
             player_id,
             npc_index,
@@ -495,7 +495,7 @@ impl MapHandle {
         let _ = self.tx.send(Command::UnacceptTrade { player_id });
     }
 
-    pub fn unequip(&self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub fn unequip(&self, player_id: EOShort, item_id: EOShort, sub_loc: i32) {
         let _ = self.tx.send(Command::Unequip {
             player_id,
             item_id,

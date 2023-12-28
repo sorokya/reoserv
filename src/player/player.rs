@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder, MAX2},
+    data::{i32, EOInt, EOShort, StreamBuilder, MAX2},
     net::PacketProcessor,
     protocol::{PacketAction, PacketFamily},
 };
@@ -34,7 +34,7 @@ pub struct Player {
     ip: String,
     character: Option<Character>,
     session_id: Option<EOShort>,
-    interact_npc_index: Option<EOChar>,
+    interact_npc_index: Option<i32>,
     interact_player_id: Option<EOShort>,
     board_id: Option<EOShort>,
     chest_index: Option<usize>,

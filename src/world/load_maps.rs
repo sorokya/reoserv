@@ -9,7 +9,7 @@ use std::{
 
 use bytes::Bytes;
 use eo::{
-    data::{EOByte, EOInt, EOShort, Serializeable, StreamReader},
+    data::{u8, EOInt, EOShort, Serializeable, StreamReader},
     pubs::EmfFile,
 };
 use futures::{stream, StreamExt};
@@ -63,7 +63,7 @@ async fn load_map(
         let mut raw_file = tokio::fs::File::open(path).await?.into_std().await;
         file_size = raw_file.metadata()?.len();
 
-        let mut data_buf: Vec<EOByte> = Vec::new();
+        let mut data_buf: Vec<u8> = Vec::new();
         raw_file.seek(SeekFrom::Start(0))?;
         raw_file.read_to_end(&mut data_buf)?;
 

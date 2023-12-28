@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOByte, EOChar, EOInt, EOShort},
+    data::{u8, EOChar, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use mysql_async::Pool;
@@ -114,7 +114,7 @@ impl PlayerHandle {
 
     pub async fn gen_encoding_multiples(
         &self,
-    ) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<[u8; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -127,7 +127,7 @@ impl PlayerHandle {
 
     pub async fn get_encoding_multiples(
         &self,
-    ) -> Result<[EOByte; 2], Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<[u8; 2], Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx

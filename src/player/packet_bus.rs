@@ -1,6 +1,6 @@
 use bytes::{BufMut, Bytes, BytesMut};
 use eo::{
-    data::{encode_number, EOByte},
+    data::{encode_number, u8},
     net::{PacketProcessor, ServerSequencer},
     protocol::{PacketAction, PacketFamily},
 };
@@ -95,8 +95,8 @@ impl PacketBus {
         }
     }
 
-    async fn read(&self, length: usize) -> Option<std::io::Result<Vec<EOByte>>> {
-        let mut buf: Vec<EOByte> = vec![0; length];
+    async fn read(&self, length: usize) -> Option<std::io::Result<Vec<u8>>> {
+        let mut buf: Vec<u8> = vec![0; length];
         self.socket.readable().await.unwrap();
         match self.socket.try_read(&mut buf) {
             Ok(0) => {

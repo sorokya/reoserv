@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use eo::{
-    data::{EOByte, EOChar, EOInt, EOShort},
+    data::{u8, EOChar, EOInt, EOShort},
     protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
 };
 use tokio::sync::oneshot;
@@ -44,10 +44,10 @@ pub enum Command {
         respond_to: oneshot::Sender<Option<usize>>,
     },
     GenEncodingMultiples {
-        respond_to: oneshot::Sender<[EOByte; 2]>,
+        respond_to: oneshot::Sender<[u8; 2]>,
     },
     GetEncodingMultiples {
-        respond_to: oneshot::Sender<[EOByte; 2]>,
+        respond_to: oneshot::Sender<[u8; 2]>,
     },
     GetIpAddr {
         respond_to: oneshot::Sender<String>,

@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eo::{
-    data::{EOByte, Serializeable, StreamBuilder, StreamReader, MAX1},
+    data::{u8, Serializeable, StreamBuilder, StreamReader, MAX1},
     net::stupid_hash,
     protocol::{
         client,
@@ -21,7 +21,7 @@ async fn request(reader: StreamReader, player: PlayerHandle) {
         builder.add_byte(InitReply::Banned.to_byte());
         if duration > 0 {
             builder.add_byte(InitBanType::Temp.to_byte());
-            builder.add_byte(cmp::min(duration, MAX1) as EOByte)
+            builder.add_byte(cmp::min(duration, MAX1) as u8)
         } else {
             builder.add_byte(InitBanType::Perm.to_byte());
         }
@@ -65,7 +65,7 @@ async fn request(reader: StreamReader, player: PlayerHandle) {
     reply.data = InitData::Ok(InitOk {
         response,
         player_id,
-        seq_bytes: [sequence_bytes.0 as EOByte, sequence_bytes.1],
+        seq_bytes: [sequence_bytes.0 as u8, sequence_bytes.1],
         encode_multiple: encoding_multiples[0],
         decode_multiple: encoding_multiples[1],
     });

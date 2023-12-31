@@ -2,8 +2,11 @@ use std::cmp;
 
 use bytes::Bytes;
 use eolib::{
-    data::EoWriter,
-    protocol::net::{Item, PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChestAgreeServerPacket, ChestReplyServerPacket},
+        Item, PacketAction, PacketFamily, ThreeItem,
+    },
 };
 
 use crate::{
@@ -106,16 +109,27 @@ impl Map {
             return;
         }
 
-        let mut writer = EoWriter::new();
-        writer.add_short(item.id);
-        writer.add_int(character.get_item_amount(item.id));
-        let weight = character.get_weight();
-        writer.add_char(weight.current);
-        writer.add_char(weight.max);
+        let items: Vec<ThreeItem> = chest
+            .items
+            .iter()
+            .map(|i| ThreeItem {
+                id: i.item_id,
+                amount: i.amount,
+            })
+            .collect();
 
-        for item in chest.items.iter() {
-            writer.add_short(item.item_id);
-            writer.add_three(item.amount);
+        let packet = ChestReplyServerPacket {
+            added_item_id: item.id,
+            remaining_amount: character.get_item_amount(item.id),
+            weight: character.get_weight(),
+            items: items.clone(),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestReplyServerPacket: {}", e);
+            return;
         }
 
         character.player.as_ref().unwrap().send(
@@ -124,10 +138,13 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        let packet = ChestAgreeServerPacket { items };
+
         let mut writer = EoWriter::new();
-        for item in chest.items.iter() {
-            writer.add_short(item.item_id);
-            writer.add_three(item.amount);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+            return;
         }
 
         let buf = writer.to_byte_array();

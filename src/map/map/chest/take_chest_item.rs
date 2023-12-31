@@ -82,7 +82,12 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ChestGetServerPacket: {}", e);
+            return;
+        }
+
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Chest,
@@ -94,7 +99,12 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        packet.serialize(&mut writer);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+            return;
+        }
+
         let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {

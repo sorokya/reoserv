@@ -1,6 +1,9 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyCreateServerPacket, PartyMember},
+        PacketAction, PacketFamily,
+    },
 };
 
 use crate::world::Party;
@@ -31,18 +34,31 @@ impl World {
 
         self.parties.push(Party::new(leader_id, member_id));
 
+        let packet = PartyCreateServerPacket {
+            members: vec![
+                PartyMember {
+                    player_id: leader_id,
+                    leader: true,
+                    level: leader_character.level,
+                    hp_percentage: leader_character.get_hp_percentage(),
+                    name: leader_character.name.clone(),
+                },
+                PartyMember {
+                    player_id: member_id,
+                    leader: false,
+                    level: member_character.level,
+                    hp_percentage: member_character.get_hp_percentage(),
+                    name: member_character.name.clone(),
+                },
+            ],
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(leader_id);
-        writer.add_char(1);
-        writer.add_char(leader_character.level);
-        writer.add_char(leader_character.get_hp_percentage());
-        writer.add_string(&leader_character.name);
-        writer.add_byte(0xff);
-        writer.add_short(member_id);
-        writer.add_char(0);
-        writer.add_char(member_character.level);
-        writer.add_char(member_character.get_hp_percentage());
-        writer.add_string(&member_character.name);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCreateServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 

@@ -1,6 +1,9 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyAddServerPacket, PartyCreateServerPacket, PartyMember},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::World;
@@ -28,14 +31,33 @@ impl World {
             Err(_) => return,
         };
 
+        let packet = PartyAddServerPacket {
+            member: PartyMember {
+                player_id,
+                leader: false,
+                level: character.level,
+                hp_percentage: character.get_hp_percentage(),
+                name: character.name.clone(),
+            },
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_char(0);
-        writer.add_char(character.level);
-        writer.add_char(character.get_hp_percentage());
-        writer.add_string(&character.name);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyAddServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
+
+        let party = match self
+            .parties
+            .iter()
+            .find(|p| p.members.contains(&party_member_id))
+        {
+            Some(party) => party,
+            None => return,
+        };
 
         for member_id in &party.members {
             if *member_id == player_id {
@@ -50,27 +72,15 @@ impl World {
             member.send(PacketAction::Add, PacketFamily::Party, buf.clone());
         }
 
+        let packet = PartyCreateServerPacket {
+            members: self.get_party_members(party).await,
+        };
+
         let mut writer = EoWriter::new();
-        let leader_id = party.leader;
-        for (index, member_id) in party.members.iter().enumerate() {
-            let member = match self.players.get(member_id) {
-                Some(member) => member,
-                None => continue,
-            };
 
-            let character = match member.get_character().await {
-                Ok(character) => character,
-                Err(_) => continue,
-            };
-
-            writer.add_short(*member_id);
-            writer.add_char(if *member_id == leader_id { 1 } else { 0 });
-            writer.add_char(character.level);
-            writer.add_char(character.get_hp_percentage());
-            writer.add_string(&character.name);
-            if index != party.members.len() - 1 {
-                writer.add_byte(0xff);
-            }
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCreateServerPacket: {}", e);
+            return;
         }
 
         player.send(

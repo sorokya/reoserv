@@ -1,7 +1,9 @@
-use bytes::Bytes;
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyCloseServerPacket, PartyRemoveServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::World;
@@ -24,14 +26,29 @@ impl World {
 
         party.members.retain(|&id| id != player_id);
 
+        let packet = PartyCloseServerPacket::new();
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCloseServerPacket: {}", e);
+            return;
+        }
+
         player.send(
             PacketAction::Close,
             PacketFamily::Party,
-            Bytes::from_static(&[0xff]),
+            writer.to_byte_array(),
         );
 
+        let packet = PartyRemoveServerPacket { player_id };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyRemoveServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 

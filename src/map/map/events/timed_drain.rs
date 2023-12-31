@@ -67,6 +67,14 @@ impl Map {
                 None => continue,
             };
 
+            if damage > 0 {
+                character
+                    .player
+                    .as_ref()
+                    .unwrap()
+                    .update_party_hp(character.get_hp_percentage());
+            }
+
             let packet = EffectTargetOtherServerPacket {
                 damage,
                 hp: character.hp,

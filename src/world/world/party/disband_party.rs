@@ -1,6 +1,6 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::PartyRemoveServerPacket, PacketAction, PacketFamily},
 };
 
 use super::super::World;
@@ -14,8 +14,16 @@ impl World {
 
         let party = self.parties.remove(party_index);
 
+        let packet = PartyRemoveServerPacket {
+            player_id: leader_id,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(leader_id);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize PartyRemoveServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 

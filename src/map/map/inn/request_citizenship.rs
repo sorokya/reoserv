@@ -1,7 +1,7 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{server::CitizenReplyServerPacket, PacketAction, PacketFamily},
         r#pub::NpcType,
     },
 };
@@ -64,25 +64,31 @@ impl Map {
             None => return,
         };
 
-        let mut wrong_answers = 0;
+        let mut questions_wrong = 0;
         if answers[0] != inn_data.answer1 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
         if answers[1] != inn_data.answer2 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
         if answers[2] != inn_data.answer3 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
-        if wrong_answers == 0 {
+        if questions_wrong == 0 {
             character.home = inn_data.name.clone();
         }
 
+        let packet = CitizenReplyServerPacket { questions_wrong };
+
         let mut writer = EoWriter::new();
-        writer.add_char(wrong_answers);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenReplyServerPacket: {}", e);
+            return;
+        }
 
         player.send(
             PacketAction::Reply,

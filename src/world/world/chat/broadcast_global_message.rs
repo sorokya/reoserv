@@ -52,7 +52,7 @@ impl World {
 
             let player_id = player_id.unwrap();
 
-            if state == ClientState::Playing && player_id != target_player_id {
+            if state == ClientState::InGame && player_id != target_player_id {
                 player.send(PacketAction::Msg, PacketFamily::Talk, buf.clone());
             }
         }

@@ -1,7 +1,7 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{server::CitizenOpenServerPacket, PacketAction, PacketFamily},
         r#pub::NpcType,
     },
 };
@@ -64,17 +64,23 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
+        let packet = CitizenOpenServerPacket {
+            behavior_id: inn_data.behavior_id + 1,
+            current_home_id: current_inn_data.behavior_id - 1,
+            session_id,
+            questions: [
+                inn_data.question1.clone(),
+                inn_data.question2.clone(),
+                inn_data.question3.clone(),
+            ],
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_three(inn_data.behavior_id + 1);
-        writer.add_char(current_inn_data.behavior_id - 1);
-        writer.add_short(session_id);
-        writer.add_byte(0xff);
-        writer.add_string(&inn_data.question1);
-        writer.add_byte(0xff);
-        writer.add_string(&inn_data.question2);
-        writer.add_byte(0xff);
-        writer.add_string(&inn_data.question3);
-        writer.add_byte(0xff);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing CitizenOpenServerPacket: {}", e);
+            return;
+        }
 
         player.send(
             PacketAction::Open,

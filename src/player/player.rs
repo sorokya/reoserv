@@ -127,7 +127,7 @@ impl Player {
                 let _ = respond_to.send(id);
             }
             Command::GetAccountId { respond_to } => {
-                if let ClientState::LoggedIn | ClientState::Playing = self.state {
+                if let ClientState::LoggedIn | ClientState::InGame = self.state {
                     let _ = respond_to.send(Ok(self.account_id));
                 } else {
                     let _ = respond_to.send(Err(InvalidStateError::new(
@@ -150,10 +150,8 @@ impl Player {
                         let _ = respond_to.send(Ok(character));
                     }
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        ClientState::Playing,
-                        self.state,
-                    )));
+                    let _ = respond_to
+                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
                 }
             }
             Command::GetChestIndex { respond_to } => {
@@ -166,10 +164,8 @@ impl Player {
                 if let Some(map) = self.map.as_ref() {
                     let _ = respond_to.send(Ok(map.to_owned()));
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        ClientState::Playing,
-                        self.state,
-                    )));
+                    let _ = respond_to
+                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
                 }
             }
             Command::GetMapId { respond_to } => {
@@ -178,10 +174,8 @@ impl Player {
                 } else if let Some(character) = self.character.as_ref() {
                     let _ = respond_to.send(Ok(character.map_id));
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        ClientState::Playing,
-                        self.state,
-                    )));
+                    let _ = respond_to
+                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
                 }
             }
             Command::GetPlayerId { respond_to } => {
@@ -317,10 +311,8 @@ impl Player {
                     let _ = respond_to.send(Ok(Box::new(character.to_owned())));
                     self.character = None;
                 } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        ClientState::Playing,
-                        self.state,
-                    )));
+                    let _ = respond_to
+                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
                 }
             }
             Command::TakeSessionId { respond_to } => {
@@ -332,7 +324,7 @@ impl Player {
                 }
             }
             Command::UpdatePartyHP { hp_percentage } => {
-                if self.state == ClientState::Playing {
+                if self.state == ClientState::InGame {
                     self.world.update_party_hp(self.id, hp_percentage);
                 }
             }

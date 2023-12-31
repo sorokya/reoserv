@@ -1,7 +1,7 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{server::CitizenRequestServerPacket, PacketAction, PacketFamily},
         r#pub::NpcType,
     },
 };
@@ -16,6 +16,10 @@ impl Map {
             Some(character) => character,
             None => return,
         };
+
+        if character.hp == character.max_hp && character.tp == character.max_tp {
+            return;
+        }
 
         let player = match character.player.as_ref() {
             Some(player) => player,
@@ -65,8 +69,14 @@ impl Map {
 
         let cost = (character.max_hp - character.hp) + (character.max_tp - character.tp);
 
+        let packet = CitizenRequestServerPacket { cost };
+
         let mut writer = EoWriter::new();
-        writer.add_int(cost);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenRequestServerPacket: {}", e);
+            return;
+        }
 
         player.set_sleep_cost(cost);
         player.send(

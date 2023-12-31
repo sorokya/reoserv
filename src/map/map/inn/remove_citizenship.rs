@@ -1,7 +1,10 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{
+            server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
+            PacketAction, PacketFamily,
+        },
         r#pub::NpcType,
     },
 };
@@ -50,16 +53,23 @@ impl Map {
             None => return,
         };
 
-        let reply =
-            if character.home == SETTINGS.new_character.home || character.home != inn_data.name {
-                0
+        let packet = CitizenRemoveServerPacket {
+            reply_code: if character.home == SETTINGS.new_character.home
+                || character.home != inn_data.name
+            {
+                InnUnsubscribeReply::NotCitizen
             } else {
                 character.home = SETTINGS.new_character.home.to_owned();
-                1
-            };
+                InnUnsubscribeReply::Unsubscribed
+            },
+        };
 
         let mut writer = EoWriter::new();
-        writer.add_char(reply);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenRemoveServerPacket: {}", e);
+            return;
+        }
 
         player.send(
             PacketAction::Remove,

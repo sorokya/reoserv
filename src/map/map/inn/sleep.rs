@@ -1,7 +1,7 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{server::CitizenAcceptServerPacket, PacketAction, PacketFamily},
         r#pub::NpcType,
         Coords,
     },
@@ -97,8 +97,16 @@ impl Map {
         character.hp = character.max_hp;
         character.tp = character.max_tp;
 
+        let packet = CitizenAcceptServerPacket {
+            gold_amount: character.get_item_amount(1),
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_int(character.get_item_amount(1));
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenAcceptServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Accept,

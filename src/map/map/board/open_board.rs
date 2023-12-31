@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::{BoardOpenServerPacket, BoardPostListing}}};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::{
@@ -72,22 +72,22 @@ impl Map {
                 .await
                 .unwrap();
 
-            writer.add_char(board_id);
-            writer.add_char(posts.len() as i32);
+            let open = BoardOpenServerPacket {
+                board_id,
+                posts: posts.iter().map(|post| BoardPostListing {
+                    post_id: post.id,
+                    author: post.author.to_owned(),
+                    subject: if SETTINGS.board.date_posts {
+                        format!("{} ({})", post.subject, format_duration(&post.created_at))
+                    } else {
+                        post.subject.to_owned()
+                    },
+                }).collect(),
+            };
 
-            for post in posts {
-                let subject = if SETTINGS.board.date_posts {
-                    format!("{} ({})", post.subject, format_duration(&post.created_at))
-                } else {
-                    post.subject
-                };
-
-                writer.add_short(post.id);
-                writer.add_byte(0xff);
-                writer.add_string(&post.author);
-                writer.add_byte(0xff);
-                writer.add_string(&subject);
-                writer.add_byte(0xff);
+            if let Err(e) = open.serialize(&mut writer) {
+                error!("Failed to serialize BoardOpenServerPacket: {}", e);
+                return;
             }
 
             player.send(PacketAction::Open, PacketFamily::Board, writer.to_byte_array());

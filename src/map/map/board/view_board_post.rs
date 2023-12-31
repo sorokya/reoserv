@@ -1,4 +1,4 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::BoardPlayerServerPacket}};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::utils::get_board_tile_spec;
@@ -52,8 +52,15 @@ impl Map {
                 _ => return,
             };
 
-            writer.add_short(post_id);
-            writer.add_string(&row.take::<String, &str>("body").unwrap());
+            let packet = BoardPlayerServerPacket {
+                post_id,
+                post_body: row.take::<String, &str>("body").unwrap(),
+            };
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize BoardPlayerServerPacket: {}", e);
+                return;
+            }
 
             player.send(PacketAction::Player, PacketFamily::Board, writer.to_byte_array());
         });

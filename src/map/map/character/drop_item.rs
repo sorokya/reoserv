@@ -87,13 +87,17 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
-        let buf = writer.to_byte_array();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ItemDropServerPacket: {}", e);
+            return;
+        }
+
         character
             .player
             .as_ref()
             .unwrap()
-            .send(PacketAction::Drop, PacketFamily::Item, buf);
+            .send(PacketAction::Drop, PacketFamily::Item, writer.to_byte_array());
 
         self.items.insert(
             item_index,

@@ -1,4 +1,4 @@
-use eolib::{protocol::{Direction, net::{server::AttackPlayerServerPacket, PacketAction, PacketFamily}, Coords, r#pub::{NpcType, ItemSubtype}}, data::EoWriter};
+use eolib::{protocol::{Direction, net::{server::{AttackPlayerServerPacket, ArenaSpecServerPacket, ArenaAcceptServerPacket}, PacketAction, PacketFamily}, Coords, r#pub::{NpcType, ItemSubtype}}, data::{EoWriter, EoSerialize}};
 use rand::Rng;
 
 use crate::{
@@ -219,16 +219,20 @@ impl Map {
             );
         }
 
+        let packet = ArenaSpecServerPacket {
+            player_id,
+            direction,
+            kills_count: arena_player.kills,
+            killer_name: character.name.to_owned(),
+            victim_name: target_character.name.to_owned(),
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_byte(0xff);
-        writer.add_char(i32::from(direction));
-        writer.add_byte(0xff);
-        writer.add_short(arena_player.kills);
-        writer.add_byte(0xff);
-        writer.add_string(&character.name);
-        writer.add_byte(0xff);
-        writer.add_string(&target_character.name);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaSpecServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 
@@ -244,14 +248,19 @@ impl Map {
     fn arena_end(&mut self, arena_player: &ArenaPlayer, winner_name: String, target_name: String) {
         self.arena_players.clear();
 
+        let packet = ArenaAcceptServerPacket {
+            winner_name: winner_name.to_owned(),
+            kills_count: arena_player.kills,
+            killer_name: winner_name,
+            victim_name: target_name,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_string(&winner_name);
-        writer.add_byte(0xff);
-        writer.add_short(arena_player.kills);
-        writer.add_byte(0xff);
-        writer.add_string(&winner_name);
-        writer.add_byte(0xff);
-        writer.add_string(&target_name);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaAcceptServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 

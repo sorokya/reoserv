@@ -103,7 +103,6 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::AcceptTrade { player_id } => self.accept_trade(player_id).await,
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
@@ -113,7 +112,7 @@ impl Map {
                 self.add_locker_item(player_id, item).await
             }
             Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
-            Command::AgreeTrade { player_id: _ } => todo!(),
+            Command::AgreeTrade { player_id } => self.accept_trade(player_id).await,
             Command::Attack {
                 target_player_id,
                 direction,
@@ -151,7 +150,7 @@ impl Map {
                 amount,
             } => self.deposit_gold(player_id, session_id, amount).await,
 
-            Command::DisagreeTrade { player_id: _ } => todo!(),
+            Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
 
             Command::DropItem {
                 target_player_id,
@@ -228,13 +227,6 @@ impl Map {
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
-
-            Command::HasPlayer {
-                player_id,
-                respond_to,
-            } => {
-                let _ = respond_to.send(self.characters.contains_key(&player_id));
-            }
 
             Command::JunkItem {
                 target_player_id,
@@ -402,8 +394,6 @@ impl Map {
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),
-
-            Command::UnacceptTrade { player_id } => self.unaccept_trade(player_id).await,
 
             Command::Unequip {
                 player_id,

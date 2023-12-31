@@ -1,6 +1,6 @@
 use std::cmp;
 
-use eolib::{protocol::{r#pub::{SkillType, EsfRecord, SkillTargetRestrict, SkillTargetType, NpcType}, net::{PacketAction, PacketFamily}}, data::EoWriter};
+use eolib::{protocol::{r#pub::{SkillType, EsfRecord, SkillTargetRestrict, SkillTargetType, NpcType}, net::{PacketAction, PacketFamily, server::{SpellTargetSelfServerPacket, SpellTargetOtherServerPacket, RecoverPlayerServerPacket}}}, data::{EoWriter, EoSerialize}};
 use rand::Rng;
 
 use crate::{
@@ -111,11 +111,21 @@ impl Map {
                 .update_party_hp(hp_percentage);
         }
 
+        let packet = SpellTargetSelfServerPacket {
+            player_id,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage,
+            hp: None,
+            tp: None,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_short(spell_id);
-        writer.add_int(spell.hp_heal);
-        writer.add_char(hp_percentage);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
+            return;
+        }
 
         self.send_buf_near_player(
             player_id,
@@ -124,13 +134,21 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        let packet = SpellTargetSelfServerPacket {
+            player_id,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage,
+            hp: Some(character.hp),
+            tp: Some(character.tp),
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_short(spell_id);
-        writer.add_int(spell.hp_heal);
-        writer.add_char(hp_percentage);
-        writer.add_short(character.hp);
-        writer.add_short(character.tp);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::TargetSelf,
@@ -195,13 +213,22 @@ impl Map {
             None => return,
         };
 
+        let mut packet: SpellTargetOtherServerPacket = SpellTargetOtherServerPacket {
+            victim_id: target_player_id,
+            caster_id: player_id,
+            caster_direction: character.direction,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage: target.get_hp_percentage(),
+            hp: None,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(target_player_id);
-        writer.add_short(player_id);
-        writer.add_char(i32::from(character.direction));
-        writer.add_short(spell_id);
-        writer.add_int(spell.hp_heal);
-        writer.add_char(target.get_hp_percentage());
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
+            return;
+        }
 
         self.send_buf_near_player(
             target_player_id,
@@ -210,14 +237,14 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        packet.hp = Some(target.hp);
+
         let mut writer = EoWriter::new();
-        writer.add_short(target_player_id);
-        writer.add_short(player_id);
-        writer.add_char(i32::from(character.direction));
-        writer.add_short(spell_id);
-        writer.add_int(spell.hp_heal);
-        writer.add_char(target.get_hp_percentage());
-        writer.add_short(target.hp);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
+            return;
+        }
 
         target.player.as_ref().unwrap().send(
             PacketAction::TargetOther,
@@ -225,9 +252,17 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        let packet = RecoverPlayerServerPacket {
+            hp: character.hp,
+            tp: character.tp,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(character.hp);
-        writer.add_short(character.tp);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,

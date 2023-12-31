@@ -9,9 +9,6 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Command {
-    AcceptTrade {
-        player_id: i32,
-    },
     AcceptTradeRequest {
         player_id: i32,
         target_player_id: i32,
@@ -124,10 +121,6 @@ pub enum Command {
         target_player_id: i32,
         item_id: i32,
         amount: i32,
-    },
-    HasPlayer {
-        player_id: i32,
-        respond_to: oneshot::Sender<bool>,
     },
     JunkItem {
         target_player_id: i32,
@@ -283,9 +276,6 @@ pub enum Command {
     TimedSpikes,
     TimedWarpSuck,
     ToggleHidden {
-        player_id: i32,
-    },
-    UnacceptTrade {
         player_id: i32,
     },
     Unequip {

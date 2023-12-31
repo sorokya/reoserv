@@ -5,7 +5,10 @@ use crate::player::PlayerHandle;
 fn ping(player: PlayerHandle) {
     let pong = MessagePongServerPacket::new();
     let mut writer = EoWriter::new();
-    pong.serialize(&mut writer);
+    if let Err(e) = pong.serialize(&mut writer) {
+        error!("Failed to serialize MessagePongServerPacket: {}", e);
+        return;
+    }
     player.send(PacketAction::Pong, PacketFamily::Message, writer.to_byte_array());
 }
 

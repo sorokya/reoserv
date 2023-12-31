@@ -1,4 +1,4 @@
-use eolib::{data::EoWriter, protocol::{net::{PacketAction, PacketFamily}, r#pub::NpcType}};
+use eolib::{data::{EoWriter, EoSerialize}, protocol::{net::{PacketAction, PacketFamily, server::BankOpenServerPacket}, r#pub::NpcType}};
 
 use crate::NPC_DB;
 
@@ -40,10 +40,19 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
+        let open = BankOpenServerPacket {
+            gold_bank: character.gold_bank,
+            session_id,
+            locker_upgrades: character.bank_level,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_int(character.gold_bank);
-        writer.add_three(session_id as i32);
-        writer.add_char(character.bank_level);
+
+        if let Err(e) = open.serialize(&mut writer) {
+            error!("Failed to serialize BankOpenServerPacket: {}", e);
+            return;
+        }
+
         player.send(PacketAction::Open, PacketFamily::Bank, writer.to_byte_array());
     }
 }

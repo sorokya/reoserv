@@ -36,10 +36,6 @@ impl MapHandle {
         Self { tx }
     }
 
-    pub fn accept_trade(&self, player_id: i32) {
-        let _ = self.tx.send(Command::AcceptTrade { player_id });
-    }
-
     pub fn accept_trade_request(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::AcceptTradeRequest {
             player_id,
@@ -220,15 +216,6 @@ impl MapHandle {
             item_id,
             amount,
         });
-    }
-
-    pub async fn has_player(&self, player_id: i32) -> bool {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::HasPlayer {
-            player_id,
-            respond_to: tx,
-        });
-        rx.await.unwrap()
     }
 
     pub fn learn_skill(&self, player_id: i32, spell_id: i32, session_id: i32) {
@@ -507,10 +494,6 @@ impl MapHandle {
 
     pub fn act_npcs(&self) {
         let _ = self.tx.send(Command::ActNpcs);
-    }
-
-    pub fn unaccept_trade(&self, player_id: i32) {
-        let _ = self.tx.send(Command::UnacceptTrade { player_id });
     }
 
     pub fn unequip(&self, player_id: i32, item_id: i32, sub_loc: i32) {

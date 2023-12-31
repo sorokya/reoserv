@@ -176,7 +176,10 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
 fn send_error_message(player: &PlayerHandle, message: String) {
     let packet = TalkServerServerPacket { message };
     let mut writer = EoWriter::new();
-    packet.serialize(&mut writer);
+    if let Err(e) = packet.serialize(&mut writer) {
+        error!("Failed to serialize TalkServerServerPacket: {}", e);
+        return;
+    }
     player.send(PacketAction::Server, PacketFamily::Talk, writer.to_byte_array());
 }
 

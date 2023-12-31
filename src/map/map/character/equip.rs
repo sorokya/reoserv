@@ -51,7 +51,10 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize PaperdollAgreeServerPacket: {}", e);
+            return;
+        }
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Paperdoll,

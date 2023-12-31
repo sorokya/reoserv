@@ -41,7 +41,10 @@ impl Character {
             };
 
             let mut writer = EoWriter::new();
-            reply.serialize(&mut writer);
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize PaperdollPingServerPacket: {}", e);
+                return false;
+            }
 
             self.player.as_ref().unwrap().send(
                 PacketAction::Ping,

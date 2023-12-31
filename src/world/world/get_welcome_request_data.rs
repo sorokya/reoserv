@@ -5,7 +5,7 @@ use eolib::protocol::{
 
 use crate::{
     character::Character, errors::DataNotFoundError, player::PlayerHandle, CLASS_DB, ITEM_DB,
-    NPC_DB, SETTINGS, SPELL_DB,
+    NPC_DB, SETTINGS, SPELL_DB, utils::pad_string,
 };
 
 use super::World;
@@ -73,7 +73,7 @@ impl World {
             guild_name: character.guild_name.clone().unwrap_or_default(),
             guild_rank_name: character.guild_rank_string.clone().unwrap_or_default(),
             class_id: character.class,
-            guild_tag: character.guild_tag.clone().unwrap_or_default(),
+            guild_tag: pad_string(&character.guild_tag.clone().unwrap_or_default(), 3),
             admin: character.admin_level,
             level: character.level,
             experience: character.experience,

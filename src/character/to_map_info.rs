@@ -1,5 +1,7 @@
 use eolib::protocol::net::server::{BigCoords, CharacterMapInfo};
 
+use crate::utils::pad_string;
+
 use super::Character;
 
 impl Character {
@@ -15,7 +17,7 @@ impl Character {
             direction: self.direction,
             class_id: self.class,
             guild_tag: match self.guild_tag {
-                Some(ref tag) => pad_guild_tag(tag.to_string()),
+                Some(ref tag) => pad_string(tag, 3),
                 None => "   ".to_string(),
             },
             level: self.level,
@@ -33,12 +35,4 @@ impl Character {
             warp_effect: None,
         }
     }
-}
-
-fn pad_guild_tag(tag: String) -> String {
-    let mut tag = tag;
-    while tag.len() < 3 {
-        tag.push(' ');
-    }
-    tag
 }

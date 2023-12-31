@@ -26,7 +26,7 @@ impl Map {
                     .characters
                     .iter()
                     .filter_map(|(index, character)| {
-                        if player_ids.contains(index) {
+                        if !character.hidden && player_ids.contains(index) {
                             Some(character.to_map_info())
                         } else {
                             None

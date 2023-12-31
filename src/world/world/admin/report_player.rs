@@ -1,6 +1,12 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{server::AdminMessageType, PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            AdminInteractReplyServerPacket, AdminInteractReplyServerPacketMessageTypeData,
+            AdminInteractReplyServerPacketMessageTypeDataReport, AdminMessageType,
+        },
+        PacketAction, PacketFamily,
+    },
 };
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
@@ -23,22 +29,35 @@ impl World {
             }
         };
 
-        let mut writer = EoWriter::new();
-        writer.add_char(i32::from(AdminMessageType::Report));
-        writer.add_byte(0xff);
-        writer.add_string(&character.name);
-        writer.add_byte(0xff);
-        writer.add_string(&message);
-        writer.add_byte(0xff);
-        writer.add_string(&reportee_name);
-        writer.add_byte(0xff);
+        self.notify_online_admins(&character.name, &message, &reportee_name)
+            .await;
+        self.add_to_admin_board(character.id, character.name.clone(), message, reportee_name);
+    }
 
-        let from_name = character.name;
+    async fn notify_online_admins(&self, player_name: &str, message: &str, reportee_name: &str) {
+        let packet = AdminInteractReplyServerPacket {
+            message_type: AdminMessageType::Report,
+            message_type_data: Some(AdminInteractReplyServerPacketMessageTypeData::Report(
+                AdminInteractReplyServerPacketMessageTypeDataReport {
+                    player_name: player_name.to_owned(),
+                    message: message.to_owned(),
+                    reportee_name: reportee_name.to_owned(),
+                },
+            )),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize AdminInteractReplyServerPacket: {}", e);
+            return;
+        }
+
         let buf = writer.to_byte_array();
 
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
-                if character.name != from_name && i32::from(character.admin_level) >= 1 {
+                if character.name != player_name && i32::from(character.admin_level) >= 1 {
                     player.send(
                         PacketAction::Reply,
                         PacketFamily::AdminInteract,
@@ -47,9 +66,16 @@ impl World {
                 }
             }
         }
+    }
 
+    fn add_to_admin_board(
+        &self,
+        character_id: i32,
+        player_name: String,
+        message: String,
+        reportee_name: String,
+    ) {
         let pool = self.pool.clone();
-        let character_id = character.id;
         tokio::spawn(async move {
             let mut conn = pool.get_conn().await.unwrap();
             conn.exec_drop(
@@ -57,7 +83,7 @@ impl World {
                 params! {
                     "board_id" => SETTINGS.board.admin_board,
                     "character_id" => character_id,
-                    "subject" => format!("[Report] {} reports {}", capitalize(&from_name), capitalize(&reportee_name)),
+                    "subject" => format!("[Report] {} reports {}", capitalize(&player_name), capitalize(&reportee_name)),
                     "body" => message,
                 },
             )

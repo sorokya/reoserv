@@ -1,7 +1,7 @@
 use bytes::{BufMut, Bytes, BytesMut};
 use eolib::{
     data::{decode_number, encode_number},
-    encrypt::{generate_swap_multiple, encrypt_packet, decrypt_packet},
+    encrypt::{decrypt_packet, encrypt_packet, generate_swap_multiple},
     packet::{generate_sequence_start, Sequencer},
     protocol::net::{PacketAction, PacketFamily},
 };
@@ -11,6 +11,7 @@ pub struct PacketBus {
     socket: TcpStream,
     pub need_pong: bool,
     pub sequencer: Sequencer,
+    pub upcoming_sequence_start: i32,
     pub server_enryption_multiple: u8,
     pub client_enryption_multiple: u8,
 }
@@ -22,6 +23,7 @@ impl PacketBus {
             socket,
             need_pong: false,
             sequencer,
+            upcoming_sequence_start: 0,
             server_enryption_multiple: generate_swap_multiple(),
             client_enryption_multiple: generate_swap_multiple(),
         }

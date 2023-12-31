@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use eolib::protocol::{map::{Emf, MapTileSpec}, Coords};
+use eolib::protocol::{
+    map::{Emf, MapTileSpec},
+    Coords,
+};
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -421,10 +424,23 @@ impl Map {
                 session_id,
                 amount,
             } => self.withdraw_gold(player_id, session_id, amount).await,
-            Command::FindPlayer { player_id: _, name: _ } => todo!(),
-            Command::RequestNpcs { player_id: _, npc_indexes: _ } => todo!(),
-            Command::RequestPlayers { player_id: _, player_ids: _ } => todo!(),
-            Command::RequestPlayersAndNpcs { player_id: _, player_ids: _, npc_indexes: _ } => todo!(),
+            Command::FindPlayer {
+                player_id: _,
+                name: _,
+            } => todo!(),
+            Command::RequestNpcs {
+                player_id,
+                npc_indexes,
+            } => self.request_npcs(player_id, npc_indexes),
+            Command::RequestPlayers {
+                player_id,
+                player_ids,
+            } => self.request_players(player_id, player_ids),
+            Command::RequestPlayersAndNpcs {
+                player_id,
+                player_ids,
+                npc_indexes,
+            } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
             Command::RequestRefresh { player_id: _ } => todo!(),
         }
     }

@@ -1,7 +1,11 @@
 use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
-use eolib::{data::{SHORT_MAX, EoWriter, EoSerialize}, packet::{generate_sequence_start, get_ping_sequence_bytes}, protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily}};
+use eolib::{
+    data::{EoSerialize, EoWriter, SHORT_MAX},
+    packet::{generate_sequence_start, get_ping_sequence_bytes},
+    protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily},
+};
 use mysql_async::Pool;
 use rand::Rng;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
@@ -91,13 +95,28 @@ impl Player {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }
-            Command::BeginHandshake { challenge, hdid, version } => self.begin_handshake(challenge, hdid, version).await,
+            Command::BeginHandshake {
+                challenge,
+                hdid,
+                version,
+            } => self.begin_handshake(challenge, hdid, version).await,
             Command::CancelTrade => self.cancel_trade().await,
             Command::Close(reason) => {
                 self.close(reason).await;
                 return false;
             }
-            Command::CompleteHandshake { player_id, client_encryption_multiple, server_encryption_multiple } => self.complete_handshake(player_id, client_encryption_multiple, server_encryption_multiple).await,
+            Command::CompleteHandshake {
+                player_id,
+                client_encryption_multiple,
+                server_encryption_multiple,
+            } => {
+                self.complete_handshake(
+                    player_id,
+                    client_encryption_multiple,
+                    server_encryption_multiple,
+                )
+                .await
+            }
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
@@ -211,15 +230,19 @@ impl Player {
                     info!("player {} connection closed: ping timeout", self.id);
                     return false;
                 } else {
-                    let start = generate_sequence_start();
-                    self.bus.sequencer.set_start(start);
+                    self.bus.upcoming_sequence_start = generate_sequence_start();
                     let mut writer = EoWriter::with_capacity(3);
-                    let sequence_bytes = get_ping_sequence_bytes(start);
+                    let sequence_bytes = get_ping_sequence_bytes(self.bus.upcoming_sequence_start);
                     let packet = ConnectionPlayerServerPacket {
                         seq1: sequence_bytes[0],
                         seq2: sequence_bytes[1],
                     };
-                    packet.serialize(&mut writer);
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Error serializing ConnectionPlayerServerPacket: {}", e);
+                        return false;
+                    }
+
                     self.bus.need_pong = true;
                     self.bus
                         .send(
@@ -235,7 +258,9 @@ impl Player {
                 self.bus.need_pong = false;
             }
             Command::PongNewSequence { respond_to } => {
-                self.bus.sequencer.set_start(generate_sequence_start());
+                self.bus
+                    .sequencer
+                    .set_start(self.bus.upcoming_sequence_start);
                 let _ = respond_to.send(());
             }
             Command::RequestWarp {

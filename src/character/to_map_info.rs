@@ -1,4 +1,4 @@
-use eolib::protocol::net::server::{CharacterMapInfo, BigCoords};
+use eolib::protocol::net::server::{BigCoords, CharacterMapInfo};
 
 use super::Character;
 
@@ -15,8 +15,8 @@ impl Character {
             direction: self.direction,
             class_id: self.class,
             guild_tag: match self.guild_tag {
-                Some(ref tag) => tag.to_string(),
-                None => String::new(),
+                Some(ref tag) => pad_guild_tag(tag.to_string()),
+                None => "   ".to_string(),
             },
             level: self.level,
             gender: self.gender,
@@ -33,4 +33,12 @@ impl Character {
             warp_effect: None,
         }
     }
+}
+
+fn pad_guild_tag(tag: String) -> String {
+    let mut tag = tag;
+    while tag.len() < 3 {
+        tag.push(' ');
+    }
+    tag
 }

@@ -1,4 +1,14 @@
-use eolib::{protocol::{Direction, Coords, net::{server::{WalkReplyServerPacket, WalkPlayerServerPacket}, PacketAction, PacketFamily}, map::MapTileSpec}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{
+            server::{WalkPlayerServerPacket, WalkReplyServerPacket},
+            PacketAction, PacketFamily,
+        },
+        Coords, Direction,
+    },
+};
 
 use crate::utils::{get_next_coords, in_client_range};
 
@@ -53,6 +63,8 @@ impl Map {
                     return;
                 }
 
+                // TODO: Maybe don't do this.. player can get out of sync if door was open out of
+                // range
                 if warp.door > 0 {
                     let door = match self.doors.iter().find(|door| door.coords == target_coords) {
                         Some(door) => door,

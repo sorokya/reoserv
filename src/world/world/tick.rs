@@ -21,6 +21,7 @@ impl World {
         self.drain_ticks += 1;
         self.warp_suck_ticks += 1;
         self.arena_ticks += 1;
+        self.door_close_ticks += 1;
 
         for map in maps {
             if self.npc_act_ticks >= SETTINGS.npcs.act_rate {

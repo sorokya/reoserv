@@ -1,8 +1,14 @@
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
         map::MapTimedEffect,
-        net::{PacketAction, PacketFamily},
+        net::{
+            server::{
+                EffectUseServerPacket, EffectUseServerPacketEffectData,
+                EffectUseServerPacketEffectDataQuake, MapEffect,
+            },
+            PacketAction, PacketFamily,
+        },
     },
 };
 use rand::{thread_rng, Rng};
@@ -10,8 +16,6 @@ use rand::{thread_rng, Rng};
 use crate::SETTINGS;
 
 use super::super::Map;
-
-const EFFECT_QUAKE: i32 = 1;
 
 impl Map {
     pub fn timed_quake(&mut self) {
@@ -44,7 +48,7 @@ impl Map {
             }
         };
 
-        let strength = match self.quake_strength {
+        let quake_strength = match self.quake_strength {
             Some(strength) => strength,
             None => {
                 let strength = rng.gen_range(config.min_strength..=config.max_strength);
@@ -55,9 +59,19 @@ impl Map {
 
         self.quake_ticks += 1;
         if self.quake_ticks >= rate {
+            let packet = EffectUseServerPacket {
+                effect: MapEffect::Quake,
+                effect_data: Some(EffectUseServerPacketEffectData::Quake(
+                    EffectUseServerPacketEffectDataQuake { quake_strength },
+                )),
+            };
+
             let mut writer = EoWriter::new();
-            writer.add_char(EFFECT_QUAKE);
-            writer.add_char(strength as i32);
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize EffectUseServerPacket: {}", e);
+                return;
+            }
 
             let buf = writer.to_byte_array();
 

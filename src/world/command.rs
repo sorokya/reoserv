@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
     client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
-    server::OnlinePlayer,
+    server::{OnlinePlayer, PartyExpShare},
     PartyRequestType,
 };
 use tokio::sync::oneshot;
@@ -210,5 +210,9 @@ pub enum Command {
     UpdatePartyHP {
         player_id: i32,
         hp_percentage: i32,
+    },
+    UpdatePartyExp {
+        player_id: i32,
+        exp_gains: Vec<PartyExpShare>,
     },
 }

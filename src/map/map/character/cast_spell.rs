@@ -359,14 +359,8 @@ impl Map {
                 Some(spell_id),
             );
         } else {
-            self.attack_npc_killed_reply(
-                player_id,
-                npc_index,
-                direction,
-                damage_dealt,
-                Some(spell_id),
-            )
-            .await;
+            self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, Some(spell_id))
+                .await;
         }
     }
 }

@@ -106,7 +106,8 @@ impl Map {
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
-                    if in_client_range(&target_coords, &npc.coords)
+                    if npc.alive
+                        && in_client_range(&target_coords, &npc.coords)
                         && !in_client_range(&target_previous_coords, &npc.coords)
                     {
                         packet.npc_indexes.push(*index);

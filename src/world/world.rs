@@ -283,6 +283,11 @@ impl World {
                 hp_percentage,
             } => self.update_party_hp(player_id, hp_percentage),
 
+            Command::UpdatePartyExp {
+                player_id,
+                exp_gains,
+            } => self.update_party_exp(player_id, exp_gains),
+
             Command::BanPlayer {
                 victim_name,
                 admin_name,

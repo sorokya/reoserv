@@ -80,6 +80,12 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        character
+            .player
+            .as_ref()
+            .unwrap()
+            .update_party_hp(character.get_hp_percentage());
+
         if character.hp == 0 {
             character.player.as_ref().unwrap().die();
         }

@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
     client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
-    server::OnlinePlayer,
+    server::{OnlinePlayer, PartyExpShare},
     PartyRequestType,
 };
 use mysql_async::Pool;
@@ -412,6 +412,13 @@ impl WorldHandle {
         let _ = self.tx.send(Command::UpdatePartyHP {
             player_id,
             hp_percentage,
+        });
+    }
+
+    pub fn update_party_exp(&self, player_id: i32, exp_gains: Vec<PartyExpShare>) {
+        let _ = self.tx.send(Command::UpdatePartyExp {
+            player_id,
+            exp_gains,
         });
     }
 }

@@ -149,7 +149,7 @@ impl Map {
         if npc.alive {
             self.attack_npc_reply(player_id, npc_index, direction, damage_dealt, None);
         } else {
-            self.attack_npc_killed_reply(player_id, npc_index, direction, damage_dealt, None)
+            self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, None)
                 .await;
         }
     }

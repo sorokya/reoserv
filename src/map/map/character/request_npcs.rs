@@ -17,7 +17,7 @@ impl Map {
                 .npcs
                 .iter()
                 .filter_map(|(index, npc)| {
-                    if npcs_indexes.contains(index) {
+                    if npc.alive && npcs_indexes.contains(index) {
                         Some(npc.to_map_info(index))
                     } else {
                         None

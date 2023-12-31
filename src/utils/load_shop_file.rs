@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::r#pub::server::{Craft, ShopFile, ShopRecord, Trade},
+    protocol::r#pub::server::{ShopCraftRecord, ShopFile, ShopRecord, ShopTradeRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -42,7 +42,7 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
             class_requirement: v["classRequirement"].as_u64().unwrap_or(0) as i32,
             trades: trades
                 .iter()
-                .map(|v| Trade {
+                .map(|v| ShopTradeRecord {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
                     buy_price: v["buyPrice"].as_u64().unwrap_or(0) as i32,
                     sell_price: v["sellPrice"].as_u64().unwrap_or(0) as i32,
@@ -51,7 +51,7 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                 .collect(),
             crafts: crafts
                 .iter()
-                .map(|v| Craft {
+                .map(|v| ShopCraftRecord {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
                     ingredient1_id: v["ingredient1Id"].as_u64().unwrap_or(0) as i32,
                     ingredient1_amount: v["ingredient1Amount"].as_u64().unwrap_or(0) as i32,

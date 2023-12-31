@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::r#pub::server::{Skill, SkillMaster, SkillMasterFile},
+    protocol::r#pub::server::{SkillMasterFile, SkillMasterRecord, SkillMasterSkillRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -33,7 +33,7 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
 
         let skills = v["skills"].as_array().unwrap();
 
-        skill_master_file.skill_masters.push(SkillMaster {
+        skill_master_file.skill_masters.push(SkillMasterRecord {
             behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
             name: v["name"].as_str().unwrap_or_default().to_string(),
             min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
@@ -41,7 +41,7 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
             class_requirement: v["classRequirement"].as_u64().unwrap_or(0) as i32,
             skills: skills
                 .iter()
-                .map(|v| Skill {
+                .map(|v| SkillMasterSkillRecord {
                     skill_id: v["id"].as_u64().unwrap_or(0) as i32,
                     level_requirement: v["levelRequirement"].as_u64().unwrap_or(0) as i32,
                     class_requirement: v["classRequirement"].as_u64().unwrap_or(0) as i32,

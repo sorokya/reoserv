@@ -85,7 +85,7 @@ fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
     });
 
     let mut writer = EoWriter::new();
-    eif_file.serialize(&mut writer);
+    eif_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();
 
     let mut digest = CRC32.digest();
@@ -93,7 +93,7 @@ fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
 
     let checksum = digest.finalize();
 
-    let encoded = encode_number(checksum as i32);
+    let encoded = encode_number(checksum as i32).unwrap();
 
     eif_file.rid = [
         decode_number(&encoded[0..=1]) as i32,

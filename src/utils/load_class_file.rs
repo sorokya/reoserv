@@ -53,7 +53,7 @@ fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
     });
 
     let mut writer = EoWriter::new();
-    ecf_file.serialize(&mut writer);
+    ecf_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();
 
     let mut digest = CRC32.digest();
@@ -61,7 +61,7 @@ fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
 
     let checksum = digest.finalize();
 
-    let encoded = encode_number(checksum as i32);
+    let encoded = encode_number(checksum as i32).unwrap();
 
     ecf_file.rid = [
         decode_number(&encoded[0..=1]) as i32,

@@ -36,7 +36,13 @@ impl PacketBus {
         data: Bytes,
     ) -> std::io::Result<()> {
         let packet_size = 2 + data.len();
-        let length_bytes = encode_number(packet_size as i32);
+        let length_bytes = match encode_number(packet_size as i32) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                error!("Packet send aborted! Error encoding packet size: {}", e);
+                return Ok(());
+            }
+        };
 
         let mut buf = BytesMut::with_capacity(2 + packet_size);
         buf.put_slice(length_bytes[0..2].as_ref());

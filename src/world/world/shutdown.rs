@@ -11,8 +11,14 @@ impl World {
         self.save().await;
 
         let packet = MessageCloseServerPacket::new();
+
         let mut writer = EoWriter::new();
-        packet.serialize(&mut writer);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize MessageCloseServerPacket: {}", e);
+            return;
+        }
+
         let buf = writer.to_byte_array();
         for player in self.players.values() {
             player.send(PacketAction::Close, PacketFamily::Message, buf.clone());

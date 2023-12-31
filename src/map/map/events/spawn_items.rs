@@ -71,7 +71,12 @@ impl Map {
                     };
 
                     let mut writer = EoWriter::new();
-                    packet.serialize(&mut writer);
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+                        return;
+                    }
+
                     let buf = writer.to_byte_array();
 
                     for character in self.characters.values() {

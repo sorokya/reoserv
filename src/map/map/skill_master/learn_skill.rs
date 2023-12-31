@@ -113,7 +113,11 @@ impl Map {
             };
 
             let mut writer = EoWriter::new();
-            reply.serialize(&mut writer);
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize StatSkillReplyServerPacket: {}", e);
+                return;
+            }
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
@@ -133,7 +137,11 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize StatSkillTakeServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Take,

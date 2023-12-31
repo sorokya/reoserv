@@ -1,6 +1,6 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TalkOpenServerPacket, PacketAction, PacketFamily},
 };
 
 use super::super::World;
@@ -12,9 +12,14 @@ impl World {
             None => return,
         };
 
+        let packet = TalkOpenServerPacket { player_id, message };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_string(&message);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TalkOpenServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
 

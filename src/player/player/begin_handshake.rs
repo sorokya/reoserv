@@ -53,14 +53,20 @@ impl Player {
                 ));
             }
 
-            reply.serialize(&mut writer);
-            self.bus
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize InitInitServerPacket: {}", e);
+                return false;
+            }
+
+            let _ = self
+                .bus
                 .send(
                     PacketAction::Init,
                     PacketFamily::Init,
                     writer.to_byte_array(),
                 )
                 .await;
+
             self.close("IP Banned".to_string()).await;
             return false;
         }
@@ -91,8 +97,14 @@ impl Player {
         self.state = ClientState::Initialized;
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
-        self.bus
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize InitInitServerPacket: {}", e);
+            return false;
+        }
+
+        let _ = self
+            .bus
             .send(
                 PacketAction::Init,
                 PacketFamily::Init,

@@ -1,6 +1,14 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
+            AccountReplyServerPacketReplyCodeDataChangeFailed,
+            AccountReplyServerPacketReplyCodeDataChanged,
+            AccountReplyServerPacketReplyCodeDataExists,
+        },
+        PacketAction, PacketFamily,
+    },
 };
 use mysql_async::{prelude::*, Params, Row};
 
@@ -43,9 +51,20 @@ impl World {
             };
 
             if !exists {
+                let packet = AccountReplyServerPacket {
+                    reply_code: AccountReply::Exists,
+                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                        AccountReplyServerPacketReplyCodeDataExists::new(),
+                    )),
+                };
+
                 let mut writer = EoWriter::new();
-                writer.add_short(5);
-                writer.add_string("NO");
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                    return;
+                }
+
                 player.send(
                     PacketAction::Reply,
                     PacketFamily::Account,
@@ -66,9 +85,21 @@ impl World {
                 Ok(row) => row,
                 Err(e) => {
                     error!("Error getting password hash: {}", e);
+
+                    let packet = AccountReplyServerPacket {
+                        reply_code: AccountReply::ChangeFailed,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::ChangeFailed(
+                            AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
+                        )),
+                    };
+
                     let mut writer = EoWriter::new();
-                    writer.add_short(5);
-                    writer.add_string("NO");
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                        return;
+                    }
+
                     player.send(
                         PacketAction::Reply,
                         PacketFamily::Account,
@@ -81,9 +112,20 @@ impl World {
 
             let password_hash: String = row.get("password_hash").unwrap();
             if !validate_password(&username, &current_password, &password_hash) {
+                let packet = AccountReplyServerPacket {
+                    reply_code: AccountReply::ChangeFailed,
+                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::ChangeFailed(
+                        AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
+                    )),
+                };
+
                 let mut writer = EoWriter::new();
-                writer.add_short(5);
-                writer.add_string("NO");
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                    return;
+                }
+
                 player.send(
                     PacketAction::Reply,
                     PacketFamily::Account,
@@ -109,9 +151,20 @@ impl World {
                 return;
             }
 
+            let packet = AccountReplyServerPacket {
+                reply_code: AccountReply::Changed,
+                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Changed(
+                    AccountReplyServerPacketReplyCodeDataChanged::new(),
+                )),
+            };
+
             let mut writer = EoWriter::new();
-            writer.add_short(6);
-            writer.add_string("NO");
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                return;
+            }
+
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Account,

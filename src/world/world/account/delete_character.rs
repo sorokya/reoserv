@@ -93,7 +93,12 @@ impl World {
             };
 
             let mut writer = EoWriter::new();
-            reply.serialize(&mut writer);
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize CharacterReplyServerPacket: {}", e);
+                return;
+            }
+
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Character,

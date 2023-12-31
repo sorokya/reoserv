@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
     client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
-    server::{OnlinePlayer, PartyExpShare},
+    server::PartyExpShare,
     PartyRequestType,
 };
 use mysql_async::Pool;
@@ -223,12 +223,6 @@ impl WorldHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNextPlayerId { respond_to: tx });
         Ok(rx.await.unwrap())
-    }
-
-    pub async fn get_online_list(&self) -> Vec<OnlinePlayer> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetOnlineList { respond_to: tx });
-        rx.await.unwrap()
     }
 
     pub async fn get_player_count(

@@ -37,7 +37,6 @@ mod enter_game;
 mod get_character_by_name;
 mod get_file;
 mod get_next_player_id;
-mod get_online_list;
 mod get_welcome_request_data;
 mod party;
 mod save;
@@ -179,10 +178,6 @@ impl World {
 
             Command::GetNextPlayerId { respond_to } => {
                 let _ = respond_to.send(self.get_next_player_id(300));
-            }
-
-            Command::GetOnlineList { respond_to } => {
-                let _ = respond_to.send(self.get_online_list().await);
             }
 
             Command::GetPlayerParty {

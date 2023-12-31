@@ -47,7 +47,12 @@ impl Map {
             };
 
             let mut writer = EoWriter::new();
-            packet.serialize(&mut writer);
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+                return;
+            }
+
             character.player.as_ref().unwrap().send(
                 PacketAction::Player,
                 PacketFamily::Recover,

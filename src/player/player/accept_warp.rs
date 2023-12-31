@@ -136,7 +136,11 @@ impl Player {
         };
 
         let mut writer = EoWriter::new();
-        agree.serialize(&mut writer);
+
+        if let Err(e) = agree.serialize(&mut writer) {
+            error!("Failed to serialize WarpAgreeServerPacket: {}", e);
+            return;
+        }
 
         let _ = self
             .bus

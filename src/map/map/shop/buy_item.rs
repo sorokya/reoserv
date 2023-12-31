@@ -103,7 +103,11 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ShopBuyServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,

@@ -67,7 +67,11 @@ impl Map {
         let reply = StatSkillRemoveServerPacket { spell_id: skill_id };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize packet {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Remove,

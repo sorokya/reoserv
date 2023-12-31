@@ -71,7 +71,11 @@ impl Player {
         self.warp_session = Some(warp_session);
 
         let mut writer = EoWriter::new();
-        request.serialize(&mut writer);
+
+        if let Err(e) = request.serialize(&mut writer) {
+            error!("Failed to serialize WarpRequestServerPacket: {}", e);
+            return;
+        }
 
         let _ = self
             .bus

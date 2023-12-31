@@ -92,7 +92,7 @@ impl World {
             }
             FileType::Eif => {
                 let mut writer = EoWriter::new();
-                ITEM_DB.serialize(&mut writer);
+                ITEM_DB.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEif,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEif(
@@ -107,7 +107,7 @@ impl World {
             }
             FileType::Enf => {
                 let mut writer = EoWriter::new();
-                NPC_DB.serialize(&mut writer);
+                NPC_DB.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEnf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEnf(
@@ -122,7 +122,7 @@ impl World {
             }
             FileType::Esf => {
                 let mut writer = EoWriter::new();
-                SPELL_DB.serialize(&mut writer);
+                SPELL_DB.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEsf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEsf(
@@ -137,7 +137,7 @@ impl World {
             }
             FileType::Ecf => {
                 let mut writer = EoWriter::new();
-                CLASS_DB.serialize(&mut writer);
+                CLASS_DB.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEcf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEcf(
@@ -154,7 +154,12 @@ impl World {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize InitInitServerPacket: {}", e);
+            return;
+        }
+
         player.send(
             PacketAction::Init,
             PacketFamily::Init,

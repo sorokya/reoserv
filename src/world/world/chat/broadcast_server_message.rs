@@ -11,7 +11,12 @@ impl World {
             message: message.to_string(),
         };
         let mut writer = EoWriter::new();
-        packet.serialize(&mut writer);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TalkServerServerPacket: {}", e);
+            return;
+        }
+
         let buf = writer.to_byte_array();
         for player in self.players.values() {
             player.send(PacketAction::Server, PacketFamily::Talk, buf.clone());

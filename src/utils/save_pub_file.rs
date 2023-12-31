@@ -7,7 +7,7 @@ pub fn save_pub_file<T: EoSerialize>(
     path: &str,
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut writer = EoWriter::new();
-    file.serialize(&mut writer);
+    file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();
 
     let mut file = std::fs::File::create(path)?;

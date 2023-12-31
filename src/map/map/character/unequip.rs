@@ -49,7 +49,12 @@ impl Map {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize PaperdollRemoveServerPacket: {}", e);
+            return;
+        }
+
         target.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::Paperdoll,

@@ -22,7 +22,12 @@ impl Map {
         T: EoSerialize,
     {
         let mut writer = EoWriter::new();
-        packet.serialize(&mut writer);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
         let buf = writer.to_byte_array();
         for (player_id, character) in self.characters.iter() {
             if *player_id != exclude_player_id && in_range(coords, &character.coords) {

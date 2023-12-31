@@ -136,9 +136,6 @@ impl Player {
                     )));
                 }
             }
-            Command::GetBanDuration { respond_to } => {
-                let _ = respond_to.send(self.get_ban_duration().await);
-            }
             Command::GetBoardId { respond_to } => {
                 let _ = respond_to.send(self.board_id);
             }

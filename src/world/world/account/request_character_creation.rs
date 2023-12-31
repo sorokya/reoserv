@@ -49,7 +49,12 @@ impl World {
                 )),
             };
             let mut writer = EoWriter::new();
-            reply.serialize(&mut writer);
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                player.close(format!("Error serializing reply: {}", e));
+                return;
+            }
+
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Character,
@@ -74,7 +79,12 @@ impl World {
         };
 
         let mut writer = EoWriter::new();
-        reply.serialize(&mut writer);
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            player.close(format!("Error serializing reply: {}", e));
+            return;
+        }
+
         player.send(
             PacketAction::Reply,
             PacketFamily::Character,

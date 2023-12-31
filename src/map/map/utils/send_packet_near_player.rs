@@ -19,7 +19,12 @@ impl Map {
         T: EoSerialize,
     {
         let mut writer = EoWriter::new();
-        packet.serialize(&mut writer);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
         self.send_buf_near_player(player_id, action, family, writer.to_byte_array());
     }
 

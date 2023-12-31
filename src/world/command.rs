@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
     client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
-    server::{OnlinePlayer, PartyExpShare},
+    server::PartyExpShare,
     PartyRequestType,
 };
 use tokio::sync::oneshot;
@@ -104,9 +104,6 @@ pub enum Command {
     },
     GetNextPlayerId {
         respond_to: oneshot::Sender<i32>,
-    },
-    GetOnlineList {
-        respond_to: oneshot::Sender<Vec<OnlinePlayer>>,
     },
     GetPlayerParty {
         player_id: i32,

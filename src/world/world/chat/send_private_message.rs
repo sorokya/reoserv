@@ -31,7 +31,12 @@ fn send_private_message(from: &str, to: &PlayerHandle, message: &str) {
         player_name: from.to_string(),
     };
     let mut writer = EoWriter::new();
-    packet.serialize(&mut writer);
+
+    if let Err(e) = packet.serialize(&mut writer) {
+        error!("Failed to serialize TalkTellServerPacket: {}", e);
+        return;
+    }
+
     to.send(
         PacketAction::Tell,
         PacketFamily::Talk,
@@ -44,8 +49,14 @@ fn send_player_not_found(player: &PlayerHandle, to: &str) {
         reply_code: TalkReply::NotFound,
         name: to.to_string(),
     };
+
     let mut writer = EoWriter::new();
-    packet.serialize(&mut writer);
+
+    if let Err(e) = packet.serialize(&mut writer) {
+        error!("Failed to serialize TalkReplyServerPacket: {}", e);
+        return;
+    }
+
     player.send(
         PacketAction::Reply,
         PacketFamily::Talk,

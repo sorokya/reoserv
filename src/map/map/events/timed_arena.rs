@@ -1,8 +1,10 @@
-use bytes::Bytes;
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
+        net::{
+            server::{ArenaDropServerPacket, ArenaUseServerPacket},
+            PacketAction, PacketFamily,
+        },
         Coords,
     },
 };
@@ -81,7 +83,17 @@ impl Map {
     }
 
     fn send_arena_full(&self) {
-        let buf = Bytes::from_static(&b"N"[..]);
+        let packet = ArenaDropServerPacket::new();
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaDropServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
+
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
                 PacketAction::Drop,
@@ -92,8 +104,16 @@ impl Map {
     }
 
     fn send_arena_launch(&mut self, player_count: usize) {
+        let packet = ArenaUseServerPacket {
+            players_count: player_count as i32,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_char(player_count as i32);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaUseServerPacket: {}", e);
+            return;
+        }
 
         let buf = writer.to_byte_array();
         for character in self.characters.values() {

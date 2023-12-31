@@ -29,12 +29,23 @@ impl World {
             }
         };
 
-        self.notify_online_admins(&character.name, &message, &reportee_name)
+        self.notify_report_to_online_admins(&character.name, &message, &reportee_name)
             .await;
-        self.add_to_admin_board(character.id, character.name.clone(), message, reportee_name);
+
+        self.add_report_to_admin_board(
+            character.id,
+            character.name.clone(),
+            message,
+            reportee_name,
+        );
     }
 
-    async fn notify_online_admins(&self, player_name: &str, message: &str, reportee_name: &str) {
+    async fn notify_report_to_online_admins(
+        &self,
+        player_name: &str,
+        message: &str,
+        reportee_name: &str,
+    ) {
         let packet = AdminInteractReplyServerPacket {
             message_type: AdminMessageType::Report,
             message_type_data: Some(AdminInteractReplyServerPacketMessageTypeData::Report(
@@ -68,7 +79,7 @@ impl World {
         }
     }
 
-    fn add_to_admin_board(
+    fn add_report_to_admin_board(
         &self,
         character_id: i32,
         player_name: String,

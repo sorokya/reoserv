@@ -1,10 +1,13 @@
 use std::cmp;
 
 use eolib::{
-    data::EoWriter,
+    data::{EoSerialize, EoWriter},
     protocol::{
         map::MapTileSpec,
-        net::{Item, PacketAction, PacketFamily},
+        net::{
+            server::{LockerReplyServerPacket, LockerSpecServerPacket},
+            Item, PacketAction, PacketFamily, ThreeItem,
+        },
         Coords,
     },
 };
@@ -26,8 +29,17 @@ impl Map {
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as i32 >= bank_size {
+            let packet = LockerSpecServerPacket {
+                locker_max_items: bank_size,
+            };
+
             let mut writer = EoWriter::new();
-            writer.add_char(bank_size);
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize LockerSpecServerPacket: {}", e);
+                return;
+            }
+
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Locker,
@@ -80,17 +92,27 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_bank_item(item.id, amount);
 
+        let packet = LockerReplyServerPacket {
+            deposited_item: Item {
+                id: item.id,
+                amount: character.get_item_amount(item.id),
+            },
+            weight: character.get_weight(),
+            locker_items: character
+                .bank
+                .iter()
+                .map(|i| ThreeItem {
+                    id: i.id,
+                    amount: i.amount,
+                })
+                .collect(),
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(item.id);
-        writer.add_int(character.get_item_amount(item.id));
 
-        let weight = character.get_weight();
-        writer.add_char(weight.current);
-        writer.add_char(weight.max);
-
-        for item in &character.bank {
-            writer.add_short(item.id);
-            writer.add_three(item.amount);
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize LockerReplyServerPacket: {}", e);
+            return;
         }
 
         character.player.as_ref().unwrap().send(

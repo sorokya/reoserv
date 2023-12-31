@@ -20,7 +20,12 @@ use super::Player;
 
 impl Player {
     // TODO: verify version
-    pub async fn begin_handshake(&mut self, challenge: i32, _hdid: String, _version: Version) {
+    pub async fn begin_handshake(
+        &mut self,
+        challenge: i32,
+        _hdid: String,
+        _version: Version,
+    ) -> bool {
         if let Some(duration) = self.get_ban_duration().await {
             let mut writer = EoWriter::new();
             let mut reply = InitInitServerPacket {
@@ -56,8 +61,8 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            self.close("IP Banned".to_string());
-            return;
+            self.close("IP Banned".to_string()).await;
+            return false;
         }
 
         let sequence_start = generate_sequence_start();
@@ -94,5 +99,7 @@ impl Player {
                 writer.to_byte_array(),
             )
             .await;
+
+        true
     }
 }

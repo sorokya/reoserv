@@ -3,6 +3,8 @@
 pub enum ClientState {
     Uninitialized,
     Initialized,
+    Accepted,
     LoggedIn,
-    Playing,
+    EnteringGame,
+    InGame,
 }

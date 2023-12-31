@@ -7,6 +7,7 @@ use eolib::protocol::Coords;
 
 use crate::character::Character;
 use crate::errors::DataNotFoundError;
+use crate::player::ClientState;
 use crate::SETTINGS;
 
 use super::super::World;
@@ -90,7 +91,9 @@ impl World {
 
         self.characters
             .insert(character.name.to_string(), player_id);
+
         player.set_character(Box::new(character));
+        player.set_state(ClientState::EnteringGame);
 
         let reply = WelcomeReplyServerPacket {
             welcome_code: WelcomeCode::SelectCharacter,

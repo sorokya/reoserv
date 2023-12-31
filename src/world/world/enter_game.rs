@@ -62,7 +62,7 @@ impl World {
                 let player_id = player_id.unwrap();
 
                 player.set_map(map.clone());
-                player.set_state(ClientState::Playing);
+                player.set_state(ClientState::InGame);
                 let character = player.take_character().await;
 
                 if let Err(e) = character {

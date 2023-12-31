@@ -99,7 +99,7 @@ impl Player {
                 challenge,
                 hdid,
                 version,
-            } => self.begin_handshake(challenge, hdid, version).await,
+            } => return self.begin_handshake(challenge, hdid, version).await,
             Command::CancelTrade => self.cancel_trade().await,
             Command::Close(reason) => {
                 self.close(reason).await;
@@ -110,12 +110,13 @@ impl Player {
                 client_encryption_multiple,
                 server_encryption_multiple,
             } => {
-                self.complete_handshake(
-                    player_id,
-                    client_encryption_multiple,
-                    server_encryption_multiple,
-                )
-                .await
+                return self
+                    .complete_handshake(
+                        player_id,
+                        client_encryption_multiple,
+                        server_encryption_multiple,
+                    )
+                    .await
             }
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::Die => self.die().await,

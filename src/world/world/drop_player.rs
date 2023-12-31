@@ -10,12 +10,17 @@ impl World {
         character_name: &str,
         respond_to: oneshot::Sender<()>,
     ) {
+        if !self.players.contains_key(&player_id) {
+            let _ = respond_to.send(());
+            return;
+        }
+
         warn!(
             "Dropping player! id: {}, account_id: {}, character_name: {}",
             player_id, account_id, character_name
         );
 
-        self.players.remove(&player_id).unwrap();
+        self.players.remove(&player_id);
 
         if account_id > 0 {
             self.accounts.retain(|id| *id != account_id);

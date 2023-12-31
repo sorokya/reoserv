@@ -1,7 +1,9 @@
-use bytes::Bytes;
-use eolib::protocol::{
-    map::MapTileSpec,
-    net::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{server::EffectReportServerPacket, PacketAction, PacketFamily},
+    },
 };
 
 use super::super::Map;
@@ -15,17 +17,26 @@ impl Map {
         // TODO: only doing this to satisfy the borrow checker..
         let mut damaged_player_ids: Vec<i32> = Vec::new();
 
+        let packet = EffectReportServerPacket::new();
+
+        let mut writer = EoWriter::new();
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize EffectReportServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
+
         for character in self.characters.values() {
             if !character.hidden
                 && self.get_tile(&character.coords).unwrap_or_default() == MapTileSpec::TimedSpikes
             {
                 damaged_player_ids.push(character.player_id.unwrap());
             } else {
-                // TODO: only send if player near spike?
                 character.player.as_ref().unwrap().send(
                     PacketAction::Report,
                     PacketFamily::Effect,
-                    Bytes::from_static(b"S"),
+                    buf.clone(),
                 );
             }
         }

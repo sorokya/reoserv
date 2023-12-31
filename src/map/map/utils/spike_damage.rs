@@ -1,15 +1,20 @@
 use std::cmp;
 
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            EffectAdminServerPacket, EffectSpecServerPacket,
+            EffectSpecServerPacketMapDamageTypeData, EffectSpecServerPacketMapDamageTypeDataSpikes,
+            MapDamageType,
+        },
+        PacketAction, PacketFamily,
+    },
 };
 
 use crate::SETTINGS;
 
 use super::super::Map;
-
-const EFFECT_SPIKE: i32 = 2;
 
 impl Map {
     pub fn spike_damage(&mut self, player_id: i32) {
@@ -25,11 +30,23 @@ impl Map {
 
         let hp_percentage = character.get_hp_percentage();
 
+        let packet = EffectSpecServerPacket {
+            map_damage_type: MapDamageType::Spikes,
+            map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::Spikes(
+                EffectSpecServerPacketMapDamageTypeDataSpikes {
+                    hp_damage: damage,
+                    hp: character.hp,
+                    max_hp: character.max_hp,
+                },
+            )),
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_char(EFFECT_SPIKE);
-        writer.add_short(damage);
-        writer.add_short(character.hp);
-        writer.add_short(character.max_hp);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize EffectSpecServerPacket: {}", e);
+            return;
+        }
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
@@ -42,11 +59,19 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        let packet = EffectAdminServerPacket {
+            player_id,
+            hp_percentage,
+            died: character.hp == 0,
+            damage,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_char(hp_percentage);
-        writer.add_char(if character.hp == 0 { 1 } else { 0 });
-        writer.add_three(damage as i32);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize EffectAdminServerPacket: {}", e);
+            return;
+        }
 
         self.send_buf_near_player(
             player_id,

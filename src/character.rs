@@ -1,7 +1,14 @@
-use std::cmp;
 use chrono::prelude::*;
-use eolib::protocol::{Coords, Direction, net::{server::{SitState, EquipmentPaperdoll, CharacterIcon}, Item, Spell, client::CharacterCreateClientPacket, Weight}, Gender, AdminLevel};
+use eolib::protocol::{
+    net::{
+        client::CharacterCreateClientPacket,
+        server::{CharacterIcon, EquipmentPaperdoll, SitState},
+        Item, Spell, Weight,
+    },
+    AdminLevel, Coords, Direction, Gender,
+};
 use mysql_async::Conn;
+use std::cmp;
 
 use crate::{player::PlayerHandle, EXP_TABLE, SETTINGS};
 

@@ -1,6 +1,13 @@
 use std::cmp;
 
-use eolib::{data::EoWriter, protocol::{net::{PacketAction, PacketFamily, Item}, Coords, map::MapTileSpec}};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        map::MapTileSpec,
+        net::{Item, PacketAction, PacketFamily},
+        Coords,
+    },
+};
 
 use crate::SETTINGS;
 

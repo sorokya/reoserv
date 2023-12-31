@@ -1,5 +1,14 @@
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+            WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
+        },
+        PacketAction, PacketFamily,
+    },
+};
 use std::{io::Cursor, path::Path};
-use eolib::{protocol::net::{server::{WelcomeReplyServerPacket, WelcomeCode, WelcomeReplyServerPacketWelcomeCodeData, WelcomeReplyServerPacketWelcomeCodeDataEnterGame}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 use crate::{
@@ -74,18 +83,24 @@ impl World {
                 let nearby_info = map.get_nearby_info(player_id).await;
                 let reply = WelcomeReplyServerPacket {
                     welcome_code: WelcomeCode::EnterGame,
-                    welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
-                        news: get_news().await,
-                        weight,
-                        items,
-                        spells,
-                        nearby: nearby_info,
-                    })),
+                    welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(
+                        WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
+                            news: get_news().await,
+                            weight,
+                            items,
+                            spells,
+                            nearby: nearby_info,
+                        },
+                    )),
                 };
 
                 let mut writer = EoWriter::new();
                 reply.serialize(&mut writer);
-                player.send(PacketAction::Reply, PacketFamily::Welcome, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Welcome,
+                    writer.to_byte_array(),
+                );
             } else {
                 player.close(format!(
                     "{}",

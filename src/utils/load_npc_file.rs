@@ -1,4 +1,7 @@
-use eolib::{protocol::r#pub::{EnfRecord, NpcType, Enf, Element}, data::{EoWriter, encode_number, decode_number, EoReader, EoSerialize}};
+use eolib::{
+    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    protocol::r#pub::{Element, Enf, EnfRecord, NpcType},
+};
 use glob::glob;
 use serde_json::Value;
 use std::{fs::File, io::Read};

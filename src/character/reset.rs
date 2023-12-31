@@ -13,8 +13,7 @@ impl Character {
 
         self.spells.clear();
         self.stat_points = self.level * SETTINGS.world.stat_points_per_level;
-        self.skill_points =
-            self.level * SETTINGS.world.skill_points_per_level;
+        self.skill_points = self.level * SETTINGS.world.skill_points_per_level;
 
         self.calculate_stats();
     }

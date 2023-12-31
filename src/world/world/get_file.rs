@@ -1,5 +1,5 @@
 use eolib::{
-    data::{EoWriter, EoSerialize},
+    data::{EoSerialize, EoWriter},
     protocol::net::{
         client::FileType,
         server::{
@@ -8,7 +8,8 @@ use eolib::{
             InitInitServerPacketReplyCodeDataFileEmf, InitInitServerPacketReplyCodeDataFileEnf,
             InitInitServerPacketReplyCodeDataFileEsf, InitInitServerPacketReplyCodeDataWarpMap,
             InitReply, MapFile, PubFile,
-        }, PacketAction, PacketFamily,
+        },
+        PacketAction, PacketFamily,
     },
 };
 

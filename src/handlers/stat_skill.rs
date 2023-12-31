@@ -1,6 +1,13 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{client::{StatSkillAddClientPacket, StatSkillAddClientPacketActionTypeData, StatSkillJunkClientPacket, StatSkillOpenClientPacket, StatSkillRemoveClientPacket, StatSkillTakeClientPacket}, PacketAction},
+    protocol::net::{
+        client::{
+            StatSkillAddClientPacket, StatSkillAddClientPacketActionTypeData,
+            StatSkillJunkClientPacket, StatSkillOpenClientPacket, StatSkillRemoveClientPacket,
+            StatSkillTakeClientPacket,
+        },
+        PacketAction,
+    },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};

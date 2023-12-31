@@ -1,4 +1,7 @@
-use eolib::protocol::{net::server::{CharacterSelectionListEntry, EquipmentCharacterSelect}, Gender, AdminLevel};
+use eolib::protocol::{
+    net::server::{CharacterSelectionListEntry, EquipmentCharacterSelect},
+    AdminLevel, Gender,
+};
 use mysql_async::{prelude::*, Conn, Row};
 
 use crate::ITEM_DB;

@@ -1,4 +1,11 @@
-use eolib::{protocol::{r#pub::NpcType, Coords, net::{PacketAction, PacketFamily}}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        r#pub::NpcType,
+        Coords,
+    },
+};
 
 use crate::{INN_DB, NPC_DB};
 

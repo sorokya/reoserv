@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{server::{SitState, RecoverPlayerServerPacket}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{RecoverPlayerServerPacket, SitState},
+        PacketAction, PacketFamily,
+    },
+};
 
 use super::super::Map;
 

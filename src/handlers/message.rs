@@ -1,4 +1,7 @@
-use eolib::{data::{EoWriter, EoSerialize, EoReader}, protocol::net::{server::MessagePongServerPacket, PacketAction, PacketFamily}};
+use eolib::{
+    data::{EoReader, EoSerialize, EoWriter},
+    protocol::net::{server::MessagePongServerPacket, PacketAction, PacketFamily},
+};
 
 use crate::player::PlayerHandle;
 
@@ -9,7 +12,11 @@ fn ping(player: PlayerHandle) {
         error!("Failed to serialize MessagePongServerPacket: {}", e);
         return;
     }
-    player.send(PacketAction::Pong, PacketFamily::Message, writer.to_byte_array());
+    player.send(
+        PacketAction::Pong,
+        PacketFamily::Message,
+        writer.to_byte_array(),
+    );
 }
 
 pub fn message(action: PacketAction, _reader: EoReader, player: PlayerHandle) {

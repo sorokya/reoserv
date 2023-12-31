@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::protocol::{Coords, net::{PacketAction, PacketFamily}};
+use eolib::protocol::{
+    net::{PacketAction, PacketFamily},
+    Coords,
+};
 
 use super::super::Map;
 

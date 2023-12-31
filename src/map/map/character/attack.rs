@@ -1,4 +1,14 @@
-use eolib::{protocol::{Direction, net::{server::{AttackPlayerServerPacket, ArenaSpecServerPacket, ArenaAcceptServerPacket}, PacketAction, PacketFamily}, Coords, r#pub::{NpcType, ItemSubtype}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket},
+            PacketAction, PacketFamily,
+        },
+        r#pub::{ItemSubtype, NpcType},
+        Coords, Direction,
+    },
+};
 use rand::Rng;
 
 use crate::{
@@ -120,10 +130,7 @@ impl Map {
             None => return,
         };
 
-        if !matches!(
-            npc_data.r#type,
-            NpcType::Passive | NpcType::Aggressive
-        ) {
+        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
             return;
         }
 
@@ -147,12 +154,7 @@ impl Map {
         }
     }
 
-    fn attack_player(
-        &mut self,
-        player_id: i32,
-        target_player_id: i32,
-        direction: Direction,
-    ) {
+    fn attack_player(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
         if self.arena_players.iter().any(|p| p.player_id == player_id) {
             return self.attack_player_arena(player_id, target_player_id, direction);
         }
@@ -160,12 +162,7 @@ impl Map {
         error!("PVP is not implemented yet!");
     }
 
-    fn attack_player_arena(
-        &mut self,
-        player_id: i32,
-        target_player_id: i32,
-        direction: Direction,
-    ) {
+    fn attack_player_arena(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
         if !self
             .arena_players
             .iter()

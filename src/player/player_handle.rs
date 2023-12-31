@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::protocol::{Coords, net::{server::WarpEffect, PacketAction, PacketFamily, Version}};
+use eolib::protocol::{
+    net::{server::WarpEffect, PacketAction, PacketFamily, Version},
+    Coords,
+};
 use mysql_async::Pool;
 use tokio::{
     net::TcpStream,
@@ -40,7 +43,11 @@ impl PlayerHandle {
     }
 
     pub fn begin_handshake(&self, challenge: i32, hdid: String, version: Version) {
-        let _ = self.tx.send(Command::BeginHandshake { challenge, hdid, version });
+        let _ = self.tx.send(Command::BeginHandshake {
+            challenge,
+            hdid,
+            version,
+        });
     }
 
     pub fn cancel_trade(&self) {
@@ -51,8 +58,17 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
-    pub fn complete_handshake(&self, player_id: i32, client_encryption_multiple: i32, server_encryption_multiple: i32) {
-        let _ = self.tx.send(Command::CompleteHandshake { player_id, client_encryption_multiple, server_encryption_multiple });
+    pub fn complete_handshake(
+        &self,
+        player_id: i32,
+        client_encryption_multiple: i32,
+        server_encryption_multiple: i32,
+    ) {
+        let _ = self.tx.send(Command::CompleteHandshake {
+            player_id,
+            client_encryption_multiple,
+            server_encryption_multiple,
+        });
     }
 
     pub fn arena_die(&self, spawn_coords: Coords) {
@@ -164,9 +180,7 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_session_id(
-        &self,
-    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_session_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetSessionId { respond_to: tx });
         match rx.await {

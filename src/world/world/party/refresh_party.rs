@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use super::super::World;
 
@@ -37,6 +40,10 @@ impl World {
             }
         }
 
-        player.send(PacketAction::List, PacketFamily::Party, writer.to_byte_array());
+        player.send(
+            PacketAction::List,
+            PacketFamily::Party,
+            writer.to_byte_array(),
+        );
     }
 }

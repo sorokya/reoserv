@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::{player::PartyRequest, utils::in_client_range, SETTINGS};
 
@@ -104,6 +107,10 @@ impl Map {
         writer.add_short(player_id);
         writer.add_string(&character.name);
 
-        target.send(PacketAction::Request, PacketFamily::Party, writer.to_byte_array());
+        target.send(
+            PacketAction::Request,
+            PacketFamily::Party,
+            writer.to_byte_array(),
+        );
     }
 }

@@ -1,6 +1,9 @@
-use eolib::data::{EoWriter, EoSerialize};
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
+    AccountReplyServerPacketReplyCodeDataDefault, AccountReplyServerPacketReplyCodeDataExists,
+};
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use eolib::protocol::net::server::{AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData, AccountReplyServerPacketReplyCodeDataExists, AccountReply, AccountReplyServerPacketReplyCodeDataDefault};
 
 use super::account_exists::account_exists;
 
@@ -34,11 +37,17 @@ impl World {
         if exists {
             let reply = AccountReplyServerPacket {
                 reply_code: AccountReply::Exists,
-                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(AccountReplyServerPacketReplyCodeDataExists::new())),
+                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                    AccountReplyServerPacketReplyCodeDataExists::new(),
+                )),
             };
             let mut writer = EoWriter::new();
             reply.serialize(&mut writer);
-            player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Account,
+                writer.to_byte_array(),
+            );
             return;
         }
 
@@ -60,13 +69,17 @@ impl World {
 
         let reply = AccountReplyServerPacket {
             reply_code: AccountReply::Unrecognized(session_id),
-            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Default(AccountReplyServerPacketReplyCodeDataDefault {
-                sequence_start
-            })),
+            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Default(
+                AccountReplyServerPacketReplyCodeDataDefault { sequence_start },
+            )),
         };
 
         let mut writer = EoWriter::new();
         reply.serialize(&mut writer);
-        player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Account,
+            writer.to_byte_array(),
+        );
     }
 }

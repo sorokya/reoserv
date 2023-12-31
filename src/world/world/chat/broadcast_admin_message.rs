@@ -1,4 +1,10 @@
-use eolib::{protocol::{net::{server::TalkAdminServerPacket, PacketAction, PacketFamily}, AdminLevel}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::TalkAdminServerPacket, PacketAction, PacketFamily},
+        AdminLevel,
+    },
+};
 
 use super::super::World;
 

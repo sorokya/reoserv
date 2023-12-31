@@ -1,6 +1,9 @@
-use eolib::{protocol::net::{client::RangeRequestClientPacket, PacketAction}, data::{EoSerialize, EoReader}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{client::RangeRequestClientPacket, PacketAction},
+};
 
-use crate::{player::PlayerHandle, map::MapHandle};
+use crate::{map::MapHandle, player::PlayerHandle};
 
 fn request(reader: EoReader, player_id: i32, map: MapHandle) {
     let request = match RangeRequestClientPacket::deserialize(&reader) {

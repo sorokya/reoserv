@@ -1,4 +1,8 @@
-use eolib::protocol::net::{client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType}, server::OnlinePlayer, PartyRequestType};
+use eolib::protocol::net::{
+    client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+    server::OnlinePlayer,
+    PartyRequestType,
+};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};

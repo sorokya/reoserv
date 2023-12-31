@@ -1,4 +1,8 @@
-use eolib::protocol::net::{client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType}, server::OnlinePlayer, PartyRequestType};
+use eolib::protocol::net::{
+    client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+    server::OnlinePlayer,
+    PartyRequestType,
+};
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
@@ -86,12 +90,7 @@ impl WorldHandle {
             .send(Command::BroadcastAnnouncement { name, message });
     }
 
-    pub fn broadcast_global_message(
-        &self,
-        target_player_id: i32,
-        name: String,
-        message: String,
-    ) {
+    pub fn broadcast_global_message(&self, target_player_id: i32, name: String, message: String) {
         let _ = self.tx.send(Command::BroadcastGlobalMessage {
             target_player_id,
             name,

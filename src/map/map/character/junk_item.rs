@@ -1,6 +1,9 @@
 use std::cmp;
 
-use eolib::{protocol::net::{server::ItemJunkServerPacket, ThreeItem, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem},
+};
 
 use super::super::Map;
 

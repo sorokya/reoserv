@@ -1,6 +1,13 @@
 use std::cmp;
 
-use eolib::{protocol::{Coords, map::MapTileSpec, net::{PacketAction, PacketFamily}}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        map::MapTileSpec,
+        net::{PacketAction, PacketFamily},
+        Coords,
+    },
+};
 
 use super::super::Map;
 

@@ -1,4 +1,10 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::NPC_DB;
 

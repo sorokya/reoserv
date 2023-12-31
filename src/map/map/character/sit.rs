@@ -1,4 +1,10 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::{SitState, SitReplyServerPacket}}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{SitReplyServerPacket, SitState},
+        PacketAction, PacketFamily,
+    },
+};
 
 use super::super::Map;
 

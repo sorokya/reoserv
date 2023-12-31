@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::protocol::{Coords, net::{server::WarpEffect, PacketAction, PacketFamily, Version}};
+use eolib::protocol::{
+    net::{server::WarpEffect, PacketAction, PacketFamily, Version},
+    Coords,
+};
 use tokio::sync::oneshot;
 
 use crate::{

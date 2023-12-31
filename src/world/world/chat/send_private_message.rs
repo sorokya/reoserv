@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{server::{TalkTellServerPacket, TalkReplyServerPacket, TalkReply}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{TalkReply, TalkReplyServerPacket, TalkTellServerPacket},
+        PacketAction, PacketFamily,
+    },
+};
 
 use crate::player::PlayerHandle;
 
@@ -26,7 +32,11 @@ fn send_private_message(from: &str, to: &PlayerHandle, message: &str) {
     };
     let mut writer = EoWriter::new();
     packet.serialize(&mut writer);
-    to.send(PacketAction::Tell, PacketFamily::Talk, writer.to_byte_array());
+    to.send(
+        PacketAction::Tell,
+        PacketFamily::Talk,
+        writer.to_byte_array(),
+    );
 }
 
 fn send_player_not_found(player: &PlayerHandle, to: &str) {
@@ -36,5 +46,9 @@ fn send_player_not_found(player: &PlayerHandle, to: &str) {
     };
     let mut writer = EoWriter::new();
     packet.serialize(&mut writer);
-    player.send(PacketAction::Reply, PacketFamily::Talk, writer.to_byte_array());
+    player.send(
+        PacketAction::Reply,
+        PacketFamily::Talk,
+        writer.to_byte_array(),
+    );
 }

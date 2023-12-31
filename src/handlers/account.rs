@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{client::{AccountCreateClientPacket, AccountRequestClientPacket, AccountAgreeClientPacket}, PacketAction}, data::{EoSerialize, EoReader}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{AccountAgreeClientPacket, AccountCreateClientPacket, AccountRequestClientPacket},
+        PacketAction,
+    },
+};
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
@@ -35,7 +41,12 @@ fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.change_password(player_id, agree.username, agree.old_password, agree.new_password);
+    world.change_password(
+        player_id,
+        agree.username,
+        agree.old_password,
+        agree.new_password,
+    );
 }
 
 pub async fn account(

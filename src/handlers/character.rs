@@ -1,4 +1,13 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{CharacterCreateClientPacket, CharacterRemoveClientPacket, CharacterRequestClientPacket, CharacterTakeClientPacket}}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            CharacterCreateClientPacket, CharacterRemoveClientPacket, CharacterRequestClientPacket,
+            CharacterTakeClientPacket,
+        },
+        PacketAction,
+    },
+};
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 

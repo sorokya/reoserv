@@ -1,4 +1,13 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::{ShopOpenServerPacket, ShopTradeItem, ShopCraftItem}, CharItem, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{ShopCraftItem, ShopOpenServerPacket, ShopTradeItem},
+            CharItem, PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SHOP_DB};
 
@@ -93,6 +102,10 @@ impl Map {
 
         let mut writer = EoWriter::new();
         reply.serialize(&mut writer);
-        player.send(PacketAction::Open, PacketFamily::Shop, writer.to_byte_array());
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Shop,
+            writer.to_byte_array(),
+        );
     }
 }

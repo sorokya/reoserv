@@ -1,16 +1,24 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::{StatSkillReplyServerPacket, SkillMasterReply, StatSkillReplyServerPacketReplyCodeData, StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket}, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                SkillMasterReply, StatSkillReplyServerPacket,
+                StatSkillReplyServerPacketReplyCodeData,
+                StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn learn_skill(
-        &mut self,
-        player_id: i32,
-        spell_id: i32,
-        session_id: i32,
-    ) {
+    pub async fn learn_skill(&mut self, player_id: i32, spell_id: i32, session_id: i32) {
         if spell_id == 0 {
             return;
         }
@@ -82,10 +90,14 @@ impl Map {
             || character.adj_agility < skill.agi_requirement
             || character.adj_constitution < skill.con_requirement
             || character.adj_charisma < skill.cha_requirement
-            || (skill.skill_id_requirement1 > 0 && !character.has_spell(skill.skill_id_requirement1))
-            || (skill.skill_id_requirement2 > 0 && !character.has_spell(skill.skill_id_requirement2))
-            || (skill.skill_id_requirement3 > 0 && !character.has_spell(skill.skill_id_requirement3))
-            || (skill.skill_id_requirement4 > 0 && !character.has_spell(skill.skill_id_requirement4))
+            || (skill.skill_id_requirement1 > 0
+                && !character.has_spell(skill.skill_id_requirement1))
+            || (skill.skill_id_requirement2 > 0
+                && !character.has_spell(skill.skill_id_requirement2))
+            || (skill.skill_id_requirement3 > 0
+                && !character.has_spell(skill.skill_id_requirement3))
+            || (skill.skill_id_requirement4 > 0
+                && !character.has_spell(skill.skill_id_requirement4))
         {
             return;
         }
@@ -93,9 +105,11 @@ impl Map {
         if skill.class_requirement > 0 && character.class != skill.class_requirement {
             let reply = StatSkillReplyServerPacket {
                 reply_code: SkillMasterReply::WrongClass,
-                reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(StatSkillReplyServerPacketReplyCodeDataWrongClass {
-                    class_id: character.class,
-                })),
+                reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
+                    StatSkillReplyServerPacketReplyCodeDataWrongClass {
+                        class_id: character.class,
+                    },
+                )),
             };
 
             let mut writer = EoWriter::new();

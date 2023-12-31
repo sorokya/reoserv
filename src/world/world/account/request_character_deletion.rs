@@ -1,4 +1,7 @@
-use eolib::{protocol::net::{server::CharacterPlayerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::CharacterPlayerServerPacket, PacketAction, PacketFamily},
+};
 
 use crate::character::Character;
 
@@ -61,6 +64,10 @@ impl World {
 
         let mut writer = EoWriter::new();
         reply.serialize(&mut writer);
-        player.send(PacketAction::Player, PacketFamily::Character, writer.to_byte_array());
+        player.send(
+            PacketAction::Player,
+            PacketFamily::Character,
+            writer.to_byte_array(),
+        );
     }
 }

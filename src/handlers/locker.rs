@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{LockerAddClientPacket, LockerTakeClientPacket}, Item}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{LockerAddClientPacket, LockerTakeClientPacket},
+        Item, PacketAction,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
@@ -15,10 +21,13 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
         return;
     }
 
-    map.add_locker_item(player_id, Item {
-        id: add.deposit_item.id,
-        amount: add.deposit_item.amount,
-    });
+    map.add_locker_item(
+        player_id,
+        Item {
+            id: add.deposit_item.id,
+            amount: add.deposit_item.amount,
+        },
+    );
 }
 
 fn buy(player_id: i32, map: MapHandle) {

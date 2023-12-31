@@ -1,4 +1,4 @@
-use eolib::data::{EoWriter, EoSerialize};
+use eolib::data::{EoSerialize, EoWriter};
 use eolib::protocol::net::client::AccountCreateClientPacket;
 use eolib::protocol::net::server::{
     AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,

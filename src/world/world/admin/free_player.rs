@@ -1,4 +1,4 @@
-use eolib::protocol::{Coords, net::server::WarpEffect};
+use eolib::protocol::{net::server::WarpEffect, Coords};
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 

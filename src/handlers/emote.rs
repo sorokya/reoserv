@@ -1,4 +1,7 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::EmoteReportClientPacket}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{client::EmoteReportClientPacket, PacketAction},
+};
 
 use crate::player::PlayerHandle;
 

@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use super::super::Map;
 
@@ -36,11 +39,19 @@ impl Map {
         let mut writer = EoWriter::new();
         writer.add_char(UNAGREED);
 
-        player.send(PacketAction::Spec, PacketFamily::Trade, writer.to_byte_array());
+        player.send(
+            PacketAction::Spec,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
 
         let mut writer = EoWriter::new();
         writer.add_short(player_id);
         writer.add_char(UNAGREED);
-        partner.send(PacketAction::Agree, PacketFamily::Trade, writer.to_byte_array());
+        partner.send(
+            PacketAction::Agree,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
     }
 }

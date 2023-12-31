@@ -1,4 +1,7 @@
-use eolib::protocol::net::{server::{WarpEffect, AvatarRemoveServerPacket}, PacketAction, PacketFamily};
+use eolib::protocol::net::{
+    server::{AvatarRemoveServerPacket, WarpEffect},
+    PacketAction, PacketFamily,
+};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, ARENAS};

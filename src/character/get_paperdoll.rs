@@ -1,4 +1,4 @@
-use eolib::protocol::net::server::{EquipmentMapInfo, EquipmentChange};
+use eolib::protocol::net::server::{EquipmentChange, EquipmentMapInfo};
 
 use crate::ITEM_DB;
 

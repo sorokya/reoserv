@@ -1,5 +1,8 @@
 use crc::{Crc, CRC_32_CKSUM};
-use eolib::{protocol::r#pub::{Ecf, EcfRecord}, data::{encode_number, decode_number, EoReader, EoSerialize, EoWriter}};
+use eolib::{
+    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    protocol::r#pub::{Ecf, EcfRecord},
+};
 use glob::glob;
 use serde_json::Value;
 use std::{fs::File, io::Read};

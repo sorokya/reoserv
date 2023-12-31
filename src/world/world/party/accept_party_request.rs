@@ -18,7 +18,8 @@ impl World {
 
         match player.get_party_request().await {
             PartyRequest::Invite(actual_player_id) => {
-                if request_type != PartyRequestType::Invite || actual_player_id != target_player_id {
+                if request_type != PartyRequestType::Invite || actual_player_id != target_player_id
+                {
                     return;
                 }
 

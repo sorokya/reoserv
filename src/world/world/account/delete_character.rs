@@ -1,6 +1,9 @@
-use eolib::data::{EoWriter, EoSerialize};
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
+    CharacterReplyServerPacketReplyCodeDataDeleted,
+};
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use eolib::protocol::net::server::{CharacterReplyServerPacket, CharacterReply, CharacterReplyServerPacketReplyCodeData, CharacterReplyServerPacketReplyCodeDataDeleted};
 
 use crate::{character::Character, errors::WrongSessionIdError};
 
@@ -84,14 +87,18 @@ impl World {
 
             let reply = CharacterReplyServerPacket {
                 reply_code: CharacterReply::Deleted,
-                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(CharacterReplyServerPacketReplyCodeDataDeleted {
-                    characters,
-                })),
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(
+                    CharacterReplyServerPacketReplyCodeDataDeleted { characters },
+                )),
             };
 
             let mut writer = EoWriter::new();
             reply.serialize(&mut writer);
-            player.send(PacketAction::Reply, PacketFamily::Character, writer.to_byte_array());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                writer.to_byte_array(),
+            );
         });
     }
 }

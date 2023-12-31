@@ -1,4 +1,11 @@
-use eolib::{protocol::{Coords, r#pub::ItemType, net::{server::ChestOpenServerPacket, ThreeItem, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::ChestOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
+        r#pub::ItemType,
+        Coords,
+    },
+};
 
 use crate::{utils::in_client_range, ITEM_DB};
 

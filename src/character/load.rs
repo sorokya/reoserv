@@ -1,4 +1,7 @@
-use eolib::protocol::{AdminLevel, Gender, Direction, net::{server::SitState, Item, Spell}};
+use eolib::protocol::{
+    net::{server::SitState, Item, Spell},
+    AdminLevel, Direction, Gender,
+};
 use mysql_async::{prelude::*, Conn, Params, Row};
 
 use super::Character;

@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{client::{PartyRequestClientPacket, PartyAcceptClientPacket, PartyRemoveClientPacket}, PartyRequestType, PacketAction}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{PartyAcceptClientPacket, PartyRemoveClientPacket, PartyRequestClientPacket},
+        PacketAction, PartyRequestType,
+    },
+};
 
 use crate::{
     map::MapHandle,
@@ -16,8 +22,12 @@ pub fn request(reader: EoReader, player_id: i32, map: MapHandle) {
     };
 
     match request.request_type {
-        PartyRequestType::Join => map.party_request(request.player_id, PartyRequest::Join(player_id)),
-        PartyRequestType::Invite => map.party_request(request.player_id, PartyRequest::Invite(player_id)),
+        PartyRequestType::Join => {
+            map.party_request(request.player_id, PartyRequest::Join(player_id))
+        }
+        PartyRequestType::Invite => {
+            map.party_request(request.player_id, PartyRequest::Invite(player_id))
+        }
         _ => {}
     }
 }

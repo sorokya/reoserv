@@ -1,16 +1,17 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::NPC_DB;
 
 use super::super::Map;
 
 impl Map {
-    pub async fn forget_skill(
-        &mut self,
-        player_id: i32,
-        skill_id: i32,
-        session_id: i32,
-    ) {
+    pub async fn forget_skill(&mut self, player_id: i32, skill_id: i32, session_id: i32) {
         if skill_id == 0 {
             return;
         }

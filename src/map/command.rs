@@ -1,5 +1,12 @@
 use bytes::Bytes;
-use eolib::protocol::{net::{Item, ThreeItem, server::{WarpEffect, NearbyInfo}, client::{StatId, ByteCoords}}, Direction, Coords, Emote};
+use eolib::protocol::{
+    net::{
+        client::{ByteCoords, StatId},
+        server::{NearbyInfo, WarpEffect},
+        Item, ThreeItem,
+    },
+    Coords, Direction, Emote,
+};
 use tokio::sync::oneshot;
 
 use crate::{
@@ -156,7 +163,7 @@ pub enum Command {
     },
     OpenDoor {
         target_player_id: i32, // TODO: rename to player_id
-        door_coords: Coords,       // TODO: rename to coords
+        door_coords: Coords,   // TODO: rename to coords
     },
     OpenInn {
         player_id: i32,

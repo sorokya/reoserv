@@ -1,5 +1,10 @@
 use crc::{Crc, CRC_32_CKSUM};
-use eolib::{protocol::r#pub::{Esf, EsfRecord, SkillNature, SkillType, SkillTargetRestrict, SkillTargetType, Element}, data::{EoWriter, encode_number, decode_number, EoReader, EoSerialize}};
+use eolib::{
+    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    protocol::r#pub::{
+        Element, Esf, EsfRecord, SkillNature, SkillTargetRestrict, SkillTargetType, SkillType,
+    },
+};
 use glob::glob;
 use serde_json::Value;
 
@@ -44,11 +49,9 @@ fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
             element: Element::from(v["element"].as_u64().unwrap_or(0) as i32),
             element_power: v["elementPower"].as_u64().unwrap_or(0) as i32,
             target_restrict: SkillTargetRestrict::from(
-                v["targetRestrict"].as_u64().unwrap_or(0) as i32,
+                v["targetRestrict"].as_u64().unwrap_or(0) as i32
             ),
-            target_type: SkillTargetType::from(
-                v["targetType"].as_u64().unwrap_or(0) as i32
-            ),
+            target_type: SkillTargetType::from(v["targetType"].as_u64().unwrap_or(0) as i32),
             target_time: v["targetTime"].as_u64().unwrap_or(0) as i32,
             max_skill_level: v["maxSkillLevel"].as_u64().unwrap_or(0) as i32,
             min_damage: v["minDamage"].as_u64().unwrap_or(0) as i32,

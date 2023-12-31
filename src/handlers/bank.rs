@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{BankAddClientPacket, BankOpenClientPacket, BankTakeClientPacket}}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{BankAddClientPacket, BankOpenClientPacket, BankTakeClientPacket},
+        PacketAction,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 

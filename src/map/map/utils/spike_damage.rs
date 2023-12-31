@@ -1,6 +1,9 @@
 use std::cmp;
 
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::SETTINGS;
 

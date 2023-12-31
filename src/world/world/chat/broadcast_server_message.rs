@@ -1,4 +1,7 @@
-use eolib::{protocol::net::{server::TalkServerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TalkServerServerPacket, PacketAction, PacketFamily},
+};
 
 use super::super::World;
 

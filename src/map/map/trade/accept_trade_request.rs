@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::utils::in_client_range;
 
@@ -50,7 +53,11 @@ impl Map {
         writer.add_short(player_id);
         writer.add_string(&character.name);
         writer.add_byte(0xff);
-        player.send(PacketAction::Open, PacketFamily::Trade, writer.to_byte_array());
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
 
         let mut writer = EoWriter::new();
         writer.add_short(player_id);
@@ -59,6 +66,10 @@ impl Map {
         writer.add_short(target_player_id);
         writer.add_string(&target_character.name);
         writer.add_byte(0xff);
-        target_player.send(PacketAction::Open, PacketFamily::Trade, writer.to_byte_array());
+        target_player.send(
+            PacketAction::Open,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
     }
 }

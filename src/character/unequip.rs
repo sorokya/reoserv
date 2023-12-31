@@ -1,4 +1,4 @@
-use eolib::protocol::{r#pub::ItemType, net::Item};
+use eolib::protocol::{net::Item, r#pub::ItemType};
 
 use crate::ITEM_DB;
 

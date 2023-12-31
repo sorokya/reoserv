@@ -1,4 +1,7 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::BoardPlayerServerPacket}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily},
+};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::utils::get_board_tile_spec;
@@ -62,7 +65,11 @@ impl Map {
                 return;
             }
 
-            player.send(PacketAction::Player, PacketFamily::Board, writer.to_byte_array());
+            player.send(
+                PacketAction::Player,
+                PacketFamily::Board,
+                writer.to_byte_array(),
+            );
         });
     }
 }

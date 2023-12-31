@@ -3,7 +3,10 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use crc::{Crc, CRC_32_CKSUM};
 
-use eolib::{protocol::r#pub::{Eif, EifRecord, ItemType, ItemSpecial, ItemSize, ItemSubtype, Element}, data::{EoWriter, encode_number, decode_number, EoReader, EoSerialize}};
+use eolib::{
+    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    protocol::r#pub::{Eif, EifRecord, Element, ItemSize, ItemSpecial, ItemSubtype, ItemType},
+};
 use glob::glob;
 use serde_json::Value;
 

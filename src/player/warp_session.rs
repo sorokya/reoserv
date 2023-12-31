@@ -1,4 +1,4 @@
-use eolib::protocol::{Coords, net::server::WarpEffect};
+use eolib::protocol::{net::server::WarpEffect, Coords};
 
 pub struct WarpSession {
     pub map_id: i32,

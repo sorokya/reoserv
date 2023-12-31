@@ -1,4 +1,13 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::{StatSkillOpenServerPacket, SkillLearn, CharacterBaseStats}, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
+            PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
 
@@ -80,6 +89,10 @@ impl Map {
 
         let mut writer = EoWriter::new();
         reply.serialize(&mut writer);
-        player.send(PacketAction::Open, PacketFamily::StatSkill, writer.to_byte_array());
+        player.send(
+            PacketAction::Open,
+            PacketFamily::StatSkill,
+            writer.to_byte_array(),
+        );
     }
 }

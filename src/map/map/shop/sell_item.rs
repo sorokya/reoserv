@@ -1,6 +1,15 @@
 use std::cmp;
 
-use eolib::{protocol::{net::{Item, server::{ShopSellServerPacket, ShopSoldItem}, PacketAction, PacketFamily}, r#pub::NpcType}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{ShopSellServerPacket, ShopSoldItem},
+            Item, PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SHOP_DB};
 

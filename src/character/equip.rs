@@ -1,4 +1,10 @@
-use eolib::{protocol::{r#pub::ItemType, net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily},
+        r#pub::ItemType,
+    },
+};
 
 use crate::ITEM_DB;
 

@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::{protocol::net::{PacketAction, PacketFamily}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use super::super::World;
 

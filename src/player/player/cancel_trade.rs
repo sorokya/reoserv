@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use super::Player;
 
@@ -17,7 +20,11 @@ impl Player {
         writer.add_short(interact_player_id);
         let _ = self
             .bus
-            .send(PacketAction::Close, PacketFamily::Trade, writer.to_byte_array())
+            .send(
+                PacketAction::Close,
+                PacketFamily::Trade,
+                writer.to_byte_array(),
+            )
             .await;
     }
 }

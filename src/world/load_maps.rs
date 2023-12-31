@@ -8,7 +8,10 @@ use std::{
 };
 
 use bytes::Bytes;
-use eolib::{protocol::map::Emf, data::{EoReader, EoSerialize}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::map::Emf,
+};
 use futures::{stream, StreamExt};
 use mysql_async::Pool;
 
@@ -50,7 +53,7 @@ async fn load_map(
 ) -> Result<(i32, MapHandle), Box<dyn std::error::Error + Send + Sync>> {
     let raw_path = format!("maps/{:0>5}.emf", id);
     let path = Path::new(&raw_path);
-    
+
     if !Path::exists(path) {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
@@ -71,8 +74,5 @@ async fn load_map(
 
     let file = Emf::deserialize(&reader)?;
 
-    Ok((
-        id,
-        MapHandle::new(id, file_size as i32, pool, file, world),
-    ))
+    Ok((id, MapHandle::new(id, file_size as i32, pool, file, world)))
 }

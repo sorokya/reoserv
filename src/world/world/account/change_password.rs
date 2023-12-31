@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 use mysql_async::{prelude::*, Params, Row};
 
 use super::{
@@ -43,7 +46,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(5);
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -62,7 +69,11 @@ impl World {
                     let mut writer = EoWriter::new();
                     writer.add_short(5);
                     writer.add_string("NO");
-                    player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+                    player.send(
+                        PacketAction::Reply,
+                        PacketFamily::Account,
+                        writer.to_byte_array(),
+                    );
                     return;
                 }
             }
@@ -73,7 +84,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(5);
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -97,7 +112,11 @@ impl World {
             let mut writer = EoWriter::new();
             writer.add_short(6);
             writer.add_string("NO");
-            player.send(PacketAction::Reply, PacketFamily::Account, writer.to_byte_array());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Account,
+                writer.to_byte_array(),
+            );
         });
     }
 }

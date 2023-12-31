@@ -1,6 +1,6 @@
 use chrono::Utc;
-use eolib::protocol::Coords;
 use eolib::protocol::map::{Emf, MapTileSpec};
+use eolib::protocol::Coords;
 
 use crate::SETTINGS;
 

@@ -1,7 +1,16 @@
-use eolib::{protocol::{net::{server::{
-    SitState, WarpAgreeServerPacket, WarpAgreeServerPacketWarpTypeData,
-    WarpAgreeServerPacketWarpTypeDataMapSwitch, WarpEffect, WarpType,
-}, PacketAction, PacketFamily}, Coords}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                SitState, WarpAgreeServerPacket, WarpAgreeServerPacketWarpTypeData,
+                WarpAgreeServerPacketWarpTypeDataMapSwitch, WarpEffect, WarpType,
+            },
+            PacketAction, PacketFamily,
+        },
+        Coords,
+    },
+};
 
 use crate::{
     errors::{MissingSessionIdError, WrongSessionIdError},

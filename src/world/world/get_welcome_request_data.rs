@@ -1,11 +1,14 @@
 use eolib::protocol::{
-    net::server::{ServerSettings, WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter, EquipmentWelcome, LoginMessageCode},
+    net::server::{
+        EquipmentWelcome, LoginMessageCode, ServerSettings,
+        WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
+    },
     Coords,
 };
 
 use crate::{
-    character::Character, errors::DataNotFoundError, player::PlayerHandle, CLASS_DB, ITEM_DB,
-    NPC_DB, SETTINGS, SPELL_DB, utils::pad_string,
+    character::Character, errors::DataNotFoundError, player::PlayerHandle, utils::pad_string,
+    CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB,
 };
 
 use super::World;

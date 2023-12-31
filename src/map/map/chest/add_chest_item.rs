@@ -1,7 +1,10 @@
 use std::cmp;
 
 use bytes::Bytes;
-use eolib::{protocol::net::{Item, PacketAction, PacketFamily}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{Item, PacketAction, PacketFamily},
+};
 
 use crate::{
     map::{chest::ChestItem, Chest},

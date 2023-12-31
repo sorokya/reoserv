@@ -1,4 +1,8 @@
-use eolib::protocol::{Coords, net::{server::DoorOpenServerPacket, PacketAction, PacketFamily}, r#pub::ItemType};
+use eolib::protocol::{
+    net::{server::DoorOpenServerPacket, PacketAction, PacketFamily},
+    r#pub::ItemType,
+    Coords,
+};
 
 use crate::{utils::in_client_range, ITEM_DB};
 

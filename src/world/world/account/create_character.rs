@@ -1,11 +1,11 @@
 use crate::{character::Character, errors::WrongSessionIdError};
-use eolib::data::{EoWriter, EoSerialize};
-use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::data::{EoSerialize, EoWriter};
 use eolib::protocol::net::client::CharacterCreateClientPacket;
 use eolib::protocol::net::server::{
     CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
     CharacterReplyServerPacketReplyCodeDataExists, CharacterReplyServerPacketReplyCodeDataOk,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 use super::super::World;
@@ -105,9 +105,9 @@ impl World {
 
             let reply = CharacterReplyServerPacket {
                 reply_code: CharacterReply::OK,
-                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::OK(CharacterReplyServerPacketReplyCodeDataOk {
-                    characters,
-                })),
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::OK(
+                    CharacterReplyServerPacketReplyCodeDataOk { characters },
+                )),
             };
 
             let mut writer = EoWriter::new();

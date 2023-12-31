@@ -1,4 +1,10 @@
-use eolib::{protocol::{Direction, net::{server::AttackPlayerServerPacket, PacketAction, PacketFamily}, Coords}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        net::{server::AttackPlayerServerPacket, PacketAction, PacketFamily},
+        Coords, Direction,
+    },
+};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 

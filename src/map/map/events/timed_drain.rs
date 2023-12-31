@@ -1,6 +1,12 @@
 use std::cmp;
 
-use eolib::{protocol::{net::{PacketAction, PacketFamily}, map::MapTimedEffect}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        map::MapTimedEffect,
+        net::{PacketAction, PacketFamily},
+    },
+};
 
 use crate::{utils::in_client_range, SETTINGS};
 

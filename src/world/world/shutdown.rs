@@ -1,4 +1,7 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::MessageCloseServerPacket}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::MessageCloseServerPacket, PacketAction, PacketFamily},
+};
 use tokio::sync::oneshot;
 
 use super::World;

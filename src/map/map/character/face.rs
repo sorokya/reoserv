@@ -1,4 +1,7 @@
-use eolib::protocol::{Direction, net::{server::FacePlayerServerPacket, PacketAction, PacketFamily}};
+use eolib::protocol::{
+    net::{server::FacePlayerServerPacket, PacketAction, PacketFamily},
+    Direction,
+};
 
 use super::super::Map;
 

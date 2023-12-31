@@ -1,4 +1,7 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::LockerBuyServerPacket}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::LockerBuyServerPacket, PacketAction, PacketFamily},
+};
 
 use crate::SETTINGS;
 

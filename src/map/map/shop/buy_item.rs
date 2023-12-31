@@ -1,4 +1,10 @@
-use eolib::{protocol::{net::{Item, server::ShopBuyServerPacket, PacketAction, PacketFamily}, r#pub::NpcType}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::ShopBuyServerPacket, Item, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SHOP_DB};
 

@@ -1,4 +1,10 @@
-use eolib::{data::EoWriter, protocol::{net::{PacketAction, PacketFamily}, Emote}};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        Emote,
+    },
+};
 
 use super::super::Map;
 

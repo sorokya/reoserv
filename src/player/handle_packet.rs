@@ -3,7 +3,10 @@ use crate::{
     player::{ClientState, PlayerHandle},
 };
 use bytes::Bytes;
-use eolib::{data::EoReader, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoReader,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::{world::WorldHandle, SETTINGS};
 
@@ -20,10 +23,10 @@ pub async fn handle_packet(
     }
 
     let family = PacketFamily::from(reader.get_byte()?);
-     if let PacketFamily::Unrecognized(_) = family {
+    if let PacketFamily::Unrecognized(_) = family {
         player.close("invalid packet family".to_string());
         return Ok(());
-     }
+    }
 
     if player.get_state().await? != ClientState::Uninitialized {
         if family != PacketFamily::Init {

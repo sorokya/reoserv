@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{server::AdminMessageType, PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{server::AdminMessageType, PacketAction, PacketFamily},
+};
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 

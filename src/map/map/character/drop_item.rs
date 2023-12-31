@@ -1,6 +1,17 @@
 use std::cmp;
 
-use eolib::{protocol::{net::{ThreeItem, server::{ItemDropServerPacket, ItemAddServerPacket}, PacketAction, PacketFamily, client::ByteCoords}, Coords, r#pub::ItemSpecial}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            client::ByteCoords,
+            server::{ItemAddServerPacket, ItemDropServerPacket},
+            PacketAction, PacketFamily, ThreeItem,
+        },
+        r#pub::ItemSpecial,
+        Coords,
+    },
+};
 
 use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 
@@ -93,11 +104,11 @@ impl Map {
             return;
         }
 
-        character
-            .player
-            .as_ref()
-            .unwrap()
-            .send(PacketAction::Drop, PacketFamily::Item, writer.to_byte_array());
+        character.player.as_ref().unwrap().send(
+            PacketAction::Drop,
+            PacketFamily::Item,
+            writer.to_byte_array(),
+        );
 
         self.items.insert(
             item_index,

@@ -1,4 +1,7 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::TalkMsgServerPacket}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TalkMsgServerPacket, PacketAction, PacketFamily},
+};
 
 use crate::{player::ClientState, LANG};
 
@@ -6,12 +9,7 @@ use super::super::World;
 
 impl World {
     // TODO: make this sync
-    pub async fn broadcast_global_message(
-        &self,
-        target_player_id: i32,
-        name: &str,
-        message: &str,
-    ) {
+    pub async fn broadcast_global_message(&self, target_player_id: i32, name: &str, message: &str) {
         let player = match self.players.get(&target_player_id) {
             Some(player) => player,
             None => return,
@@ -22,7 +20,11 @@ impl World {
             writer.add_string("Server");
             writer.add_byte(0xff);
             writer.add_string(&LANG.global_locked);
-            player.send(PacketAction::Msg, PacketFamily::Talk, writer.to_byte_array());
+            player.send(
+                PacketAction::Msg,
+                PacketFamily::Talk,
+                writer.to_byte_array(),
+            );
             return;
         }
 

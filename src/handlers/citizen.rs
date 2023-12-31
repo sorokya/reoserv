@@ -1,4 +1,13 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{CitizenOpenClientPacket, CitizenReplyClientPacket, CitizenRequestClientPacket, CitizenAcceptClientPacket}}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            CitizenAcceptClientPacket, CitizenOpenClientPacket, CitizenReplyClientPacket,
+            CitizenRequestClientPacket,
+        },
+        PacketAction,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 

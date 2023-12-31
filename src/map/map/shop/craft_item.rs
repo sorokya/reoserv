@@ -1,4 +1,10 @@
-use eolib::{protocol::{r#pub::NpcType, net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::{NPC_DB, SHOP_DB};
 
@@ -63,29 +69,25 @@ impl Map {
         };
 
         if craft.ingredient1_id > 0
-            && character.get_item_amount(craft.ingredient1_id)
-                < craft.ingredient1_amount
+            && character.get_item_amount(craft.ingredient1_id) < craft.ingredient1_amount
         {
             return;
         }
 
         if craft.ingredient2_id > 0
-            && character.get_item_amount(craft.ingredient2_id)
-                < craft.ingredient2_amount
+            && character.get_item_amount(craft.ingredient2_id) < craft.ingredient2_amount
         {
             return;
         }
 
         if craft.ingredient3_id > 0
-            && character.get_item_amount(craft.ingredient3_id)
-                < craft.ingredient3_amount
+            && character.get_item_amount(craft.ingredient3_id) < craft.ingredient3_amount
         {
             return;
         }
 
         if craft.ingredient4_id > 0
-            && character.get_item_amount(craft.ingredient4_id)
-                < craft.ingredient4_amount
+            && character.get_item_amount(craft.ingredient4_id) < craft.ingredient4_amount
         {
             return;
         }

@@ -1,4 +1,16 @@
-use eolib::{protocol::{net::{server::{AvatarChange, AvatarChangeType, AvatarChangeChangeTypeData, AvatarChangeChangeTypeDataEquipment, PaperdollAgreeServerPacket, AvatarAgreeServerPacket}, PacketAction, PacketFamily}, r#pub::ItemType}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+                AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollAgreeServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::ItemType,
+    },
+};
 
 use crate::ITEM_DB;
 
@@ -34,9 +46,11 @@ impl Map {
             player_id,
             change_type: AvatarChangeType::Equipment,
             sound: false,
-            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(AvatarChangeChangeTypeDataEquipment {
-                equipment: character.get_paperdoll_bahws(),
-            })),
+            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
+                AvatarChangeChangeTypeDataEquipment {
+                    equipment: character.get_paperdoll_bahws(),
+                },
+            )),
         };
 
         let reply = PaperdollAgreeServerPacket {
@@ -67,11 +81,7 @@ impl Map {
 
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
-            ItemType::Armor
-                | ItemType::Weapon
-                | ItemType::Shield
-                | ItemType::Hat
-                | ItemType::Boots
+            ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 
         if is_visible_change && self.characters.len() > 1 {

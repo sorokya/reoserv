@@ -6,11 +6,7 @@ use crate::utils::in_client_range;
 use super::super::Map;
 
 impl Map {
-    pub fn get_nearby_info(
-        &self,
-        target_player_id: i32,
-        respond_to: oneshot::Sender<NearbyInfo>,
-    ) {
+    pub fn get_nearby_info(&self, target_player_id: i32, respond_to: oneshot::Sender<NearbyInfo>) {
         let target = self.characters.get(&target_player_id).unwrap();
         let mut nearby_items = Vec::new();
         let mut nearby_npcs = Vec::new();

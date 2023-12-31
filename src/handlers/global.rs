@@ -1,4 +1,4 @@
-use eolib::{protocol::net::PacketAction, data::EoReader};
+use eolib::{data::EoReader, protocol::net::PacketAction};
 
 use crate::player::PlayerHandle;
 

@@ -1,4 +1,7 @@
-use eolib::{data::EoWriter, protocol::net::{PacketAction, PacketFamily}};
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::{utils::in_client_range, SETTINGS};
 
@@ -51,7 +54,11 @@ impl Map {
             writer.add_char(MAGIC_NUMBER);
             writer.add_short(player_id);
             writer.add_string(&character.name);
-            target_player.send(PacketAction::Request, PacketFamily::Trade, writer.to_byte_array());
+            target_player.send(
+                PacketAction::Request,
+                PacketFamily::Trade,
+                writer.to_byte_array(),
+            );
         }
     }
 }

@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{AdminInteractReportClientPacket, AdminInteractTellClientPacket}}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{AdminInteractReportClientPacket, AdminInteractTellClientPacket},
+        PacketAction,
+    },
+};
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 

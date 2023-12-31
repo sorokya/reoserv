@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::protocol::{map::MapTileSpec, net::{PacketAction, PacketFamily}};
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{PacketAction, PacketFamily},
+};
 
 use super::super::Map;
 

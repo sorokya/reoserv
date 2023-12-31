@@ -2,7 +2,7 @@ use std::cmp;
 
 use chrono::Utc;
 use eolib::{
-    data::{EoWriter, EoSerialize},
+    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{

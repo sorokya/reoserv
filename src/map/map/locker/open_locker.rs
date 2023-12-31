@@ -1,4 +1,11 @@
-use eolib::{protocol::{Coords, map::MapTileSpec, net::{server::LockerOpenServerPacket, ThreeItem, PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{server::LockerOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
+        Coords,
+    },
+};
 
 use super::super::Map;
 

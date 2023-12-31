@@ -1,6 +1,9 @@
 use std::mem;
 
-use eolib::{protocol::net::{server::EffectPlayerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::EffectPlayerServerPacket, PacketAction, PacketFamily},
+};
 
 use super::super::Map;
 

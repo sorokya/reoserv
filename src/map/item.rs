@@ -1,4 +1,4 @@
-use eolib::protocol::{Coords, net::server::ItemMapInfo};
+use eolib::protocol::{net::server::ItemMapInfo, Coords};
 
 #[derive(Debug, Default)]
 pub struct Item {

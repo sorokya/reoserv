@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{Item, client::{ChestAddClientPacket, ChestOpenClientPacket, ChestTakeClientPacket}, PacketAction}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{ChestAddClientPacket, ChestOpenClientPacket, ChestTakeClientPacket},
+        Item, PacketAction,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 

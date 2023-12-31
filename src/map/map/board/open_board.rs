@@ -1,5 +1,11 @@
 use chrono::NaiveDateTime;
-use eolib::{data::{EoWriter, EoSerialize}, protocol::net::{PacketAction, PacketFamily, server::{BoardOpenServerPacket, BoardPostListing}}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{BoardOpenServerPacket, BoardPostListing},
+        PacketAction, PacketFamily,
+    },
+};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::{
@@ -32,8 +38,7 @@ impl Map {
             return;
         }
 
-        if board_id == SETTINGS.board.admin_board && i32::from(character.admin_level) < 1
-        {
+        if board_id == SETTINGS.board.admin_board && i32::from(character.admin_level) < 1 {
             return;
         }
 
@@ -74,15 +79,18 @@ impl Map {
 
             let open = BoardOpenServerPacket {
                 board_id,
-                posts: posts.iter().map(|post| BoardPostListing {
-                    post_id: post.id,
-                    author: post.author.to_owned(),
-                    subject: if SETTINGS.board.date_posts {
-                        format!("{} ({})", post.subject, format_duration(&post.created_at))
-                    } else {
-                        post.subject.to_owned()
-                    },
-                }).collect(),
+                posts: posts
+                    .iter()
+                    .map(|post| BoardPostListing {
+                        post_id: post.id,
+                        author: post.author.to_owned(),
+                        subject: if SETTINGS.board.date_posts {
+                            format!("{} ({})", post.subject, format_duration(&post.created_at))
+                        } else {
+                            post.subject.to_owned()
+                        },
+                    })
+                    .collect(),
             };
 
             if let Err(e) = open.serialize(&mut writer) {
@@ -90,7 +98,11 @@ impl Map {
                 return;
             }
 
-            player.send(PacketAction::Open, PacketFamily::Board, writer.to_byte_array());
+            player.send(
+                PacketAction::Open,
+                PacketFamily::Board,
+                writer.to_byte_array(),
+            );
         });
     }
 }

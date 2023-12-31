@@ -1,5 +1,8 @@
 use bytes::Bytes;
-use eolib::{protocol::net::{PacketAction, PacketFamily}, data::{EoSerialize, EoWriter}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{PacketAction, PacketFamily},
+};
 
 use crate::utils::in_range;
 

@@ -1,7 +1,10 @@
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eolib::{protocol::r#pub::server::{TalkFile, TalkRecord, TalkMessage}, data::{EoReader, EoSerialize}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::r#pub::server::{TalkFile, TalkMessage, TalkRecord},
+};
 use glob::glob;
 use serde_json::Value;
 
@@ -36,7 +39,9 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
                 rate: v["talkRate"].as_u64().unwrap_or(0) as i32,
                 messages: messages
                     .iter()
-                    .map(|v| TalkMessage {message: v.as_str().unwrap_or_default().to_string()})
+                    .map(|v| TalkMessage {
+                        message: v.as_str().unwrap_or_default().to_string(),
+                    })
                     .collect(),
             });
         }

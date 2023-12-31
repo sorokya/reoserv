@@ -1,5 +1,13 @@
 use bytes::Bytes;
-use eolib::protocol::{map::Emf, net::{Item, ThreeItem, server::{WarpEffect, NearbyInfo}, client::{StatId, ByteCoords}}, Coords, Emote, Direction};
+use eolib::protocol::{
+    map::Emf,
+    net::{
+        client::{ByteCoords, StatId},
+        server::{NearbyInfo, WarpEffect},
+        Item, ThreeItem,
+    },
+    Coords, Direction, Emote,
+};
 use mysql_async::Pool;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -20,13 +28,7 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(
-        id: i32,
-        file_size: i32,
-        pool: Pool,
-        file: Emf,
-        world: WorldHandle,
-    ) -> Self {
+    pub fn new(id: i32, file_size: i32, pool: Pool, file: Emf, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let map = Map::new(id, file_size, file, pool, world, rx);
         let _ = tokio::task::Builder::new()
@@ -320,12 +322,7 @@ impl MapHandle {
             .send(Command::RemoveTradeItem { player_id, item_id });
     }
 
-    pub fn request_citizenship(
-        &self,
-        player_id: i32,
-        session_id: i32,
-        answers: [String; 3],
-    ) {
+    pub fn request_citizenship(&self, player_id: i32, session_id: i32, answers: [String; 3]) {
         let _ = self.tx.send(Command::RequestCitizenship {
             player_id,
             session_id,
@@ -354,7 +351,12 @@ impl MapHandle {
         });
     }
 
-    pub fn request_players_and_npcs(&self, player_id: i32, player_ids: Vec<i32>, npc_indexes: Vec<i32>) {
+    pub fn request_players_and_npcs(
+        &self,
+        player_id: i32,
+        player_ids: Vec<i32>,
+        npc_indexes: Vec<i32>,
+    ) {
         let _ = self.tx.send(Command::RequestPlayersAndNpcs {
             player_id,
             player_ids,

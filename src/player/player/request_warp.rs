@@ -1,5 +1,5 @@
 use eolib::{
-    data::{EoWriter, SHORT_MAX, EoSerialize},
+    data::{EoSerialize, EoWriter, SHORT_MAX},
     protocol::{
         net::{
             server::{

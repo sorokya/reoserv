@@ -1,5 +1,8 @@
 use chrono::{Duration, Utc};
-use eolib::{protocol::net::{server::ChestAgreeServerPacket, ThreeItem, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::ChestAgreeServerPacket, PacketAction, PacketFamily, ThreeItem},
+};
 use rand::seq::SliceRandom;
 
 use crate::{map::chest::ChestItem, utils::get_distance};

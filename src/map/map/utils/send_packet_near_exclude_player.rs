@@ -1,4 +1,10 @@
-use eolib::{protocol::{Coords, net::{PacketAction, PacketFamily}}, data::{EoSerialize, EoWriter}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        Coords,
+    },
+};
 
 use crate::utils::in_range;
 

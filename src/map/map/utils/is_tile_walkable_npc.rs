@@ -1,4 +1,4 @@
-use eolib::protocol::{Coords, map::MapTileSpec};
+use eolib::protocol::{map::MapTileSpec, Coords};
 
 use super::super::Map;
 

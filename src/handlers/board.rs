@@ -1,4 +1,13 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{client::{BoardCreateClientPacket, BoardOpenClientPacket, BoardRemoveClientPacket, BoardTakeClientPacket}, PacketAction}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            BoardCreateClientPacket, BoardOpenClientPacket, BoardRemoveClientPacket,
+            BoardTakeClientPacket,
+        },
+        PacketAction,
+    },
+};
 
 use crate::{map::MapHandle, player::PlayerHandle};
 

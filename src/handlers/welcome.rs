@@ -28,8 +28,12 @@ fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
             Some(WelcomeAgreeClientPacketFileTypeData::Emf(_)) => None,
             Some(WelcomeAgreeClientPacketFileTypeData::Eif(agree_item)) => Some(agree_item.file_id),
             Some(WelcomeAgreeClientPacketFileTypeData::Enf(agree_npc)) => Some(agree_npc.file_id),
-            Some(WelcomeAgreeClientPacketFileTypeData::Esf(agree_spell)) => Some(agree_spell.file_id),
-            Some(WelcomeAgreeClientPacketFileTypeData::Ecf(agree_class)) => Some(agree_class.file_id),
+            Some(WelcomeAgreeClientPacketFileTypeData::Esf(agree_spell)) => {
+                Some(agree_spell.file_id)
+            }
+            Some(WelcomeAgreeClientPacketFileTypeData::Ecf(agree_class)) => {
+                Some(agree_class.file_id)
+            }
             _ => return,
         },
         false,

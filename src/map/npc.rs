@@ -1,7 +1,7 @@
 use std::cmp;
 
 use chrono::{DateTime, Utc};
-use eolib::protocol::{Coords, Direction, net::server::NpcMapInfo};
+use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
@@ -45,13 +45,7 @@ impl Npc {
         }
     }
 
-    pub fn damage(
-        &mut self,
-        player_id: i32,
-        amount: i32,
-        accuracy: i32,
-        critical: bool,
-    ) -> i32 {
+    pub fn damage(&mut self, player_id: i32, amount: i32, accuracy: i32, critical: bool) -> i32 {
         let npc_data = match NPC_DB.npcs.get(self.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => {

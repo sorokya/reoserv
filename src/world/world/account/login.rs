@@ -1,6 +1,9 @@
-use eolib::data::{EoWriter, EoSerialize};
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
+    LoginReplyServerPacketReplyCodeDataOk,
+};
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use eolib::protocol::net::server::{LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData, LoginReplyServerPacketReplyCodeDataOk};
 use mysql_async::{prelude::*, Params, Row};
 
 use crate::{player::ClientState, world::WorldHandle};
@@ -47,7 +50,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(i32::from(LoginReply::WrongUser));
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -63,7 +70,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(i32::from(LoginReply::Banned));
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 player.close("Account is banned".to_string());
                 return;
             }
@@ -83,7 +94,11 @@ impl World {
                     let mut writer = EoWriter::new();
                     writer.add_short(i32::from(LoginReply::WrongUserPassword));
                     writer.add_string("NO");
-                    player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+                    player.send(
+                        PacketAction::Reply,
+                        PacketFamily::Login,
+                        writer.to_byte_array(),
+                    );
                     return;
                 }
             }
@@ -94,7 +109,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(i32::from(LoginReply::WrongUserPassword));
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -103,7 +122,11 @@ impl World {
                 let mut writer = EoWriter::new();
                 writer.add_short(i32::from(LoginReply::LoggedIn));
                 writer.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -134,14 +157,18 @@ impl World {
 
             let reply = LoginReplyServerPacket {
                 reply_code: LoginReply::OK,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(LoginReplyServerPacketReplyCodeDataOk {
-                    characters
-                })),
+                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
+                    LoginReplyServerPacketReplyCodeDataOk { characters },
+                )),
             };
 
             let mut writer = EoWriter::new();
             reply.serialize(&mut writer);
-            player.send(PacketAction::Reply, PacketFamily::Login, writer.to_byte_array());
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Login,
+                writer.to_byte_array(),
+            );
         });
     }
 }

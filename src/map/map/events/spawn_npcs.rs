@@ -84,17 +84,11 @@ impl Map {
             } else {
                 Coords {
                     x: cmp::max(
-                        cmp::min(
-                            spawn_coords.x + rng.gen_range(-2..=2),
-                            self.file.width,
-                        ),
+                        cmp::min(spawn_coords.x + rng.gen_range(-2..=2), self.file.width),
                         0,
                     ) as i32,
                     y: cmp::max(
-                        cmp::min(
-                            spawn_coords.y + rng.gen_range(-2..=2),
-                            self.file.height,
-                        ),
+                        cmp::min(spawn_coords.y + rng.gen_range(-2..=2), self.file.height),
                         0,
                     ) as i32,
                 }
@@ -105,10 +99,7 @@ impl Map {
                 && (i > 100 || !self.is_tile_occupied(&spawn_coords))
             {
                 let x = cmp::max(
-                    cmp::min(
-                        file_spawn_coords.x + rng.gen_range(-2..=2),
-                        self.file.width,
-                    ),
+                    cmp::min(file_spawn_coords.x + rng.gen_range(-2..=2), self.file.width),
                     0,
                 );
                 let y = cmp::max(

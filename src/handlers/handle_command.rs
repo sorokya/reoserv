@@ -1,7 +1,7 @@
-use eolib::data::{EoWriter, EoSerialize};
-use eolib::protocol::Coords;
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{TalkServerServerPacket, WarpEffect};
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use eolib::protocol::net::server::{WarpEffect, TalkServerServerPacket};
+use eolib::protocol::Coords;
 
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
@@ -31,7 +31,10 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
             Some(WarpEffect::Admin),
         )
     } else {
-        send_error_message(character.player.as_ref().unwrap(), format!("Map {} does not exist.", map_id));
+        send_error_message(
+            character.player.as_ref().unwrap(),
+            format!("Map {} does not exist.", map_id),
+        );
     }
 }
 
@@ -180,7 +183,11 @@ fn send_error_message(player: &PlayerHandle, message: String) {
         error!("Failed to serialize TalkServerServerPacket: {}", e);
         return;
     }
-    player.send(PacketAction::Server, PacketFamily::Talk, writer.to_byte_array());
+    player.send(
+        PacketAction::Server,
+        PacketFamily::Talk,
+        writer.to_byte_array(),
+    );
 }
 
 pub async fn handle_command(

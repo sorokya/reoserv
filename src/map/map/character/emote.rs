@@ -1,4 +1,7 @@
-use eolib::protocol::{Emote, net::{server::EmotePlayerServerPacket, PacketAction, PacketFamily}};
+use eolib::protocol::{
+    net::{server::EmotePlayerServerPacket, PacketAction, PacketFamily},
+    Emote,
+};
 
 use super::super::Map;
 

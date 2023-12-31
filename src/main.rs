@@ -7,7 +7,10 @@ extern crate serde_derive;
 
 use std::time::Duration;
 
-use eolib::protocol::r#pub::{Ecf, server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile}, Eif, Enf, Esf};
+use eolib::protocol::r#pub::{
+    server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
+    Ecf, Eif, Enf, Esf,
+};
 use lazy_static::lazy_static;
 
 mod arenas;

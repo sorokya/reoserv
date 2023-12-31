@@ -1,4 +1,16 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::{net::{client::{TalkAdminClientPacket, TalkAnnounceClientPacket, TalkMsgClientPacket, TalkReportClientPacket, TalkTellClientPacket, TalkOpenClientPacket}, PacketAction}, AdminLevel}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::{
+        net::{
+            client::{
+                TalkAdminClientPacket, TalkAnnounceClientPacket, TalkMsgClientPacket,
+                TalkOpenClientPacket, TalkReportClientPacket, TalkTellClientPacket,
+            },
+            PacketAction,
+        },
+        AdminLevel,
+    },
+};
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
@@ -46,11 +58,7 @@ async fn msg(reader: EoReader, player: PlayerHandle, world: WorldHandle) {
     };
 
     if let Ok(character) = player.get_character().await {
-        world.broadcast_global_message(
-            character.player_id.unwrap(),
-            character.name,
-            msg.message,
-        )
+        world.broadcast_global_message(character.player_id.unwrap(), character.name, msg.message)
     }
 }
 

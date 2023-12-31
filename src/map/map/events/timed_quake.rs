@@ -1,4 +1,10 @@
-use eolib::{protocol::{net::{PacketAction, PacketFamily}, map::MapTimedEffect}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        map::MapTimedEffect,
+        net::{PacketAction, PacketFamily},
+    },
+};
 use rand::{thread_rng, Rng};
 
 use crate::SETTINGS;
@@ -11,7 +17,10 @@ impl Map {
     pub fn timed_quake(&mut self) {
         if !matches!(
             self.file.timed_effect,
-            MapTimedEffect::Quake1 | MapTimedEffect::Quake2 | MapTimedEffect::Quake3 | MapTimedEffect::Quake4
+            MapTimedEffect::Quake1
+                | MapTimedEffect::Quake2
+                | MapTimedEffect::Quake3
+                | MapTimedEffect::Quake4
         ) {
             return;
         }

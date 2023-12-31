@@ -1,4 +1,10 @@
-use eolib::{protocol::{r#pub::NpcType, net::{PacketAction, PacketFamily}}, data::EoWriter};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::{utils::in_client_range, INN_DB, NPC_DB};
 
@@ -70,6 +76,10 @@ impl Map {
         writer.add_string(&inn_data.question3);
         writer.add_byte(0xff);
 
-        player.send(PacketAction::Open, PacketFamily::Citizen, writer.to_byte_array());
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Citizen,
+            writer.to_byte_array(),
+        );
     }
 }

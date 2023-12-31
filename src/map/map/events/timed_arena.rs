@@ -1,5 +1,11 @@
 use bytes::Bytes;
-use eolib::{data::EoWriter, protocol::{Coords, net::{PacketAction, PacketFamily}}};
+use eolib::{
+    data::EoWriter,
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        Coords,
+    },
+};
 
 use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
 

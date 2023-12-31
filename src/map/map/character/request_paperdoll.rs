@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{server::{PaperdollReplyServerPacket, CharacterDetails}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{CharacterDetails, PaperdollReplyServerPacket},
+        PacketAction, PacketFamily,
+    },
+};
 
 use super::super::Map;
 
@@ -58,6 +64,10 @@ impl Map {
         let mut writer = EoWriter::new();
         reply.serialize(&mut writer);
 
-        player.send(PacketAction::Reply, PacketFamily::Paperdoll, writer.to_byte_array());
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Paperdoll,
+            writer.to_byte_array(),
+        );
     }
 }

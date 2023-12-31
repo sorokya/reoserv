@@ -1,6 +1,18 @@
 use std::cmp;
 
-use eolib::{protocol::{r#pub::{SkillType, EsfRecord, SkillTargetRestrict, SkillTargetType, NpcType}, net::{PacketAction, PacketFamily, server::{SpellTargetSelfServerPacket, SpellTargetOtherServerPacket, RecoverPlayerServerPacket}}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
+                SpellTargetSelfServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
+    },
+};
 use rand::Rng;
 
 use crate::{
@@ -322,10 +334,7 @@ impl Map {
             None => return,
         };
 
-        if !matches!(
-            npc_data.r#type,
-            NpcType::Passive | NpcType::Aggressive
-        ) {
+        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
             return;
         }
 

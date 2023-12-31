@@ -1,4 +1,10 @@
-use eolib::{data::{EoReader, EoSerialize}, protocol::net::{PacketAction, client::{ChairRequestClientPacket, ChairRequestClientPacketSitActionData, SitAction}}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{ChairRequestClientPacket, ChairRequestClientPacketSitActionData, SitAction},
+        PacketAction,
+    },
+};
 
 use crate::player::PlayerHandle;
 
@@ -30,9 +36,9 @@ async fn request(reader: EoReader, player: PlayerHandle) {
                     }
                 };
                 map.sit_chair(player_id, coords);
-            },
+            }
             SitAction::Stand => map.stand(player_id),
-            _ => {},
+            _ => {}
         }
     }
 }

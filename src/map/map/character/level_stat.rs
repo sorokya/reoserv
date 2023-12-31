@@ -1,4 +1,9 @@
-use eolib::{protocol::net::{client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily,
+    },
+};
 
 use super::super::Map;
 

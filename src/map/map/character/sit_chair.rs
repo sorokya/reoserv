@@ -1,4 +1,14 @@
-use eolib::{protocol::{Coords, net::{server::{SitState, ChairReplyServerPacket, ChairPlayerServerPacket}, PacketAction, PacketFamily}, map::MapTileSpec, Direction}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{
+            server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
+            PacketAction, PacketFamily,
+        },
+        Coords, Direction,
+    },
+};
 
 use crate::utils::get_distance;
 

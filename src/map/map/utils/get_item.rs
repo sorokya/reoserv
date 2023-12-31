@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{server::{ItemGetServerPacket, ItemRemoveServerPacket, ItemAddServerPacket}, ThreeItem, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
+        PacketAction, PacketFamily, ThreeItem,
+    },
+};
 
 use crate::{utils::get_distance, SETTINGS};
 

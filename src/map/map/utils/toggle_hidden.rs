@@ -1,4 +1,10 @@
-use eolib::{protocol::{AdminLevel, net::{PacketAction, PacketFamily}}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        AdminLevel,
+    },
+};
 
 use super::super::Map;
 

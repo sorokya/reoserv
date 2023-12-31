@@ -1,7 +1,10 @@
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eolib::{protocol::r#pub::server::{ShopFile, ShopRecord, Trade, Craft}, data::{EoReader, EoSerialize}};
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::r#pub::server::{Craft, ShopFile, ShopRecord, Trade},
+};
 use glob::glob;
 use serde_json::Value;
 

@@ -1,5 +1,11 @@
 use chrono::Utc;
-use eolib::{protocol::net::{ThreeItem, server::{ChestGetServerPacket, ChestAgreeServerPacket}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChestAgreeServerPacket, ChestGetServerPacket},
+        PacketAction, PacketFamily, ThreeItem,
+    },
+};
 
 use crate::{map::Chest, utils::get_distance};
 

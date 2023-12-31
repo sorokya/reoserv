@@ -1,4 +1,10 @@
-use eolib::{data::{EoWriter, EoSerialize}, protocol::{net::{PacketAction, PacketFamily, server::BankOpenServerPacket}, r#pub::NpcType}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::BankOpenServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
+};
 
 use crate::NPC_DB;
 
@@ -53,6 +59,10 @@ impl Map {
             return;
         }
 
-        player.send(PacketAction::Open, PacketFamily::Bank, writer.to_byte_array());
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Bank,
+            writer.to_byte_array(),
+        );
     }
 }

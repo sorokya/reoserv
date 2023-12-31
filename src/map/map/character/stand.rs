@@ -1,4 +1,10 @@
-use eolib::{protocol::net::{server::{SitState, SitCloseServerPacket, ChairCloseServerPacket}, PacketAction, PacketFamily}, data::{EoWriter, EoSerialize}};
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
+        PacketAction, PacketFamily,
+    },
+};
 
 use crate::utils::get_next_coords;
 

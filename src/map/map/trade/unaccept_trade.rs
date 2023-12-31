@@ -1,11 +1,12 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{TradeAgreeServerPacket, TradeSpecServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
-
-const UNAGREED: i32 = 0;
 
 impl Map {
     pub async fn unaccept_trade(&mut self, player_id: i32) {
@@ -36,8 +37,14 @@ impl Map {
 
         player.set_trade_accepted(false);
 
+        let packet = TradeSpecServerPacket { agree: false };
+
         let mut writer = EoWriter::new();
-        writer.add_char(UNAGREED);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeSpecServerPacket: {}", e);
+            return;
+        }
 
         player.send(
             PacketAction::Spec,
@@ -45,9 +52,18 @@ impl Map {
             writer.to_byte_array(),
         );
 
+        let packet = TradeAgreeServerPacket {
+            partner_player_id: player_id,
+            agree: false,
+        };
+
         let mut writer = EoWriter::new();
-        writer.add_short(player_id);
-        writer.add_char(UNAGREED);
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeAgreeServerPacket: {}", e);
+            return;
+        }
+
         partner.send(
             PacketAction::Agree,
             PacketFamily::Trade,

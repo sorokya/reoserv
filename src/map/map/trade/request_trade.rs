@@ -1,13 +1,11 @@
 use eolib::{
-    data::EoWriter,
-    protocol::net::{PacketAction, PacketFamily},
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TradeRequestServerPacket, PacketAction, PacketFamily},
 };
 
 use crate::{utils::in_client_range, SETTINGS};
 
 use super::super::Map;
-
-const MAGIC_NUMBER: i32 = 138;
 
 impl Map {
     pub fn request_trade(&self, player_id: i32, target_player_id: i32) {
@@ -50,10 +48,18 @@ impl Map {
         if in_client_range(&character.coords, &target.coords) {
             player.set_interact_player_id(Some(target_player_id));
 
+            let packet = TradeRequestServerPacket {
+                partner_player_id: player_id,
+                partner_player_name: character.name.clone(),
+            };
+
             let mut writer = EoWriter::new();
-            writer.add_char(MAGIC_NUMBER);
-            writer.add_short(player_id);
-            writer.add_string(&character.name);
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize TradeRequestServerPacket: {}", e);
+                return;
+            }
+
             target_player.send(
                 PacketAction::Request,
                 PacketFamily::Trade,

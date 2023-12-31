@@ -20,10 +20,6 @@ pub async fn load_maps(
     pool: Pool,
     world: WorldHandle,
 ) -> Result<HashMap<i32, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
-    if SETTINGS.server.num_of_maps > i32::MAX {
-        panic!("Too many maps to load!");
-    }
-
     let max_id = SETTINGS.server.num_of_maps;
     let mut map_files: HashMap<i32, MapHandle> = HashMap::with_capacity(max_id as usize);
     let mut load_handles = vec![];

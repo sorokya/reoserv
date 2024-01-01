@@ -120,7 +120,7 @@ CREATE TABLE `Character` (
 DROP TABLE IF EXISTS `Ban`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Account` (
+CREATE TABLE `Ban` (
   `id` int NOT NULL AUTO_INCREMENT,
   `account_id` int NOT NULL,
   `ip` varchar(15) NOT NULL,

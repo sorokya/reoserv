@@ -280,6 +280,10 @@ impl MapHandle {
         });
     }
 
+    pub fn open_jukebox(&self, player_id: i32) {
+        let _ = self.tx.send(Command::OpenJukebox { player_id });
+    }
+
     pub fn open_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }

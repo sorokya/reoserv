@@ -30,6 +30,8 @@ pub struct Map {
     quake_rate: Option<i32>,
     quake_strength: Option<i32>,
     has_timed_spikes: bool,
+    jukebox_player: Option<String>,
+    jukebox_ticks: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -44,6 +46,7 @@ mod character;
 mod chest;
 mod events;
 mod inn;
+mod jukebox;
 mod locker;
 mod shop;
 mod skill_master;
@@ -101,6 +104,8 @@ impl Map {
             quake_rate: None,
             quake_strength: None,
             has_timed_spikes,
+            jukebox_player: None,
+            jukebox_ticks: 0,
         }
     }
 
@@ -275,6 +280,8 @@ impl Map {
                 player_id,
                 npc_index,
             } => self.open_inn(player_id, npc_index).await,
+
+            Command::OpenJukebox { player_id } => self.open_jukebox(player_id),
 
             Command::OpenLocker { player_id } => self.open_locker(player_id),
 

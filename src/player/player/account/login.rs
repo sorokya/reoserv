@@ -62,7 +62,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let banned = match account_banned(&mut conn, &username).await {
@@ -138,7 +138,7 @@ impl Player {
                         writer.to_byte_array(),
                     )
                     .await;
-                return false;
+                return true;
             }
         }
         .unwrap();
@@ -168,7 +168,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let account_id: i32 = row.get("id").unwrap();
@@ -196,7 +196,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         if let Err(e) = update_last_login_ip(&mut conn, account_id, &self.ip).await {

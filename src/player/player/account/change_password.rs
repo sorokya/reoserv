@@ -72,7 +72,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let row = match conn
@@ -114,7 +114,7 @@ impl Player {
                         writer.to_byte_array(),
                     )
                     .await;
-                return false;
+                return true;
             }
         }
         .unwrap();
@@ -143,7 +143,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let account_id: i32 = row.get("id").unwrap();

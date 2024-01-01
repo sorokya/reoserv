@@ -81,7 +81,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let password_hash = generate_password_hash(&packet.username, &packet.password);

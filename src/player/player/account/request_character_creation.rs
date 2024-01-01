@@ -56,7 +56,7 @@ impl Player {
                     writer.to_byte_array(),
                 )
                 .await;
-            return false;
+            return true;
         }
 
         let session_id = self.generate_session_id();

@@ -82,7 +82,7 @@ impl Player {
                 )
                 .await;
 
-            return false;
+            return true;
         }
 
         let mut character = Character::from_creation(self.account_id, &packet);

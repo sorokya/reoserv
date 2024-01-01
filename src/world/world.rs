@@ -39,6 +39,8 @@ mod get_file;
 mod get_next_player_id;
 mod get_welcome_request_data;
 mod party;
+mod request_player_list;
+mod request_player_name_list;
 mod save;
 mod shutdown;
 mod tick;
@@ -334,8 +336,10 @@ impl World {
                 victim_name,
                 admin_name,
             } => self.unfreeze_player(victim_name, admin_name),
-            Command::RequestPlayerList { player_id: _ } => todo!(),
-            Command::RequestPlayerNameList { player_id: _ } => todo!(),
+            Command::RequestPlayerList { player_id } => self.request_player_list(player_id),
+            Command::RequestPlayerNameList { player_id } => {
+                self.request_player_name_list(player_id)
+            }
         }
     }
 }

@@ -441,7 +441,7 @@ impl Map {
                 player_ids,
                 npc_indexes,
             } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
-            Command::RequestRefresh { player_id: _ } => todo!(),
+            Command::RequestRefresh { player_id } => self.request_refresh(player_id),
         }
     }
 }

@@ -14,6 +14,7 @@ mod request_npcs;
 mod request_paperdoll;
 mod request_players;
 mod request_players_and_npcs;
+mod request_refresh;
 mod send_chat_message;
 mod sit;
 mod sit_chair;

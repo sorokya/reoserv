@@ -696,6 +696,7 @@ dependencies = [
 [[package]]
 name = "eolib"
 version = "1.0.0-RC4"
+source = "git+https://github.com/sorokya/eolib-rs#aecd7a0d7c4d7c402ab851d2a49258e0f27d6aa7"
 dependencies = [
  "bytes",
  "convert_case",

@@ -1,23 +1,23 @@
-use super::{Character, PaperdollSlot};
+use super::{Character, EquipmentSlot};
 
 impl Character {
-    pub fn destroy_equipment(&mut self, slot: &PaperdollSlot) {
+    pub fn destroy_equipment(&mut self, slot: &EquipmentSlot) {
         match slot {
-            PaperdollSlot::Boots => self.paperdoll.boots = 0,
-            PaperdollSlot::Accessory => self.paperdoll.accessory = 0,
-            PaperdollSlot::Gloves => self.paperdoll.gloves = 0,
-            PaperdollSlot::Belt => self.paperdoll.belt = 0,
-            PaperdollSlot::Armor => self.paperdoll.armor = 0,
-            PaperdollSlot::Necklace => self.paperdoll.necklace = 0,
-            PaperdollSlot::Hat => self.paperdoll.hat = 0,
-            PaperdollSlot::Shield => self.paperdoll.shield = 0,
-            PaperdollSlot::Weapon => self.paperdoll.weapon = 0,
-            PaperdollSlot::Ring1 => self.paperdoll.ring[0] = 0,
-            PaperdollSlot::Ring2 => self.paperdoll.ring[1] = 0,
-            PaperdollSlot::Armlet1 => self.paperdoll.armlet[0] = 0,
-            PaperdollSlot::Armlet2 => self.paperdoll.armlet[1] = 0,
-            PaperdollSlot::Bracer1 => self.paperdoll.bracer[0] = 0,
-            PaperdollSlot::Bracer2 => self.paperdoll.bracer[1] = 0,
+            EquipmentSlot::Boots => self.equipment.boots = 0,
+            EquipmentSlot::Accessory => self.equipment.accessory = 0,
+            EquipmentSlot::Gloves => self.equipment.gloves = 0,
+            EquipmentSlot::Belt => self.equipment.belt = 0,
+            EquipmentSlot::Armor => self.equipment.armor = 0,
+            EquipmentSlot::Necklace => self.equipment.necklace = 0,
+            EquipmentSlot::Hat => self.equipment.hat = 0,
+            EquipmentSlot::Shield => self.equipment.shield = 0,
+            EquipmentSlot::Weapon => self.equipment.weapon = 0,
+            EquipmentSlot::Ring1 => self.equipment.ring[0] = 0,
+            EquipmentSlot::Ring2 => self.equipment.ring[1] = 0,
+            EquipmentSlot::Armlet1 => self.equipment.armlet[0] = 0,
+            EquipmentSlot::Armlet2 => self.equipment.armlet[1] = 0,
+            EquipmentSlot::Bracer1 => self.equipment.bracer[0] = 0,
+            EquipmentSlot::Bracer2 => self.equipment.bracer[1] = 0,
         }
     }
 }

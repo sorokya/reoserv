@@ -57,7 +57,7 @@ impl Map {
         character.reset();
 
         let reply = StatSkillJunkServerPacket {
-            stats: character.get_character_stats_1(),
+            stats: character.get_character_stats_reset(),
         };
 
         let mut writer = EoWriter::new();

@@ -36,7 +36,7 @@ impl Map {
             sound: false,
             change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
                 AvatarChangeChangeTypeDataEquipment {
-                    equipment: target.get_paperdoll_bahws(),
+                    equipment: target.get_equipment_change(),
                 },
             )),
         };
@@ -45,7 +45,7 @@ impl Map {
             change: change.clone(),
             item_id,
             sub_loc,
-            stats: target.get_item_character_stats(),
+            stats: target.get_character_stats_equipment_change(),
         };
 
         let mut writer = EoWriter::new();

@@ -29,7 +29,7 @@ impl Character {
             hp: self.hp,
             max_tp: self.max_tp,
             tp: self.tp,
-            equipment: self.get_paperdoll_b000a0hsw(),
+            equipment: self.get_equipment_map_info(),
             sit_state: self.sit_state,
             invisible: self.hidden,
             warp_effect: None,

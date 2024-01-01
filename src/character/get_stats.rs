@@ -7,7 +7,7 @@ use eolib::protocol::net::server::{
 use super::Character;
 
 impl Character {
-    pub fn get_character_stats_1(&self) -> CharacterStatsReset {
+    pub fn get_character_stats_reset(&self) -> CharacterStatsReset {
         CharacterStatsReset {
             hp: self.hp,
             max_hp: self.max_hp,
@@ -34,7 +34,7 @@ impl Character {
         }
     }
 
-    pub fn get_character_stats_2(&self) -> CharacterStatsWelcome {
+    pub fn get_character_stats_welcome(&self) -> CharacterStatsWelcome {
         CharacterStatsWelcome {
             hp: self.hp,
             max_hp: self.max_hp,
@@ -62,7 +62,7 @@ impl Character {
         }
     }
 
-    pub fn get_character_stats_3(&self) -> CharacterStatsUpdate {
+    pub fn get_character_stats_update(&self) -> CharacterStatsUpdate {
         CharacterStatsUpdate {
             base_stats: CharacterBaseStats {
                 str: self.adj_strength,
@@ -86,7 +86,7 @@ impl Character {
         }
     }
 
-    pub fn get_item_character_stats(&self) -> CharacterStatsEquipmentChange {
+    pub fn get_character_stats_equipment_change(&self) -> CharacterStatsEquipmentChange {
         CharacterStatsEquipmentChange {
             max_hp: self.max_hp,
             max_tp: self.max_tp,

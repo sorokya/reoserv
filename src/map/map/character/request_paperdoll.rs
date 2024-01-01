@@ -57,7 +57,7 @@ impl Map {
                 class_id: target.class,
                 gender: target.gender,
             },
-            equipment: target.paperdoll.clone(),
+            equipment: target.equipment.clone(),
             icon: target.get_icon(in_party),
         };
 

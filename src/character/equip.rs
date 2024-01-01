@@ -62,76 +62,76 @@ impl Character {
 
         match item_record.r#type {
             ItemType::Weapon => {
-                if self.paperdoll.weapon != 0 {
+                if self.equipment.weapon != 0 {
                     return false;
                 }
-                self.paperdoll.weapon = item_id
+                self.equipment.weapon = item_id
             }
             ItemType::Shield => {
-                if self.paperdoll.shield != 0 {
+                if self.equipment.shield != 0 {
                     return false;
                 }
-                self.paperdoll.shield = item_id
+                self.equipment.shield = item_id
             }
             ItemType::Armor => {
-                if self.paperdoll.armor != 0 {
+                if self.equipment.armor != 0 {
                     return false;
                 }
-                self.paperdoll.armor = item_id
+                self.equipment.armor = item_id
             }
             ItemType::Hat => {
-                if self.paperdoll.hat != 0 {
+                if self.equipment.hat != 0 {
                     return false;
                 }
-                self.paperdoll.hat = item_id
+                self.equipment.hat = item_id
             }
             ItemType::Boots => {
-                if self.paperdoll.boots != 0 {
+                if self.equipment.boots != 0 {
                     return false;
                 }
-                self.paperdoll.boots = item_id
+                self.equipment.boots = item_id
             }
             ItemType::Gloves => {
-                if self.paperdoll.gloves != 0 {
+                if self.equipment.gloves != 0 {
                     return false;
                 }
-                self.paperdoll.gloves = item_id
+                self.equipment.gloves = item_id
             }
             ItemType::Accessory => {
-                if self.paperdoll.accessory != 0 {
+                if self.equipment.accessory != 0 {
                     return false;
                 }
-                self.paperdoll.accessory = item_id
+                self.equipment.accessory = item_id
             }
             ItemType::Belt => {
-                if self.paperdoll.belt != 0 {
+                if self.equipment.belt != 0 {
                     return false;
                 }
-                self.paperdoll.belt = item_id
+                self.equipment.belt = item_id
             }
             ItemType::Necklace => {
-                if self.paperdoll.necklace != 0 {
+                if self.equipment.necklace != 0 {
                     return false;
                 }
-                self.paperdoll.necklace = item_id
+                self.equipment.necklace = item_id
             }
             ItemType::Ring => {
-                if self.paperdoll.ring[sub_loc as usize] != 0 {
+                if self.equipment.ring[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.ring[sub_loc as usize] = item_id
+                self.equipment.ring[sub_loc as usize] = item_id
             }
             ItemType::Armlet => {
-                if self.paperdoll.armlet[sub_loc as usize] != 0 {
+                if self.equipment.armlet[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.armlet[sub_loc as usize] = item_id
+                self.equipment.armlet[sub_loc as usize] = item_id
             }
             ItemType::Bracer => {
-                if self.paperdoll.bracer[sub_loc as usize] != 0 {
+                if self.equipment.bracer[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.bracer[sub_loc as usize] = item_id
+                self.equipment.bracer[sub_loc as usize] = item_id
             }
             _ => {
                 warn!(

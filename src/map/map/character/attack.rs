@@ -272,8 +272,8 @@ impl Map {
 }
 
 fn can_attack(character: &Character) -> bool {
-    let weapon = character.paperdoll.weapon;
-    let shield = character.paperdoll.shield;
+    let weapon = character.equipment.weapon;
+    let shield = character.equipment.shield;
 
     if weapon == 0 {
         return true;
@@ -301,7 +301,7 @@ fn can_attack(character: &Character) -> bool {
 }
 
 fn get_weapon_range(character: &Character) -> i32 {
-    let weapon = character.paperdoll.weapon;
+    let weapon = character.equipment.weapon;
     if weapon == 0 {
         return 1;
     }

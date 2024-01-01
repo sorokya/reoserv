@@ -39,25 +39,25 @@ impl Character {
             self.weight += record.weight * item.amount;
         }
 
-        let paperdoll_items = vec![
-            self.paperdoll.boots,
-            self.paperdoll.accessory,
-            self.paperdoll.gloves,
-            self.paperdoll.belt,
-            self.paperdoll.armor,
-            self.paperdoll.necklace,
-            self.paperdoll.hat,
-            self.paperdoll.shield,
-            self.paperdoll.weapon,
-            self.paperdoll.ring[0],
-            self.paperdoll.ring[1],
-            self.paperdoll.armlet[0],
-            self.paperdoll.armlet[1],
-            self.paperdoll.bracer[0],
-            self.paperdoll.bracer[1],
+        let equipment_items = vec![
+            self.equipment.boots,
+            self.equipment.accessory,
+            self.equipment.gloves,
+            self.equipment.belt,
+            self.equipment.armor,
+            self.equipment.necklace,
+            self.equipment.hat,
+            self.equipment.shield,
+            self.equipment.weapon,
+            self.equipment.ring[0],
+            self.equipment.ring[1],
+            self.equipment.armlet[0],
+            self.equipment.armlet[1],
+            self.equipment.bracer[0],
+            self.equipment.bracer[1],
         ];
 
-        for item_id in paperdoll_items {
+        for item_id in equipment_items {
             if item_id == 0 {
                 continue;
             }

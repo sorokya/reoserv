@@ -18,7 +18,7 @@ use eolib::{
     },
 };
 
-use crate::{character::PaperdollSlot, ITEM_DB};
+use crate::{character::EquipmentSlot, ITEM_DB};
 
 use super::super::Map;
 
@@ -138,8 +138,8 @@ impl Map {
                 );
             }
             ItemType::CureCurse => {
-                let paperdoll = character.get_paperdoll_array();
-                let mut cursed_items: Vec<PaperdollSlot> = Vec::new();
+                let paperdoll = character.get_equipment_array();
+                let mut cursed_items: Vec<EquipmentSlot> = Vec::new();
                 for (index, item_id) in paperdoll.iter().enumerate() {
                     if *item_id == 0 {
                         continue;
@@ -153,7 +153,7 @@ impl Map {
                     };
 
                     if item.special == ItemSpecial::Cursed {
-                        cursed_items.push(PaperdollSlot::from_index(index).unwrap());
+                        cursed_items.push(EquipmentSlot::from_index(index).unwrap());
                     }
                 }
 
@@ -170,7 +170,7 @@ impl Map {
                 reply.item_type = ItemType::CureCurse;
                 reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::CureCurse(
                     ItemReplyServerPacketItemTypeDataCureCurse {
-                        stats: character.get_item_character_stats(),
+                        stats: character.get_character_stats_equipment_change(),
                     },
                 ));
 
@@ -183,7 +183,7 @@ impl Map {
                             sound: false,
                             change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
                                 AvatarChangeChangeTypeDataEquipment {
-                                    equipment: character.get_paperdoll_bahws(),
+                                    equipment: character.get_equipment_change(),
                                 },
                             )),
                         },

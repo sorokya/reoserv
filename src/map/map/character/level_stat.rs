@@ -48,7 +48,7 @@ impl Map {
 
         let reply = StatSkillPlayerServerPacket {
             stat_points: character.stat_points,
-            stats: character.get_character_stats_3(),
+            stats: character.get_character_stats_update(),
         };
 
         let mut writer = EoWriter::new();

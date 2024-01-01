@@ -20,13 +20,13 @@ mod create;
 mod delete;
 mod destroy_equipment;
 mod equip;
-mod get_paperdoll;
+mod equipment_slot;
+mod get_equipment;
 mod get_spawn_coords;
 mod get_spawn_map;
 mod get_stats;
 mod load;
-mod paperdoll_slot;
-pub use paperdoll_slot::PaperdollSlot;
+pub use equipment_slot::EquipmentSlot;
 mod remove_item;
 mod reset;
 mod spell_state;
@@ -60,7 +60,7 @@ pub struct Character {
     pub guild_tag: Option<String>,
     pub guild_rank_id: Option<i32>,
     pub guild_rank_string: Option<String>,
-    pub paperdoll: EquipmentPaperdoll,
+    pub equipment: EquipmentPaperdoll,
     pub level: i32,
     pub experience: i32,
     pub hp: i32,

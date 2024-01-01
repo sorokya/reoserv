@@ -1,7 +1,6 @@
 use eolib::protocol::{
     net::server::{
-        EquipmentWelcome, LoginMessageCode, ServerSettings,
-        WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
+        LoginMessageCode, ServerSettings, WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
     },
     Coords,
 };
@@ -81,21 +80,8 @@ impl World {
             level: character.level,
             experience: character.experience,
             usage: character.usage,
-            stats: character.get_character_stats_2(),
-            equipment: EquipmentWelcome {
-                boots: character.paperdoll.boots,
-                gloves: character.paperdoll.gloves,
-                accessory: character.paperdoll.accessory,
-                armor: character.paperdoll.armor,
-                belt: character.paperdoll.belt,
-                necklace: character.paperdoll.necklace,
-                hat: character.paperdoll.hat,
-                shield: character.paperdoll.shield,
-                weapon: character.paperdoll.weapon,
-                ring: character.paperdoll.ring,
-                armlet: character.paperdoll.armlet,
-                bracer: character.paperdoll.bracer,
-            },
+            stats: character.get_character_stats_welcome(),
+            equipment: character.get_equipment_welcome(),
             guild_rank: character.guild_rank_id.unwrap_or_default(),
             settings,
             login_message_code: match character.usage {

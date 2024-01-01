@@ -34,6 +34,7 @@ mod admin;
 mod chat;
 mod drop_player;
 mod enter_game;
+mod find_player;
 mod get_character_by_name;
 mod get_file;
 mod get_next_player_id;
@@ -294,6 +295,8 @@ impl World {
                 self.ban_player(victim_name, admin_name, duration, silent)
                     .await
             }
+
+            Command::FindPlayer { player_id, name } => self.find_player(player_id, name),
 
             Command::FreePlayer { victim_name } => self.free_player(victim_name),
 

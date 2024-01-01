@@ -424,10 +424,7 @@ impl Map {
                 session_id,
                 amount,
             } => self.withdraw_gold(player_id, session_id, amount).await,
-            Command::FindPlayer {
-                player_id: _,
-                name: _,
-            } => todo!(),
+            Command::FindPlayer { player_id, name } => self.find_player(player_id, name),
             Command::RequestNpcs {
                 player_id,
                 npc_indexes,

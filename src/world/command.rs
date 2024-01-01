@@ -79,6 +79,10 @@ pub enum Command {
         player_id: i32,
         session_id: i32,
     },
+    FindPlayer {
+        player_id: i32,
+        name: String,
+    },
     FreePlayer {
         victim_name: String,
     },

@@ -5,6 +5,7 @@ mod emote;
 mod enter;
 mod equip;
 mod face;
+mod find_player;
 mod junk_item;
 mod leave;
 mod level_stat;

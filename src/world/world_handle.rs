@@ -165,6 +165,10 @@ impl WorldHandle {
         });
     }
 
+    pub fn find_player(&self, player_id: i32, name: String) {
+        let _ = self.tx.send(Command::FindPlayer { player_id, name });
+    }
+
     pub fn free_player(&self, victim_name: String) {
         let _ = self.tx.send(Command::FreePlayer { victim_name });
     }

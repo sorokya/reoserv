@@ -1,6 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
-use super::{load_maps::load_maps, Command, Party, WorldHandle};
+use super::{load_maps::load_maps, Command, Party};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -28,17 +28,13 @@ pub struct World {
     global_locked: bool,
 }
 
-mod account;
 mod add_player;
 mod admin;
 mod chat;
 mod drop_player;
-mod enter_game;
 mod find_player;
 mod get_character_by_name;
-mod get_file;
 mod get_next_player_id;
-mod get_welcome_request_data;
 mod party;
 mod request_player_list;
 mod request_player_name_list;
@@ -71,7 +67,7 @@ impl World {
         }
     }
 
-    pub async fn handle_command(&mut self, command: Command, world_handle: WorldHandle) {
+    pub async fn handle_command(&mut self, command: Command) {
         match command {
             Command::AcceptPartyRequest {
                 player_id,
@@ -84,6 +80,10 @@ impl World {
 
             Command::AddLoggedInAccount { account_id } => {
                 self.accounts.push(account_id);
+            }
+
+            Command::AddCharacter { player_id, name } => {
+                self.characters.insert(name, player_id);
             }
 
             Command::AddPlayer {
@@ -115,27 +115,6 @@ impl World {
 
             Command::_BroadcastServerMessage { message } => self.broadcast_server_message(&message),
 
-            Command::ChangePassword {
-                player_id,
-                username,
-                current_password,
-                new_password,
-            } => self.change_password(player_id, username, current_password, new_password),
-
-            Command::CreateAccount { player_id, details } => {
-                self.create_account(player_id, details).await
-            }
-
-            Command::CreateCharacter { player_id, details } => {
-                self.create_character(player_id, details).await
-            }
-
-            Command::DeleteCharacter {
-                player_id,
-                session_id,
-                character_id,
-            } => self.delete_character(player_id, session_id, character_id),
-
             Command::DropPlayer {
                 player_id,
                 account_id,
@@ -143,24 +122,8 @@ impl World {
                 respond_to,
             } => self.drop_player(player_id, account_id, &character_name, respond_to),
 
-            Command::EnterGame {
-                player_id,
-                session_id,
-            } => self.enter_game(player_id, session_id).await,
-
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
-            }
-
-            Command::GetFile {
-                player_id,
-                file_type,
-                session_id,
-                file_id,
-                warp,
-            } => {
-                self.get_file(player_id, file_type, session_id, file_id, warp)
-                    .await;
             }
 
             Command::GetMap { map_id, respond_to } => {
@@ -214,12 +177,6 @@ impl World {
                 }
             }
 
-            Command::Login {
-                player_id,
-                name,
-                password,
-            } => self.login(player_id, name, password, world_handle),
-
             Command::PingPlayers => {
                 for player in self.players.values() {
                     player.ping();
@@ -237,30 +194,9 @@ impl World {
                 message,
             } => self.report_player(player_id, reportee_name, message).await,
 
-            Command::RequestAccountCreation { player_id, name } => {
-                self.request_account_creation(player_id, name).await;
-            }
-
-            Command::RequestCharacterCreation { player_id } => {
-                self.request_character_creation(player_id).await;
-            }
-
-            Command::RequestCharacterDeletion {
-                player_id,
-                character_id,
-            } => {
-                self.request_character_deletion(player_id, character_id)
-                    .await
-            }
-
             Command::RequestPartyList { player_id } => self.refresh_party(player_id).await,
 
             Command::Save => self.save().await,
-
-            Command::SelectCharacter {
-                player_id,
-                character_id,
-            } => self.select_character(player_id, character_id).await,
 
             Command::SendAdminMessage { player_id, message } => {
                 self.send_admin_message(player_id, message).await

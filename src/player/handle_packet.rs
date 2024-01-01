@@ -50,9 +50,7 @@ pub async fn handle_packet(
     }
 
     match family {
-        PacketFamily::Account => {
-            handlers::account(action, reader, player.clone(), world.clone()).await
-        }
+        PacketFamily::Account => handlers::account(action, reader, player.clone()).await,
         PacketFamily::AdminInteract => {
             handlers::admin_interact(action, reader, player.clone(), world.clone()).await
         }
@@ -60,9 +58,7 @@ pub async fn handle_packet(
         PacketFamily::Bank => handlers::bank(action, reader, player.clone()).await,
         PacketFamily::Board => handlers::board(action, reader, player.clone()).await,
         PacketFamily::Chair => handlers::chair(action, reader, player.clone()).await,
-        PacketFamily::Character => {
-            handlers::character(action, reader, player.clone(), world.clone()).await
-        }
+        PacketFamily::Character => handlers::character(action, reader, player.clone()).await,
         PacketFamily::Chest => handlers::chest(action, reader, player.clone()).await,
         PacketFamily::Citizen => handlers::citizen(action, reader, player.clone()).await,
         PacketFamily::Connection => handlers::connection(action, reader, player.clone()).await,
@@ -73,7 +69,7 @@ pub async fn handle_packet(
         PacketFamily::Init => handlers::init(action, reader, player.clone()).await,
         PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
         PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
-        PacketFamily::Login => handlers::login(action, reader, player.clone(), world.clone()).await,
+        PacketFamily::Login => handlers::login(action, reader, player.clone()).await,
         PacketFamily::Message => handlers::message(action, reader, player.clone()),
         PacketFamily::NpcRange => handlers::npc_range(action, reader, player.clone()).await,
         PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,
@@ -91,10 +87,8 @@ pub async fn handle_packet(
         PacketFamily::Talk => handlers::talk(action, reader, player.clone(), world.clone()).await,
         PacketFamily::Trade => handlers::trade(action, reader, player.clone()).await,
         PacketFamily::Walk => handlers::walk(reader, player.clone()).await,
-        PacketFamily::Warp => handlers::warp(action, reader, player.clone(), world.clone()).await,
-        PacketFamily::Welcome => {
-            handlers::welcome(action, reader, player.clone(), world.clone()).await
-        }
+        PacketFamily::Warp => handlers::warp(action, reader, player.clone()).await,
+        PacketFamily::Welcome => handlers::welcome(action, reader, player.clone()).await,
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);
         }

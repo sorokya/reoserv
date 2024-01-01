@@ -15,62 +15,73 @@ use eolib::{
 
 use crate::{errors::WrongSessionIdError, CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB};
 
-use super::World;
+use super::Player;
 
-impl World {
+impl Player {
     pub async fn get_file(
-        &self,
-        player_id: i32,
+        &mut self,
         file_type: FileType,
         session_id: i32,
         _file_id: Option<i32>,
         warp: bool,
-    ) {
-        let player = match self.players.get(&player_id) {
-            Some(player) => player,
-            None => return,
-        };
-
-        let actual_session_id = match player.get_session_id().await {
-            Ok(session_id) => session_id,
-            Err(e) => {
-                player.close(format!("Error getting session id: {}", e));
-                return;
+    ) -> bool {
+        let actual_session_id = match self.session_id {
+            Some(session_id) => session_id,
+            None => {
+                self.close("No session id".to_string()).await;
+                return false;
             }
         };
 
         if actual_session_id != session_id {
-            player.close(format!(
+            self.close(format!(
                 "{}",
                 WrongSessionIdError::new(actual_session_id, session_id,)
-            ));
-            return;
+            ))
+            .await;
+            return false;
         }
 
         let reply: InitInitServerPacket = match file_type {
             FileType::Emf => {
-                let map_id = match player.get_map_id().await {
-                    Ok(map_id) => map_id,
-                    Err(_) => {
-                        player.close("Player requested map with no character selected".to_string());
-                        return;
+                let map_id = if warp {
+                    match self.warp_session {
+                        Some(ref warp_session) => warp_session.map_id,
+                        None => {
+                            self.close("Player requested map with no warp session".to_string())
+                                .await;
+                            return false;
+                        }
+                    }
+                } else {
+                    match self.character {
+                        Some(ref character) => character.map_id,
+                        None => {
+                            self.close(
+                                "Player requested map with no character selected".to_string(),
+                            )
+                            .await;
+                            return false;
+                        }
                     }
                 };
 
                 let mut reply = InitInitServerPacket::new();
-                let maps = self.maps.as_ref().expect("Maps not loaded");
-                let map = match maps.get(&map_id) {
-                    Some(map) => map,
-                    None => {
-                        player.close(format!("Requested map not found: {}", map_id));
-                        return;
+                let map = match self.world.get_map(map_id).await {
+                    Ok(map) => map,
+                    Err(e) => {
+                        self.close(format!("Requested map {} not found: {}", map_id, e))
+                            .await;
+                        return false;
                     }
                 };
+
                 reply.reply_code = if warp {
                     InitReply::WarpMap
                 } else {
                     InitReply::FileEmf
                 };
+
                 reply.reply_code_data = Some(if warp {
                     InitInitServerPacketReplyCodeData::WarpMap(
                         InitInitServerPacketReplyCodeDataWarpMap {
@@ -150,20 +161,25 @@ impl World {
                     )),
                 }
             }
-            _ => return,
+            _ => return false,
         };
 
         let mut writer = EoWriter::new();
 
         if let Err(e) = reply.serialize(&mut writer) {
             error!("Failed to serialize InitInitServerPacket: {}", e);
-            return;
+            return false;
         }
 
-        player.send(
-            PacketAction::Init,
-            PacketFamily::Init,
-            writer.to_byte_array(),
-        );
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Init,
+                PacketFamily::Init,
+                writer.to_byte_array(),
+            )
+            .await;
+
+        true
     }
 }

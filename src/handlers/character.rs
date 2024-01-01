@@ -9,9 +9,9 @@ use eolib::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::player::PlayerHandle;
 
-fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn create(reader: EoReader, player: PlayerHandle) {
     let create = match CharacterCreateClientPacket::deserialize(&reader) {
         Ok(create) => create,
         Err(e) => {
@@ -19,10 +19,10 @@ fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
             return;
         }
     };
-    world.create_character(player_id, create);
+    player.create_character(create);
 }
 
-fn remove(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn remove(reader: EoReader, player: PlayerHandle) {
     let remove = match CharacterRemoveClientPacket::deserialize(&reader) {
         Ok(remove) => remove,
         Err(e) => {
@@ -30,10 +30,10 @@ fn remove(reader: EoReader, player_id: i32, world: WorldHandle) {
             return;
         }
     };
-    world.delete_character(player_id, remove.session_id, remove.character_id);
+    player.delete_character(remove.session_id, remove.character_id);
 }
 
-fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn request(reader: EoReader, player: PlayerHandle) {
     let request = match CharacterRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -46,10 +46,10 @@ fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
         return;
     }
 
-    world.request_character_creation(player_id);
+    player.request_character_creation();
 }
 
-fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn take(reader: EoReader, player: PlayerHandle) {
     let take = match CharacterTakeClientPacket::deserialize(&reader) {
         Ok(take) => take,
         Err(e) => {
@@ -57,28 +57,15 @@ fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
             return;
         }
     };
-    world.request_character_deletion(player_id, take.character_id);
+    player.request_character_deletion(take.character_id);
 }
 
-pub async fn character(
-    action: PacketAction,
-    reader: EoReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
-    let player_id = match player.get_player_id().await {
-        Ok(player_id) => player_id,
-        Err(e) => {
-            error!("Error getting player id {}", e);
-            return;
-        }
-    };
-
+pub async fn character(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
-        PacketAction::Create => create(reader, player_id, world),
-        PacketAction::Remove => remove(reader, player_id, world),
-        PacketAction::Request => request(reader, player_id, world),
-        PacketAction::Take => take(reader, player_id, world),
+        PacketAction::Create => create(reader, player),
+        PacketAction::Remove => remove(reader, player),
+        PacketAction::Request => request(reader, player),
+        PacketAction::Take => take(reader, player),
         _ => error!("Unhandled packet Character_{:?}", action),
     }
 }

@@ -7,30 +7,27 @@ use eolib::protocol::net::{PacketAction, PacketFamily};
 
 use super::account_exists::account_exists;
 
-use super::super::World;
+use super::super::Player;
 
-impl World {
-    pub async fn request_account_creation(&self, player_id: i32, username: String) {
-        let player = match self.players.get(&player_id) {
-            Some(player) => player,
-            None => return,
-        };
-
+impl Player {
+    pub async fn request_account_creation(&mut self, username: String) -> bool {
         // TODO: validate name
 
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(e) => {
-                player.close(format!("Error getting connection from pool: {}", e));
-                return;
+                self.close(format!("Error getting connection from pool: {}", e))
+                    .await;
+                return false;
             }
         };
 
         let exists = match account_exists(&mut conn, &username).await {
             Ok(exists) => exists,
             Err(e) => {
-                player.close(format!("Error checking if account exists: {}", e));
-                return;
+                self.close(format!("Error checking if account exists: {}", e))
+                    .await;
+                return false;
             }
         };
 
@@ -44,33 +41,23 @@ impl World {
             let mut writer = EoWriter::new();
 
             if let Err(e) = reply.serialize(&mut writer) {
-                player.close(format!("Error serializing reply: {}", e));
-                return;
+                self.close(format!("Error serializing reply: {}", e)).await;
+                return false;
             }
 
-            player.send(
-                PacketAction::Reply,
-                PacketFamily::Account,
-                writer.to_byte_array(),
-            );
-            return;
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    writer.to_byte_array(),
+                )
+                .await;
+            return true;
         }
 
-        let session_id = match player.generate_session_id().await {
-            Ok(session_id) => session_id,
-            Err(e) => {
-                player.close(format!("Error generating session id: {}", e));
-                return;
-            }
-        };
-
-        let sequence_start = match player.get_sequence_start().await {
-            Ok(sequence_start) => sequence_start,
-            Err(e) => {
-                player.close(format!("Error getting sequence start: {}", e));
-                return;
-            }
-        };
+        let session_id = self.generate_session_id();
+        let sequence_start = self.bus.sequencer.get_start();
 
         let reply = AccountReplyServerPacket {
             reply_code: AccountReply::Unrecognized(session_id),
@@ -82,14 +69,19 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = reply.serialize(&mut writer) {
-            player.close(format!("Error serializing reply: {}", e));
-            return;
+            self.close(format!("Error serializing reply: {}", e)).await;
+            return false;
         }
 
-        player.send(
-            PacketAction::Reply,
-            PacketFamily::Account,
-            writer.to_byte_array(),
-        );
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Reply,
+                PacketFamily::Account,
+                writer.to_byte_array(),
+            )
+            .await;
+
+        true
     }
 }

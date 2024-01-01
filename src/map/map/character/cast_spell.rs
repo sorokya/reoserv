@@ -1,9 +1,17 @@
 use std::cmp;
 
-use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::{EnfNpcType, EsfSpell, EsfSpellTargetRestrict, EsfSpellTargetType, EsfSpellType},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
+                SpellTargetSelfServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
+    },
 };
 use rand::Rng;
 
@@ -15,28 +23,29 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    pub async fn cast_spell(&mut self, player_id: EOShort, target: SpellTarget) {
+    pub async fn cast_spell(&mut self, player_id: i32, target: SpellTarget) {
         let spell_id = match self.get_player_spell_id(player_id) {
             Some(spell_id) => spell_id,
             None => return,
         };
 
-        let spell_data = match SPELL_DB.spells.get(spell_id as usize - 1) {
+        let spell_data = match SPELL_DB.skills.get(spell_id as usize - 1) {
             Some(spell_data) => spell_data,
             None => return,
         };
 
         match spell_data.r#type {
-            EsfSpellType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target),
-            EsfSpellType::Damage => {
+            SkillType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target),
+            SkillType::Attack => {
                 self.cast_damage_spell(player_id, spell_id, spell_data, target)
                     .await
             }
-            EsfSpellType::Bard => {}
+            SkillType::Bard => {}
+            _ => {}
         }
     }
 
-    fn get_player_spell_id(&self, player_id: EOShort) -> Option<EOShort> {
+    fn get_player_spell_id(&self, player_id: i32) -> Option<i32> {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
@@ -61,12 +70,12 @@ impl Map {
 
     fn cast_heal_spell(
         &mut self,
-        player_id: EOShort,
-        spell_id: EOShort,
-        spell: &EsfSpell,
+        player_id: i32,
+        spell_id: i32,
+        spell: &EsfRecord,
         target: SpellTarget,
     ) {
-        if spell.target_restrict != EsfSpellTargetRestrict::Friendly {
+        if spell.target_restrict != SkillTargetRestrict::Friendly {
             return;
         }
 
@@ -80,8 +89,8 @@ impl Map {
         }
     }
 
-    fn cast_heal_self(&mut self, player_id: EOShort, spell_id: EOShort, spell: &EsfSpell) {
-        if spell.target_type != EsfSpellTargetType::Player {
+    fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
+        if spell.target_type != SkillTargetType::SELF {
             return;
         }
 
@@ -114,44 +123,62 @@ impl Map {
                 .update_party_hp(hp_percentage);
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(hp_percentage);
+        let packet = SpellTargetSelfServerPacket {
+            player_id,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage,
+            hp: None,
+            tp: None,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
+            return;
+        }
 
         self.send_buf_near_player(
             player_id,
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(hp_percentage);
-        builder.add_short(character.hp);
-        builder.add_short(character.tp);
+        let packet = SpellTargetSelfServerPacket {
+            player_id,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage,
+            hp: Some(character.hp),
+            tp: Some(character.tp),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 
-    fn cast_heal_group(&mut self, _player_id: EOShort, _spell: &EsfSpell) {}
+    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfRecord) {}
 
     fn cast_heal_player(
         &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
-        spell_id: EOShort,
-        spell: &EsfSpell,
+        player_id: i32,
+        target_player_id: i32,
+        spell_id: i32,
+        spell: &EsfRecord,
     ) {
-        if spell.target_type != EsfSpellTargetType::Other {
+        if spell.target_type != SkillTargetType::Normal {
             return;
         }
 
@@ -198,56 +225,73 @@ impl Map {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_short(player_id);
-        builder.add_char(character.direction.to_char());
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(target.get_hp_percentage());
+        let mut packet: SpellTargetOtherServerPacket = SpellTargetOtherServerPacket {
+            victim_id: target_player_id,
+            caster_id: player_id,
+            caster_direction: character.direction,
+            spell_id,
+            spell_heal_hp: spell.hp_heal,
+            hp_percentage: target.get_hp_percentage(),
+            hp: None,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
+            return;
+        }
 
         self.send_buf_near_player(
             target_player_id,
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_short(player_id);
-        builder.add_char(character.direction.to_char());
-        builder.add_short(spell_id);
-        builder.add_int(spell.hp_heal as EOInt);
-        builder.add_char(target.get_hp_percentage());
-        builder.add_short(target.hp);
+        packet.hp = Some(target.hp);
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
+            return;
+        }
 
         target.player.as_ref().unwrap().send(
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(character.hp);
-        builder.add_short(character.tp);
+        let packet = RecoverPlayerServerPacket {
+            hp: character.hp,
+            tp: character.tp,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 
     async fn cast_damage_spell(
         &mut self,
-        player_id: EOShort,
-        spell_id: EOShort,
-        spell_data: &EsfSpell,
+        player_id: i32,
+        spell_id: i32,
+        spell_data: &EsfRecord,
         target: SpellTarget,
     ) {
-        if spell_data.target_restrict == EsfSpellTargetRestrict::Friendly
-            || spell_data.target_type != EsfSpellTargetType::Other
+        if spell_data.target_restrict == SkillTargetRestrict::Friendly
+            || spell_data.target_type != SkillTargetType::Normal
         {
             return;
         }
@@ -264,10 +308,10 @@ impl Map {
 
     async fn cast_damage_npc(
         &mut self,
-        player_id: EOShort,
-        npc_index: EOChar,
-        spell_id: EOShort,
-        spell_data: &EsfSpell,
+        player_id: i32,
+        npc_index: i32,
+        spell_id: i32,
+        spell_data: &EsfRecord,
     ) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
@@ -290,10 +334,7 @@ impl Map {
             None => return,
         };
 
-        if !matches!(
-            npc_data.r#type,
-            EnfNpcType::Passive | EnfNpcType::Aggressive
-        ) {
+        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
             return;
         }
 
@@ -318,14 +359,8 @@ impl Map {
                 Some(spell_id),
             );
         } else {
-            self.attack_npc_killed_reply(
-                player_id,
-                npc_index,
-                direction,
-                damage_dealt,
-                Some(spell_id),
-            )
-            .await;
+            self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, Some(spell_id))
+                .await;
         }
     }
 }

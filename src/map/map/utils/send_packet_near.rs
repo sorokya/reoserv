@@ -1,7 +1,10 @@
 use bytes::Bytes;
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        Coords,
+    },
 };
 
 use crate::utils::in_range;
@@ -16,11 +19,16 @@ impl Map {
         family: PacketFamily,
         packet: T,
     ) where
-        T: Serializeable,
+        T: EoSerialize,
     {
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        self.send_buf_near(coords, action, family, builder.get())
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
+        self.send_buf_near(coords, action, family, writer.to_byte_array())
     }
 
     pub fn send_buf_near(

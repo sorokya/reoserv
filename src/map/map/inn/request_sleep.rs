@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOInt, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::CitizenRequestServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -9,11 +11,15 @@ use crate::{INN_DB, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn request_sleep(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn request_sleep(&mut self, player_id: i32, session_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };
+
+        if character.hp == character.max_hp && character.tp == character.max_tp {
+            return;
+        }
 
         let player = match character.player.as_ref() {
             Some(player) => player,
@@ -44,14 +50,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn) => inn,
             None => return,
@@ -63,10 +69,20 @@ impl Map {
 
         let cost = (character.max_hp - character.hp) + (character.max_tp - character.tp);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(cost as EOInt);
+        let packet = CitizenRequestServerPacket { cost };
 
-        player.set_sleep_cost(cost as EOInt);
-        player.send(PacketAction::Request, PacketFamily::Citizen, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenRequestServerPacket: {}", e);
+            return;
+        }
+
+        player.set_sleep_cost(cost);
+        player.send(
+            PacketAction::Request,
+            PacketFamily::Citizen,
+            writer.to_byte_array(),
+        );
     }
 }

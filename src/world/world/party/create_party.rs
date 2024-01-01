@@ -1,6 +1,9 @@
-use eo::{
-    data::{EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyCreateServerPacket, PartyMember},
+        PacketAction, PacketFamily,
+    },
 };
 
 use crate::world::Party;
@@ -8,7 +11,7 @@ use crate::world::Party;
 use super::super::World;
 
 impl World {
-    pub async fn create_party(&mut self, leader_id: EOShort, member_id: EOShort) {
+    pub async fn create_party(&mut self, leader_id: i32, member_id: i32) {
         let leader = match self.players.get(&leader_id) {
             Some(player) => player,
             None => return,
@@ -31,19 +34,33 @@ impl World {
 
         self.parties.push(Party::new(leader_id, member_id));
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(leader_id);
-        builder.add_char(1);
-        builder.add_char(leader_character.level);
-        builder.add_char(leader_character.get_hp_percentage());
-        builder.add_break_string(&leader_character.name);
-        builder.add_short(member_id);
-        builder.add_char(0);
-        builder.add_char(member_character.level);
-        builder.add_char(member_character.get_hp_percentage());
-        builder.add_string(&member_character.name);
+        let packet = PartyCreateServerPacket {
+            members: vec![
+                PartyMember {
+                    player_id: leader_id,
+                    leader: true,
+                    level: leader_character.level,
+                    hp_percentage: leader_character.get_hp_percentage(),
+                    name: leader_character.name.clone(),
+                },
+                PartyMember {
+                    player_id: member_id,
+                    leader: false,
+                    level: member_character.level,
+                    hp_percentage: member_character.get_hp_percentage(),
+                    name: member_character.name.clone(),
+                },
+            ],
+        };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCreateServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         leader.send(PacketAction::Create, PacketFamily::Party, buf.clone());
         member.send(PacketAction::Create, PacketFamily::Party, buf);

@@ -1,18 +1,17 @@
 use config::{Config, ConfigError, File};
-use eo::data::{EOChar, EOInt, EOShort};
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub host: String,
     pub port: String,
-    pub max_connections: EOInt,
+    pub max_connections: i32,
     pub password_salt: String,
-    pub ping_rate: EOInt,
+    pub ping_rate: i32,
     pub enforce_sequence: bool,
-    pub num_of_maps: EOInt,
+    pub num_of_maps: i32,
     pub min_version: String,
     pub max_version: String,
-    pub save_rate: EOInt,
+    pub save_rate: i32,
     pub generate_pub: bool,
     pub lang: String,
 }
@@ -28,69 +27,69 @@ pub struct Database {
 
 #[derive(Debug, Deserialize)]
 pub struct NewCharacter {
-    pub spawn_map: EOShort,
-    pub spawn_x: EOChar,
-    pub spawn_y: EOChar,
-    pub spawn_direction: EOChar,
+    pub spawn_map: i32,
+    pub spawn_x: i32,
+    pub spawn_y: i32,
+    pub spawn_direction: i32,
     pub home: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Jail {
-    pub map: EOShort,
-    pub x: EOChar,
-    pub y: EOChar,
-    pub free_map: EOShort,
-    pub free_x: EOChar,
-    pub free_y: EOChar,
+    pub map: i32,
+    pub x: i32,
+    pub y: i32,
+    pub free_map: i32,
+    pub free_x: i32,
+    pub free_y: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Rescue {
-    pub map: EOShort,
-    pub x: EOChar,
-    pub y: EOChar,
+    pub map: i32,
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct World {
-    pub see_distance: EOChar,
-    pub drop_distance: EOChar,
-    pub recover_rate: EOInt,
-    pub npc_recover_rate: EOInt,
-    pub chest_spawn_rate: EOInt,
-    pub exp_multiplier: EOInt,
-    pub stat_points_per_level: EOInt,
-    pub skill_points_per_level: EOInt,
-    pub tick_rate: EOInt,
-    pub arena_spawn_rate: EOInt,
-    pub door_close_rate: EOInt,
-    pub quake_rate: EOInt,
-    pub spike_rate: EOInt,
+    pub see_distance: i32,
+    pub drop_distance: i32,
+    pub recover_rate: i32,
+    pub npc_recover_rate: i32,
+    pub chest_spawn_rate: i32,
+    pub exp_multiplier: i32,
+    pub stat_points_per_level: i32,
+    pub skill_points_per_level: i32,
+    pub tick_rate: i32,
+    pub arena_spawn_rate: i32,
+    pub door_close_rate: i32,
+    pub quake_rate: i32,
+    pub spike_rate: i32,
     pub spike_damage: f32,
-    pub drain_rate: EOInt,
+    pub drain_rate: i32,
     pub drain_hp_damage: f32,
     pub drain_tp_damage: f32,
-    pub warp_suck_rate: EOInt,
+    pub warp_suck_rate: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct NPCs {
     pub instant_spawn: bool,
-    pub respawn_rate: EOInt,
+    pub respawn_rate: i32,
     pub freeze_on_empty_map: bool,
     pub freeze_out_of_range: bool,
-    pub chase_distance: EOInt,
-    pub bored_timer: EOInt,
-    pub act_rate: EOInt,
-    pub speed_0: EOInt,
-    pub speed_1: EOInt,
-    pub speed_2: EOInt,
-    pub speed_3: EOInt,
-    pub speed_4: EOInt,
-    pub speed_5: EOInt,
-    pub speed_6: EOInt,
-    pub talk_rate: EOInt,
+    pub chase_distance: i32,
+    pub bored_timer: i32,
+    pub act_rate: i32,
+    pub speed_0: i32,
+    pub speed_1: i32,
+    pub speed_2: i32,
+    pub speed_3: i32,
+    pub speed_4: i32,
+    pub speed_5: i32,
+    pub speed_6: i32,
+    pub talk_rate: i32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -100,27 +99,27 @@ pub struct Sln {
     pub site: String,
     pub hostname: String,
     pub server_name: String,
-    pub rate: EOInt,
+    pub rate: i32,
     pub zone: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Bank {
-    pub max_item_amount: EOInt,
-    pub base_size: EOInt,
-    pub size_step: EOInt,
-    pub max_upgrades: EOInt,
-    pub upgrade_base_cost: EOInt,
-    pub upgrade_cost_step: EOInt,
+    pub max_item_amount: i32,
+    pub base_size: i32,
+    pub size_step: i32,
+    pub max_upgrades: i32,
+    pub upgrade_base_cost: i32,
+    pub upgrade_cost_step: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Limits {
-    pub max_bank_gold: EOInt,
-    pub max_item: EOInt,
-    pub max_trade: EOInt,
-    pub max_chest: EOInt,
-    pub max_party_size: EOInt,
+    pub max_bank_gold: i32,
+    pub max_item: i32,
+    pub max_trade: i32,
+    pub max_chest: i32,
+    pub max_party_size: i32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -130,41 +129,41 @@ pub struct Combat {
 
 #[derive(Debug, Deserialize)]
 pub struct WeaponRange {
-    pub weapon: EOShort,
-    pub range: EOChar,
+    pub weapon: i32,
+    pub range: i32,
     pub arrows: bool,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Board {
-    pub max_posts: EOInt,
-    pub max_user_posts: EOInt,
-    pub max_recent_posts: EOInt,
-    pub recent_post_time: EOInt,
-    pub max_subject_length: EOInt,
-    pub max_post_length: EOInt,
+    pub max_posts: i32,
+    pub max_user_posts: i32,
+    pub max_recent_posts: i32,
+    pub recent_post_time: i32,
+    pub max_subject_length: i32,
+    pub max_post_length: i32,
     pub date_posts: bool,
-    pub admin_board: EOInt,
-    pub admin_max_posts: EOInt,
+    pub admin_board: i32,
+    pub admin_max_posts: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Chest {
-    pub slots: EOInt,
+    pub slots: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Quake {
-    pub min_ticks: EOInt,
-    pub max_ticks: EOInt,
-    pub min_strength: EOInt,
-    pub max_strength: EOInt,
+    pub min_ticks: i32,
+    pub max_ticks: i32,
+    pub min_strength: i32,
+    pub max_strength: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Map {
     pub quakes: Vec<Quake>,
-    pub door_close_rate: EOInt,
+    pub door_close_rate: i32,
 }
 
 #[derive(Debug, Deserialize)]

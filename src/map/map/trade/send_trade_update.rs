@@ -1,12 +1,15 @@
-use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{TradeAdminServerPacket, TradeItemData, TradeReplyServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn send_trade_update(&self, player_id: EOShort) {
+    pub async fn send_trade_update(&self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -34,30 +37,71 @@ impl Map {
 
         let partner_accepted = partner.is_trade_accepted().await;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        for item in character.trade_items.iter() {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
-        }
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_short(partner_id);
-        for item in partner_character.trade_items.iter() {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
-        }
-
-        let buf = builder.get();
-
-        player.send(PacketAction::Reply, PacketFamily::Trade, buf.clone());
-        partner.send(
-            if partner_accepted {
-                PacketAction::Admin
-            } else {
-                PacketAction::Reply
+        let packet = TradeReplyServerPacket {
+            trade_data: TradeItemData {
+                partner_player_id: partner_id,
+                partner_items: partner_character.trade_items.clone(),
+                your_player_id: player_id,
+                your_items: character.trade_items.clone(),
             },
+        };
+
+        let mut writer = EoWriter::new();
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeReplyServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
             PacketFamily::Trade,
-            buf,
+            writer.to_byte_array(),
         );
+
+        if partner_accepted {
+            let packet = TradeAdminServerPacket {
+                trade_data: TradeItemData {
+                    partner_player_id: player_id,
+                    partner_items: character.trade_items.clone(),
+                    your_player_id: partner_id,
+                    your_items: partner_character.trade_items.clone(),
+                },
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize TradeAdminServerPacket: {}", e);
+                return;
+            }
+
+            partner.send(
+                PacketAction::Admin,
+                PacketFamily::Trade,
+                writer.to_byte_array(),
+            );
+        } else {
+            let packet = TradeReplyServerPacket {
+                trade_data: TradeItemData {
+                    partner_player_id: player_id,
+                    partner_items: character.trade_items.clone(),
+                    your_player_id: partner_id,
+                    your_items: partner_character.trade_items.clone(),
+                },
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize TradeReplyServerPacket: {}", e);
+                return;
+            }
+
+            partner.send(
+                PacketAction::Reply,
+                PacketFamily::Trade,
+                writer.to_byte_array(),
+            );
+        }
     }
 }

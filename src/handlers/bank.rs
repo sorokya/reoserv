@@ -1,38 +1,58 @@
-use eo::{
-    data::{EOChar, EOShort, StreamReader},
-    protocol::PacketAction,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{BankAddClientPacket, BankOpenClientPacket, BankTakeClientPacket},
+        PacketAction,
+    },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let amount = reader.get_int();
-    if amount == 0 {
+fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+    let add = match BankAddClientPacket::deserialize(&reader) {
+        Ok(add) => add,
+        Err(e) => {
+            error!("Error deserializing BankAddClientPacket {}", e);
+            return;
+        }
+    };
+
+    if add.amount == 0 {
         return;
     }
 
-    let session_id = reader.get_three();
-
-    map.deposit_gold(player_id, session_id, amount);
+    map.deposit_gold(player_id, add.session_id, add.amount);
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let npc_index = reader.get_short();
-    map.open_bank(player_id, npc_index as EOChar);
+fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+    let open = match BankOpenClientPacket::deserialize(&reader) {
+        Ok(open) => open,
+        Err(e) => {
+            error!("Error deserializing BankOpenClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.open_bank(player_id, open.npc_index);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let amount = reader.get_int();
-    if amount == 0 {
+fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+    let take = match BankTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing BankTakeClientPacket {}", e);
+            return;
+        }
+    };
+
+    if take.amount == 0 {
         return;
     }
 
-    let session_id = reader.get_three();
-
-    map.withdraw_gold(player_id, session_id, amount);
+    map.withdraw_gold(player_id, take.session_id, take.amount);
 }
 
-pub async fn bank(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn bank(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {

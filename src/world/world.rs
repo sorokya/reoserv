@@ -1,7 +1,6 @@
 use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
 
 use super::{load_maps::load_maps, Command, Party, WorldHandle};
-use eo::data::{EOInt, EOShort};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -9,23 +8,23 @@ use tokio::sync::mpsc::UnboundedReceiver;
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
-    players: HashMap<EOShort, PlayerHandle>,
-    accounts: Vec<EOInt>,
-    characters: HashMap<String, EOShort>,
+    players: HashMap<i32, PlayerHandle>,
+    accounts: Vec<i32>,
+    characters: HashMap<String, i32>,
     pool: Pool,
-    maps: Option<HashMap<EOShort, MapHandle>>,
+    maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
-    npc_act_ticks: EOInt,
-    npc_spawn_ticks: EOInt,
-    item_spawn_ticks: EOInt,
-    player_recover_ticks: EOInt,
-    npc_recover_ticks: EOInt,
-    quake_ticks: EOInt,
-    spike_ticks: EOInt,
-    drain_ticks: EOInt,
-    warp_suck_ticks: EOInt,
-    arena_ticks: EOInt,
-    door_close_ticks: EOInt,
+    npc_act_ticks: i32,
+    npc_spawn_ticks: i32,
+    item_spawn_ticks: i32,
+    player_recover_ticks: i32,
+    npc_recover_ticks: i32,
+    quake_ticks: i32,
+    spike_ticks: i32,
+    drain_ticks: i32,
+    warp_suck_ticks: i32,
+    arena_ticks: i32,
+    door_close_ticks: i32,
     global_locked: bool,
 }
 
@@ -35,12 +34,14 @@ mod admin;
 mod chat;
 mod drop_player;
 mod enter_game;
+mod find_player;
 mod get_character_by_name;
 mod get_file;
 mod get_next_player_id;
-mod get_online_list;
 mod get_welcome_request_data;
 mod party;
+mod request_player_list;
+mod request_player_name_list;
 mod save;
 mod shutdown;
 mod tick;
@@ -182,10 +183,6 @@ impl World {
                 let _ = respond_to.send(self.get_next_player_id(300));
             }
 
-            Command::GetOnlineList { respond_to } => {
-                let _ = respond_to.send(self.get_online_list().await);
-            }
-
             Command::GetPlayerParty {
                 player_id,
                 respond_to,
@@ -284,6 +281,11 @@ impl World {
                 hp_percentage,
             } => self.update_party_hp(player_id, hp_percentage),
 
+            Command::UpdatePartyExp {
+                player_id,
+                exp_gains,
+            } => self.update_party_exp(player_id, exp_gains),
+
             Command::BanPlayer {
                 victim_name,
                 admin_name,
@@ -293,6 +295,8 @@ impl World {
                 self.ban_player(victim_name, admin_name, duration, silent)
                     .await
             }
+
+            Command::FindPlayer { player_id, name } => self.find_player(player_id, name),
 
             Command::FreePlayer { victim_name } => self.free_player(victim_name),
 
@@ -335,6 +339,10 @@ impl World {
                 victim_name,
                 admin_name,
             } => self.unfreeze_player(victim_name, admin_name),
+            Command::RequestPlayerList { player_id } => self.request_player_list(player_id),
+            Command::RequestPlayerNameList { player_id } => {
+                self.request_player_name_list(player_id)
+            }
         }
     }
 }

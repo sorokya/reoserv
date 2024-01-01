@@ -1,6 +1,9 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{PacketAction, PacketFamily},
+        Coords,
+    },
 };
 
 use crate::utils::in_range;
@@ -11,16 +14,21 @@ impl Map {
     pub fn send_packet_near_exclude_player<T>(
         &self,
         coords: &Coords,
-        exclude_player_id: EOShort,
+        exclude_player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         packet: T,
     ) where
-        T: Serializeable,
+        T: EoSerialize,
     {
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
         for (player_id, character) in self.characters.iter() {
             if *player_id != exclude_player_id && in_range(coords, &character.coords) {
                 character

@@ -1,12 +1,12 @@
-use eo::{
-    data::EOShort,
-    protocol::{server::emote, Emote, PacketAction, PacketFamily},
+use eolib::protocol::{
+    net::{server::EmotePlayerServerPacket, PacketAction, PacketFamily},
+    Emote,
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn emote(&self, target_player_id: EOShort, emote: Emote) {
+    pub fn emote(&self, target_player_id: i32, emote: Emote) {
         let character = match self.characters.get(&target_player_id) {
             Some(character) => character,
             None => return,
@@ -16,7 +16,7 @@ impl Map {
             return;
         }
 
-        let packet = emote::Player {
+        let packet = EmotePlayerServerPacket {
             player_id: target_player_id,
             emote,
         };

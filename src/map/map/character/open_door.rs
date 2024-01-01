@@ -1,7 +1,7 @@
-use eo::{
-    data::EOShort,
-    protocol::{server::door, Coords, PacketAction, PacketFamily},
-    pubs::EifItemType,
+use eolib::protocol::{
+    net::{server::DoorOpenServerPacket, PacketAction, PacketFamily},
+    r#pub::ItemType,
+    Coords,
 };
 
 use crate::{utils::in_client_range, ITEM_DB};
@@ -9,7 +9,7 @@ use crate::{utils::in_client_range, ITEM_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_door(&mut self, player_id: EOShort, door_coords: Coords) {
+    pub fn open_door(&mut self, player_id: i32, door_coords: Coords) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -24,7 +24,7 @@ impl Map {
             None => return,
         };
 
-        if !in_client_range(&character.coords, &door_coords) {
+        if door.open || !in_client_range(&character.coords, &door_coords) {
             return;
         }
 
@@ -36,7 +36,7 @@ impl Map {
                     None => return false,
                 };
 
-                item_data.r#type == EifItemType::Key && item_data.spec1 as EOShort == door.key
+                item_data.r#type == ItemType::Key && item_data.spec1 == door.key
             })
         {
             return;
@@ -44,7 +44,7 @@ impl Map {
 
         door.open = true;
 
-        let packet = door::Open {
+        let packet = DoorOpenServerPacket {
             coords: door_coords,
         };
 

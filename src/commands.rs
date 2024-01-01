@@ -1,5 +1,5 @@
 use config::{Config, ConfigError, File};
-use eo::protocol::AdminLevel;
+use eolib::protocol::AdminLevel;
 
 #[derive(Debug, Deserialize)]
 pub enum ArgType {

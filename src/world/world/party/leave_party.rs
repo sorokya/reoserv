@@ -1,13 +1,15 @@
-use bytes::Bytes;
-use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyCloseServerPacket, PartyRemoveServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::World;
 
 impl World {
-    pub fn leave_party(&mut self, player_id: EOShort) {
+    pub fn leave_party(&mut self, player_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -24,16 +26,31 @@ impl World {
 
         party.members.retain(|&id| id != player_id);
 
+        let packet = PartyCloseServerPacket::new();
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCloseServerPacket: {}", e);
+            return;
+        }
+
         player.send(
             PacketAction::Close,
             PacketFamily::Party,
-            Bytes::from_static(&[EO_BREAK_CHAR]),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
+        let packet = PartyRemoveServerPacket { player_id };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyRemoveServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         for member_id in &party.members {
             let member = match self.players.get(member_id) {

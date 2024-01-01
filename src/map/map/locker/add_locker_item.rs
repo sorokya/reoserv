@@ -1,9 +1,15 @@
 use std::cmp;
 
-use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
-    protocol::{Coords, Item, PacketAction, PacketFamily},
-    pubs::EmfTileSpec,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{
+            server::{LockerReplyServerPacket, LockerSpecServerPacket},
+            Item, PacketAction, PacketFamily, ThreeItem,
+        },
+        Coords,
+    },
 };
 
 use crate::SETTINGS;
@@ -11,7 +17,7 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub async fn add_locker_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_locker_item(&mut self, player_id: i32, item: Item) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -22,13 +28,22 @@ impl Map {
         }
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
-        if character.bank.len() as EOInt >= bank_size {
-            let mut builder = StreamBuilder::new();
-            builder.add_char(bank_size as EOChar);
+        if character.bank.len() as i32 >= bank_size {
+            let packet = LockerSpecServerPacket {
+                locker_max_items: bank_size,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize LockerSpecServerPacket: {}", e);
+                return;
+            }
+
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Locker,
-                builder.get(),
+                writer.to_byte_array(),
             );
             return;
         }
@@ -53,7 +68,7 @@ impl Map {
         ];
 
         if !adjacent_tiles.iter().any(|tile| match tile {
-            Some(tile) => *tile == EmfTileSpec::BankVault,
+            Some(tile) => *tile == MapTileSpec::BankVault,
             None => false,
         }) {
             return;
@@ -77,23 +92,33 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_bank_item(item.id, amount);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(item.id);
-        builder.add_int(character.get_item_amount(item.id));
+        let packet = LockerReplyServerPacket {
+            deposited_item: Item {
+                id: item.id,
+                amount: character.get_item_amount(item.id),
+            },
+            weight: character.get_weight(),
+            locker_items: character
+                .bank
+                .iter()
+                .map(|i| ThreeItem {
+                    id: i.id,
+                    amount: i.amount,
+                })
+                .collect(),
+        };
 
-        let weight = character.get_weight();
-        builder.add_char(weight.current);
-        builder.add_char(weight.max);
+        let mut writer = EoWriter::new();
 
-        for item in &character.bank {
-            builder.add_short(item.id);
-            builder.add_three(item.amount);
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize LockerReplyServerPacket: {}", e);
+            return;
         }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Locker,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

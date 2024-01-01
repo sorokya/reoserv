@@ -1,9 +1,9 @@
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eo::{
-    data::{EOChar, Serializeable, StreamReader},
-    pubs::{TalkFile, TalkNpc},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::r#pub::server::{TalkFile, TalkMessageRecord, TalkRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -22,7 +22,6 @@ pub fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
 
 fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut talk_file = TalkFile::default();
-    talk_file.magic = "ETF".to_string();
 
     let mut npc_id = 1;
     for entry in glob("pub/npcs/*.json")? {
@@ -34,14 +33,15 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
 
         let messages = v["talkMessages"].as_array().unwrap();
-        if messages.len() > 0 {
-            talk_file.npcs.push(TalkNpc {
+        if !messages.is_empty() {
+            talk_file.npcs.push(TalkRecord {
                 npc_id,
-                rate: v["talkRate"].as_u64().unwrap_or(0) as EOChar,
-                num_messages: messages.len() as EOChar,
+                rate: v["talkRate"].as_u64().unwrap_or(0) as i32,
                 messages: messages
                     .iter()
-                    .map(|v| v.as_str().unwrap_or_default().to_string())
+                    .map(|v| TalkMessageRecord {
+                        message: v.as_str().unwrap_or_default().to_string(),
+                    })
                     .collect(),
             });
         }
@@ -60,10 +60,6 @@ fn load_pub() -> Result<TalkFile, Box<dyn std::error::Error>> {
     file.read_to_end(&mut buf)?;
 
     let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut talk_file = TalkFile::default();
-    talk_file.deserialize(&reader);
-
-    Ok(talk_file)
+    let reader = EoReader::new(bytes);
+    Ok(TalkFile::deserialize(&reader)?)
 }

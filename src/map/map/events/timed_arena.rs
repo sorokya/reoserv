@@ -1,7 +1,12 @@
-use bytes::Bytes;
-use eo::{
-    data::{EOChar, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{ArenaDropServerPacket, ArenaUseServerPacket},
+            PacketAction, PacketFamily,
+        },
+        Coords,
+    },
 };
 
 use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
@@ -20,7 +25,7 @@ impl Map {
         if self.arena_ticks >= config.rate {
             self.arena_ticks = 0;
 
-            if self.arena_players.len() as EOChar >= config.block {
+            if self.arena_players.len() as i32 >= config.block {
                 return self.send_arena_full();
             }
 
@@ -78,7 +83,17 @@ impl Map {
     }
 
     fn send_arena_full(&self) {
-        let buf = Bytes::from_static(&b"N"[..]);
+        let packet = ArenaDropServerPacket::new();
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaDropServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
+
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
                 PacketAction::Drop,
@@ -89,10 +104,18 @@ impl Map {
     }
 
     fn send_arena_launch(&mut self, player_count: usize) {
-        let mut builder = StreamBuilder::new();
-        builder.add_char(player_count as EOChar);
+        let packet = ArenaUseServerPacket {
+            players_count: player_count as i32,
+        };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaUseServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
                 PacketAction::Use,

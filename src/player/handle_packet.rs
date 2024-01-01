@@ -3,9 +3,9 @@ use crate::{
     player::{ClientState, PlayerHandle},
 };
 use bytes::Bytes;
-use eo::{
-    data::{EOInt, StreamReader},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::EoReader,
+    protocol::net::{PacketAction, PacketFamily},
 };
 
 use crate::{world::WorldHandle, SETTINGS};
@@ -15,34 +15,18 @@ pub async fn handle_packet(
     player: PlayerHandle,
     world: WorldHandle,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let reader = StreamReader::new(packet);
-    let action = match PacketAction::from_byte(reader.get_byte()) {
-        Some(action) => action,
-        None => {
-            reader.reset();
-            let buf = reader.get_vec(reader.remaining());
-            error!(
-                "Invalid packet action! This should never happen..\nPacket: {:?}",
-                &buf[..]
-            );
-            player.close("invalid packet action".to_string());
-            return Ok(());
-        }
-    };
+    let reader = EoReader::new(packet);
+    let action = PacketAction::from(reader.get_byte()?);
+    if let PacketAction::Unrecognized(_) = action {
+        player.close("invalid packet action".to_string());
+        return Ok(());
+    }
 
-    let family = match PacketFamily::from_byte(reader.get_byte()) {
-        Some(family) => family,
-        None => {
-            reader.reset();
-            let buf = reader.get_vec(reader.remaining());
-            error!(
-                "Invalid packet family! This should never happen..\nPacket: {:?}",
-                &buf[..]
-            );
-            player.close("invalid packet family".to_string());
-            return Ok(());
-        }
-    };
+    let family = PacketFamily::from(reader.get_byte()?);
+    if let PacketFamily::Unrecognized(_) = family {
+        player.close("invalid packet family".to_string());
+        return Ok(());
+    }
 
     if player.get_state().await? != ClientState::Uninitialized {
         if family != PacketFamily::Init {
@@ -51,7 +35,7 @@ pub async fn handle_packet(
             }
 
             let server_sequence = player.gen_sequence().await?;
-            let client_sequence = reader.get_char() as EOInt;
+            let client_sequence = reader.get_char()?;
 
             if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
                 player.close(format!(
@@ -85,13 +69,13 @@ pub async fn handle_packet(
         PacketFamily::Door => handlers::door(action, reader, player.clone()).await,
         PacketFamily::Emote => handlers::emote(action, reader, player.clone()).await,
         PacketFamily::Face => handlers::face(action, reader, player.clone()).await,
-        PacketFamily::Global => handlers::global(action, reader, player.clone()).await,
+        PacketFamily::Global => handlers::global(action, reader, player.clone()),
         PacketFamily::Init => handlers::init(action, reader, player.clone()).await,
         PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
         PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
         PacketFamily::Login => handlers::login(action, reader, player.clone(), world.clone()).await,
-        PacketFamily::Message => handlers::message(action, reader, player.clone()).await,
-        PacketFamily::NPCRange => handlers::npc_range(action, reader, player.clone()).await,
+        PacketFamily::Message => handlers::message(action, reader, player.clone()),
+        PacketFamily::NpcRange => handlers::npc_range(action, reader, player.clone()).await,
         PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,
         PacketFamily::Party => handlers::party(action, reader, player.clone(), world.clone()).await,
         PacketFamily::PlayerRange => handlers::player_range(action, reader, player.clone()).await,

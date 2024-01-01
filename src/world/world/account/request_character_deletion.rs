@@ -1,6 +1,6 @@
-use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::character::Player, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::CharacterPlayerServerPacket, PacketAction, PacketFamily},
 };
 
 use crate::character::Character;
@@ -8,7 +8,7 @@ use crate::character::Character;
 use super::super::World;
 
 impl World {
-    pub async fn request_character_deletion(&self, player_id: EOShort, character_id: EOInt) {
+    pub async fn request_character_deletion(&self, player_id: i32, character_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -57,13 +57,22 @@ impl World {
             }
         };
 
-        let reply = Player {
+        let reply = CharacterPlayerServerPacket {
             session_id,
             character_id,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Player, PacketFamily::Character, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            player.close(format!("Error serializing reply: {}", e));
+            return;
+        }
+
+        player.send(
+            PacketAction::Player,
+            PacketFamily::Character,
+            writer.to_byte_array(),
+        );
     }
 }

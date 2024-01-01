@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use chrono::{NaiveDateTime, Utc};
-use eo::data::EOInt;
 use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 pub async fn account_banned(
@@ -23,7 +22,7 @@ pub async fn account_banned(
         }
     };
 
-    let duration: EOInt = row.take("duration").unwrap();
+    let duration: i32 = row.take("duration").unwrap();
     // 0 = permanent
     if duration == 0 {
         return Ok(true);

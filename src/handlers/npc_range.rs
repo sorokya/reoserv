@@ -1,32 +1,41 @@
-use eo::{
-    data::{EOChar, Serializeable, StreamBuilder, StreamReader},
-    protocol::{client::npcrange::Request, server::npc, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{client::NpcRangeRequestClientPacket, PacketAction},
 };
 
-use crate::player::PlayerHandle;
+use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn request(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
-
-    if let Ok(map) = player.get_map().await {
-        let map_info = map.get_map_info(Vec::default(), request.npc_indexes).await;
-        if !map_info.nearby.npcs.is_empty() {
-            let reply = npc::Agree {
-                num_npcs: map_info.nearby.npcs.len() as EOChar,
-                npcs: map_info.nearby.npcs,
-            };
-
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Agree, PacketFamily::Npc, builder.get());
+fn request(reader: EoReader, player_id: i32, map: MapHandle) {
+    let request = match NpcRangeRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing NpcRangeRequestClientPacket {}", e);
+            return;
         }
-    }
+    };
+
+    map.request_npcs(player_id, request.npc_indexes)
 }
 
-pub async fn npc_range(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn npc_range(action: PacketAction, reader: EoReader, player: PlayerHandle) {
+    let player_id = match player.get_player_id().await {
+        Ok(player_id) => player_id,
+        Err(e) => {
+            error!("Error getting player id {}", e);
+            return;
+        }
+    };
+
+    let map = match player.get_map().await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Error getting map {}", e);
+            return;
+        }
+    };
+
     match action {
-        PacketAction::Request => request(reader, player).await,
+        PacketAction::Request => request(reader, player_id, map),
         _ => error!("Unhandled packet NPCRange_{:?}", action),
     }
 }

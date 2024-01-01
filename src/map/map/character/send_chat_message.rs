@@ -1,12 +1,9 @@
-use eo::{
-    data::EOShort,
-    protocol::{server::talk, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::TalkPlayerServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
 impl Map {
-    pub fn send_chat_message(&self, target_player_id: EOShort, message: String) {
+    pub fn send_chat_message(&self, target_player_id: i32, message: String) {
         let character = match self.characters.get(&target_player_id) {
             Some(character) => character,
             None => return,
@@ -16,7 +13,7 @@ impl Map {
             return;
         }
 
-        let packet = talk::Player {
+        let packet = TalkPlayerServerPacket {
             player_id: target_player_id,
             message,
         };

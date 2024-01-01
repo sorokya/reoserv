@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::paperdoll, PacketAction, PacketFamily},
-    pubs::EifItemType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily},
+        r#pub::ItemType,
+    },
 };
 
 use crate::ITEM_DB;
@@ -9,7 +11,7 @@ use crate::ITEM_DB;
 use super::Character;
 
 impl Character {
-    pub fn equip(&mut self, item_id: EOShort, sub_loc: EOChar) -> bool {
+    pub fn equip(&mut self, item_id: i32, sub_loc: i32) -> bool {
         if sub_loc > 1 {
             return false;
         }
@@ -24,109 +26,112 @@ impl Character {
             None => return false,
         };
 
-        if item_record.r#type == EifItemType::Armor && item_record.spec2 != self.gender.to_char() {
+        if item_record.r#type == ItemType::Armor && item_record.spec2 != i32::from(self.gender) {
             return false;
         }
 
-        if (self.level as EOShort) < item_record.level_req
-            || self.adj_strength < item_record.str_req
-            || self.adj_intelligence < item_record.int_req
-            || self.adj_wisdom < item_record.wis_req
-            || self.adj_agility < item_record.agi_req
-            || self.adj_constitution < item_record.con_req
-            || self.adj_charisma < item_record.cha_req
+        if self.level < item_record.level_requirement
+            || self.adj_strength < item_record.str_requirement
+            || self.adj_intelligence < item_record.int_requirement
+            || self.adj_wisdom < item_record.wis_requirement
+            || self.adj_agility < item_record.agi_requirement
+            || self.adj_constitution < item_record.con_requirement
+            || self.adj_charisma < item_record.cha_requirement
         {
             return false;
         }
 
-        if item_record.class_req != 0 && item_record.class_req != self.class as EOShort {
-            let reply = paperdoll::Ping {
+        if item_record.class_requirement != 0 && item_record.class_requirement != self.class {
+            let reply = PaperdollPingServerPacket {
                 class_id: self.class,
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize PaperdollPingServerPacket: {}", e);
+                return false;
+            }
 
             self.player.as_ref().unwrap().send(
                 PacketAction::Ping,
                 PacketFamily::Paperdoll,
-                builder.get(),
+                writer.to_byte_array(),
             );
             return false;
         }
 
         match item_record.r#type {
-            EifItemType::Weapon => {
-                if self.paperdoll.weapon != 0 {
+            ItemType::Weapon => {
+                if self.equipment.weapon != 0 {
                     return false;
                 }
-                self.paperdoll.weapon = item_id
+                self.equipment.weapon = item_id
             }
-            EifItemType::Shield => {
-                if self.paperdoll.shield != 0 {
+            ItemType::Shield => {
+                if self.equipment.shield != 0 {
                     return false;
                 }
-                self.paperdoll.shield = item_id
+                self.equipment.shield = item_id
             }
-            EifItemType::Armor => {
-                if self.paperdoll.armor != 0 {
+            ItemType::Armor => {
+                if self.equipment.armor != 0 {
                     return false;
                 }
-                self.paperdoll.armor = item_id
+                self.equipment.armor = item_id
             }
-            EifItemType::Hat => {
-                if self.paperdoll.hat != 0 {
+            ItemType::Hat => {
+                if self.equipment.hat != 0 {
                     return false;
                 }
-                self.paperdoll.hat = item_id
+                self.equipment.hat = item_id
             }
-            EifItemType::Boots => {
-                if self.paperdoll.boots != 0 {
+            ItemType::Boots => {
+                if self.equipment.boots != 0 {
                     return false;
                 }
-                self.paperdoll.boots = item_id
+                self.equipment.boots = item_id
             }
-            EifItemType::Gloves => {
-                if self.paperdoll.gloves != 0 {
+            ItemType::Gloves => {
+                if self.equipment.gloves != 0 {
                     return false;
                 }
-                self.paperdoll.gloves = item_id
+                self.equipment.gloves = item_id
             }
-            EifItemType::Accessory => {
-                if self.paperdoll.accessory != 0 {
+            ItemType::Accessory => {
+                if self.equipment.accessory != 0 {
                     return false;
                 }
-                self.paperdoll.accessory = item_id
+                self.equipment.accessory = item_id
             }
-            EifItemType::Belt => {
-                if self.paperdoll.belt != 0 {
+            ItemType::Belt => {
+                if self.equipment.belt != 0 {
                     return false;
                 }
-                self.paperdoll.belt = item_id
+                self.equipment.belt = item_id
             }
-            EifItemType::Necklace => {
-                if self.paperdoll.necklace != 0 {
+            ItemType::Necklace => {
+                if self.equipment.necklace != 0 {
                     return false;
                 }
-                self.paperdoll.necklace = item_id
+                self.equipment.necklace = item_id
             }
-            EifItemType::Ring => {
-                if self.paperdoll.ring[sub_loc as usize] != 0 {
+            ItemType::Ring => {
+                if self.equipment.ring[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.ring[sub_loc as usize] = item_id
+                self.equipment.ring[sub_loc as usize] = item_id
             }
-            EifItemType::Armlet => {
-                if self.paperdoll.armlet[sub_loc as usize] != 0 {
+            ItemType::Armlet => {
+                if self.equipment.armlet[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.armlet[sub_loc as usize] = item_id
+                self.equipment.armlet[sub_loc as usize] = item_id
             }
-            EifItemType::Bracer => {
-                if self.paperdoll.bracer[sub_loc as usize] != 0 {
+            ItemType::Bracer => {
+                if self.equipment.bracer[sub_loc as usize] != 0 {
                     return false;
                 }
-                self.paperdoll.bracer[sub_loc as usize] = item_id
+                self.equipment.bracer[sub_loc as usize] = item_id
             }
             _ => {
                 warn!(

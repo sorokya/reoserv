@@ -1,15 +1,12 @@
 use chrono::Utc;
-use eo::{
-    data::{EOShort, EOThree},
-    protocol::{server::spell::Request, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::SpellRequestServerPacket, PacketAction, PacketFamily};
 
 use crate::character::SpellState;
 
 use super::super::Map;
 
 impl Map {
-    pub fn start_spell_chant(&mut self, player_id: EOShort, spell_id: EOShort, timestamp: EOThree) {
+    pub fn start_spell_chant(&mut self, player_id: i32, spell_id: i32, timestamp: i32) {
         if spell_id == 0 {
             return;
         }
@@ -33,7 +30,7 @@ impl Map {
             return;
         }
 
-        let packet = Request {
+        let packet = SpellRequestServerPacket {
             player_id,
             spell_id,
         };

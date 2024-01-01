@@ -1,12 +1,14 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Player, PacketAction, PacketFamily, StatId},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn level_stat(&mut self, player_id: EOShort, stat_id: StatId) {
+    pub fn level_stat(&mut self, player_id: i32, stat_id: StatId) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -37,24 +39,29 @@ impl Map {
             StatId::Cha => {
                 character.base_charisma += 1;
             }
+            _ => return,
         }
 
         character.stat_points -= 1;
 
         character.calculate_stats();
 
-        let reply = Player {
+        let reply = StatSkillPlayerServerPacket {
             stat_points: character.stat_points,
-            stats: character.get_character_stats_3(),
+            stats: character.get_character_stats_update(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize StatSkillPlayerServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

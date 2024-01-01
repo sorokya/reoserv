@@ -1,7 +1,4 @@
-use eo::{
-    data::EOInt,
-    protocol::{Item, Spell},
-};
+use eolib::protocol::net::{Item, Spell};
 use mysql_async::{prelude::*, Conn, Row, TxOpts};
 
 use super::Character;
@@ -60,10 +57,10 @@ impl Character {
                 "home" => &self.home,
                 "fiance" => &self.fiance,
                 "partner" => &self.partner,
-                "admin_level" => self.admin_level as u32,
+                "admin_level" => i32::from(self.admin_level),
                 "class" => self.class as u32,
-                "gender" => self.gender as u32,
-                "race" => self.skin as u32,
+                "gender" => i32::from(self.gender),
+                "race" => self.skin,
                 "hair_style" => self.hair_style as u32,
                 "hair_color" => self.hair_color as u32,
                 "bank_level" => self.bank_level,
@@ -76,21 +73,21 @@ impl Character {
             include_str!("../sql/update_paperdoll.sql"),
             params! {
                 "character_id" => self.id,
-                "boots" => self.paperdoll.boots as u32,
-                "accessory" => self.paperdoll.accessory as u32,
-                "gloves" => self.paperdoll.gloves as u32,
-                "belt" => self.paperdoll.belt as u32,
-                "armor" => self.paperdoll.armor as u32,
-                "necklace" => self.paperdoll.necklace as u32,
-                "hat" => self.paperdoll.hat as u32,
-                "shield" => self.paperdoll.shield as u32,
-                "weapon" => self.paperdoll.weapon as u32,
-                "ring" => self.paperdoll.ring[0] as u32,
-                "ring2" => self.paperdoll.ring[1] as u32,
-                "armlet" => self.paperdoll.armlet[0] as u32,
-                "armlet2" => self.paperdoll.armlet[1] as u32,
-                "bracer" => self.paperdoll.bracer[0] as u32,
-                "bracer2" => self.paperdoll.bracer[1] as u32,
+                "boots" => self.equipment.boots as u32,
+                "accessory" => self.equipment.accessory as u32,
+                "gloves" => self.equipment.gloves as u32,
+                "belt" => self.equipment.belt as u32,
+                "armor" => self.equipment.armor as u32,
+                "necklace" => self.equipment.necklace as u32,
+                "hat" => self.equipment.hat as u32,
+                "shield" => self.equipment.shield as u32,
+                "weapon" => self.equipment.weapon as u32,
+                "ring" => self.equipment.ring[0] as u32,
+                "ring2" => self.equipment.ring[1] as u32,
+                "armlet" => self.equipment.armlet[0] as u32,
+                "armlet2" => self.equipment.armlet[1] as u32,
+                "bracer" => self.equipment.bracer[0] as u32,
+                "bracer2" => self.equipment.bracer[1] as u32,
             },
         )
         .await?;
@@ -102,9 +99,9 @@ impl Character {
                 "map_id" => self.map_id as u32,
                 "x" => self.coords.x as u32,
                 "y" => self.coords.y as u32,
-                "direction" => self.direction as u32,
-                "sitting" => self.sit_state as u32,
-                "hidden" => EOInt::from(self.hidden),
+                "direction" => i32::from(self.direction),
+                "sitting" => i32::from(self.sit_state),
+                "hidden" => i32::from(self.hidden),
             },
         )
         .await?;

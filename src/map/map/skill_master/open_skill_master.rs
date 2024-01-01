@@ -1,9 +1,12 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::statskill::Open, CharacterBaseStats, PacketAction, PacketFamily, SkillLearn,
+        net::{
+            server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
+            PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
     },
-    pubs::EnfNpcType,
 };
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
@@ -11,7 +14,7 @@ use crate::{NPC_DB, SKILL_MASTER_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_skill_master(&mut self, player_id: EOShort, npc_index: EOChar) {
+    pub async fn open_skill_master(&mut self, player_id: i32, npc_index: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,
@@ -22,14 +25,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         let skill_master = match SKILL_MASTER_DB
             .skill_masters
             .iter()
-            .find(|skill_master| skill_master.vendor_id == npc_data.behavior_id)
+            .find(|skill_master| skill_master.behavior_id == npc_data.behavior_id)
         {
             Some(skill_master) => skill_master,
             None => return,
@@ -55,7 +58,7 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let reply = Open {
+        let reply = StatSkillOpenServerPacket {
             session_id,
             shop_name: skill_master.name.clone(),
             skills: skill_master
@@ -63,29 +66,38 @@ impl Map {
                 .iter()
                 .map(|skill| SkillLearn {
                     id: skill.skill_id,
-                    level_req: skill.min_level,
-                    class_req: skill.class_req,
+                    level_requirement: skill.level_requirement,
+                    class_requirement: skill.class_requirement,
                     cost: skill.price,
-                    skill_req: [
-                        skill.skill_id_req1,
-                        skill.skill_id_req2,
-                        skill.skill_id_req3,
-                        skill.skill_id_req4,
+                    skill_requirements: [
+                        skill.skill_id_requirement1,
+                        skill.skill_id_requirement2,
+                        skill.skill_id_requirement3,
+                        skill.skill_id_requirement4,
                     ],
-                    stat_req: CharacterBaseStats {
-                        str: skill.str_req,
-                        intl: skill.int_req,
-                        wis: skill.wis_req,
-                        agi: skill.agi_req,
-                        con: skill.con_req,
-                        cha: skill.cha_req,
+                    stat_requirements: CharacterBaseStats {
+                        str: skill.str_requirement,
+                        intl: skill.int_requirement,
+                        wis: skill.wis_requirement,
+                        agi: skill.agi_requirement,
+                        con: skill.con_requirement,
+                        cha: skill.cha_requirement,
                     },
                 })
                 .collect(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Open, PacketFamily::StatSkill, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize packet {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Open,
+            PacketFamily::StatSkill,
+            writer.to_byte_array(),
+        );
     }
 }

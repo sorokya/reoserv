@@ -1,6 +1,6 @@
-use eo::{
-    data::StreamBuilder,
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::EoWriter,
+    protocol::net::{PacketAction, PacketFamily},
 };
 
 use crate::LANG;
@@ -20,9 +20,13 @@ impl World {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_string(&admin_name);
-        player.send(PacketAction::Spec, PacketFamily::Talk, builder.get());
+        let mut writer = EoWriter::new();
+        writer.add_string(&admin_name);
+        player.send(
+            PacketAction::Spec,
+            PacketFamily::Talk,
+            writer.to_byte_array(),
+        );
 
         self.broadcast_server_message(&get_lang_string!(
             &LANG.announce_mute,

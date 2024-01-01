@@ -1,4 +1,4 @@
-use eo::protocol::Coords;
+use eolib::protocol::Coords;
 
 use super::super::Map;
 

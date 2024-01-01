@@ -1,11 +1,15 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::{avatar, paperdoll},
-        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
-        PacketFamily,
+        net::{
+            server::{
+                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+                AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollAgreeServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::ItemType,
     },
-    pubs::EifItemType,
 };
 
 use crate::ITEM_DB;
@@ -13,7 +17,7 @@ use crate::ITEM_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn equip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub async fn equip(&mut self, player_id: i32, item_id: i32, sub_loc: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -40,30 +44,35 @@ impl Map {
 
         let change = AvatarChange {
             player_id,
-            slot: AvatarSlot::Clothes,
-            sound: 0,
-            data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                paperdoll: character.get_paperdoll_bahws(),
-            }),
+            change_type: AvatarChangeType::Equipment,
+            sound: false,
+            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
+                AvatarChangeChangeTypeDataEquipment {
+                    equipment: character.get_equipment_change(),
+                },
+            )),
         };
 
-        let reply = paperdoll::Agree {
+        let reply = PaperdollAgreeServerPacket {
             change: change.clone(),
             item_id,
-            item_amount_remaining: match character.items.iter().find(|i| i.id == item_id) {
+            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item.amount,
                 None => 0,
             },
             sub_loc,
-            stats: character.get_item_character_stats(),
+            stats: character.get_character_stats_equipment_change(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize PaperdollAgreeServerPacket: {}", e);
+            return;
+        }
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Paperdoll,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if character.hidden {
@@ -72,15 +81,11 @@ impl Map {
 
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
-            EifItemType::Armor
-                | EifItemType::Weapon
-                | EifItemType::Shield
-                | EifItemType::Hat
-                | EifItemType::Boots
+            ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = avatar::Agree { change };
+            let reply = AvatarAgreeServerPacket { change };
 
             self.send_packet_near_player(
                 player_id,

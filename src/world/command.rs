@@ -1,6 +1,7 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort},
-    protocol::{client, FileType, OnlinePlayers},
+use eolib::protocol::net::{
+    client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+    server::PartyExpShare,
+    PartyRequestType,
 };
 use tokio::sync::oneshot;
 
@@ -11,16 +12,16 @@ use super::{Party, WorldHandle};
 #[derive(Debug)]
 pub enum Command {
     AcceptPartyRequest {
-        player_id: EOShort,
-        target_player_id: EOShort,
-        request_type: EOChar,
+        player_id: i32,
+        target_player_id: i32,
+        request_type: PartyRequestType,
     },
     AddLoggedInAccount {
-        account_id: EOInt,
+        account_id: i32,
     },
     AddPlayer {
         respond_to: oneshot::Sender<()>,
-        player_id: EOShort,
+        player_id: i32,
         player: PlayerHandle,
     },
     BanPlayer {
@@ -38,7 +39,7 @@ pub enum Command {
         message: String,
     },
     BroadcastGlobalMessage {
-        target_player_id: EOShort,
+        target_player_id: i32,
         name: String,
         message: String,
     },
@@ -46,37 +47,41 @@ pub enum Command {
         message: String,
     },
     BroadcastPartyMessage {
-        player_id: EOShort,
+        player_id: i32,
         message: String,
     },
     ChangePassword {
-        player_id: EOShort,
+        player_id: i32,
         username: String,
         current_password: String,
         new_password: String,
     },
     CreateAccount {
-        player_id: EOShort,
-        details: client::account::Create,
+        player_id: i32,
+        details: AccountCreateClientPacket,
     },
     CreateCharacter {
-        player_id: EOShort,
-        details: client::character::Create,
+        player_id: i32,
+        details: CharacterCreateClientPacket,
     },
     DeleteCharacter {
-        player_id: EOShort,
-        session_id: EOShort,
-        character_id: EOInt,
+        player_id: i32,
+        session_id: i32,
+        character_id: i32,
     },
     DropPlayer {
-        player_id: EOShort,
-        account_id: EOInt,
+        player_id: i32,
+        account_id: i32,
         character_name: String,
         respond_to: oneshot::Sender<()>,
     },
     EnterGame {
-        player_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        session_id: i32,
+    },
+    FindPlayer {
+        player_id: i32,
+        name: String,
     },
     FreePlayer {
         victim_name: String,
@@ -91,31 +96,28 @@ pub enum Command {
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
     GetFile {
-        player_id: EOShort,
+        player_id: i32,
         file_type: FileType,
-        session_id: EOShort,
-        file_id: Option<EOChar>,
+        session_id: i32,
+        file_id: Option<i32>,
         warp: bool,
     },
     GetMap {
-        map_id: EOShort,
+        map_id: i32,
         respond_to: oneshot::Sender<Result<MapHandle, Box<dyn std::error::Error + Send + Sync>>>,
     },
     GetNextPlayerId {
-        respond_to: oneshot::Sender<EOShort>,
-    },
-    GetOnlineList {
-        respond_to: oneshot::Sender<Vec<OnlinePlayers>>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetPlayerParty {
-        player_id: EOShort,
+        player_id: i32,
         respond_to: oneshot::Sender<Option<Party>>,
     },
     GetPlayerCount {
         respond_to: oneshot::Sender<usize>,
     },
     IsLoggedIn {
-        account_id: EOInt,
+        account_id: i32,
         respond_to: oneshot::Sender<bool>,
     },
     JailPlayer {
@@ -132,7 +134,7 @@ pub enum Command {
         respond_to: oneshot::Sender<()>,
     },
     Login {
-        player_id: EOShort,
+        player_id: i32,
         name: String,
         password: String,
     },
@@ -142,46 +144,52 @@ pub enum Command {
     },
     PingPlayers,
     Quake {
-        magnitude: EOChar,
+        magnitude: i32,
     },
     ReportPlayer {
-        player_id: EOShort,
+        player_id: i32,
         reportee_name: String,
         message: String,
     },
     RequestAccountCreation {
-        player_id: EOShort,
+        player_id: i32,
         name: String,
     },
     RequestCharacterCreation {
-        player_id: EOShort,
+        player_id: i32,
     },
     RequestCharacterDeletion {
-        player_id: EOShort,
-        character_id: EOInt,
+        player_id: i32,
+        character_id: i32,
     },
     RequestPartyList {
-        player_id: EOShort,
+        player_id: i32,
     },
     RequestPlayerInfo {
-        player_id: EOShort,
+        player_id: i32,
         victim_name: String,
     },
+    RequestPlayerList {
+        player_id: i32,
+    },
+    RequestPlayerNameList {
+        player_id: i32,
+    },
     RequestPlayerInventory {
-        player_id: EOShort,
+        player_id: i32,
         victim_name: String,
     },
     RemovePartyMember {
-        player_id: EOShort,
-        target_player_id: EOShort,
+        player_id: i32,
+        target_player_id: i32,
     },
     Save,
     SelectCharacter {
-        player_id: EOShort,
-        character_id: EOInt,
+        player_id: i32,
+        character_id: i32,
     },
     SendAdminMessage {
-        player_id: EOShort,
+        player_id: i32,
         message: String,
     },
     SendPrivateMessage {
@@ -201,7 +209,11 @@ pub enum Command {
         admin_name: String,
     },
     UpdatePartyHP {
-        player_id: EOShort,
-        hp_percentage: EOChar,
+        player_id: i32,
+        hp_percentage: i32,
+    },
+    UpdatePartyExp {
+        player_id: i32,
+        exp_gains: Vec<PartyExpShare>,
     },
 }

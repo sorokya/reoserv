@@ -1,18 +1,26 @@
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::PartyAgreeServerPacket, PacketAction, PacketFamily},
 };
 
 use super::super::World;
 
 impl World {
-    pub fn update_party_hp(&self, player_id: EOShort, hp_percentage: EOChar) {
+    pub fn update_party_hp(&self, player_id: i32, hp_percentage: i32) {
         if let Some(party) = self.get_player_party(player_id) {
-            let mut builder = StreamBuilder::new();
-            builder.add_short(player_id);
-            builder.add_char(hp_percentage);
+            let packet = PartyAgreeServerPacket {
+                player_id,
+                hp_percentage,
+            };
 
-            let buf = builder.get();
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize PartyAgreeServerPacket: {}", e);
+                return;
+            }
+
+            let buf = writer.to_byte_array();
 
             for member_id in &party.members {
                 let member = match self.players.get(member_id) {

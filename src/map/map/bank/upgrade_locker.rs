@@ -1,6 +1,6 @@
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::LockerBuyServerPacket, PacketAction, PacketFamily},
 };
 
 use crate::SETTINGS;
@@ -8,7 +8,7 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub fn upgrade_locker(&mut self, player_id: EOShort) {
+    pub fn upgrade_locker(&mut self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -33,14 +33,22 @@ impl Map {
         character.remove_item(1, cost);
         character.bank_level += 1;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.get_item_amount(1));
-        builder.add_char(character.bank_level as EOChar);
+        let buy = LockerBuyServerPacket {
+            gold_amount: character.get_item_amount(1),
+            locker_upgrades: character.bank_level,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = buy.serialize(&mut writer) {
+            error!("Failed to serialize LockerBuyServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,
             PacketFamily::Locker,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

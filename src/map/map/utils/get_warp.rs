@@ -1,9 +1,9 @@
-use eo::{protocol::Coords, pubs::EmfWarp};
+use eolib::protocol::{map::MapWarp, Coords};
 
 use super::super::Map;
 
 impl Map {
-    pub fn get_warp(&self, coords: &Coords) -> Option<EmfWarp> {
+    pub fn get_warp(&self, coords: &Coords) -> Option<MapWarp> {
         if let Some(row) = self.file.warp_rows.iter().find(|row| row.y == coords.y) {
             row.tiles
                 .iter()

@@ -1,7 +1,7 @@
 use bytes::Bytes;
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{PacketAction, PacketFamily},
 };
 
 use crate::utils::in_range;
@@ -11,21 +11,26 @@ use super::super::Map;
 impl Map {
     pub fn send_packet_near_player<T>(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         packet: T,
     ) where
-        T: Serializeable,
+        T: EoSerialize,
     {
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        self.send_buf_near_player(player_id, action, family, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
+        self.send_buf_near_player(player_id, action, family, writer.to_byte_array());
     }
 
     pub fn send_buf_near_player(
         &self,
-        player_id: EOShort,
+        player_id: i32,
         action: PacketAction,
         family: PacketFamily,
         buf: Bytes,

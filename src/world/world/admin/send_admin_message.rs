@@ -1,6 +1,12 @@
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{AdminMessageType, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            AdminInteractReplyServerPacket, AdminInteractReplyServerPacketMessageTypeData,
+            AdminInteractReplyServerPacketMessageTypeDataMessage, AdminMessageType,
+        },
+        PacketAction, PacketFamily,
+    },
 };
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
@@ -10,7 +16,7 @@ use crate::{utils::capitalize, SETTINGS};
 use super::super::World;
 
 impl World {
-    pub async fn send_admin_message(&self, player_id: EOShort, message: String) {
+    pub async fn send_admin_message(&self, player_id: i32, message: String) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -24,18 +30,35 @@ impl World {
             }
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(AdminMessageType::Message.to_char());
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&character.name);
-        builder.add_break_string(&message);
+        self.notify_message_to_online_admins(&character.name, &message)
+            .await;
 
-        let from_name = character.name;
-        let buf = builder.get();
+        self.add_message_to_admin_board(character.id, character.name.clone(), message);
+    }
+
+    async fn notify_message_to_online_admins(&self, player_name: &str, message: &str) {
+        let packet = AdminInteractReplyServerPacket {
+            message_type: AdminMessageType::Message,
+            message_type_data: Some(AdminInteractReplyServerPacketMessageTypeData::Message(
+                AdminInteractReplyServerPacketMessageTypeDataMessage {
+                    player_name: player_name.to_owned(),
+                    message: message.to_owned(),
+                },
+            )),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize AdminInteractReplyServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
-                if character.name != from_name && character.admin_level as EOChar >= 1 {
+                if character.name != player_name && i32::from(character.admin_level) >= 1 {
                     player.send(
                         PacketAction::Reply,
                         PacketFamily::AdminInteract,
@@ -44,9 +67,10 @@ impl World {
                 }
             }
         }
+    }
 
+    fn add_message_to_admin_board(&self, character_id: i32, player_name: String, message: String) {
         let pool = self.pool.clone();
-        let character_id = character.id;
         tokio::spawn(async move {
             let mut conn = pool.get_conn().await.unwrap();
             conn.exec_drop(
@@ -54,7 +78,7 @@ impl World {
                 params! {
                     "board_id" => SETTINGS.board.admin_board,
                     "character_id" => character_id,
-                    "subject" => format!("[Request] {} needs help", capitalize(&from_name)),
+                    "subject" => format!("[Request] {} needs help", capitalize(&player_name)),
                     "body" => message,
                 },
             )

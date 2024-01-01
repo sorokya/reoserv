@@ -1,24 +1,40 @@
-use eo::{
-    data::{EOShort, StreamReader},
-    protocol::PacketAction,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{AdminInteractReportClientPacket, AdminInteractTellClientPacket},
+        PacketAction,
+    },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn report(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let reportee_name = reader.get_break_string();
-    let message = reader.get_break_string();
-    world.report_player(player_id, reportee_name, message);
+fn report(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let report = match AdminInteractReportClientPacket::deserialize(&reader) {
+        Ok(report) => report,
+        Err(e) => {
+            error!("Error deserializing AdminInteractReportClientPacket {}", e);
+            return;
+        }
+    };
+
+    world.report_player(player_id, report.reportee, report.message);
 }
 
-fn tell(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let message = reader.get_break_string();
-    world.send_admin_message(player_id, message);
+fn tell(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let tell = match AdminInteractTellClientPacket::deserialize(&reader) {
+        Ok(tell) => tell,
+        Err(e) => {
+            error!("Error deserializing AdminInteractTellClientPacket {}", e);
+            return;
+        }
+    };
+
+    world.send_admin_message(player_id, tell.message);
 }
 
 pub async fn admin_interact(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {

@@ -1,31 +1,38 @@
 use std::cmp;
 
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EmfEffect,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTimedEffect,
+        net::{
+            server::{
+                EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
+                EffectSpecServerPacketMapDamageTypeDataTpDrain, EffectTargetOtherServerPacket,
+                MapDamageType, MapDrainDamageOther,
+            },
+            PacketAction, PacketFamily,
+        },
+    },
 };
 
 use crate::{utils::in_client_range, SETTINGS};
 
 use super::super::Map;
 
-const EFFECT_DRAIN: EOChar = 1;
-
 impl Map {
     pub fn timed_drain(&mut self) {
-        if self.file.effect == EmfEffect::HPDrain {
+        if self.file.timed_effect == MapTimedEffect::HpDrain {
             self.timed_drain_hp();
         }
 
-        if self.file.effect == EmfEffect::TPDrain {
+        if self.file.timed_effect == MapTimedEffect::TpDrain {
             self.timed_drain_tp();
         }
     }
 
     fn timed_drain_hp(&mut self) {
-        let player_ids: Vec<EOShort> = self.characters.keys().copied().collect();
-        let mut damage_list: Vec<EOShort> = Vec::with_capacity(player_ids.len());
+        let player_ids: Vec<i32> = self.characters.keys().copied().collect();
+        let mut damage_list: Vec<i32> = Vec::with_capacity(player_ids.len());
 
         for player_id in &player_ids {
             let character = match self.characters.get_mut(player_id) {
@@ -36,9 +43,14 @@ impl Map {
                 }
             };
 
+            if character.hidden {
+                damage_list.push(0);
+                continue;
+            }
+
             let damage = (character.max_hp as f32 * SETTINGS.world.drain_hp_damage).floor() as i32;
-            let damage = cmp::min(damage, character.hp as i32 - 1);
-            let damage = cmp::max(damage, 0) as EOShort;
+            let damage = cmp::min(damage, character.hp - 1);
+            let damage = cmp::max(damage, 0) as i32;
 
             character.hp -= damage;
             damage_list.push(damage);
@@ -55,65 +67,103 @@ impl Map {
                 None => continue,
             };
 
-            let mut builder = StreamBuilder::new();
-            builder.add_short(damage);
-            builder.add_short(character.hp);
-            builder.add_short(character.max_hp);
+            if damage > 0 {
+                character
+                    .player
+                    .as_ref()
+                    .unwrap()
+                    .update_party_hp(character.get_hp_percentage());
+            }
 
-            for (other_index, other_player_id) in player_ids.iter().enumerate() {
-                if other_player_id == player_id {
-                    continue;
-                }
+            let packet = EffectTargetOtherServerPacket {
+                damage,
+                hp: character.hp,
+                max_hp: character.max_hp,
+                others: player_ids
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(other_index, id)| {
+                        if id == player_id {
+                            None
+                        } else {
+                            match self.characters.get(id) {
+                                Some(other) => {
+                                    if other.hidden
+                                        || !in_client_range(&character.coords, &other.coords)
+                                    {
+                                        None
+                                    } else {
+                                        let other_damage = match damage_list.get(other_index) {
+                                            Some(damage) => *damage,
+                                            None => 0,
+                                        };
+                                        if other_damage > 0 {
+                                            Some(MapDrainDamageOther {
+                                                player_id: *id,
+                                                hp_percentage: other.get_hp_percentage(),
+                                                damage: other_damage,
+                                            })
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                }
+                                None => None,
+                            }
+                        }
+                    })
+                    .collect(),
+            };
 
-                let other = match self.characters.get(other_player_id) {
-                    Some(other) => other,
-                    None => continue,
-                };
+            let mut writer = EoWriter::new();
 
-                if other.hidden || !in_client_range(&character.coords, &other.coords) {
-                    continue;
-                }
-
-                let other_damage = match damage_list.get(other_index) {
-                    Some(damage) => *damage,
-                    None => 0,
-                };
-
-                builder.add_short(*other_player_id);
-                builder.add_char(other.get_hp_percentage());
-                builder.add_short(other_damage);
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize EffectTargetOtherServerPacket: {}", e);
+                return;
             }
 
             character.player.as_ref().unwrap().send(
                 PacketAction::TargetOther,
                 PacketFamily::Effect,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }
 
     fn timed_drain_tp(&mut self) {
         for character in self.characters.values_mut() {
-            if character.tp == 0 {
+            if character.tp == 0 || character.hidden {
                 continue;
             }
 
             let damage = (character.max_tp as f32 * SETTINGS.world.drain_tp_damage).floor() as i32;
-            let damage = cmp::min(damage, character.tp as i32 - 1);
-            let damage = cmp::max(damage, 0) as EOShort;
+            let damage = cmp::min(damage, character.tp - 1);
+            let damage = cmp::max(damage, 0) as i32;
 
             character.tp -= damage;
 
-            let mut builder = StreamBuilder::new();
-            builder.add_char(EFFECT_DRAIN);
-            builder.add_short(damage);
-            builder.add_short(character.tp);
-            builder.add_short(character.max_tp);
+            let packet = EffectSpecServerPacket {
+                map_damage_type: MapDamageType::TpDrain,
+                map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::TpDrain(
+                    EffectSpecServerPacketMapDamageTypeDataTpDrain {
+                        tp_damage: damage,
+                        tp: character.tp,
+                        max_tp: character.max_tp,
+                    },
+                )),
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize EffectSpecServerPacket: {}", e);
+                return;
+            }
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Effect,
-                builder.get(),
+                writer.to_byte_array(),
             );
         }
     }

@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Junk, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::NPC_DB;
@@ -9,7 +11,7 @@ use crate::NPC_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn reset_character(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn reset_character(&mut self, player_id: i32, session_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
@@ -48,23 +50,27 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         character.reset();
 
-        let reply = Junk {
-            stats: character.get_character_stats_1(),
+        let reply = StatSkillJunkServerPacket {
+            stats: character.get_character_stats_reset(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize StatSkillJunkServerPacket {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Junk,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

@@ -1,12 +1,15 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::paperdoll, PacketAction, PacketFamily, PaperdollInfo},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{CharacterDetails, PaperdollReplyServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn request_paperdoll(&self, player_id: EOShort, target_player_id: EOShort) {
+    pub async fn request_paperdoll(&self, player_id: i32, target_player_id: i32) {
         let player = match self.characters.get(&player_id) {
             Some(character) => character.player.as_ref().unwrap(),
             None => {
@@ -29,10 +32,11 @@ impl Map {
             .await
             .is_some();
 
-        let reply = paperdoll::Reply {
-            info: PaperdollInfo {
+        let reply = PaperdollReplyServerPacket {
+            details: CharacterDetails {
                 name: target.name.clone(),
                 home: target.home.clone(),
+                admin: target.admin_level,
                 partner: match &target.partner {
                     Some(partner) => partner.clone(),
                     None => "".to_string(),
@@ -53,13 +57,21 @@ impl Map {
                 class_id: target.class,
                 gender: target.gender,
             },
-            paperdoll: target.paperdoll.clone(),
-            paperdoll_icon: target.get_icon(in_party),
+            equipment: target.equipment.clone(),
+            icon: target.get_icon(in_party),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
 
-        player.send(PacketAction::Reply, PacketFamily::Paperdoll, builder.get());
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize PaperdollReplyServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Paperdoll,
+            writer.to_byte_array(),
+        );
     }
 }

@@ -155,7 +155,7 @@ quakes = [
 
 # Number of ticks before a door is closed
 # This should be a multiple of world.door_close_rate
-door_close_rate = 24
+door_close_rate = 3
 
 [npcs]
 # Should NPCs spawn immediately when the server starts?

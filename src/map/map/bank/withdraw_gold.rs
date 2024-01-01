@@ -1,14 +1,14 @@
 use std::cmp;
 
-use eo::{
-    data::{EOInt, EOShort, EOThree, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::BankReplyServerPacket, PacketAction, PacketFamily},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn withdraw_gold(&mut self, player_id: EOShort, session_id: EOThree, amount: EOInt) {
+    pub async fn withdraw_gold(&mut self, player_id: i32, session_id: i32, amount: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -20,7 +20,7 @@ impl Map {
         };
 
         let actual_session_id = match player.get_session_id().await {
-            Ok(session_id) => session_id as EOThree,
+            Ok(session_id) => session_id,
             Err(_) => return,
         };
 
@@ -55,14 +55,22 @@ impl Map {
         character.gold_bank -= amount;
         character.add_item(1, amount);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.get_item_amount(1));
-        builder.add_int(character.gold_bank);
+        let reply = BankReplyServerPacket {
+            gold_inventory: character.get_item_amount(1),
+            gold_bank: character.gold_bank,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize BankReplyServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Bank,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

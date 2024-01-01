@@ -1,7 +1,15 @@
-use eo::{
-    data::{EOChar, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EmfEffect,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTimedEffect,
+        net::{
+            server::{
+                EffectUseServerPacket, EffectUseServerPacketEffectData,
+                EffectUseServerPacketEffectDataQuake, MapEffect,
+            },
+            PacketAction, PacketFamily,
+        },
+    },
 };
 use rand::{thread_rng, Rng};
 
@@ -9,22 +17,23 @@ use crate::SETTINGS;
 
 use super::super::Map;
 
-const EFFECT_QUAKE: EOChar = 1;
-
 impl Map {
     pub fn timed_quake(&mut self) {
         if !matches!(
-            self.file.effect,
-            EmfEffect::Quake1 | EmfEffect::Quake2 | EmfEffect::Quake3 | EmfEffect::Quake4
+            self.file.timed_effect,
+            MapTimedEffect::Quake1
+                | MapTimedEffect::Quake2
+                | MapTimedEffect::Quake3
+                | MapTimedEffect::Quake4
         ) {
             return;
         }
 
-        let config = match self.file.effect {
-            EmfEffect::Quake1 => &SETTINGS.map.quakes[0],
-            EmfEffect::Quake2 => &SETTINGS.map.quakes[1],
-            EmfEffect::Quake3 => &SETTINGS.map.quakes[2],
-            EmfEffect::Quake4 => &SETTINGS.map.quakes[3],
+        let config = match self.file.timed_effect {
+            MapTimedEffect::Quake1 => &SETTINGS.map.quakes[0],
+            MapTimedEffect::Quake2 => &SETTINGS.map.quakes[1],
+            MapTimedEffect::Quake3 => &SETTINGS.map.quakes[2],
+            MapTimedEffect::Quake4 => &SETTINGS.map.quakes[3],
             _ => return,
         };
 
@@ -39,7 +48,7 @@ impl Map {
             }
         };
 
-        let strength = match self.quake_strength {
+        let quake_strength = match self.quake_strength {
             Some(strength) => strength,
             None => {
                 let strength = rng.gen_range(config.min_strength..=config.max_strength);
@@ -50,11 +59,21 @@ impl Map {
 
         self.quake_ticks += 1;
         if self.quake_ticks >= rate {
-            let mut builder = StreamBuilder::new();
-            builder.add_char(EFFECT_QUAKE);
-            builder.add_char(strength as EOChar);
+            let packet = EffectUseServerPacket {
+                effect: MapEffect::Quake,
+                effect_data: Some(EffectUseServerPacketEffectData::Quake(
+                    EffectUseServerPacketEffectDataQuake { quake_strength },
+                )),
+            };
 
-            let buf = builder.get();
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize EffectUseServerPacket: {}", e);
+                return;
+            }
+
+            let buf = writer.to_byte_array();
 
             for character in self.characters.values() {
                 character.player.as_ref().unwrap().send(

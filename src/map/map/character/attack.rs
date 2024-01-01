@@ -1,7 +1,13 @@
-use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
-    pubs::{EifItemSubType, EnfNpcType},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket},
+            PacketAction, PacketFamily,
+        },
+        r#pub::{ItemSubtype, NpcType},
+        Coords, Direction,
+    },
 };
 use rand::Rng;
 
@@ -15,14 +21,14 @@ use crate::{
 use super::super::Map;
 
 enum AttackTarget {
-    Npc(EOChar),
-    Player(EOShort),
+    Npc(i32),
+    Player(i32),
 }
 
 impl Map {
     // TODO: enforce timestamp
-    pub async fn attack(&mut self, player_id: EOShort, direction: Direction, _timestamp: EOThree) {
-        let reply = attack::Player {
+    pub async fn attack(&mut self, player_id: i32, direction: Direction, _timestamp: i32) {
+        let reply = AttackPlayerServerPacket {
             player_id,
             direction,
         };
@@ -56,7 +62,7 @@ impl Map {
         };
     }
 
-    fn get_attack_target(&self, player_id: EOShort, direction: Direction) -> Option<AttackTarget> {
+    fn get_attack_target(&self, player_id: i32, direction: Direction) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
@@ -108,7 +114,7 @@ impl Map {
         None
     }
 
-    async fn attack_npc(&mut self, player_id: EOShort, npc_index: EOChar, direction: Direction) {
+    async fn attack_npc(&mut self, player_id: i32, npc_index: i32, direction: Direction) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -124,10 +130,7 @@ impl Map {
             None => return,
         };
 
-        if !matches!(
-            npc_data.r#type,
-            EnfNpcType::Passive | EnfNpcType::Aggressive
-        ) {
+        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
             return;
         }
 
@@ -137,7 +140,7 @@ impl Map {
         };
 
         let attacker_facing_npc =
-            ((npc.direction.to_char() as i32) - (attacker.direction.to_char() as i32)).abs() != 2;
+            (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
 
         let critical = npc.hp == npc.max_hp || attacker_facing_npc;
 
@@ -146,17 +149,12 @@ impl Map {
         if npc.alive {
             self.attack_npc_reply(player_id, npc_index, direction, damage_dealt, None);
         } else {
-            self.attack_npc_killed_reply(player_id, npc_index, direction, damage_dealt, None)
+            self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, None)
                 .await;
         }
     }
 
-    fn attack_player(
-        &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
-        direction: Direction,
-    ) {
+    fn attack_player(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
         if self.arena_players.iter().any(|p| p.player_id == player_id) {
             return self.attack_player_arena(player_id, target_player_id, direction);
         }
@@ -164,12 +162,7 @@ impl Map {
         error!("PVP is not implemented yet!");
     }
 
-    fn attack_player_arena(
-        &mut self,
-        player_id: EOShort,
-        target_player_id: EOShort,
-        direction: Direction,
-    ) {
+    fn attack_player_arena(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
         if !self
             .arena_players
             .iter()
@@ -223,17 +216,22 @@ impl Map {
             );
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_char(direction.to_char());
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_short(arena_player.kills);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&character.name);
-        builder.add_string(&target_character.name);
+        let packet = ArenaSpecServerPacket {
+            player_id,
+            direction,
+            kills_count: arena_player.kills,
+            killer_name: character.name.to_owned(),
+            victim_name: target_character.name.to_owned(),
+        };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaSpecServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
@@ -247,14 +245,21 @@ impl Map {
     fn arena_end(&mut self, arena_player: &ArenaPlayer, winner_name: String, target_name: String) {
         self.arena_players.clear();
 
-        let mut builder = StreamBuilder::new();
-        builder.add_break_string(&winner_name);
-        builder.add_short(arena_player.kills);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&winner_name);
-        builder.add_string(&target_name);
+        let packet = ArenaAcceptServerPacket {
+            winner_name: winner_name.to_owned(),
+            kills_count: arena_player.kills,
+            killer_name: winner_name,
+            victim_name: target_name,
+        };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ArenaAcceptServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
             character.player.as_ref().unwrap().send(
@@ -267,8 +272,8 @@ impl Map {
 }
 
 fn can_attack(character: &Character) -> bool {
-    let weapon = character.paperdoll.weapon;
-    let shield = character.paperdoll.shield;
+    let weapon = character.equipment.weapon;
+    let shield = character.equipment.shield;
 
     if weapon == 0 {
         return true;
@@ -289,14 +294,14 @@ fn can_attack(character: &Character) -> bool {
             None => return false,
         };
 
-        return shield_data.subtype == EifItemSubType::Arrows;
+        return shield_data.subtype == ItemSubtype::Arrows;
     }
 
     true
 }
 
-fn get_weapon_range(character: &Character) -> EOChar {
-    let weapon = character.paperdoll.weapon;
+fn get_weapon_range(character: &Character) -> i32 {
+    let weapon = character.equipment.weapon;
     if weapon == 0 {
         return 1;
     }

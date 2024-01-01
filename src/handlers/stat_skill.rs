@@ -1,51 +1,86 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamReader},
-    protocol::{
-        client::statskill::{Add, AddData, Junk, Open, Remove, Take},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            StatSkillAddClientPacket, StatSkillAddClientPacketActionTypeData,
+            StatSkillJunkClientPacket, StatSkillOpenClientPacket, StatSkillRemoveClientPacket,
+            StatSkillTakeClientPacket,
+        },
         PacketAction,
     },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-async fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Add::default();
-    packet.deserialize(&reader);
+fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+    let add = match StatSkillAddClientPacket::deserialize(&reader) {
+        Ok(add) => add,
+        Err(e) => {
+            error!("Error deserializing StatSkillAddClientPacket {}", e);
+            return;
+        }
+    };
 
-    match packet.data {
-        AddData::Stat(stat) => map.level_stat(player_id, stat.stat_id),
-        AddData::Skill(skill) => {
+    match add.action_type_data {
+        Some(StatSkillAddClientPacketActionTypeData::Stat(stat)) => {
+            map.level_stat(player_id, stat.stat_id)
+        }
+        Some(StatSkillAddClientPacketActionTypeData::Skill(skill)) => {
             error!("Unhandled packet StatSkill_Add_Skill {:?}", skill);
         }
-        AddData::None => {}
+        _ => {}
     }
 }
 
-async fn junk(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Junk::default();
-    packet.deserialize(&reader);
-    map.reset_character(player_id, packet.session_id as EOShort);
+fn junk(reader: EoReader, player_id: i32, map: MapHandle) {
+    let junk = match StatSkillJunkClientPacket::deserialize(&reader) {
+        Ok(junk) => junk,
+        Err(e) => {
+            error!("Error deserializing StatSkillJunkClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.reset_character(player_id, junk.session_id);
 }
 
-async fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Open::default();
-    packet.deserialize(&reader);
-    map.open_skill_master(player_id, packet.npc_index as EOChar);
+fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+    let open = match StatSkillOpenClientPacket::deserialize(&reader) {
+        Ok(open) => open,
+        Err(e) => {
+            error!("Error deserializing StatSkillOpenClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.open_skill_master(player_id, open.npc_index);
 }
 
-async fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Remove::default();
-    packet.deserialize(&reader);
-    map.forget_skill(player_id, packet.spell_id, packet.session_id as EOShort);
+fn remove(reader: EoReader, player_id: i32, map: MapHandle) {
+    let remove = match StatSkillRemoveClientPacket::deserialize(&reader) {
+        Ok(remove) => remove,
+        Err(e) => {
+            error!("Error deserializing StatSkillRemoveClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.forget_skill(player_id, remove.spell_id, remove.session_id);
 }
 
-async fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Take::default();
-    packet.deserialize(&reader);
-    map.learn_skill(player_id, packet.spell_id, packet.session_id as EOShort);
+fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+    let take = match StatSkillTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing StatSkillTakeClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.learn_skill(player_id, take.spell_id, take.session_id);
 }
 
-pub async fn stat_skill(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn stat_skill(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {
@@ -63,11 +98,11 @@ pub async fn stat_skill(action: PacketAction, reader: StreamReader, player: Play
     };
 
     match action {
-        PacketAction::Add => add(reader, player_id, map).await,
-        PacketAction::Junk => junk(reader, player_id, map).await,
-        PacketAction::Open => open(reader, player_id, map).await,
-        PacketAction::Remove => remove(reader, player_id, map).await,
-        PacketAction::Take => take(reader, player_id, map).await,
+        PacketAction::Add => add(reader, player_id, map),
+        PacketAction::Junk => junk(reader, player_id, map),
+        PacketAction::Open => open(reader, player_id, map),
+        PacketAction::Remove => remove(reader, player_id, map),
+        PacketAction::Take => take(reader, player_id, map),
         _ => error!("Unhandled packet StatSkill_{:?}", action),
     }
 }

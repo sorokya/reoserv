@@ -1,15 +1,11 @@
-use eo::{
-    data::{EOChar, EOShort},
-    protocol::Item,
-    pubs::EifItemType,
-};
+use eolib::protocol::{net::Item, r#pub::ItemType};
 
 use crate::ITEM_DB;
 
 use super::Character;
 
 impl Character {
-    pub fn unequip(&mut self, item_id: EOShort, sub_loc: EOChar) -> bool {
+    pub fn unequip(&mut self, item_id: i32, sub_loc: i32) -> bool {
         if sub_loc > 1 {
             return false;
         }
@@ -20,77 +16,77 @@ impl Character {
         };
 
         match item_record.r#type {
-            EifItemType::Weapon => {
-                if self.paperdoll.weapon != item_id {
+            ItemType::Weapon => {
+                if self.equipment.weapon != item_id {
                     return false;
                 }
-                self.paperdoll.weapon = 0;
+                self.equipment.weapon = 0;
             }
-            EifItemType::Shield => {
-                if self.paperdoll.shield != item_id {
+            ItemType::Shield => {
+                if self.equipment.shield != item_id {
                     return false;
                 }
-                self.paperdoll.shield = 0;
+                self.equipment.shield = 0;
             }
-            EifItemType::Armor => {
-                if self.paperdoll.armor != item_id {
+            ItemType::Armor => {
+                if self.equipment.armor != item_id {
                     return false;
                 }
-                self.paperdoll.armor = 0;
+                self.equipment.armor = 0;
             }
-            EifItemType::Hat => {
-                if self.paperdoll.hat != item_id {
+            ItemType::Hat => {
+                if self.equipment.hat != item_id {
                     return false;
                 }
-                self.paperdoll.hat = 0;
+                self.equipment.hat = 0;
             }
-            EifItemType::Boots => {
-                if self.paperdoll.boots != item_id {
+            ItemType::Boots => {
+                if self.equipment.boots != item_id {
                     return false;
                 }
-                self.paperdoll.boots = 0;
+                self.equipment.boots = 0;
             }
-            EifItemType::Gloves => {
-                if self.paperdoll.gloves != item_id {
+            ItemType::Gloves => {
+                if self.equipment.gloves != item_id {
                     return false;
                 }
-                self.paperdoll.gloves = 0;
+                self.equipment.gloves = 0;
             }
-            EifItemType::Accessory => {
-                if self.paperdoll.accessory != item_id {
+            ItemType::Accessory => {
+                if self.equipment.accessory != item_id {
                     return false;
                 }
-                self.paperdoll.accessory = 0;
+                self.equipment.accessory = 0;
             }
-            EifItemType::Belt => {
-                if self.paperdoll.belt != item_id {
+            ItemType::Belt => {
+                if self.equipment.belt != item_id {
                     return false;
                 }
-                self.paperdoll.belt = 0;
+                self.equipment.belt = 0;
             }
-            EifItemType::Necklace => {
-                if self.paperdoll.necklace != item_id {
+            ItemType::Necklace => {
+                if self.equipment.necklace != item_id {
                     return false;
                 }
-                self.paperdoll.necklace = 0;
+                self.equipment.necklace = 0;
             }
-            EifItemType::Ring => {
-                if self.paperdoll.ring[sub_loc as usize] != item_id {
+            ItemType::Ring => {
+                if self.equipment.ring[sub_loc as usize] != item_id {
                     return false;
                 }
-                self.paperdoll.ring[sub_loc as usize] = 0;
+                self.equipment.ring[sub_loc as usize] = 0;
             }
-            EifItemType::Armlet => {
-                if self.paperdoll.armlet[sub_loc as usize] != item_id {
+            ItemType::Armlet => {
+                if self.equipment.armlet[sub_loc as usize] != item_id {
                     return false;
                 }
-                self.paperdoll.armlet[sub_loc as usize] = 0;
+                self.equipment.armlet[sub_loc as usize] = 0;
             }
-            EifItemType::Bracer => {
-                if self.paperdoll.bracer[sub_loc as usize] != item_id {
+            ItemType::Bracer => {
+                if self.equipment.bracer[sub_loc as usize] != item_id {
                     return false;
                 }
-                self.paperdoll.bracer[sub_loc as usize] = 0;
+                self.equipment.bracer[sub_loc as usize] = 0;
             }
             _ => {
                 warn!(

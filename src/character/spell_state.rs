@@ -1,12 +1,11 @@
 use chrono::{DateTime, Utc};
-use eo::data::{EOShort, EOThree};
 
 #[derive(Clone, Debug)]
 pub enum SpellState {
     None,
     Requested {
-        spell_id: EOShort,
-        timestamp: EOThree,
+        spell_id: i32,
+        timestamp: i32,
         cast_time: DateTime<Utc>,
     },
 }

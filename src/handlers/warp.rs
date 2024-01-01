@@ -1,28 +1,40 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamReader},
-    protocol::{
-        client::warp::{Accept, Take},
-        FileType, PacketAction,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{FileType, WarpAcceptClientPacket, WarpTakeClientPacket},
+        PacketAction,
     },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn accept(reader: StreamReader, player: PlayerHandle) {
-    let mut accept = Accept::default();
-    accept.deserialize(&reader);
+fn accept(reader: EoReader, player: PlayerHandle) {
+    let accept = match WarpAcceptClientPacket::deserialize(&reader) {
+        Ok(accept) => accept,
+        Err(e) => {
+            error!("Error deserializing WarpAcceptClientPacket {}", e);
+            return;
+        }
+    };
+
     player.accept_warp(accept.map_id, accept.session_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let mut take = Take::default();
-    take.deserialize(&reader);
-    world.get_file(player_id, FileType::Map, take.session_id, None, true);
+fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let take = match WarpTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing WarpTakeClientPacket {}", e);
+            return;
+        }
+    };
+
+    world.get_file(player_id, FileType::Emf, take.session_id, None, true);
 }
 
 pub async fn warp(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {

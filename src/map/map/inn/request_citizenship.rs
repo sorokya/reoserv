@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::CitizenReplyServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -11,8 +13,8 @@ use super::super::Map;
 impl Map {
     pub async fn request_citizenship(
         &mut self,
-        player_id: EOShort,
-        session_id: EOShort,
+        player_id: i32,
+        session_id: i32,
         answers: [String; 3],
     ) {
         let character = match self.characters.get_mut(&player_id) {
@@ -49,39 +51,49 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn_data) => inn_data,
             None => return,
         };
 
-        let mut wrong_answers = 0;
+        let mut questions_wrong = 0;
         if answers[0] != inn_data.answer1 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
         if answers[1] != inn_data.answer2 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
         if answers[2] != inn_data.answer3 {
-            wrong_answers += 1;
+            questions_wrong += 1;
         }
 
-        if wrong_answers == 0 {
+        if questions_wrong == 0 {
             character.home = inn_data.name.clone();
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(wrong_answers as EOChar);
+        let packet = CitizenReplyServerPacket { questions_wrong };
 
-        player.send(PacketAction::Reply, PacketFamily::Citizen, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenReplyServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Citizen,
+            writer.to_byte_array(),
+        );
     }
 }

@@ -1,10 +1,9 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::character::{self, Reply},
-        CharacterList, CharacterReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
+    CharacterReplyServerPacketReplyCodeDataDeleted,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 
 use crate::{character::Character, errors::WrongSessionIdError};
 
@@ -13,7 +12,7 @@ use super::super::World;
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub fn delete_character(&self, player_id: EOShort, session_id: EOShort, character_id: EOInt) {
+    pub fn delete_character(&self, player_id: i32, session_id: i32, character_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,
@@ -86,19 +85,25 @@ impl World {
 
             let characters = characters.unwrap();
 
-            let reply = Reply {
+            let reply = CharacterReplyServerPacket {
                 reply_code: CharacterReply::Deleted,
-                data: character::ReplyData::Deleted(character::ReplyDeleted {
-                    character_list: CharacterList {
-                        num_characters: characters.len() as EOChar,
-                        characters,
-                    },
-                }),
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(
+                    CharacterReplyServerPacketReplyCodeDataDeleted { characters },
+                )),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize CharacterReplyServerPacket: {}", e);
+                return;
+            }
+
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                writer.to_byte_array(),
+            );
         });
     }
 }

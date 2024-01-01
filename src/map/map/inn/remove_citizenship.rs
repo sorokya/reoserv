@@ -1,7 +1,12 @@
-use eo::{
-    data::{EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
+            PacketAction, PacketFamily,
+        },
+        r#pub::NpcType,
+    },
 };
 
 use crate::{INN_DB, NPC_DB, SETTINGS};
@@ -9,7 +14,7 @@ use crate::{INN_DB, NPC_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn remove_citizenship(&mut self, player_id: EOShort) {
+    pub async fn remove_citizenship(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
@@ -35,30 +40,41 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn_data) => inn_data,
             None => return,
         };
 
-        let reply =
-            if character.home == SETTINGS.new_character.home || character.home != inn_data.name {
-                0
+        let packet = CitizenRemoveServerPacket {
+            reply_code: if character.home == SETTINGS.new_character.home
+                || character.home != inn_data.name
+            {
+                InnUnsubscribeReply::NotCitizen
             } else {
                 character.home = SETTINGS.new_character.home.to_owned();
-                1
-            };
+                InnUnsubscribeReply::Unsubscribed
+            },
+        };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(reply);
+        let mut writer = EoWriter::new();
 
-        player.send(PacketAction::Remove, PacketFamily::Citizen, builder.get());
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenRemoveServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Remove,
+            PacketFamily::Citizen,
+            writer.to_byte_array(),
+        );
     }
 }

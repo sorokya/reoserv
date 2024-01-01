@@ -1,8 +1,13 @@
-use eo::protocol::{server::welcome::ReplySelectCharacter, ServerSettings};
+use eolib::protocol::{
+    net::server::{
+        LoginMessageCode, ServerSettings, WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
+    },
+    Coords,
+};
 
 use crate::{
-    character::Character, errors::DataNotFoundError, player::PlayerHandle, CLASS_DB, ITEM_DB,
-    NPC_DB, SETTINGS, SPELL_DB,
+    character::Character, errors::DataNotFoundError, player::PlayerHandle, utils::pad_string,
+    CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB,
 };
 
 use super::World;
@@ -12,8 +17,11 @@ impl World {
         &self,
         player: PlayerHandle,
         character: &Character,
-    ) -> Result<ReplySelectCharacter, Box<dyn std::error::Error + Send + Sync>> {
-        let (map_rid, map_filesize) = {
+    ) -> Result<
+        WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        let (map_rid, map_file_size) = {
             let maps = self.maps.as_ref().expect("Maps not loaded");
             let map = match maps.get(&character.map_id) {
                 Some(map) => map,
@@ -28,19 +36,18 @@ impl World {
             map.get_rid_and_size().await
         };
 
-        let (eif_rid, eif_length) = { (ITEM_DB.rid, ITEM_DB.num_items) };
+        let (eif_rid, eif_length) = { (ITEM_DB.rid, ITEM_DB.items.len() as i32) };
 
-        let (ecf_rid, ecf_length) = { (CLASS_DB.rid, CLASS_DB.num_classes) };
+        let (ecf_rid, ecf_length) = { (CLASS_DB.rid, CLASS_DB.classes.len() as i32) };
 
-        let (enf_rid, enf_length) = { (NPC_DB.rid, NPC_DB.num_npcs) };
+        let (enf_rid, enf_length) = { (NPC_DB.rid, NPC_DB.npcs.len() as i32) };
 
-        let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.num_spells) };
+        let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.skills.len() as i32) };
 
         let settings = ServerSettings {
             jail_map: SETTINGS.jail.map,
             rescue_map: 4,
-            rescue_x: 24,
-            rescue_y: 24,
+            rescue_coords: Coords { x: 24, y: 24 },
             spy_and_light_guide_flood_rate: 10,
             guardian_flood_rate: 10,
             game_master_flood_rate: 10,
@@ -49,12 +56,12 @@ impl World {
 
         let session_id = player.generate_session_id().await?;
 
-        Ok(ReplySelectCharacter {
+        Ok(WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter {
             session_id,
             character_id: character.id,
             map_id: character.map_id,
             map_rid,
-            map_filesize,
+            map_file_size,
             eif_rid,
             eif_length,
             enf_rid,
@@ -68,18 +75,18 @@ impl World {
             guild_name: character.guild_name.clone().unwrap_or_default(),
             guild_rank_name: character.guild_rank_string.clone().unwrap_or_default(),
             class_id: character.class,
-            guild_tag: character.guild_tag.clone().unwrap_or_default(),
+            guild_tag: pad_string(&character.guild_tag.clone().unwrap_or_default(), 3),
             admin: character.admin_level,
             level: character.level,
             experience: character.experience,
             usage: character.usage,
-            stats: character.get_character_stats_2(),
-            paperdoll: character.paperdoll.to_owned(),
+            stats: character.get_character_stats_welcome(),
+            equipment: character.get_equipment_welcome(),
             guild_rank: character.guild_rank_id.unwrap_or_default(),
             settings,
-            login_message: match character.usage {
-                0 => 2,
-                _ => 0,
+            login_message_code: match character.usage {
+                0 => LoginMessageCode::Yes,
+                _ => LoginMessageCode::No,
             },
         })
     }

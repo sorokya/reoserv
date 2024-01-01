@@ -1,14 +1,14 @@
 use std::io::Write;
 
-use eo::data::{Serializeable, StreamBuilder};
+use eolib::data::{EoSerialize, EoWriter};
 
-pub fn save_pub_file<T: Serializeable>(
+pub fn save_pub_file<T: EoSerialize>(
     file: &T,
     path: &str,
 ) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let mut builder = StreamBuilder::new();
-    file.serialize(&mut builder);
-    let buf = builder.get();
+    let mut writer = EoWriter::new();
+    file.serialize(&mut writer).unwrap();
+    let buf = writer.to_byte_array();
 
     let mut file = std::fs::File::create(path)?;
     file.write_all(&buf)?;

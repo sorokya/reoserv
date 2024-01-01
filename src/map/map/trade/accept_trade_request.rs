@@ -1,6 +1,6 @@
-use eo::{
-    data::{EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TradeOpenServerPacket, PacketAction, PacketFamily},
 };
 
 use crate::utils::in_client_range;
@@ -8,7 +8,7 @@ use crate::utils::in_client_range;
 use super::super::Map;
 
 impl Map {
-    pub async fn accept_trade_request(&mut self, player_id: EOShort, target_player_id: EOShort) {
+    pub async fn accept_trade_request(&mut self, player_id: i32, target_player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -46,18 +46,44 @@ impl Map {
         player.set_trading(true);
         target_player.set_trading(true);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(target_player_id);
-        builder.add_break_string(&target_character.name);
-        builder.add_short(player_id);
-        builder.add_break_string(&character.name);
-        player.send(PacketAction::Open, PacketFamily::Trade, builder.get());
+        let packet = TradeOpenServerPacket {
+            partner_player_id: target_player_id,
+            partner_player_name: target_character.name.clone(),
+            your_player_id: player_id,
+            your_player_name: character.name.clone(),
+        };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_break_string(&character.name);
-        builder.add_short(target_player_id);
-        builder.add_break_string(&target_character.name);
-        target_player.send(PacketAction::Open, PacketFamily::Trade, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeOpenServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
+
+        let packet = TradeOpenServerPacket {
+            partner_player_id: player_id,
+            partner_player_name: character.name.clone(),
+            your_player_id: target_player_id,
+            your_player_name: target_character.name.clone(),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeOpenServerPacket: {}", e);
+            return;
+        }
+
+        target_player.send(
+            PacketAction::Open,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
     }
 }

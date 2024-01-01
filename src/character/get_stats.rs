@@ -1,16 +1,14 @@
-use eo::{
-    data::EOShort,
-    protocol::{
-        CharacterBaseStats, CharacterBaseStats2, CharacterSecondaryStats, CharacterStats1,
-        CharacterStats2, CharacterStats3, ItemCharacterStats,
-    },
+use eolib::protocol::net::server::{
+    CharacterBaseStats, CharacterBaseStatsWelcome, CharacterSecondaryStats,
+    CharacterStatsEquipmentChange, CharacterStatsReset, CharacterStatsUpdate,
+    CharacterStatsWelcome,
 };
 
 use super::Character;
 
 impl Character {
-    pub fn get_character_stats_1(&self) -> CharacterStats1 {
-        CharacterStats1 {
+    pub fn get_character_stats_reset(&self) -> CharacterStatsReset {
+        CharacterStatsReset {
             hp: self.hp,
             max_hp: self.max_hp,
             tp: self.tp,
@@ -19,8 +17,8 @@ impl Character {
             stat_points: self.stat_points,
             skill_points: self.skill_points,
             secondary: CharacterSecondaryStats {
-                mindam: self.min_damage,
-                maxdam: self.max_damage,
+                min_damage: self.min_damage,
+                max_damage: self.max_damage,
                 accuracy: self.accuracy,
                 evade: self.evasion,
                 armor: self.armor,
@@ -36,8 +34,8 @@ impl Character {
         }
     }
 
-    pub fn get_character_stats_2(&self) -> CharacterStats2 {
-        CharacterStats2 {
+    pub fn get_character_stats_welcome(&self) -> CharacterStatsWelcome {
+        CharacterStatsWelcome {
             hp: self.hp,
             max_hp: self.max_hp,
             tp: self.tp,
@@ -47,13 +45,13 @@ impl Character {
             skill_points: self.skill_points,
             karma: self.karma,
             secondary: CharacterSecondaryStats {
-                mindam: self.min_damage,
-                maxdam: self.max_damage,
+                min_damage: self.min_damage,
+                max_damage: self.max_damage,
                 accuracy: self.accuracy,
                 evade: self.evasion,
                 armor: self.armor,
             },
-            base: CharacterBaseStats2 {
+            base: CharacterBaseStatsWelcome {
                 str: self.adj_strength,
                 intl: self.adj_intelligence,
                 wis: self.adj_wisdom,
@@ -64,9 +62,9 @@ impl Character {
         }
     }
 
-    pub fn get_character_stats_3(&self) -> CharacterStats3 {
-        CharacterStats3 {
-            base: CharacterBaseStats {
+    pub fn get_character_stats_update(&self) -> CharacterStatsUpdate {
+        CharacterStatsUpdate {
+            base_stats: CharacterBaseStats {
                 str: self.adj_strength,
                 intl: self.adj_intelligence,
                 wis: self.adj_wisdom,
@@ -77,10 +75,10 @@ impl Character {
             max_hp: self.max_hp,
             max_tp: self.max_tp,
             max_sp: self.max_sp,
-            max_weight: self.max_weight as EOShort,
-            secondary: CharacterSecondaryStats {
-                mindam: self.min_damage,
-                maxdam: self.max_damage,
+            max_weight: self.max_weight,
+            secondary_stats: CharacterSecondaryStats {
+                min_damage: self.min_damage,
+                max_damage: self.max_damage,
                 accuracy: self.accuracy,
                 evade: self.evasion,
                 armor: self.armor,
@@ -88,11 +86,11 @@ impl Character {
         }
     }
 
-    pub fn get_item_character_stats(&self) -> ItemCharacterStats {
-        ItemCharacterStats {
+    pub fn get_character_stats_equipment_change(&self) -> CharacterStatsEquipmentChange {
+        CharacterStatsEquipmentChange {
             max_hp: self.max_hp,
             max_tp: self.max_tp,
-            base: CharacterBaseStats {
+            base_stats: CharacterBaseStats {
                 str: self.adj_strength,
                 intl: self.adj_intelligence,
                 wis: self.adj_wisdom,
@@ -100,9 +98,9 @@ impl Character {
                 con: self.adj_constitution,
                 cha: self.adj_charisma,
             },
-            secondary: CharacterSecondaryStats {
-                mindam: self.min_damage,
-                maxdam: self.max_damage,
+            secondary_stats: CharacterSecondaryStats {
+                min_damage: self.min_damage,
+                max_damage: self.max_damage,
                 accuracy: self.accuracy,
                 evade: self.evasion,
                 armor: self.armor,

@@ -1,13 +1,11 @@
-use eo::data::EOShort;
-
 #[derive(Debug)]
 pub struct DataNotFoundError {
     pub kind: String,
-    pub id: EOShort,
+    pub id: i32,
 }
 
 impl DataNotFoundError {
-    pub fn new(kind: String, id: EOShort) -> Self {
+    pub fn new(kind: String, id: i32) -> Self {
         Self { kind, id }
     }
 }

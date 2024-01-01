@@ -1,11 +1,11 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::client::walk,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::client::WalkPlayerClientPacket,
 };
 
 use crate::player::PlayerHandle;
 
-pub async fn walk(reader: StreamReader, player: PlayerHandle) {
+pub async fn walk(reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
@@ -22,13 +22,18 @@ pub async fn walk(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    let mut packet = walk::Player::default();
-    packet.deserialize(&reader);
+    let packet = match WalkPlayerClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing WalkPlayerClientPacket {}", e);
+            return;
+        }
+    };
 
     map.walk(
         player_id,
-        packet.walk.direction,
-        packet.walk.coords,
-        packet.walk.timestamp,
+        packet.walk_action.direction,
+        packet.walk_action.coords,
+        packet.walk_action.timestamp,
     );
 }

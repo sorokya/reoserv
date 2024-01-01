@@ -1,4 +1,3 @@
-use eo::data::EOShort;
 use mysql_async::{params, prelude::Queryable, Conn};
 
 use crate::utils::get_board_tile_spec;
@@ -6,7 +5,7 @@ use crate::utils::get_board_tile_spec;
 use super::super::Map;
 
 impl Map {
-    pub async fn remove_board_post(&mut self, player_id: EOShort, post_id: EOShort) {
+    pub async fn remove_board_post(&mut self, player_id: i32, post_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -17,7 +16,7 @@ impl Map {
             None => return,
         };
 
-        if character.admin_level.to_char() < 1 {
+        if i32::from(character.admin_level) < 1 {
             return self.open_board(player_id, board_id);
         }
 
@@ -56,7 +55,7 @@ impl Map {
     }
 }
 
-async fn delete_post(conn: &mut Conn, post_id: EOShort) -> Result<(), mysql_async::Error> {
+async fn delete_post(conn: &mut Conn, post_id: i32) -> Result<(), mysql_async::Error> {
     conn.exec_drop(
         include_str!("../../../sql/delete_board_post.sql"),
         params! {

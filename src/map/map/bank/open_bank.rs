@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::BankOpenServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::NPC_DB;
@@ -9,7 +11,7 @@ use crate::NPC_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn open_bank(&mut self, player_id: EOShort, npc_index: EOChar) {
+    pub async fn open_bank(&mut self, player_id: i32, npc_index: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,
@@ -20,7 +22,7 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Bank {
+        if npc_data.r#type != NpcType::Bank {
             return;
         }
 
@@ -44,10 +46,23 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.gold_bank);
-        builder.add_three(session_id as EOThree);
-        builder.add_char(character.bank_level as EOChar);
-        player.send(PacketAction::Open, PacketFamily::Bank, builder.get());
+        let open = BankOpenServerPacket {
+            gold_bank: character.gold_bank,
+            session_id,
+            locker_upgrades: character.bank_level,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = open.serialize(&mut writer) {
+            error!("Failed to serialize BankOpenServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Bank,
+            writer.to_byte_array(),
+        );
     }
 }

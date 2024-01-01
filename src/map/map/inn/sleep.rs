@@ -1,7 +1,10 @@
-use eo::{
-    data::{EOShort, StreamBuilder},
-    protocol::{Coords, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::CitizenAcceptServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+        Coords,
+    },
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -9,7 +12,7 @@ use crate::{INN_DB, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn sleep(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn sleep(&mut self, player_id: i32, session_id: i32) {
         let (cost, sleep_map, sleep_coords) = {
             let character = match self.characters.get(&player_id) {
                 Some(character) => character,
@@ -45,14 +48,14 @@ impl Map {
                 None => return,
             };
 
-            if npc_data.r#type != EnfNpcType::Inn {
+            if npc_data.r#type != NpcType::Inn {
                 return;
             }
 
             let inn_data = match INN_DB
                 .inns
                 .iter()
-                .find(|inn| inn.vendor_id == npc_data.behavior_id)
+                .find(|inn| inn.behavior_id == npc_data.behavior_id)
             {
                 Some(inn) => inn,
                 None => return,
@@ -94,13 +97,21 @@ impl Map {
         character.hp = character.max_hp;
         character.tp = character.max_tp;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_int(character.get_item_amount(1));
+        let packet = CitizenAcceptServerPacket {
+            gold_amount: character.get_item_amount(1),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CitizenAcceptServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Accept,
             PacketFamily::Citizen,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         character.player.as_ref().unwrap().request_warp(

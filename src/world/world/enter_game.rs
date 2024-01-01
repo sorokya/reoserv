@@ -1,12 +1,14 @@
-use std::{io::Cursor, path::Path};
-
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::welcome::{Reply, ReplyData, ReplyEnterGame},
-        PacketAction, PacketFamily, WelcomeReply,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{
+            WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+            WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
+        },
+        PacketAction, PacketFamily,
     },
 };
+use std::{io::Cursor, path::Path};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 use crate::{
@@ -17,7 +19,7 @@ use crate::{
 use super::World;
 
 impl World {
-    pub async fn enter_game(&mut self, player_id: EOShort, session_id: EOShort) {
+    pub async fn enter_game(&mut self, player_id: i32, session_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -60,7 +62,7 @@ impl World {
                 let player_id = player_id.unwrap();
 
                 player.set_map(map.clone());
-                player.set_state(ClientState::Playing);
+                player.set_state(ClientState::InGame);
                 let character = player.take_character().await;
 
                 if let Err(e) = character {
@@ -79,20 +81,31 @@ impl World {
 
                 map.enter(character, None).await;
                 let nearby_info = map.get_nearby_info(player_id).await;
-                let reply = Reply {
-                    reply_code: WelcomeReply::EnterGame,
-                    data: ReplyData::EnterGame(ReplyEnterGame {
-                        news: get_news().await,
-                        weight,
-                        items,
-                        spells,
-                        nearby: nearby_info,
-                    }),
+                let reply = WelcomeReplyServerPacket {
+                    welcome_code: WelcomeCode::EnterGame,
+                    welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(
+                        WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
+                            news: get_news().await,
+                            weight,
+                            items,
+                            spells,
+                            nearby: nearby_info,
+                        },
+                    )),
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
-                player.send(PacketAction::Reply, PacketFamily::Welcome, builder.get());
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = reply.serialize(&mut writer) {
+                    error!("Failed to serialize WelcomeReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Welcome,
+                    writer.to_byte_array(),
+                );
             } else {
                 player.close(format!(
                     "{}",

@@ -1,14 +1,11 @@
-use eo::{
-    data::{EOInt, EOShort},
-    protocol::Item,
-};
+use eolib::protocol::net::Item;
 
 use crate::ITEM_DB;
 
 use super::Character;
 
 impl Character {
-    pub fn add_item(&mut self, item_id: EOShort, amount: EOInt) {
+    pub fn add_item(&mut self, item_id: i32, amount: i32) {
         let existing_item = self.items.iter_mut().find(|item| item.id == item_id);
 
         if let Some(existing_item) = existing_item {
@@ -21,7 +18,7 @@ impl Character {
         }
 
         if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
-            self.weight += item.weight as EOInt * amount;
+            self.weight += item.weight * amount;
         }
     }
 }

@@ -30,3 +30,5 @@ mod load_talk_file;
 pub use load_talk_file::load_talk_file;
 mod save_pub_file;
 pub use save_pub_file::save_pub_file;
+mod pad_string;
+pub use pad_string::pad_string;

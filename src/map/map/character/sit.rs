@@ -1,12 +1,15 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::sit, PacketAction, PacketFamily, SitState},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{SitReplyServerPacket, SitState},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
 
 impl Map {
-    pub fn sit(&mut self, player_id: EOShort) {
+    pub fn sit(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -21,19 +24,23 @@ impl Map {
 
         character.sit_state = SitState::Floor;
 
-        let reply = sit::Reply {
+        let reply = SitReplyServerPacket {
             player_id,
             coords: character.coords,
             direction: character.direction,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize SitReplyServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Sit,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if !character.hidden {

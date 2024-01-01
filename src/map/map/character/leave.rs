@@ -1,6 +1,6 @@
-use eo::{
-    data::EOShort,
-    protocol::{server::avatar, PacketAction, PacketFamily, WarpAnimation},
+use eolib::protocol::net::{
+    server::{AvatarRemoveServerPacket, WarpEffect},
+    PacketAction, PacketFamily,
 };
 use tokio::sync::oneshot;
 
@@ -11,10 +11,10 @@ use super::super::Map;
 impl Map {
     pub fn leave(
         &mut self,
-        player_id: EOShort,
-        warp_animation: Option<WarpAnimation>,
+        player_id: i32,
+        warp_animation: Option<WarpEffect>,
         respond_to: oneshot::Sender<Character>,
-        interact_player_id: Option<EOShort>,
+        interact_player_id: Option<i32>,
     ) {
         if let Some(interact_player_id) = interact_player_id {
             self.cancel_trade(player_id, interact_player_id);
@@ -37,9 +37,9 @@ impl Map {
         }
 
         if !target.hidden {
-            let packet = avatar::Remove {
+            let packet = AvatarRemoveServerPacket {
                 player_id,
-                animation: warp_animation,
+                warp_effect: warp_animation,
             };
 
             self.send_packet_near(

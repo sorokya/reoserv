@@ -1,7 +1,10 @@
 use chrono::NaiveDateTime;
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{BoardOpenServerPacket, BoardPostListing},
+        PacketAction, PacketFamily,
+    },
 };
 use mysql_async::{params, prelude::Queryable, Row};
 
@@ -13,14 +16,14 @@ use crate::{
 use super::super::Map;
 
 struct BoardPost {
-    id: EOShort,
+    id: i32,
     author: String,
     subject: String,
     created_at: NaiveDateTime,
 }
 
 impl Map {
-    pub fn open_board(&mut self, player_id: EOShort, board_id: EOShort) {
+    pub fn open_board(&mut self, player_id: i32, board_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -35,8 +38,7 @@ impl Map {
             return;
         }
 
-        if board_id == SETTINGS.board.admin_board as EOShort && character.admin_level.to_char() < 1
-        {
+        if board_id == SETTINGS.board.admin_board && i32::from(character.admin_level) < 1 {
             return;
         }
 
@@ -49,10 +51,10 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
 
             let mut conn = pool.get_conn().await.unwrap();
-            let limit = if board_id == SETTINGS.board.admin_board as EOShort {
+            let limit = if board_id == SETTINGS.board.admin_board {
                 SETTINGS.board.admin_max_posts
             } else {
                 SETTINGS.board.max_posts
@@ -75,23 +77,32 @@ impl Map {
                 .await
                 .unwrap();
 
-            builder.add_char(board_id as EOChar);
-            builder.add_char(posts.len() as EOChar);
+            let open = BoardOpenServerPacket {
+                board_id,
+                posts: posts
+                    .iter()
+                    .map(|post| BoardPostListing {
+                        post_id: post.id,
+                        author: post.author.to_owned(),
+                        subject: if SETTINGS.board.date_posts {
+                            format!("{} ({})", post.subject, format_duration(&post.created_at))
+                        } else {
+                            post.subject.to_owned()
+                        },
+                    })
+                    .collect(),
+            };
 
-            for post in posts {
-                let subject = if SETTINGS.board.date_posts {
-                    format!("{} ({})", post.subject, format_duration(&post.created_at))
-                } else {
-                    post.subject
-                };
-
-                builder.add_short(post.id);
-                builder.add_byte(EO_BREAK_CHAR);
-                builder.add_break_string(&post.author);
-                builder.add_break_string(&subject);
+            if let Err(e) = open.serialize(&mut writer) {
+                error!("Failed to serialize BoardOpenServerPacket: {}", e);
+                return;
             }
 
-            player.send(PacketAction::Open, PacketFamily::Board, builder.get());
+            player.send(
+                PacketAction::Open,
+                PacketFamily::Board,
+                writer.to_byte_array(),
+            );
         });
     }
 }

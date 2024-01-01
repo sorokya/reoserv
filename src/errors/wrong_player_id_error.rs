@@ -1,9 +1,7 @@
-use eo::data::EOShort;
-
 #[derive(Debug)]
 pub struct WrongPlayerIdError {
-    pub expected: EOShort,
-    pub actual: EOShort,
+    pub expected: i32,
+    pub actual: i32,
 }
 
 impl std::error::Error for WrongPlayerIdError {}

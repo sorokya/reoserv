@@ -1,14 +1,15 @@
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{TradeAgreeServerPacket, TradeSpecServerPacket},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
 
-const UNAGREED: EOChar = 0;
-
 impl Map {
-    pub async fn unaccept_trade(&mut self, player_id: EOShort) {
+    pub async fn unaccept_trade(&mut self, player_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -36,14 +37,37 @@ impl Map {
 
         player.set_trade_accepted(false);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_char(UNAGREED);
+        let packet = TradeSpecServerPacket { agree: false };
 
-        player.send(PacketAction::Spec, PacketFamily::Trade, builder.get());
+        let mut writer = EoWriter::new();
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_char(UNAGREED);
-        partner.send(PacketAction::Agree, PacketFamily::Trade, builder.get());
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeSpecServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Spec,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
+
+        let packet = TradeAgreeServerPacket {
+            partner_player_id: player_id,
+            agree: false,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeAgreeServerPacket: {}", e);
+            return;
+        }
+
+        partner.send(
+            PacketAction::Agree,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
     }
 }

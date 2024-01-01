@@ -1,6 +1,6 @@
-use eo::{
-    data::StreamBuilder,
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TradeCloseServerPacket, PacketAction, PacketFamily},
 };
 
 use super::Player;
@@ -16,11 +16,24 @@ impl Player {
         self.trading = false;
         self.trade_accepted = false;
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(interact_player_id);
+        let packet = TradeCloseServerPacket {
+            partner_player_id: interact_player_id,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeCloseServerPacket: {}", e);
+            return;
+        }
+
         let _ = self
             .bus
-            .send(PacketAction::Close, PacketFamily::Trade, builder.get())
+            .send(
+                PacketAction::Close,
+                PacketFamily::Trade,
+                writer.to_byte_array(),
+            )
             .await;
     }
 }

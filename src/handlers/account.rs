@@ -1,36 +1,57 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamReader},
-    protocol::{
-        client::account::{Create, Request},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{AccountAgreeClientPacket, AccountCreateClientPacket, AccountRequestClientPacket},
         PacketAction,
     },
 };
 
 use crate::{player::PlayerHandle, world::WorldHandle};
 
-fn create(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let mut create = Create::default();
-    create.deserialize(&reader);
+fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let create = match AccountCreateClientPacket::deserialize(&reader) {
+        Ok(create) => create,
+        Err(e) => {
+            error!("Error deserializing AccountCreateClientPacket {}", e);
+            return;
+        }
+    };
+
     world.create_account(player_id, create.clone());
 }
 
-fn request(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
+fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let request = match AccountRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing AccountRequestClientPacket {}", e);
+            return;
+        }
+    };
+
     world.request_account_creation(player_id, request.username);
 }
 
-fn agree(reader: StreamReader, player_id: EOShort, world: WorldHandle) {
-    let username = reader.get_break_string();
-    let current_password = reader.get_break_string();
-    let new_password = reader.get_break_string();
+fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
+    let agree = match AccountAgreeClientPacket::deserialize(&reader) {
+        Ok(agree) => agree,
+        Err(e) => {
+            error!("Error deserializing AccountAgreeClientPacket {}", e);
+            return;
+        }
+    };
 
-    world.change_password(player_id, username, current_password, new_password);
+    world.change_password(
+        player_id,
+        agree.username,
+        agree.old_password,
+        agree.new_password,
+    );
 }
 
 pub async fn account(
     action: PacketAction,
-    reader: StreamReader,
+    reader: EoReader,
     player: PlayerHandle,
     world: WorldHandle,
 ) {

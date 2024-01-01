@@ -1,12 +1,11 @@
 use crate::{character::Character, errors::WrongSessionIdError};
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        client::character::Create,
-        server::character::{Reply, ReplyData, ReplyExists, ReplyOk},
-        CharacterList, CharacterReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::client::CharacterCreateClientPacket;
+use eolib::protocol::net::server::{
+    CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
+    CharacterReplyServerPacketReplyCodeDataExists, CharacterReplyServerPacketReplyCodeDataOk,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 use super::super::World;
@@ -14,7 +13,7 @@ use super::super::World;
 use super::get_character_list::get_character_list;
 
 impl World {
-    pub async fn create_character(&self, player_id: EOShort, details: Create) {
+    pub async fn create_character(&self, player_id: i32, details: CharacterCreateClientPacket) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,
@@ -59,16 +58,25 @@ impl World {
             };
 
             if exists {
-                let reply = Reply {
+                let reply = CharacterReplyServerPacket {
                     reply_code: CharacterReply::Exists,
-                    data: ReplyData::Exists(ReplyExists {
-                        no: "NO".to_string(),
-                    }),
+                    reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Exists(
+                        CharacterReplyServerPacketReplyCodeDataExists::new(),
+                    )),
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
-                player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = reply.serialize(&mut writer) {
+                    error!("Failed to serialize CharacterReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Character,
+                    writer.to_byte_array(),
+                );
 
                 return;
             }
@@ -100,19 +108,25 @@ impl World {
 
             let characters = characters.unwrap();
 
-            let reply = Reply {
-                reply_code: CharacterReply::Ok,
-                data: ReplyData::Ok(ReplyOk {
-                    character_list: CharacterList {
-                        num_characters: characters.len() as EOChar,
-                        characters,
-                    },
-                }),
+            let reply = CharacterReplyServerPacket {
+                reply_code: CharacterReply::OK,
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::OK(
+                    CharacterReplyServerPacketReplyCodeDataOk { characters },
+                )),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize CharacterReplyServerPacket: {}", e);
+                return;
+            }
+
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                writer.to_byte_array(),
+            );
         });
     }
 }

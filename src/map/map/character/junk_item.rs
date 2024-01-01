@@ -1,14 +1,14 @@
 use std::cmp;
 
-use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::item, PacketAction, PacketFamily, ShortItem},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem},
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn junk_item(&mut self, target_player_id: EOShort, item_id: EOShort, amount: EOInt) {
+    pub async fn junk_item(&mut self, target_player_id: i32, item_id: i32, amount: i32) {
         if amount == 0 {
             return;
         }
@@ -37,21 +37,26 @@ impl Map {
         }
 
         let character = self.characters.get(&target_player_id).unwrap();
-        let reply = item::Junk {
-            junked_item: ShortItem {
+        let reply = ItemJunkServerPacket {
+            junked_item: ThreeItem {
                 id: item_id,
                 amount: amount_to_junk,
             },
-            junked_item_amount: match character.items.iter().find(|i| i.id == item_id) {
+            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item.amount,
                 None => 0,
             },
             weight: character.get_weight(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ItemJunkServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
         character
             .player
             .as_ref()

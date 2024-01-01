@@ -1,36 +1,62 @@
-use eo::{
-    data::{EOShort, StreamReader},
-    protocol::PacketAction,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{
+            BoardCreateClientPacket, BoardOpenClientPacket, BoardRemoveClientPacket,
+            BoardTakeClientPacket,
+        },
+        PacketAction,
+    },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn create(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let _board_id = reader.get_short();
-    reader.seek(1);
-    let subject = reader.get_break_string();
-    let body = reader.get_break_string();
-    map.create_board_post(player_id, subject, body);
+fn create(reader: EoReader, player_id: i32, map: MapHandle) {
+    let create = match BoardCreateClientPacket::deserialize(&reader) {
+        Ok(create) => create,
+        Err(e) => {
+            error!("Error deserializing BoardCreateClientPacket {}", e);
+            return;
+        }
+    };
+
+    map.create_board_post(player_id, create.post_subject, create.post_body);
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let board_id = reader.get_short();
-    map.open_board(player_id, board_id + 1);
+fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+    let open = match BoardOpenClientPacket::deserialize(&reader) {
+        Ok(open) => open,
+        Err(e) => {
+            error!("Error deserializing BoardOpenClientPacket {}", e);
+            return;
+        }
+    };
+    map.open_board(player_id, open.board_id + 1);
 }
 
-fn remove(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let _board_id = reader.get_short();
-    let post_id = reader.get_short();
-    map.remove_board_post(player_id, post_id);
+fn remove(reader: EoReader, player_id: i32, map: MapHandle) {
+    let remove = match BoardRemoveClientPacket::deserialize(&reader) {
+        Ok(remove) => remove,
+        Err(e) => {
+            error!("Error deserializing BoardOpenClientPacket {}", e);
+            return;
+        }
+    };
+    map.remove_board_post(player_id, remove.post_id);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let _board_id = reader.get_short();
-    let post_id = reader.get_short();
-    map.view_board_post(player_id, post_id);
+fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+    let take = match BoardTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing BoardTakeClientPacket {}", e);
+            return;
+        }
+    };
+    map.view_board_post(player_id, take.post_id);
 }
 
-pub async fn board(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn board(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {

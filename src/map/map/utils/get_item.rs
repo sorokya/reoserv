@@ -1,6 +1,9 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::item, PacketAction, PacketFamily, ShortItem},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
+        PacketAction, PacketFamily, ThreeItem,
+    },
 };
 
 use crate::{utils::get_distance, SETTINGS};
@@ -8,7 +11,7 @@ use crate::{utils::get_distance, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub fn get_item(&mut self, target_player_id: EOShort, item_index: EOShort) {
+    pub fn get_item(&mut self, target_player_id: i32, item_index: i32) {
         let (item_id, item_amount, item_coords) = match self.items.get(&item_index) {
             Some(item) => (item.id, item.amount, item.coords),
             None => return,
@@ -31,18 +34,23 @@ impl Map {
 
         character.add_item(item_id, amount_picked_up);
 
-        let reply = item::Get {
+        let reply = ItemGetServerPacket {
             taken_item_index: item_index,
-            taken_item: ShortItem {
+            taken_item: ThreeItem {
                 id: item_id,
                 amount: amount_picked_up,
             },
             weight: character.get_weight(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ItemGetServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         character
             .player
@@ -62,7 +70,7 @@ impl Map {
             }
         }
 
-        let reply = item::Remove { item_index };
+        let reply = ItemRemoveServerPacket { item_index };
 
         self.send_packet_near(
             &item_coords,
@@ -72,7 +80,7 @@ impl Map {
         );
 
         if amount_picked_up != item_amount {
-            let reply = item::Add {
+            let reply = ItemAddServerPacket {
                 item_id,
                 item_index,
                 item_amount: item_amount - amount_picked_up,

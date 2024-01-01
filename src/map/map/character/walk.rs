@@ -1,7 +1,13 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{server::walk, Coords, Direction, PacketAction, PacketFamily},
-    pubs::EmfTileSpec,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        map::MapTileSpec,
+        net::{
+            server::{WalkPlayerServerPacket, WalkReplyServerPacket},
+            PacketAction, PacketFamily,
+        },
+        Coords, Direction,
+    },
 };
 
 use crate::utils::{get_next_coords, in_client_range};
@@ -14,10 +20,10 @@ use super::super::Map;
 impl Map {
     pub fn walk(
         &mut self,
-        target_player_id: EOShort,
+        target_player_id: i32,
         direction: Direction,
         _coords: Coords,
-        _timestamp: EOInt,
+        _timestamp: i32,
     ) {
         if let Some((target_previous_coords, target_coords, target_player, target_hidden)) = {
             let (coords, admin_level, player, hidden) = match self.characters.get(&target_player_id)
@@ -33,7 +39,7 @@ impl Map {
 
             let previous_coords = coords;
             let coords = get_next_coords(&coords, direction, self.file.width, self.file.height);
-            let is_tile_walkable = admin_level as EOChar >= 1
+            let is_tile_walkable = i32::from(admin_level) >= 1
                 || (self.is_tile_walkable(&coords) && !self.is_tile_occupied(&coords));
             if !self.is_in_bounds(coords) || !is_tile_walkable {
                 return;
@@ -57,6 +63,8 @@ impl Map {
                     return;
                 }
 
+                // TODO: Maybe don't do this.. player can get out of sync if door was open out of
+                // range
                 if warp.door > 0 {
                     let door = match self.doors.iter().find(|door| door.coords == target_coords) {
                         Some(door) => door,
@@ -69,9 +77,9 @@ impl Map {
                 }
 
                 target.player.as_ref().unwrap().request_warp(
-                    warp.map,
-                    warp.coords,
-                    target.map_id == warp.map,
+                    warp.destination_map,
+                    warp.destination_coords,
+                    target.map_id == warp.destination_map,
                     None,
                 );
 
@@ -79,7 +87,7 @@ impl Map {
             }
 
             let packet = {
-                let mut packet = walk::Reply::default();
+                let mut packet = WalkReplyServerPacket::default();
 
                 for (player_id, character) in self.characters.iter() {
                     if *player_id != target_player_id
@@ -98,7 +106,8 @@ impl Map {
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
-                    if in_client_range(&target_coords, &npc.coords)
+                    if npc.alive
+                        && in_client_range(&target_coords, &npc.coords)
                         && !in_client_range(&target_previous_coords, &npc.coords)
                     {
                         packet.npc_indexes.push(*index);
@@ -107,16 +116,21 @@ impl Map {
                 packet
             };
 
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize WalkReplyServerPacket: {}", e);
+                return;
+            }
+
             target_player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Walk,
-                builder.get(),
+                writer.to_byte_array(),
             );
 
             if !target_hidden {
-                let walk_packet = walk::Player {
+                let walk_packet = WalkPlayerServerPacket {
                     player_id: target_player_id,
                     direction,
                     coords: target_coords,
@@ -130,7 +144,7 @@ impl Map {
                 );
 
                 if let Some(tile) = self.get_tile(&target_coords) {
-                    if matches!(tile, EmfTileSpec::Spikes | EmfTileSpec::HiddenSpikes) {
+                    if matches!(tile, MapTileSpec::Spikes | MapTileSpec::HiddenSpikes) {
                         self.spike_damage(target_player_id)
                     }
                 }

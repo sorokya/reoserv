@@ -1,9 +1,7 @@
-use eo::data::EOShort;
-
 use super::super::Map;
 
 impl Map {
-    pub fn cancel_trade(&mut self, player_id: EOShort, partner_player_id: EOShort) {
+    pub fn cancel_trade(&mut self, player_id: i32, partner_player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,

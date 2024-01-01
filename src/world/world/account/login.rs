@@ -1,10 +1,11 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::login::{self, Reply},
-        CharacterList, LoginReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
+    LoginReplyServerPacketReplyCodeDataBanned, LoginReplyServerPacketReplyCodeDataLoggedIn,
+    LoginReplyServerPacketReplyCodeDataOk, LoginReplyServerPacketReplyCodeDataWrongUser,
+    LoginReplyServerPacketReplyCodeDataWrongUserPassword,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::{prelude::*, Params, Row};
 
 use crate::{player::ClientState, world::WorldHandle};
@@ -19,7 +20,7 @@ use super::{account_exists::account_exists, get_character_list::get_character_li
 impl World {
     pub fn login(
         &mut self,
-        player_id: EOShort,
+        player_id: i32,
         username: String,
         password: String,
         world: WorldHandle,
@@ -48,10 +49,25 @@ impl World {
             };
 
             if !exists {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::WrongUser.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let packet = LoginReplyServerPacket {
+                    reply_code: LoginReply::WrongUser,
+                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUser(
+                        LoginReplyServerPacketReplyCodeDataWrongUser::new(),
+                    )),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -64,10 +80,25 @@ impl World {
             };
 
             if banned {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::Banned.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let packet = LoginReplyServerPacket {
+                    reply_code: LoginReply::Banned,
+                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Banned(
+                        LoginReplyServerPacketReplyCodeDataBanned::new(),
+                    )),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 player.close("Account is banned".to_string());
                 return;
             }
@@ -84,10 +115,28 @@ impl World {
                 Ok(row) => row,
                 Err(e) => {
                     error!("Error getting password hash: {}", e);
-                    let mut builder = StreamBuilder::new();
-                    builder.add_short(LoginReply::WrongUserPass.to_short());
-                    builder.add_string("NO");
-                    player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+
+                    let packet = LoginReplyServerPacket {
+                        reply_code: LoginReply::WrongUserPassword,
+                        reply_code_data: Some(
+                            LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                            ),
+                        ),
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                        return;
+                    }
+
+                    player.send(
+                        PacketAction::Reply,
+                        PacketFamily::Login,
+                        writer.to_byte_array(),
+                    );
                     return;
                 }
             }
@@ -95,19 +144,49 @@ impl World {
 
             let password_hash: String = row.get("password_hash").unwrap();
             if !validate_password(&username, &password, &password_hash) {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::WrongUserPass.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let packet = LoginReplyServerPacket {
+                    reply_code: LoginReply::WrongUserPassword,
+                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                        LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                    )),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
-            let account_id: EOInt = row.get("id").unwrap();
+            let account_id: i32 = row.get("id").unwrap();
             if world.is_logged_in(account_id).await {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(LoginReply::LoggedIn.to_short());
-                builder.add_string("NO");
-                player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+                let packet = LoginReplyServerPacket {
+                    reply_code: LoginReply::LoggedIn,
+                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::LoggedIn(
+                        LoginReplyServerPacketReplyCodeDataLoggedIn::new(),
+                    )),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -136,19 +215,24 @@ impl World {
             player.set_account_id(account_id);
             player.set_state(ClientState::LoggedIn);
 
-            let reply = Reply {
-                reply_code: LoginReply::Ok,
-                data: login::ReplyData::Ok(login::ReplyOk {
-                    character_list: CharacterList {
-                        num_characters: characters.len() as EOChar,
-                        characters,
-                    },
-                }),
+            let reply = LoginReplyServerPacket {
+                reply_code: LoginReply::OK,
+                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
+                    LoginReplyServerPacketReplyCodeDataOk { characters },
+                )),
             };
 
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Login, builder.get());
+            let mut writer = EoWriter::new();
+            if let Err(e) = reply.serialize(&mut writer) {
+                error!("Failed to serialize LoginReplyServerPacket: {}", e);
+                return;
+            }
+
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Login,
+                writer.to_byte_array(),
+            );
         });
     }
 }

@@ -16,9 +16,9 @@ impl Map {
             };
 
             character.player.as_ref().unwrap().request_warp(
-                warp.map,
-                warp.coords,
-                warp.map == self.id,
+                warp.destination_map,
+                warp.destination_coords,
+                warp.destination_map == self.id,
                 None,
             );
         }

@@ -1,6 +1,6 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::talk, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::TalkMsgServerPacket, PacketAction, PacketFamily},
 };
 
 use crate::{player::ClientState, LANG};
@@ -9,32 +9,37 @@ use super::super::World;
 
 impl World {
     // TODO: make this sync
-    pub async fn broadcast_global_message(
-        &self,
-        target_player_id: EOShort,
-        name: &str,
-        message: &str,
-    ) {
+    pub async fn broadcast_global_message(&self, target_player_id: i32, name: &str, message: &str) {
         let player = match self.players.get(&target_player_id) {
             Some(player) => player,
             None => return,
         };
 
         if self.global_locked {
-            let mut builder = StreamBuilder::new();
-            builder.add_break_string("Server");
-            builder.add_string(&LANG.global_locked);
-            player.send(PacketAction::Msg, PacketFamily::Talk, builder.get());
+            let mut writer = EoWriter::new();
+            writer.add_string("Server");
+            writer.add_byte(0xff);
+            writer.add_string(&LANG.global_locked);
+            player.send(
+                PacketAction::Msg,
+                PacketFamily::Talk,
+                writer.to_byte_array(),
+            );
             return;
         }
 
-        let packet = talk::Msg {
+        let packet = TalkMsgServerPacket {
             player_name: name.to_string(),
             message: message.to_string(),
         };
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TalkMsgServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
         for player in self.players.values() {
             let state = player.get_state().await;
 
@@ -52,7 +57,7 @@ impl World {
 
             let player_id = player_id.unwrap();
 
-            if state == ClientState::Playing && player_id != target_player_id {
+            if state == ClientState::InGame && player_id != target_player_id {
                 player.send(PacketAction::Msg, PacketFamily::Talk, buf.clone());
             }
         }

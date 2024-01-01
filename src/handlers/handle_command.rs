@@ -1,6 +1,7 @@
-use eo::data::{EOChar, EOShort, Serializeable, StreamBuilder};
-use eo::protocol::server::talk;
-use eo::protocol::{Coords, PacketAction, PacketFamily, WarpAnimation};
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{TalkServerServerPacket, WarpEffect};
+use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::protocol::Coords;
 
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
@@ -8,12 +9,12 @@ use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 use crate::{COMMANDS, ITEM_DB};
 
 async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
-    let map_id = args[0].parse::<EOShort>().unwrap();
+    let map_id = args[0].parse::<i32>().unwrap();
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
             Coords {
-                x: args[1].parse::<EOChar>().unwrap(),
-                y: args[2].parse::<EOChar>().unwrap(),
+                x: args[1].parse::<i32>().unwrap(),
+                y: args[2].parse::<i32>().unwrap(),
             }
         } else {
             let map_size = map.get_dimensions().await;
@@ -27,18 +28,12 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
             map_id,
             coords,
             false,
-            Some(WarpAnimation::Admin),
+            Some(WarpEffect::Admin),
         )
     } else {
-        let packet = talk::Server {
-            message: format!("Map {} does not exist.", map_id),
-        };
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        character.player.as_ref().unwrap().send(
-            PacketAction::Server,
-            PacketFamily::Talk,
-            builder.get(),
+        send_error_message(
+            character.player.as_ref().unwrap(),
+            format!("Map {} does not exist.", map_id),
         );
     }
 }
@@ -51,7 +46,7 @@ async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle)
             character.map_id,
             character.coords,
             false,
-            Some(WarpAnimation::Admin),
+            Some(WarpEffect::Admin),
         );
     }
 }
@@ -64,7 +59,7 @@ async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle)
             target.map_id,
             target.coords,
             false,
-            Some(WarpAnimation::Admin),
+            Some(WarpEffect::Admin),
         );
     }
 }
@@ -73,7 +68,7 @@ async fn spawn_item(args: &[String], character: &Character) {
     let identifier = (*args[0]).to_string();
 
     let item_id = match identifier.parse::<u32>() {
-        Ok(id) => id as EOShort,
+        Ok(id) => id as i32,
         Err(_) => {
             // find matches from item db where name starts with identifier
             match ITEM_DB
@@ -81,17 +76,11 @@ async fn spawn_item(args: &[String], character: &Character) {
                 .iter()
                 .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
             {
-                Some(index) => index as EOShort + 1,
+                Some(index) => index as i32 + 1,
                 None => {
-                    let packet = talk::Server {
-                        message: format!("No item found with name \"{}\".", identifier),
-                    };
-                    let mut builder = StreamBuilder::new();
-                    packet.serialize(&mut builder);
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Server,
-                        PacketFamily::Talk,
-                        builder.get(),
+                    send_error_message(
+                        character.player.as_ref().unwrap(),
+                        format!("No item found with name \"{}\".", identifier),
                     );
                     return;
                 }
@@ -100,7 +89,7 @@ async fn spawn_item(args: &[String], character: &Character) {
     };
 
     let amount = if args.len() >= 2 {
-        args[1].parse::<u32>().unwrap()
+        args[1].parse::<i32>().unwrap()
     } else {
         1
     };
@@ -174,15 +163,13 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
             ArgType::Bool => raw_arg.parse::<bool>().is_ok(),
         };
         if !valid_type {
-            let packet = talk::Server {
-                message: format!(
+            send_error_message(
+                player,
+                format!(
                     "Invalid arg type. Got {}, expected: {:?}. (usage: \"{}\")",
                     raw_arg, arg.r#type, command.usage
                 ),
-            };
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
-            player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
+            );
             return false;
         }
     }
@@ -190,10 +177,17 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
 }
 
 fn send_error_message(player: &PlayerHandle, message: String) {
-    let packet = talk::Server { message };
-    let mut builder = StreamBuilder::new();
-    packet.serialize(&mut builder);
-    player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
+    let packet = TalkServerServerPacket { message };
+    let mut writer = EoWriter::new();
+    if let Err(e) = packet.serialize(&mut writer) {
+        error!("Failed to serialize TalkServerServerPacket: {}", e);
+        return;
+    }
+    player.send(
+        PacketAction::Server,
+        PacketFamily::Talk,
+        writer.to_byte_array(),
+    );
 }
 
 pub async fn handle_command(
@@ -222,7 +216,7 @@ pub async fn handle_command(
                 }
             }
 
-            if character.admin_level as EOChar >= command.admin_level as EOChar
+            if i32::from(character.admin_level) >= i32::from(command.admin_level)
                 && validate_args(&args, command, &player)
             {
                 match command.name.as_str() {
@@ -259,7 +253,7 @@ pub async fn handle_command(
                         character.name.to_owned(),
                         true,
                     ),
-                    "quake" => world.quake(args[0].parse::<EOChar>().unwrap()),
+                    "quake" => world.quake(args[0].parse::<i32>().unwrap()),
                     "mute" => world.mute_player(args[0].to_owned(), character.name.to_owned()),
                     "player" => {
                         world.request_player_info(character.player_id.unwrap(), args[0].to_owned())
@@ -272,23 +266,16 @@ pub async fn handle_command(
                     }
                     "global" => world.toggle_global(character.name.to_owned()),
                     _ => {
-                        let packet = talk::Server {
-                            message: format!("Unimplemented command: {}", command.name),
-                        };
-                        let mut builder = StreamBuilder::new();
-                        packet.serialize(&mut builder);
-                        player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
+                        send_error_message(
+                            &player,
+                            format!("Unimplemented command: {}", command.name),
+                        );
                     }
                 }
             }
         }
         None => {
-            let packet = talk::Server {
-                message: format!("Unknown command: {}", command),
-            };
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
-            player.send(PacketAction::Server, PacketFamily::Talk, builder.get());
+            send_error_message(&player, format!("Unknown command: {}", command));
         }
     }
 }

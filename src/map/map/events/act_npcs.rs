@@ -1,13 +1,19 @@
 use std::cmp;
 
 use chrono::Utc;
-use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::npc, Coords, Direction, NPCUpdateAttack, NPCUpdateChat, NPCUpdatePos, PacketAction,
-        PacketFamily, PlayerKilledState, SitState,
+        net::{
+            server::{
+                NpcPlayerServerPacket, NpcUpdateAttack, NpcUpdateChat, NpcUpdatePosition,
+                PlayerKilledState, SitState,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::{EnfRecord, NpcType},
+        Coords, Direction,
     },
-    pubs::{EnfNpc, EnfNpcType},
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::{seq::SliceRandom, Rng};
@@ -22,7 +28,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    fn act_npc_talk(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdateChat> {
+    fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateChat> {
         let talk_record = match TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id) {
             Some(record) => record,
             None => return None,
@@ -33,7 +39,7 @@ impl Map {
             None => return None,
         };
 
-        if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate as i32 {
+        if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate {
             return None;
         }
 
@@ -43,17 +49,16 @@ impl Map {
         let roll = rng.gen_range(0..=100);
         if roll <= talk_record.rate {
             let message_index = rng.gen_range(0..talk_record.messages.len());
-            Some(NPCUpdateChat {
+            Some(NpcUpdateChat {
                 npc_index: index,
-                message_length: talk_record.messages[message_index].len() as EOChar,
-                message: talk_record.messages[message_index].to_string(),
+                message: talk_record.messages[message_index].message.to_owned(),
             })
         } else {
             None
         }
     }
 
-    fn act_npc_move_chase(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdatePos> {
+    fn act_npc_move_chase(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdatePosition> {
         let target_coords = match self.npc_get_chase_target_coords(index, npc_id) {
             Some(target_coords) => target_coords,
             None => return self.act_npc_move_idle(index),
@@ -64,8 +69,8 @@ impl Map {
             None => return None,
         };
 
-        let x_delta = npc_coords.x as i32 - target_coords.x as i32;
-        let y_delta = npc_coords.y as i32 - target_coords.y as i32;
+        let x_delta = npc_coords.x - target_coords.x;
+        let y_delta = npc_coords.y - target_coords.y;
 
         let mut direction = if x_delta.abs() > y_delta.abs() {
             if x_delta < 0 {
@@ -86,7 +91,7 @@ impl Map {
             npc.direction = direction;
             npc.coords = new_coords;
             npc.act_ticks = 0;
-            Some(NPCUpdatePos {
+            Some(NpcUpdatePosition {
                 npc_index: index,
                 coords: npc.coords,
                 direction: npc.direction,
@@ -107,14 +112,14 @@ impl Map {
                 npc.direction = direction;
                 npc.coords = new_coords;
                 npc.act_ticks = 0;
-                Some(NPCUpdatePos {
+                Some(NpcUpdatePosition {
                     npc_index: index,
                     coords: npc.coords,
                     direction: npc.direction,
                 })
             } else {
                 let mut rng = rand::thread_rng();
-                direction = Direction::from_char(rng.gen_range(0..=3)).unwrap();
+                direction = Direction::from(rng.gen_range(0..=3));
 
                 let new_coords =
                     get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
@@ -124,7 +129,7 @@ impl Map {
                     npc.direction = direction;
                     npc.coords = new_coords;
                     npc.act_ticks = 0;
-                    Some(NPCUpdatePos {
+                    Some(NpcUpdatePosition {
                         npc_index: index,
                         coords: npc.coords,
                         direction: npc.direction,
@@ -136,7 +141,7 @@ impl Map {
         }
     }
 
-    fn npc_get_chase_target_coords(&self, index: EOChar, npc_id: EOShort) -> Option<Coords> {
+    fn npc_get_chase_target_coords(&self, index: i32, npc_id: i32) -> Option<Coords> {
         match self.npc_get_chase_target_player_id(index, npc_id) {
             Some(player_id) => self
                 .characters
@@ -147,7 +152,7 @@ impl Map {
     }
 
     // TODO: Party stuff
-    fn npc_get_chase_target_player_id(&self, index: EOChar, npc_id: EOShort) -> Option<EOShort> {
+    fn npc_get_chase_target_player_id(&self, index: i32, npc_id: i32) -> Option<i32> {
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return None,
@@ -167,7 +172,7 @@ impl Map {
                 };
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
-                    && distance <= SETTINGS.npcs.chase_distance as EOChar
+                    && distance <= SETTINGS.npcs.chase_distance
                     && now.signed_duration_since(opponent.last_hit).num_seconds()
                         < SETTINGS.npcs.bored_timer as i64
             });
@@ -176,13 +181,13 @@ impl Map {
             opponents_in_range
                 .max_by(|a, b| a.damage_dealt.cmp(&b.damage_dealt))
                 .map(|opponent| opponent.player_id)
-        } else if npc_data.r#type == EnfNpcType::Aggressive && !self.characters.is_empty() {
+        } else if npc_data.r#type == NpcType::Aggressive && !self.characters.is_empty() {
             // find closest player
             self.characters
                 .iter()
                 .filter(|(_, character)| {
                     let distance = get_distance(&npc.coords, &character.coords);
-                    !character.hidden && distance <= SETTINGS.npcs.chase_distance as EOChar
+                    !character.hidden && distance <= SETTINGS.npcs.chase_distance
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -195,7 +200,7 @@ impl Map {
         }
     }
 
-    fn npc_get_attack_target_player_id(&self, index: EOChar) -> Option<EOShort> {
+    fn npc_get_attack_target_player_id(&self, index: i32) -> Option<i32> {
         let npc = match self.npcs.get(&index) {
             Some(npc) => npc,
             None => return None,
@@ -236,7 +241,7 @@ impl Map {
 
             // TODO: also attack adjacent players if blocking path to opponent(s)
             // Choose a random player if npc is aggressive
-            if npc_data.r#type == EnfNpcType::Aggressive {
+            if npc_data.r#type == NpcType::Aggressive {
                 let mut rng = rand::thread_rng();
                 adjacent_player_ids.choose(&mut rng).copied()
             } else {
@@ -245,7 +250,7 @@ impl Map {
         }
     }
 
-    fn act_npc_move_idle(&mut self, index: EOChar) -> Option<NPCUpdatePos> {
+    fn act_npc_move_idle(&mut self, index: i32) -> Option<NpcUpdatePosition> {
         let (direction, coords) = match self.npcs.get(&index) {
             Some(npc) => (npc.direction, npc.coords),
             None => return None,
@@ -261,7 +266,7 @@ impl Map {
         }
 
         let new_direction = if (7..=9).contains(&action) {
-            Direction::from_char(rng.gen_range(0..=3)).unwrap()
+            Direction::from(rng.gen_range(0..=3))
         } else {
             direction
         };
@@ -279,7 +284,7 @@ impl Map {
                 npc.coords = new_coords;
             }
 
-            Some(NPCUpdatePos {
+            Some(NpcUpdatePosition {
                 npc_index: index,
                 coords: new_coords,
                 direction: new_direction,
@@ -291,11 +296,11 @@ impl Map {
 
     fn act_npc_move(
         &mut self,
-        index: EOChar,
-        npc_id: EOShort,
-        act_rate: EOInt,
-        act_ticks: EOInt,
-    ) -> Option<NPCUpdatePos> {
+        index: i32,
+        npc_id: i32,
+        act_rate: i32,
+        act_ticks: i32,
+    ) -> Option<NpcUpdatePosition> {
         let (walk_idle_for, has_opponent) = {
             match self.npcs.get(&index) {
                 Some(npc) => (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty()),
@@ -310,7 +315,7 @@ impl Map {
             None => return None,
         };
 
-        if npc_data.r#type == EnfNpcType::Aggressive || has_opponent {
+        if npc_data.r#type == NpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id)
         } else if act_ticks >= idle_rate {
             self.act_npc_move_idle(index)
@@ -319,7 +324,7 @@ impl Map {
         }
     }
 
-    fn act_npc_attack(&mut self, index: EOChar, npc_id: EOShort) -> Option<NPCUpdateAttack> {
+    fn act_npc_attack(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateAttack> {
         let target_player_id = match self.npc_get_attack_target_player_id(index) {
             Some(player_id) => player_id,
             None => return None,
@@ -341,8 +346,8 @@ impl Map {
                 None => return None,
             };
 
-            let xdiff = npc.coords.x as i32 - character.coords.x as i32;
-            let ydiff = npc.coords.y as i32 - character.coords.y as i32;
+            let xdiff = npc.coords.x - character.coords.x;
+            let ydiff = npc.coords.y - character.coords.y;
 
             let direction = match (xdiff, ydiff) {
                 (0, 1) => Direction::Up,
@@ -362,7 +367,7 @@ impl Map {
                 None => return None,
             };
 
-            character.hp -= damage as EOShort;
+            character.hp -= damage;
 
             let hp_percentage = character.get_hp_percentage();
 
@@ -375,7 +380,7 @@ impl Map {
             }
 
             let killed_state = if character.hp == 0 {
-                PlayerKilledState::Dead
+                PlayerKilledState::Killed
             } else {
                 PlayerKilledState::Alive
             };
@@ -387,15 +392,15 @@ impl Map {
             npc.direction = direction;
             npc.act_ticks = 0;
 
-            if killed_state == PlayerKilledState::Dead {
+            if killed_state == PlayerKilledState::Killed {
                 npc.opponents
                     .retain(|opponent| opponent.player_id != target_player_id);
             }
         }
 
-        Some(NPCUpdateAttack {
+        Some(NpcUpdateAttack {
             npc_index: index,
-            killed_state,
+            killed: killed_state,
             direction,
             player_id: target_player_id,
             damage,
@@ -405,11 +410,11 @@ impl Map {
 
     fn act_npc(
         &mut self,
-        index: EOChar,
+        index: i32,
     ) -> (
-        Option<NPCUpdatePos>,
-        Option<NPCUpdateChat>,
-        Option<NPCUpdateAttack>,
+        Option<NpcUpdatePosition>,
+        Option<NpcUpdateChat>,
+        Option<NpcUpdateAttack>,
     ) {
         let (npc_id, spawn_index, act_ticks) = match self.npcs.get_mut(&index) {
             Some(npc) => {
@@ -426,7 +431,7 @@ impl Map {
                     return (None, None, None);
                 } else {
                     npc.act_ticks += SETTINGS.npcs.act_rate;
-                    npc.talk_ticks += SETTINGS.npcs.act_rate as i32;
+                    npc.talk_ticks += SETTINGS.npcs.act_rate;
                     (npc.id, npc.spawn_index, npc.act_ticks)
                 }
             }
@@ -474,7 +479,7 @@ impl Map {
                         .iter()
                         .filter(|(_, npc)| npc.spawn_index == spawn_index && npc.id == spawn.id)
                         .map(|(index, _)| *index)
-                        .collect::<Vec<EOChar>>()
+                        .collect::<Vec<i32>>()
                         .clone()
                 };
 
@@ -486,11 +491,11 @@ impl Map {
             }
         }
 
-        let mut attack_updates: Vec<NPCUpdateAttack> = Vec::with_capacity(self.npcs.len());
-        let mut position_updates: Vec<NPCUpdatePos> = Vec::with_capacity(self.npcs.len());
-        let mut talk_updates: Vec<NPCUpdateChat> = Vec::with_capacity(self.npcs.len());
+        let mut attack_updates: Vec<NpcUpdateAttack> = Vec::with_capacity(self.npcs.len());
+        let mut position_updates: Vec<NpcUpdatePosition> = Vec::with_capacity(self.npcs.len());
+        let mut talk_updates: Vec<NpcUpdateChat> = Vec::with_capacity(self.npcs.len());
 
-        let indexes = self.npcs.keys().cloned().collect::<Vec<EOChar>>();
+        let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
         for index in indexes {
             let (move_update, chat_updatee, attack_update) = self.act_npc(index);
             if let Some(attack_update) = attack_update {
@@ -508,7 +513,7 @@ impl Map {
             for character in self.characters.values() {
                 // TODO: might also need to check NPCs previous position..
 
-                let in_range_npc_indexes: Vec<EOChar> = self
+                let in_range_npc_indexes: Vec<i32> = self
                     .npcs
                     .iter()
                     .filter(|(_, n)| in_range(&character.coords, &n.coords))
@@ -516,19 +521,19 @@ impl Map {
                     .cloned()
                     .collect();
 
-                let position_updates_in_rage: Vec<NPCUpdatePos> = position_updates
+                let position_updates_in_rage: Vec<NpcUpdatePosition> = position_updates
                     .iter()
                     .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
                     .collect();
 
-                let talk_updates_in_range: Vec<NPCUpdateChat> = talk_updates
+                let talk_updates_in_range: Vec<NpcUpdateChat> = talk_updates
                     .iter()
                     .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
                     .collect();
 
-                let attack_updates_in_range: Vec<NPCUpdateAttack> = attack_updates
+                let attack_updates_in_range: Vec<NpcUpdateAttack> = attack_updates
                     .iter()
                     .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
@@ -538,25 +543,31 @@ impl Map {
                     || !talk_updates_in_range.is_empty()
                     || !attack_updates_in_range.is_empty()
                 {
-                    let packet = npc::Player {
-                        pos: position_updates_in_rage,
-                        attack: attack_updates_in_range,
-                        chat: talk_updates_in_range,
+                    let packet = NpcPlayerServerPacket {
+                        positions: position_updates_in_rage,
+                        attacks: attack_updates_in_range,
+                        chats: talk_updates_in_range,
+                        hp: None,
+                        tp: None,
                     };
 
-                    let mut builder = StreamBuilder::new();
-                    packet.serialize(&mut builder);
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize NpcPlayerServerPacket: {}", e);
+                        return;
+                    }
 
                     character.player.as_ref().unwrap().send(
                         PacketAction::Player,
                         PacketFamily::Npc,
-                        builder.get(),
+                        writer.to_byte_array(),
                     );
 
                     if let Some(player_id) = character.player_id {
-                        let player_died = packet.attack.iter().any(|update| {
+                        let player_died = packet.attacks.iter().any(|update| {
                             update.player_id == player_id
-                                && update.killed_state == PlayerKilledState::Dead
+                                && update.killed == PlayerKilledState::Killed
                         });
 
                         if player_died {
@@ -569,14 +580,14 @@ impl Map {
     }
 }
 
-fn get_damage_amount(npc: &Npc, npc_data: &EnfNpc, character: &Character) -> EOInt {
+fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> i32 {
     let mut rng = rand::thread_rng();
     let rand = rng.gen_range(0.0..=1.0);
 
     let amount = rng.gen_range(npc_data.min_damage..=npc_data.max_damage);
 
     let npc_facing_player_back_or_side =
-        ((character.direction.to_char() as i32) - (npc.direction.to_char() as i32)).abs() != 2;
+        (i32::from(character.direction) - i32::from(npc.direction)).abs() != 2;
 
     let context = match context_map! {
         "critical" => npc_facing_player_back_or_side,
@@ -606,7 +617,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfNpc, character: &Character) -> EOI
     }
 
     match eval_float_with_context(&FORMULAS.damage, &context) {
-        Ok(amount) => cmp::min(amount.floor() as EOInt, character.hp as EOInt),
+        Ok(amount) => cmp::min(amount.floor() as i32, character.hp),
         Err(e) => {
             error!("Failed to calculate damage: {}", e);
             0

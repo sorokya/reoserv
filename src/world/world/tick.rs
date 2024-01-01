@@ -1,10 +1,8 @@
-use eo::data::EOInt;
-
 use crate::SETTINGS;
 
 use super::World;
 
-const ONE_SECOND: EOInt = 8;
+const ONE_SECOND: i32 = 8;
 
 impl World {
     pub async fn tick(&mut self) {
@@ -23,6 +21,7 @@ impl World {
         self.drain_ticks += 1;
         self.warp_suck_ticks += 1;
         self.arena_ticks += 1;
+        self.door_close_ticks += 1;
 
         for map in maps {
             if self.npc_act_ticks >= SETTINGS.npcs.act_rate {

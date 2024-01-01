@@ -1,7 +1,10 @@
 use chrono::Utc;
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChestAgreeServerPacket, ChestGetServerPacket},
+        PacketAction, PacketFamily, ThreeItem,
+    },
 };
 
 use crate::{map::Chest, utils::get_distance};
@@ -9,7 +12,7 @@ use crate::{map::Chest, utils::get_distance};
 use super::super::Map;
 
 impl Map {
-    pub async fn take_chest_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub async fn take_chest_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -58,10 +61,10 @@ impl Map {
             spawn.last_taken = Utc::now();
         }
 
-        let remaining_items: Vec<ShortItem> = chest
+        let remaining_items: Vec<ThreeItem> = chest
             .items
             .iter()
-            .map(|item| ShortItem {
+            .map(|item| ThreeItem {
                 id: item.item_id,
                 amount: item.amount,
             })
@@ -69,8 +72,8 @@ impl Map {
 
         character.add_item(item.item_id, item.amount);
 
-        let reply = chest::Get {
-            taken_item: ShortItem {
+        let reply = ChestGetServerPacket {
+            taken_item: ThreeItem {
                 id: item.item_id,
                 amount: item.amount,
             },
@@ -78,21 +81,31 @@ impl Map {
             items: remaining_items.clone(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ChestGetServerPacket: {}", e);
+            return;
+        }
+
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Chest,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let packet = chest::Agree {
+        let packet = ChestAgreeServerPacket {
             items: remaining_items,
         };
 
-        let mut builder = StreamBuilder::new();
-        packet.serialize(&mut builder);
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {
             let distance = get_distance(&character.coords, &chest.coords);

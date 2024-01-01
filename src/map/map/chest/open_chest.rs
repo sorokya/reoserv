@@ -1,7 +1,10 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::chest, Coords, PacketAction, PacketFamily, ShortItem},
-    pubs::EifItemType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::ChestOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
+        r#pub::ItemType,
+        Coords,
+    },
 };
 
 use crate::{utils::in_client_range, ITEM_DB};
@@ -9,7 +12,7 @@ use crate::{utils::in_client_range, ITEM_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_chest(&self, player_id: EOShort, coords: Coords) {
+    pub fn open_chest(&self, player_id: i32, coords: Coords) {
         let chest = match self.chests.iter().find(|chest| chest.coords == coords) {
             Some(chest) => chest,
             None => return,
@@ -37,7 +40,7 @@ impl Map {
                     None => return false,
                 };
 
-                item_data.r#type == EifItemType::Key && item_data.spec1 as EOShort == key
+                item_data.r#type == ItemType::Key && item_data.spec1 == key
             }) {
                 return;
             }
@@ -50,24 +53,29 @@ impl Map {
 
         player.set_chest_index(chest_index);
 
-        let reply = chest::Open {
+        let reply = ChestOpenServerPacket {
             coords,
             items: chest
                 .items
                 .iter()
-                .map(|item| ShortItem {
+                .map(|item| ThreeItem {
                     id: item.item_id,
                     amount: item.amount,
                 })
                 .collect(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ChestOpenServerPacket: {}", e);
+            return;
+        }
+
         character.player.as_ref().unwrap().send(
             PacketAction::Open,
             PacketFamily::Chest,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

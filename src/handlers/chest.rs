@@ -1,38 +1,53 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamReader},
-    protocol::{
-        client::chest::{Add, Open, Take},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{ChestAddClientPacket, ChestOpenClientPacket, ChestTakeClientPacket},
         Item, PacketAction,
     },
 };
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Add::default();
-    packet.deserialize(&reader);
+fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+    let add = match ChestAddClientPacket::deserialize(&reader) {
+        Ok(add) => add,
+        Err(e) => {
+            error!("Error deserializing ChestAddClientPacket {}", e);
+            return;
+        }
+    };
     map.add_chest_item(
         player_id,
         Item {
-            id: packet.add_item.id,
-            amount: packet.add_item.amount,
+            id: add.add_item.id,
+            amount: add.add_item.amount,
         },
     );
 }
 
-fn open(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Open::default();
-    packet.deserialize(&reader);
-    map.open_chest(player_id, packet.coords);
+fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+    let open = match ChestOpenClientPacket::deserialize(&reader) {
+        Ok(open) => open,
+        Err(e) => {
+            error!("Error deserializing ChestOpenClientPacket {}", e);
+            return;
+        }
+    };
+    map.open_chest(player_id, open.coords);
 }
 
-fn take(reader: StreamReader, player_id: EOShort, map: MapHandle) {
-    let mut packet = Take::default();
-    packet.deserialize(&reader);
-    map.take_chest_item(player_id, packet.take_item_id);
+fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+    let take = match ChestTakeClientPacket::deserialize(&reader) {
+        Ok(take) => take,
+        Err(e) => {
+            error!("Error deserializing ChestTakeClientPacket {}", e);
+            return;
+        }
+    };
+    map.take_chest_item(player_id, take.take_item_id);
 }
 
-pub async fn chest(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn chest(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {

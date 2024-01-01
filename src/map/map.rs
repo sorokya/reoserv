@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use eo::{
-    data::{EOChar, EOInt, EOShort},
-    protocol::Coords,
-    pubs::{EmfFile, EmfTileSpec},
+use eolib::protocol::{
+    map::{Emf, MapTileSpec},
+    Coords,
 };
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -15,28 +14,28 @@ use super::{Chest, Command, Door, Item, Npc};
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
     world: WorldHandle,
-    id: EOShort,
-    file: EmfFile,
-    file_size: EOInt,
+    id: i32,
+    file: Emf,
+    file_size: i32,
     chests: Vec<Chest>,
     doors: Vec<Door>,
-    items: HashMap<EOShort, Item>,
-    npcs: HashMap<EOChar, Npc>,
+    items: HashMap<i32, Item>,
+    npcs: HashMap<i32, Npc>,
     npcs_initialized: bool,
-    characters: HashMap<EOShort, Character>,
+    characters: HashMap<i32, Character>,
     pool: Pool,
-    quake_ticks: EOInt,
-    arena_ticks: EOInt,
+    quake_ticks: i32,
+    arena_ticks: i32,
     arena_players: Vec<ArenaPlayer>,
-    quake_rate: Option<EOInt>,
-    quake_strength: Option<EOInt>,
+    quake_rate: Option<i32>,
+    quake_strength: Option<i32>,
     has_timed_spikes: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct ArenaPlayer {
-    pub player_id: EOShort,
-    pub kills: EOShort,
+    pub player_id: i32,
+    pub kills: i32,
 }
 
 mod bank;
@@ -53,17 +52,17 @@ mod utils;
 
 impl Map {
     pub fn new(
-        id: EOShort,
-        file_size: EOInt,
-        file: EmfFile,
+        id: i32,
+        file_size: i32,
+        file: Emf,
         pool: Pool,
         world: WorldHandle,
         rx: UnboundedReceiver<Command>,
     ) -> Self {
-        let has_timed_spikes = file.spec_rows.iter().any(|row| {
+        let has_timed_spikes = file.tile_spec_rows.iter().any(|row| {
             row.tiles
                 .iter()
-                .any(|tile| tile.spec == EmfTileSpec::TimedSpikes)
+                .any(|tile| tile.tile_spec == MapTileSpec::TimedSpikes)
         });
 
         let mut doors: Vec<Door> = Vec::new();
@@ -107,7 +106,6 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::AcceptTrade { player_id } => self.accept_trade(player_id).await,
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
@@ -117,6 +115,7 @@ impl Map {
                 self.add_locker_item(player_id, item).await
             }
             Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
+            Command::AgreeTrade { player_id } => self.accept_trade(player_id).await,
             Command::Attack {
                 target_player_id,
                 direction,
@@ -153,6 +152,8 @@ impl Map {
                 session_id,
                 amount,
             } => self.deposit_gold(player_id, session_id, amount).await,
+
+            Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
 
             Command::DropItem {
                 target_player_id,
@@ -204,12 +205,6 @@ impl Map {
                 self.get_item(target_player_id, item_index);
             }
 
-            Command::GetMapInfo {
-                player_ids,
-                npc_indexes,
-                respond_to,
-            } => self.get_map_info(player_ids, npc_indexes, respond_to),
-
             Command::GetNearbyInfo {
                 target_player_id,
                 respond_to,
@@ -235,13 +230,6 @@ impl Map {
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
-
-            Command::HasPlayer {
-                player_id,
-                respond_to,
-            } => {
-                let _ = respond_to.send(self.characters.contains_key(&player_id));
-            }
 
             Command::JunkItem {
                 target_player_id,
@@ -410,8 +398,6 @@ impl Map {
 
             Command::ActNpcs => self.act_npcs(),
 
-            Command::UnacceptTrade { player_id } => self.unaccept_trade(player_id).await,
-
             Command::Unequip {
                 player_id,
                 item_id,
@@ -438,6 +424,21 @@ impl Map {
                 session_id,
                 amount,
             } => self.withdraw_gold(player_id, session_id, amount).await,
+            Command::FindPlayer { player_id, name } => self.find_player(player_id, name),
+            Command::RequestNpcs {
+                player_id,
+                npc_indexes,
+            } => self.request_npcs(player_id, npc_indexes),
+            Command::RequestPlayers {
+                player_id,
+                player_ids,
+            } => self.request_players(player_id, player_ids),
+            Command::RequestPlayersAndNpcs {
+                player_id,
+                player_ids,
+                npc_indexes,
+            } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
+            Command::RequestRefresh { player_id } => self.request_refresh(player_id),
         }
     }
 }

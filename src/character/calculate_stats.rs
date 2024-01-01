@@ -1,6 +1,5 @@
 use std::cmp;
 
-use eo::data::{EOInt, EOShort};
 use evalexpr::{context_map, eval_float_with_context};
 
 use crate::{CLASS_DB, FORMULAS, ITEM_DB};
@@ -37,34 +36,34 @@ impl Character {
             }
 
             let record = &ITEM_DB.items[(item.id - 1) as usize];
-            self.weight += record.weight as EOInt * item.amount;
+            self.weight += record.weight * item.amount;
         }
 
-        let paperdoll_items = vec![
-            self.paperdoll.boots,
-            self.paperdoll.accessory,
-            self.paperdoll.gloves,
-            self.paperdoll.belt,
-            self.paperdoll.armor,
-            self.paperdoll.necklace,
-            self.paperdoll.hat,
-            self.paperdoll.shield,
-            self.paperdoll.weapon,
-            self.paperdoll.ring[0],
-            self.paperdoll.ring[1],
-            self.paperdoll.armlet[0],
-            self.paperdoll.armlet[1],
-            self.paperdoll.bracer[0],
-            self.paperdoll.bracer[1],
+        let equipment_items = vec![
+            self.equipment.boots,
+            self.equipment.accessory,
+            self.equipment.gloves,
+            self.equipment.belt,
+            self.equipment.armor,
+            self.equipment.necklace,
+            self.equipment.hat,
+            self.equipment.shield,
+            self.equipment.weapon,
+            self.equipment.ring[0],
+            self.equipment.ring[1],
+            self.equipment.armlet[0],
+            self.equipment.armlet[1],
+            self.equipment.bracer[0],
+            self.equipment.bracer[1],
         ];
 
-        for item_id in paperdoll_items {
+        for item_id in equipment_items {
             if item_id == 0 {
                 continue;
             }
 
             let item = &ITEM_DB.items[(item_id - 1) as usize];
-            self.weight += item.weight as EOInt;
+            self.weight += item.weight;
             self.max_hp += item.hp;
             self.max_tp += item.tp;
             self.min_damage += item.min_damage;
@@ -72,12 +71,12 @@ impl Character {
             self.accuracy += item.accuracy;
             self.evasion += item.evade;
             self.armor += item.armor;
-            self.adj_strength += item.str as EOShort;
-            self.adj_intelligence += item.intl as EOShort;
-            self.adj_wisdom += item.wis as EOShort;
-            self.adj_agility += item.agi as EOShort;
-            self.adj_constitution += item.con as EOShort;
-            self.adj_charisma += item.cha as EOShort;
+            self.adj_strength += item.str;
+            self.adj_intelligence += item.intl;
+            self.adj_wisdom += item.wis;
+            self.adj_agility += item.agi;
+            self.adj_constitution += item.con;
+            self.adj_charisma += item.cha;
         }
 
         let context = match context_map! {
@@ -103,7 +102,7 @@ impl Character {
         };
 
         self.max_hp += match eval_float_with_context(&FORMULAS.hp, &context) {
-            Ok(max_hp) => cmp::min(max_hp.floor() as EOShort, 64000),
+            Ok(max_hp) => cmp::min(max_hp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_hp: {}", e);
                 10
@@ -111,7 +110,7 @@ impl Character {
         };
 
         self.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
-            Ok(max_tp) => cmp::min(max_tp.floor() as EOShort, 64000),
+            Ok(max_tp) => cmp::min(max_tp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_tp: {}", e);
                 10
@@ -119,7 +118,7 @@ impl Character {
         };
 
         self.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
-            Ok(max_sp) => cmp::min(max_sp.floor() as EOShort, 64000),
+            Ok(max_sp) => cmp::min(max_sp.floor() as i32, 64000),
             Err(e) => {
                 error!("Failed to calculate max_sp: {}", e);
                 20
@@ -127,16 +126,16 @@ impl Character {
         };
 
         self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
-            Ok(max_weight) => cmp::min(max_weight.floor() as EOInt, 250),
+            Ok(max_weight) => cmp::min(max_weight.floor() as i32, 250),
             Err(e) => {
                 error!("Failed to calculate max_weight: {}", e);
                 70
             }
         };
 
-        let class_formulas = &FORMULAS.classes[class.r#type as usize];
+        let class_formulas = &FORMULAS.classes[class.stat_group as usize];
         let damage = match eval_float_with_context(&class_formulas.damage, &context) {
-            Ok(damage) => damage.floor() as EOShort,
+            Ok(damage) => damage.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate damage: {}", e);
                 1
@@ -147,7 +146,7 @@ impl Character {
         self.max_damage += damage;
 
         self.accuracy += match eval_float_with_context(&class_formulas.accuracy, &context) {
-            Ok(accuracy) => accuracy.floor() as EOShort,
+            Ok(accuracy) => accuracy.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate accuracy: {}", e);
                 0
@@ -155,7 +154,7 @@ impl Character {
         };
 
         self.armor += match eval_float_with_context(&class_formulas.defense, &context) {
-            Ok(armor) => armor.floor() as EOShort,
+            Ok(armor) => armor.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate armor: {}", e);
                 0
@@ -163,7 +162,7 @@ impl Character {
         };
 
         self.evasion += match eval_float_with_context(&class_formulas.evade, &context) {
-            Ok(evasion) => evasion.floor() as EOShort,
+            Ok(evasion) => evasion.floor() as i32,
             Err(e) => {
                 error!("Failed to calculate evasion: {}", e);
                 0

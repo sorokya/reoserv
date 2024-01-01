@@ -1,27 +1,31 @@
 use bytes::{BufMut, Bytes, BytesMut};
-use eo::{
-    data::{encode_number, EOByte},
-    net::{PacketProcessor, ServerSequencer},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{decode_number, encode_number},
+    encrypt::{decrypt_packet, encrypt_packet, generate_swap_multiple},
+    packet::{generate_sequence_start, Sequencer},
+    protocol::net::{PacketAction, PacketFamily},
 };
 use tokio::net::TcpStream;
 
 pub struct PacketBus {
     socket: TcpStream,
     pub need_pong: bool,
-    pub sequencer: ServerSequencer,
-    pub packet_processor: PacketProcessor,
+    pub sequencer: Sequencer,
+    pub upcoming_sequence_start: i32,
+    pub server_enryption_multiple: u8,
+    pub client_enryption_multiple: u8,
 }
 
 impl PacketBus {
     pub fn new(socket: TcpStream) -> Self {
-        let mut sequencer = ServerSequencer::default();
-        sequencer.init_new_sequence();
+        let sequencer = Sequencer::new(generate_sequence_start());
         Self {
             socket,
             need_pong: false,
             sequencer,
-            packet_processor: PacketProcessor::default(),
+            upcoming_sequence_start: 0,
+            server_enryption_multiple: generate_swap_multiple(),
+            client_enryption_multiple: generate_swap_multiple(),
         }
     }
 
@@ -32,18 +36,24 @@ impl PacketBus {
         data: Bytes,
     ) -> std::io::Result<()> {
         let packet_size = 2 + data.len();
-        let length_bytes = encode_number(packet_size as u32);
+        let length_bytes = match encode_number(packet_size as i32) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                error!("Packet send aborted! Error encoding packet size: {}", e);
+                return Ok(());
+            }
+        };
 
         let mut buf = BytesMut::with_capacity(2 + packet_size);
         buf.put_slice(length_bytes[0..2].as_ref());
-        buf.put_u8(action.to_byte());
-        buf.put_u8(family.to_byte());
+        buf.put_u8(u8::from(action));
+        buf.put_u8(u8::from(family));
         buf.put(data);
 
         trace!("Send: {:?}", &buf[..]);
 
         let mut data_buf = buf.split_off(2);
-        self.packet_processor.encode(&mut data_buf);
+        encrypt_packet(&mut data_buf, self.server_enryption_multiple);
         buf.unsplit(data_buf);
 
         match self.socket.try_write(&buf) {
@@ -64,13 +74,16 @@ impl PacketBus {
     }
 
     pub async fn recv(&mut self) -> Option<std::io::Result<Bytes>> {
-        match self.get_packet_length().await {
+        let get_packet_length = self.get_packet_length();
+        let packet_length = get_packet_length.await;
+        match packet_length {
             Some(Ok(packet_length)) => {
                 if packet_length > 0 {
-                    match self.read(packet_length).await {
+                    let read = self.read(packet_length);
+                    match read.await {
                         Some(Ok(buf)) => {
                             let mut data_buf = buf;
-                            self.packet_processor.decode(&mut data_buf);
+                            decrypt_packet(&mut data_buf, self.client_enryption_multiple);
 
                             let data_buf = Bytes::from(data_buf);
                             Some(Ok(data_buf))
@@ -89,14 +102,14 @@ impl PacketBus {
 
     async fn get_packet_length(&self) -> Option<std::io::Result<usize>> {
         match self.read(2).await {
-            Some(Ok(buf)) => Some(Ok(eo::data::decode_number(&buf) as usize)),
+            Some(Ok(buf)) => Some(Ok(decode_number(&buf) as usize)),
             Some(Err(e)) => Some(Err(e)),
             None => None,
         }
     }
 
-    async fn read(&self, length: usize) -> Option<std::io::Result<Vec<EOByte>>> {
-        let mut buf: Vec<EOByte> = vec![0; length];
+    async fn read(&self, length: usize) -> Option<std::io::Result<Vec<u8>>> {
+        let mut buf: Vec<u8> = vec![0; length];
         self.socket.readable().await.unwrap();
         match self.socket.try_read(&mut buf) {
             Ok(0) => {

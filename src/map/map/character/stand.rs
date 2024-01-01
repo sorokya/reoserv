@@ -1,8 +1,8 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::{chair, sit},
-        PacketAction, PacketFamily, SitState,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
+        PacketAction, PacketFamily,
     },
 };
 
@@ -11,7 +11,7 @@ use crate::utils::get_next_coords;
 use super::super::Map;
 
 impl Map {
-    pub fn stand(&mut self, player_id: EOShort) {
+    pub fn stand(&mut self, player_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -24,18 +24,22 @@ impl Map {
             SitState::Floor => {
                 character.sit_state = SitState::Stand;
 
-                let reply = sit::Close {
+                let reply = SitCloseServerPacket {
                     player_id,
                     coords: character.coords,
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = reply.serialize(&mut writer) {
+                    error!("Failed to serialize SitCloseServerPacket: {}", e);
+                    return;
+                }
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Sit,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 if !character.hidden {
@@ -57,18 +61,22 @@ impl Map {
                     self.file.height,
                 );
 
-                let reply = chair::Close {
+                let reply = ChairCloseServerPacket {
                     player_id,
                     coords: character.coords,
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = reply.serialize(&mut writer) {
+                    error!("Failed to serialize ChairCloseServerPacket: {}", e);
+                    return;
+                }
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Chair,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
                 if !character.hidden {

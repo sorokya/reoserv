@@ -1,9 +1,9 @@
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use eo::{
-    data::{EOInt, EOShort, Serializeable, StreamReader},
-    pubs::{Drop, DropFile, DropNpc},
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::r#pub::server::{DropFile, DropNpcDropRecord, DropNpcRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -22,7 +22,6 @@ pub fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
 
 fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut drop_file = DropFile::default();
-    drop_file.magic = "EDF".to_string();
 
     let mut npc_id = 1;
     for entry in glob("pub/npcs/*.json")? {
@@ -34,17 +33,16 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
 
         let drops = v["drops"].as_array().unwrap();
-        if drops.len() > 0 {
-            drop_file.npcs.push(DropNpc {
+        if !drops.is_empty() {
+            drop_file.npcs.push(DropNpcRecord {
                 npc_id,
-                num_of_drops: drops.len() as EOShort,
                 drops: drops
                     .iter()
-                    .map(|v| Drop {
-                        item_id: v["itemId"].as_u64().unwrap_or(0) as EOShort,
-                        min: v["min"].as_u64().unwrap_or(0) as EOInt,
-                        max: v["max"].as_u64().unwrap_or(0) as EOInt,
-                        rate: v["rate"].as_u64().unwrap_or(0) as EOShort,
+                    .map(|v| DropNpcDropRecord {
+                        item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
+                        min_amount: v["minAmount"].as_u64().unwrap_or(0) as i32,
+                        max_amount: v["maxAmount"].as_u64().unwrap_or(0) as i32,
+                        rate: v["rate"].as_u64().unwrap_or(0) as i32,
                     })
                     .collect(),
             });
@@ -63,9 +61,6 @@ fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
     file.read_to_end(&mut buf)?;
 
     let bytes = Bytes::from(buf);
-    let reader = StreamReader::new(bytes);
-
-    let mut drop_file = DropFile::default();
-    drop_file.deserialize(&reader);
-    Ok(drop_file)
+    let reader = EoReader::new(bytes);
+    Ok(DropFile::deserialize(&reader)?)
 }

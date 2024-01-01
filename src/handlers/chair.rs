@@ -1,17 +1,14 @@
-use eo::{
-    data::{Serializeable, StreamReader},
-    protocol::{
-        client::chair::{Request, RequestData},
-        PacketAction, SitAction,
+use eolib::{
+    data::{EoReader, EoSerialize},
+    protocol::net::{
+        client::{ChairRequestClientPacket, ChairRequestClientPacketSitActionData, SitAction},
+        PacketAction,
     },
 };
 
 use crate::player::PlayerHandle;
 
-async fn request(reader: StreamReader, player: PlayerHandle) {
-    let mut request = Request::default();
-    request.deserialize(&reader);
-
+async fn request(reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
@@ -20,23 +17,33 @@ async fn request(reader: StreamReader, player: PlayerHandle) {
         }
     };
 
-    let coords = match request.data {
-        RequestData::Sit(data) => data.coords,
-        RequestData::None => {
-            error!("No data in request");
+    let request = match ChairRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing ChairRequestClientPacket {}", e);
             return;
         }
     };
 
     if let Ok(map) = player.get_map().await {
         match request.sit_action {
-            SitAction::Sit => map.sit_chair(player_id, coords),
+            SitAction::Sit => {
+                let coords = match request.sit_action_data {
+                    Some(ChairRequestClientPacketSitActionData::Sit(sit)) => sit.coords,
+                    _ => {
+                        error!("Sit action data is not sit");
+                        return;
+                    }
+                };
+                map.sit_chair(player_id, coords);
+            }
             SitAction::Stand => map.stand(player_id),
+            _ => {}
         }
     }
 }
 
-pub async fn chair(action: PacketAction, reader: StreamReader, player: PlayerHandle) {
+pub async fn chair(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
         PacketAction::Request => request(reader, player).await,
         _ => error!("Unhandled packet Chair_{:?}", action),

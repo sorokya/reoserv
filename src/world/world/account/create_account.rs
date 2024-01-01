@@ -1,11 +1,10 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        client::account::Create,
-        server::account::{Reply, ReplyCreated, ReplyData, ReplyExists},
-        AccountReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::client::AccountCreateClientPacket;
+use eolib::protocol::net::server::{
+    AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
+    AccountReplyServerPacketReplyCodeDataCreated, AccountReplyServerPacketReplyCodeDataExists,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::prelude::*;
 
 use crate::errors::WrongSessionIdError;
@@ -15,7 +14,7 @@ use super::super::World;
 use super::{account_exists::account_exists, password_hash::generate_password_hash};
 
 impl World {
-    pub async fn create_account(&self, player_id: EOShort, details: Create) {
+    pub async fn create_account(&self, player_id: i32, details: AccountCreateClientPacket) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.clone(),
             None => return,
@@ -59,16 +58,25 @@ impl World {
             };
 
             if exists {
-                let reply = Reply {
+                let reply = AccountReplyServerPacket {
                     reply_code: AccountReply::Exists,
-                    data: ReplyData::Exists(ReplyExists {
-                        no: "NO".to_string(),
-                    }),
+                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                        AccountReplyServerPacketReplyCodeDataExists::new(),
+                    )),
                 };
 
-                let mut builder = StreamBuilder::new();
-                reply.serialize(&mut builder);
-                player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = reply.serialize(&mut writer) {
+                    error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                    return;
+                }
+
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    writer.to_byte_array(),
+                );
                 return;
             }
 
@@ -87,7 +95,7 @@ impl World {
                     params! {
                         "name" => &details.username,
                         "password_hash" => &password_hash,
-                        "real_name" => &details.fullname,
+                        "real_name" => &details.full_name,
                         "location" => &details.location,
                         "email" => &details.email,
                         "computer" => &details.computer,
@@ -99,16 +107,25 @@ impl World {
             {
                 Ok(_) => {
                     info!("New account: {}", details.username);
-                    let reply = Reply {
+                    let reply = AccountReplyServerPacket {
                         reply_code: AccountReply::Created,
-                        data: ReplyData::Created(ReplyCreated {
-                            go: "GO".to_string(),
-                        }),
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Created(
+                            AccountReplyServerPacketReplyCodeDataCreated::new(),
+                        )),
                     };
 
-                    let mut builder = StreamBuilder::new();
-                    reply.serialize(&mut builder);
-                    player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = reply.serialize(&mut writer) {
+                        error!("Failed to serialize AccountReplyServerPacket: {}", e);
+                        return;
+                    }
+
+                    player.send(
+                        PacketAction::Reply,
+                        PacketFamily::Account,
+                        writer.to_byte_array(),
+                    );
                 }
                 Err(e) => {
                     player.close(format!("Error creating account: {}", e));

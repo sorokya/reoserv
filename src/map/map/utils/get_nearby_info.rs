@@ -1,7 +1,4 @@
-use eo::{
-    data::{EOChar, EOShort},
-    protocol::NearbyInfo,
-};
+use eolib::protocol::net::server::NearbyInfo;
 use tokio::sync::oneshot;
 
 use crate::utils::in_client_range;
@@ -9,11 +6,7 @@ use crate::utils::in_client_range;
 use super::super::Map;
 
 impl Map {
-    pub fn get_nearby_info(
-        &self,
-        target_player_id: EOShort,
-        respond_to: oneshot::Sender<NearbyInfo>,
-    ) {
+    pub fn get_nearby_info(&self, target_player_id: i32, respond_to: oneshot::Sender<NearbyInfo>) {
         let target = self.characters.get(&target_player_id).unwrap();
         let mut nearby_items = Vec::new();
         let mut nearby_npcs = Vec::new();
@@ -36,7 +29,6 @@ impl Map {
             }
         }
         let _ = respond_to.send(NearbyInfo {
-            num_characters: nearby_characters.len() as EOChar,
             items: nearby_items,
             npcs: nearby_npcs,
             characters: nearby_characters,

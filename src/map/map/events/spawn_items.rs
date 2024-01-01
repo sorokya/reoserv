@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{server::chest, PacketAction, PacketFamily, ShortItem},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::ChestAgreeServerPacket, PacketAction, PacketFamily, ThreeItem},
 };
 use rand::seq::SliceRandom;
 
@@ -59,20 +59,25 @@ impl Map {
                 }
 
                 if spawned_item {
-                    let packet = chest::Agree {
+                    let packet = ChestAgreeServerPacket {
                         items: chest
                             .items
                             .iter()
-                            .map(|item| ShortItem {
+                            .map(|item| ThreeItem {
                                 id: item.item_id,
                                 amount: item.amount,
                             })
                             .collect(),
                     };
 
-                    let mut builder = StreamBuilder::new();
-                    packet.serialize(&mut builder);
-                    let buf = builder.get();
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+                        return;
+                    }
+
+                    let buf = writer.to_byte_array();
 
                     for character in self.characters.values() {
                         let distance = get_distance(&character.coords, &chest.coords);

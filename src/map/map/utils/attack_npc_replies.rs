@@ -1,25 +1,44 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort, StreamBuilder},
-    protocol::{server::attack, Coords, Direction, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
+                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcKilledData,
+                NpcReplyServerPacket, NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
+                RecoverTargetGroupServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        Coords, Direction,
+    },
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{map::Item, DROP_DB, FORMULAS, NPC_DB};
+use crate::{map::Item, player::PlayerHandle, DROP_DB, FORMULAS, NPC_DB};
 
 use super::super::Map;
+
+struct ExpGain {
+    pub player_id: i32,
+    pub leveled_up: bool,
+    pub level: i32,
+    pub experience_gained: i32,
+    pub total_experience: i32,
+}
 
 impl Map {
     pub fn attack_npc_reply(
         &mut self,
-        player_id: EOShort,
-        npc_index: EOChar,
+        player_id: i32,
+        npc_index: i32,
         direction: Direction,
-        damage_dealt: EOInt,
-        spell_id: Option<EOShort>,
+        damage_dealt: i32,
+        spell_id: Option<i32>,
     ) {
         if spell_id.is_none() {
-            let reply = attack::Player {
+            let reply = AttackPlayerServerPacket {
                 player_id,
                 direction,
             };
@@ -37,44 +56,63 @@ impl Map {
             None => return,
         };
 
-        let mut builder = StreamBuilder::new();
+        let mut writer = EoWriter::new();
         if let Some(spell_id) = spell_id {
-            builder.add_short(spell_id);
-        }
-
-        builder.add_short(player_id);
-        builder.add_char(direction.to_char());
-        builder.add_short(npc_index as EOShort);
-        builder.add_three(damage_dealt);
-        builder.add_short(npc.get_hp_percentage() as EOShort);
-
-        if spell_id.is_some() {
-            let tp = match self.characters.get(&player_id) {
-                Some(character) => character.tp,
-                None => 0,
+            let packet = CastReplyServerPacket {
+                spell_id,
+                caster_id: player_id,
+                caster_direction: direction,
+                npc_index,
+                damage: damage_dealt,
+                hp_percentage: npc.get_hp_percentage(),
+                caster_tp: match self.characters.get(&player_id) {
+                    Some(character) => character.tp,
+                    None => 0,
+                },
+                kill_steal_protection: None,
             };
-            builder.add_short(tp);
-        }
 
-        self.send_buf_near(
-            &npc.coords,
-            PacketAction::Reply,
-            if spell_id.is_some() {
-                PacketFamily::Cast
-            } else {
-                PacketFamily::Npc
-            },
-            builder.get(),
-        );
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize CastReplyServerPacket: {}", e);
+                return;
+            }
+
+            self.send_buf_near(
+                &npc.coords,
+                PacketAction::Reply,
+                PacketFamily::Cast,
+                writer.to_byte_array(),
+            );
+        } else {
+            let packet = NpcReplyServerPacket {
+                player_id,
+                player_direction: direction,
+                npc_index,
+                damage: damage_dealt,
+                hp_percentage: npc.get_hp_percentage(),
+                kill_steal_protection: None,
+            };
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize NpcReplyServerPacket: {}", e);
+                return;
+            }
+
+            self.send_buf_near(
+                &npc.coords,
+                PacketAction::Reply,
+                PacketFamily::Npc,
+                writer.to_byte_array(),
+            );
+        }
     }
 
     pub async fn attack_npc_killed_reply(
         &mut self,
-        killer_player_id: EOShort,
-        npc_index: EOChar,
-        direction: Direction,
-        damage_dealt: EOInt,
-        spell_id: Option<EOShort>,
+        killer_player_id: i32,
+        npc_index: i32,
+        damage_dealt: i32,
+        spell_id: Option<i32>,
     ) {
         let (npc_id, npc_coords) = match self.npcs.get(&npc_index) {
             Some(npc) => (npc.id, npc.coords),
@@ -86,10 +124,12 @@ impl Map {
             None => return,
         };
 
-        let mut exp_gains: Vec<(EOShort, bool, EOInt, EOInt)> = Vec::new();
+        let mut exp_gains: Vec<ExpGain> = Vec::new();
 
-        if let Some(party) = self.world.get_player_party(killer_player_id).await {
-            let members_on_map: Vec<&EOShort> = party
+        let party = self.world.get_player_party(killer_player_id).await;
+
+        if let Some(party) = party.as_ref() {
+            let members_on_map: Vec<&i32> = party
                 .members
                 .iter()
                 .filter(|id| self.characters.contains_key(id))
@@ -108,7 +148,7 @@ impl Map {
                 };
 
                 match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
-                    Ok(experience) => experience as EOInt,
+                    Ok(experience) => experience as i32,
                     Err(e) => {
                         error!("Failed to calculate party experience share: {}", e);
                         1
@@ -119,14 +159,26 @@ impl Map {
             };
 
             for member_id in members_on_map {
-                let (leveled_up, total_experience, experience_gained) =
+                let (leveled_up, level, total_experience, experience_gained) =
                     self.give_experience(*member_id, experience);
-                exp_gains.push((*member_id, leveled_up, total_experience, experience_gained));
+                exp_gains.push(ExpGain {
+                    player_id: *member_id,
+                    leveled_up,
+                    level,
+                    total_experience,
+                    experience_gained,
+                });
             }
         } else {
-            let (leveled_up, experience, experience_gained) =
+            let (leveled_up, level, total_experience, experience_gained) =
                 self.give_experience(killer_player_id, npc_data.experience);
-            exp_gains.push((killer_player_id, leveled_up, experience, experience_gained));
+            exp_gains.push(ExpGain {
+                player_id: killer_player_id,
+                leveled_up,
+                level,
+                total_experience,
+                experience_gained,
+            });
         }
 
         let drop = get_drop(killer_player_id, npc_id, &npc_coords);
@@ -142,129 +194,271 @@ impl Map {
             None => (0, 0, 0),
         };
 
+        let killer = match self.characters.get(&killer_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let npc_killed_data = NpcKilledData {
+            killer_id: killer_player_id,
+            killer_direction: killer.direction,
+            npc_index,
+            drop_index,
+            drop_id: drop_item_id,
+            drop_coords: npc_coords,
+            drop_amount,
+            damage: damage_dealt,
+        };
+
+        let caster_tp = killer.tp;
+
         for (player_id, character) in self.characters.iter() {
-            let mut builder = StreamBuilder::new();
+            let exp_gain = exp_gains.iter().find(|gain| gain.player_id == *player_id);
+            let leveled_up = match exp_gain {
+                Some(gain) => gain.leveled_up,
+                None => false,
+            };
+
             if let Some(spell_id) = spell_id {
-                builder.add_short(spell_id);
-            }
-
-            builder.add_short(killer_player_id);
-            builder.add_char(direction.to_char());
-            builder.add_short(npc_index as EOShort);
-            builder.add_short(drop_index);
-            builder.add_short(drop_item_id);
-            builder.add_char(npc_coords.x);
-            builder.add_char(npc_coords.y);
-            builder.add_int(drop_amount);
-            builder.add_three(damage_dealt);
-
-            if spell_id.is_some() {
-                let tp = match self.characters.get(&killer_player_id) {
-                    Some(character) => character.tp,
-                    None => 0,
-                };
-                builder.add_short(tp);
-            }
-
-            let leveled_up = if let Some((_, leveled_up, total_experience, _)) =
-                exp_gains.iter().find(|(id, _, _, _)| id == player_id)
-            {
-                if exp_gains.len() == 1 {
-                    builder.add_int(*total_experience);
-
-                    if *leveled_up {
-                        let character = match self.characters.get(&killer_player_id) {
-                            Some(character) => character,
-                            None => return,
-                        };
-
-                        builder.add_char(character.level);
-                        builder.add_short(character.stat_points);
-                        builder.add_short(character.skill_points);
-                        builder.add_short(character.max_hp);
-                        builder.add_short(character.max_tp);
-                        builder.add_short(character.max_sp);
-                    }
+                if leveled_up && exp_gains.len() == 1 {
+                    self.attack_npc_killed_with_spell_level_up(
+                        character.player.as_ref().unwrap(),
+                        spell_id,
+                        npc_killed_data.clone(),
+                        caster_tp,
+                        exp_gain.unwrap().total_experience,
+                        LevelUpStats {
+                            level: character.level,
+                            stat_points: character.stat_points,
+                            skill_points: character.skill_points,
+                            max_hp: character.max_hp,
+                            max_tp: character.max_tp,
+                            max_sp: character.max_sp,
+                        },
+                    );
+                } else {
+                    self.attack_npc_killed_with_spell(
+                        character.player.as_ref().unwrap(),
+                        spell_id,
+                        npc_killed_data.clone(),
+                        caster_tp,
+                        exp_gain.map(|exp_gain| exp_gain.total_experience),
+                    );
                 }
-
-                *leveled_up
+            } else if leveled_up && exp_gains.len() == 1 {
+                self.attack_npc_killed_level_up(
+                    character.player.as_ref().unwrap(),
+                    npc_killed_data.clone(),
+                    exp_gain.unwrap().total_experience,
+                    LevelUpStats {
+                        level: character.level,
+                        stat_points: character.stat_points,
+                        skill_points: character.skill_points,
+                        max_hp: character.max_hp,
+                        max_tp: character.max_tp,
+                        max_sp: character.max_sp,
+                    },
+                );
             } else {
-                false
-            };
-
-            let family = match spell_id {
-                Some(_) => PacketFamily::Cast,
-                _ => PacketFamily::Npc,
-            };
-
-            let action = match exp_gains.len() == 1 && leveled_up {
-                true => PacketAction::Accept,
-                _ => PacketAction::Spec,
-            };
-
-            character
-                .player
-                .as_ref()
-                .unwrap()
-                .send(action, family, builder.get());
+                self.attack_npc_killed(
+                    character.player.as_ref().unwrap(),
+                    npc_killed_data.clone(),
+                    exp_gain.map(|exp_gain| exp_gain.total_experience),
+                );
+            }
         }
 
-        if exp_gains.len() > 1 {
-            self.attack_npc_killed_party_reply(&exp_gains);
+        if party.is_some() {
+            self.attack_npc_killed_leveled_up_party_reply(&exp_gains);
+
+            let level_up_gains: Vec<PartyExpShare> = exp_gains
+                .iter()
+                .map(|exp_gain| PartyExpShare {
+                    player_id: exp_gain.player_id,
+                    experience: exp_gain.experience_gained,
+                    level_up: if exp_gain.leveled_up {
+                        exp_gain.level
+                    } else {
+                        0
+                    },
+                })
+                .filter(|gain| gain.level_up > 0)
+                .collect();
+
+            if !level_up_gains.is_empty() {
+                self.world
+                    .update_party_exp(killer_player_id, level_up_gains);
+            }
         }
     }
 
-    fn attack_npc_killed_party_reply(&self, exp_gains: &Vec<(EOShort, bool, EOInt, EOInt)>) {
-        for (player_id, leveled_up, _, experience) in exp_gains {
-            let character = match self.characters.get(player_id) {
-                Some(character) => character,
-                None => continue,
-            };
+    fn attack_npc_killed_level_up(
+        &self,
+        player: &PlayerHandle,
+        npc_killed_data: NpcKilledData,
+        experience: i32,
+        level_up: LevelUpStats,
+    ) {
+        let packet = NpcAcceptServerPacket {
+            npc_killed_data,
+            experience,
+            level_up,
+        };
 
-            if *leveled_up {
-                let mut builder = StreamBuilder::new();
-                builder.add_short(character.stat_points);
-                builder.add_short(character.skill_points);
-                builder.add_short(character.max_hp);
-                builder.add_short(character.max_tp);
-                builder.add_short(character.max_sp);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize NpcAcceptServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Accept,
+            PacketFamily::Npc,
+            writer.to_byte_array(),
+        );
+    }
+
+    fn attack_npc_killed(
+        &self,
+        player: &PlayerHandle,
+        npc_killed_data: NpcKilledData,
+        experience: Option<i32>,
+    ) {
+        let packet = NpcSpecServerPacket {
+            npc_killed_data,
+            experience,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize NpcSpecServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Spec,
+            PacketFamily::Npc,
+            writer.to_byte_array(),
+        );
+    }
+
+    fn attack_npc_killed_with_spell_level_up(
+        &self,
+        player: &PlayerHandle,
+        spell_id: i32,
+        npc_killed_data: NpcKilledData,
+        caster_tp: i32,
+        experience: i32,
+        level_up: LevelUpStats,
+    ) {
+        let packet = CastAcceptServerPacket {
+            spell_id,
+            npc_killed_data,
+            caster_tp,
+            experience,
+            level_up,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CastAcceptServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Accept,
+            PacketFamily::Cast,
+            writer.to_byte_array(),
+        );
+    }
+
+    fn attack_npc_killed_with_spell(
+        &self,
+        player: &PlayerHandle,
+        spell_id: i32,
+        npc_killed_data: NpcKilledData,
+        caster_tp: i32,
+        experience: Option<i32>,
+    ) {
+        let packet = CastSpecServerPacket {
+            spell_id,
+            npc_killed_data,
+            caster_tp,
+            experience,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize CastSpecServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Spec,
+            PacketFamily::Cast,
+            writer.to_byte_array(),
+        );
+    }
+
+    fn attack_npc_killed_leveled_up_party_reply(&self, exp_gains: &Vec<ExpGain>) {
+        for exp_gain in exp_gains {
+            if exp_gain.leveled_up {
+                let character = match self.characters.get(&exp_gain.player_id) {
+                    Some(character) => character,
+                    None => continue,
+                };
+
+                let packet = RecoverTargetGroupServerPacket {
+                    stat_points: character.stat_points,
+                    skill_points: character.skill_points,
+                    max_hp: character.max_hp,
+                    max_tp: character.max_tp,
+                    max_sp: character.max_sp,
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize RecoverTargetGroupServerPacket: {}", e);
+                    return;
+                }
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::TargetGroup,
                     PacketFamily::Recover,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
 
-                let mut builder = StreamBuilder::new();
-                builder.add_int(character.experience);
-                builder.add_short(character.karma);
-                builder.add_char(1);
-                builder.add_short(character.stat_points);
-                builder.add_short(character.skill_points);
+                let packet = RecoverReplyServerPacket {
+                    experience: character.experience,
+                    karma: character.karma,
+                    level_up: Some(character.level),
+                    stat_points: Some(character.stat_points),
+                    skill_points: Some(character.skill_points),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize RecoverReplyServerPacket: {}", e);
+                    return;
+                }
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Recover,
-                    builder.get(),
+                    writer.to_byte_array(),
                 );
             }
-
-            let mut builder = StreamBuilder::new();
-            builder.add_short(*player_id);
-            builder.add_int(*experience);
-            builder.add_char(if *leveled_up { 1 } else { 0 });
-
-            self.send_buf_near(
-                &character.coords,
-                PacketAction::TargetGroup,
-                PacketFamily::Party,
-                builder.get(),
-            );
         }
     }
 }
 
-fn get_drop(target_player_id: EOShort, npc_id: EOShort, npc_coords: &Coords) -> Option<Item> {
+fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
     if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc_id) {
         let mut rng = rand::thread_rng();
         let mut drops = drop_npc.drops.clone();
@@ -273,7 +467,7 @@ fn get_drop(target_player_id: EOShort, npc_id: EOShort, npc_coords: &Coords) -> 
         for drop in drops {
             let roll = rng.gen_range(0..=64000);
             if roll <= drop.rate {
-                let amount = rng.gen_range(drop.min..=drop.max);
+                let amount = rng.gen_range(drop.min_amount..=drop.max_amount);
                 return Some(Item {
                     id: drop.item_id,
                     amount,

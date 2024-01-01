@@ -1,10 +1,13 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::chair::{Player, Reply},
-        Coords, Direction, PacketAction, PacketFamily, SitState,
+        map::MapTileSpec,
+        net::{
+            server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
+            PacketAction, PacketFamily,
+        },
+        Coords, Direction,
     },
-    pubs::EmfTileSpec,
 };
 
 use crate::utils::get_distance;
@@ -12,7 +15,7 @@ use crate::utils::get_distance;
 use super::super::Map;
 
 impl Map {
-    pub fn sit_chair(&mut self, player_id: EOShort, coords: Coords) {
+    pub fn sit_chair(&mut self, player_id: i32, coords: Coords) {
         if self.is_tile_occupied(&coords) {
             return;
         }
@@ -39,47 +42,47 @@ impl Map {
         }
 
         character.direction = match tile {
-            EmfTileSpec::ChairDown
+            MapTileSpec::ChairDown
                 if character.coords.y - 1 == coords.y && character.coords.x == coords.x =>
             {
                 Direction::Down
             }
-            EmfTileSpec::ChairUp
+            MapTileSpec::ChairUp
                 if character.coords.y + 1 == coords.y && character.coords.x == coords.x =>
             {
                 Direction::Up
             }
-            EmfTileSpec::ChairRight
+            MapTileSpec::ChairRight
                 if character.coords.y == coords.y && character.coords.x - 1 == coords.x =>
             {
                 Direction::Right
             }
-            EmfTileSpec::ChairLeft
+            MapTileSpec::ChairLeft
                 if character.coords.y == coords.y && character.coords.x + 1 == coords.x =>
             {
                 Direction::Left
             }
-            EmfTileSpec::ChairUpLeft
+            MapTileSpec::ChairUpLeft
                 if character.coords.y + 1 == coords.y && character.coords.x == coords.x =>
             {
                 Direction::Up
             }
-            EmfTileSpec::ChairUpLeft
+            MapTileSpec::ChairUpLeft
                 if character.coords.y == coords.y && character.coords.x + 1 == coords.x =>
             {
                 Direction::Left
             }
-            EmfTileSpec::ChairDownRight
+            MapTileSpec::ChairDownRight
                 if character.coords.y - 1 == coords.y && character.coords.x == coords.x =>
             {
                 Direction::Down
             }
-            EmfTileSpec::ChairDownRight
+            MapTileSpec::ChairDownRight
                 if character.coords.y == coords.y && character.coords.x - 1 == coords.x =>
             {
                 Direction::Right
             }
-            EmfTileSpec::ChairAll => {
+            MapTileSpec::ChairAll => {
                 if character.coords.y - 1 == coords.y && character.coords.x == coords.x {
                     Direction::Down
                 } else if character.coords.y + 1 == coords.y && character.coords.x == coords.x {
@@ -98,26 +101,30 @@ impl Map {
         character.coords = coords;
         character.sit_state = SitState::Chair;
 
-        let reply = Reply {
+        let reply = ChairReplyServerPacket {
             player_id,
             coords,
             direction: character.direction,
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ChairReplyServerPacket: {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Chair,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if character.hidden {
             return;
         }
 
-        let reply = Player {
+        let reply = ChairPlayerServerPacket {
             player_id,
             coords,
             direction: character.direction,

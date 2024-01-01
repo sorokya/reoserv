@@ -1,6 +1,9 @@
-use eo::{
-    data::{Serializeable, StreamBuilder},
-    protocol::{server::recover, PacketAction, PacketFamily, SitState},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{RecoverPlayerServerPacket, SitState},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::Map;
@@ -38,18 +41,22 @@ impl Map {
                 }
             }
 
-            let packet = recover::Player {
+            let packet = RecoverPlayerServerPacket {
                 hp: character.hp,
                 tp: character.tp,
-                sp: 0,
             };
 
-            let mut builder = StreamBuilder::new();
-            packet.serialize(&mut builder);
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+                return;
+            }
+
             character.player.as_ref().unwrap().send(
                 PacketAction::Player,
                 PacketFamily::Recover,
-                builder.get(),
+                writer.to_byte_array(),
             );
 
             // TODO: party recovery

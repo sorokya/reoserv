@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOChar, EOShort, EOThree, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::CitizenOpenServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::{utils::in_client_range, INN_DB, NPC_DB};
@@ -9,7 +11,7 @@ use crate::{utils::in_client_range, INN_DB, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_inn(&self, player_id: EOShort, npc_index: EOChar) {
+    pub async fn open_inn(&self, player_id: i32, npc_index: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -29,14 +31,14 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Inn {
+        if npc_data.r#type != NpcType::Inn {
             return;
         }
 
         let inn_data = match INN_DB
             .inns
             .iter()
-            .find(|inn| inn.vendor_id == npc_data.behavior_id)
+            .find(|inn| inn.behavior_id == npc_data.behavior_id)
         {
             Some(inn_data) => inn_data,
             None => return,
@@ -62,15 +64,28 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let mut builder = StreamBuilder::new();
-        builder.add_three(inn_data.vendor_id as EOThree + 1);
-        builder.add_char(current_inn_data.vendor_id as EOChar - 1);
-        builder.add_short(session_id);
-        builder.add_byte(EO_BREAK_CHAR);
-        builder.add_break_string(&inn_data.question1);
-        builder.add_break_string(&inn_data.question2);
-        builder.add_break_string(&inn_data.question3);
+        let packet = CitizenOpenServerPacket {
+            behavior_id: inn_data.behavior_id + 1,
+            current_home_id: current_inn_data.behavior_id - 1,
+            session_id,
+            questions: [
+                inn_data.question1.clone(),
+                inn_data.question2.clone(),
+                inn_data.question3.clone(),
+            ],
+        };
 
-        player.send(PacketAction::Open, PacketFamily::Citizen, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing CitizenOpenServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Citizen,
+            writer.to_byte_array(),
+        );
     }
 }

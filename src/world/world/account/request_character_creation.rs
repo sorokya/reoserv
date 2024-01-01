@@ -1,17 +1,16 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::character::{self, Reply},
-        CharacterReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
+    CharacterReplyServerPacketReplyCodeDataDefault, CharacterReplyServerPacketReplyCodeDataFull,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 
 use super::get_num_of_characters::get_num_of_characters;
 
 use super::super::World;
 
 impl World {
-    pub async fn request_character_creation(&self, player_id: EOShort) {
+    pub async fn request_character_creation(&self, player_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -43,15 +42,24 @@ impl World {
 
         // TODO: configurable max number of characters?
         if num_of_characters >= 3 {
-            let reply = Reply {
+            let reply = CharacterReplyServerPacket {
                 reply_code: CharacterReply::Full,
-                data: character::ReplyData::Full(character::ReplyFull {
-                    no: "NO".to_string(),
-                }),
+                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Full(
+                    CharacterReplyServerPacketReplyCodeDataFull::new(),
+                )),
             };
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                player.close(format!("Error serializing reply: {}", e));
+                return;
+            }
+
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Character,
+                writer.to_byte_array(),
+            );
             return;
         }
 
@@ -63,15 +71,24 @@ impl World {
             }
         };
 
-        let reply = Reply {
-            reply_code: CharacterReply::SessionId(session_id),
-            data: character::ReplyData::SessionId(character::ReplySessionId {
-                ok: "OK".to_string(),
-            }),
+        let reply = CharacterReplyServerPacket {
+            reply_code: CharacterReply::Unrecognized(session_id),
+            reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Default(
+                CharacterReplyServerPacketReplyCodeDataDefault::new(),
+            )),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Reply, PacketFamily::Character, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            player.close(format!("Error serializing reply: {}", e));
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Character,
+            writer.to_byte_array(),
+        );
     }
 }

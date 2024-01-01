@@ -1,10 +1,7 @@
 use std::cmp;
 
 use chrono::{DateTime, Utc};
-use eo::{
-    data::{EOChar, EOInt, EOShort, EOThree},
-    protocol::{Coords, Direction, NPCMapInfo},
-};
+use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
@@ -12,35 +9,35 @@ use crate::{FORMULAS, NPC_DB};
 
 #[derive(Debug, Default)]
 pub struct Npc {
-    pub id: EOShort,
+    pub id: i32,
     pub coords: Coords,
     pub direction: Direction,
     pub spawn_index: usize,
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
-    pub act_ticks: EOInt,
+    pub act_ticks: i32,
     pub talk_ticks: i32,
-    pub walk_idle_for: Option<EOInt>,
-    pub hp: EOThree,
-    pub max_hp: EOThree,
+    pub walk_idle_for: Option<i32>,
+    pub hp: i32,
+    pub max_hp: i32,
     pub opponents: Vec<NpcOpponent>,
 }
 
 #[derive(Debug, Default)]
 pub struct NpcOpponent {
-    pub player_id: EOShort,
-    pub damage_dealt: EOInt,
+    pub player_id: i32,
+    pub damage_dealt: i32,
     pub last_hit: DateTime<Utc>,
 }
 
 impl Npc {
-    pub fn get_hp_percentage(&self) -> EOChar {
+    pub fn get_hp_percentage(&self) -> i32 {
         let percent = (self.hp as f32 / self.max_hp as f32) * 100.0;
-        percent.floor() as EOChar
+        percent.floor() as i32
     }
 
-    pub fn to_map_info(&self, index: &EOChar) -> NPCMapInfo {
-        NPCMapInfo {
+    pub fn to_map_info(&self, index: &i32) -> NpcMapInfo {
+        NpcMapInfo {
             index: *index,
             id: self.id,
             coords: self.coords,
@@ -48,13 +45,7 @@ impl Npc {
         }
     }
 
-    pub fn damage(
-        &mut self,
-        player_id: EOShort,
-        amount: u16,
-        accuracy: u16,
-        critical: bool,
-    ) -> EOInt {
+    pub fn damage(&mut self, player_id: i32, amount: i32, accuracy: i32, critical: bool) -> i32 {
         let npc_data = match NPC_DB.npcs.get(self.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => {
@@ -92,7 +83,7 @@ impl Npc {
             0
         } else {
             match eval_float_with_context(&FORMULAS.damage, &context) {
-                Ok(amount) => amount.floor() as EOInt,
+                Ok(amount) => amount.floor() as i32,
                 Err(e) => {
                     error!("Failed to calculate damage: {}", e);
                     0
@@ -100,7 +91,7 @@ impl Npc {
             }
         };
 
-        self.hp -= cmp::min(damage, self.hp) as EOThree;
+        self.hp -= cmp::min(damage, self.hp) as i32;
         if self.hp > 0 {
             match self.opponents.iter().position(|o| o.player_id == player_id) {
                 Some(index) => {
@@ -128,17 +119,17 @@ impl Npc {
 
 #[derive(Debug, Default)]
 pub struct NPCBuilder {
-    id: EOShort,
+    id: i32,
     coords: Coords,
     direction: Direction,
     spawn_index: usize,
     alive: bool,
     dead_since: DateTime<Utc>,
-    act_ticks: EOInt,
+    act_ticks: i32,
     talk_ticks: i32,
-    walk_idle_for: Option<EOInt>,
-    hp: EOThree,
-    max_hp: EOThree,
+    walk_idle_for: Option<i32>,
+    hp: i32,
+    max_hp: i32,
 }
 
 impl NPCBuilder {
@@ -146,7 +137,7 @@ impl NPCBuilder {
         Self::default()
     }
 
-    pub fn id(mut self, id: EOShort) -> Self {
+    pub fn id(mut self, id: i32) -> Self {
         self.id = id;
         self
     }
@@ -176,12 +167,12 @@ impl NPCBuilder {
         self
     }
 
-    pub fn hp(mut self, hp: EOThree) -> Self {
+    pub fn hp(mut self, hp: i32) -> Self {
         self.hp = hp;
         self
     }
 
-    pub fn max_hp(mut self, max_hp: EOThree) -> Self {
+    pub fn max_hp(mut self, max_hp: i32) -> Self {
         self.max_hp = max_hp;
         self
     }

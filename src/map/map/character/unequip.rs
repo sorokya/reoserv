@@ -1,11 +1,15 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::{avatar, paperdoll},
-        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarSlot, PacketAction,
-        PacketFamily,
+        net::{
+            server::{
+                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+                AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollRemoveServerPacket,
+            },
+            PacketAction, PacketFamily,
+        },
+        r#pub::ItemType,
     },
-    pubs::EifItemType,
 };
 
 use crate::ITEM_DB;
@@ -13,7 +17,7 @@ use crate::ITEM_DB;
 use super::super::Map;
 
 impl Map {
-    pub fn unequip(&mut self, player_id: EOShort, item_id: EOShort, sub_loc: EOChar) {
+    pub fn unequip(&mut self, player_id: i32, item_id: i32, sub_loc: i32) {
         let target = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -28,26 +32,33 @@ impl Map {
 
         let change = AvatarChange {
             player_id,
-            slot: AvatarSlot::Clothes,
-            sound: 0,
-            data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                paperdoll: target.get_paperdoll_bahws(),
-            }),
+            change_type: AvatarChangeType::Equipment,
+            sound: false,
+            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
+                AvatarChangeChangeTypeDataEquipment {
+                    equipment: target.get_equipment_change(),
+                },
+            )),
         };
 
-        let reply = paperdoll::Remove {
+        let reply = PaperdollRemoveServerPacket {
             change: change.clone(),
             item_id,
             sub_loc,
-            stats: target.get_item_character_stats(),
+            stats: target.get_character_stats_equipment_change(),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize PaperdollRemoveServerPacket: {}", e);
+            return;
+        }
+
         target.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::Paperdoll,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
         if target.hidden {
@@ -56,15 +67,11 @@ impl Map {
 
         let is_visible_change = matches!(
             ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
-            EifItemType::Armor
-                | EifItemType::Weapon
-                | EifItemType::Shield
-                | EifItemType::Hat
-                | EifItemType::Boots
+            ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = avatar::Agree { change };
+            let reply = AvatarAgreeServerPacket { change };
 
             self.send_packet_near_player(
                 player_id,

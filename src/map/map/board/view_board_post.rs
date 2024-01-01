@@ -1,6 +1,6 @@
-use eo::{
-    data::{EOShort, StreamBuilder},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily},
 };
 use mysql_async::{params, prelude::Queryable, Row};
 
@@ -9,7 +9,7 @@ use crate::utils::get_board_tile_spec;
 use super::super::Map;
 
 impl Map {
-    pub async fn view_board_post(&self, player_id: EOShort, post_id: EOShort) {
+    pub async fn view_board_post(&self, player_id: i32, post_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -36,7 +36,7 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut builder = StreamBuilder::new();
+            let mut writer = EoWriter::new();
 
             let mut conn = pool.get_conn().await.unwrap();
 
@@ -55,10 +55,21 @@ impl Map {
                 _ => return,
             };
 
-            builder.add_short(post_id);
-            builder.add_string(&row.take::<String, &str>("body").unwrap());
+            let packet = BoardPlayerServerPacket {
+                post_id,
+                post_body: row.take::<String, &str>("body").unwrap(),
+            };
 
-            player.send(PacketAction::Player, PacketFamily::Board, builder.get());
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize BoardPlayerServerPacket: {}", e);
+                return;
+            }
+
+            player.send(
+                PacketAction::Player,
+                PacketFamily::Board,
+                writer.to_byte_array(),
+            );
         });
     }
 }

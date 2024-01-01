@@ -1,17 +1,16 @@
-use eo::{
-    data::{EOChar, EOShort, Serializeable, StreamBuilder},
-    protocol::{
-        server::account::{self, Reply},
-        AccountReply, PacketAction, PacketFamily,
-    },
+use eolib::data::{EoSerialize, EoWriter};
+use eolib::protocol::net::server::{
+    AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
+    AccountReplyServerPacketReplyCodeDataDefault, AccountReplyServerPacketReplyCodeDataExists,
 };
+use eolib::protocol::net::{PacketAction, PacketFamily};
 
 use super::account_exists::account_exists;
 
 use super::super::World;
 
 impl World {
-    pub async fn request_account_creation(&self, player_id: EOShort, username: String) {
+    pub async fn request_account_creation(&self, player_id: i32, username: String) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -36,15 +35,24 @@ impl World {
         };
 
         if exists {
-            let reply = Reply {
+            let reply = AccountReplyServerPacket {
                 reply_code: AccountReply::Exists,
-                data: account::ReplyData::Exists(account::ReplyExists {
-                    no: "NO".to_string(),
-                }),
+                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                    AccountReplyServerPacketReplyCodeDataExists::new(),
+                )),
             };
-            let mut builder = StreamBuilder::new();
-            reply.serialize(&mut builder);
-            player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = reply.serialize(&mut writer) {
+                player.close(format!("Error serializing reply: {}", e));
+                return;
+            }
+
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Account,
+                writer.to_byte_array(),
+            );
             return;
         }
 
@@ -64,16 +72,24 @@ impl World {
             }
         };
 
-        let reply = Reply {
-            reply_code: AccountReply::SessionId(session_id),
-            data: account::ReplyData::SessionId(account::ReplySessionId {
-                ok: "OK".to_string(),
-                sequence_start: sequence_start as EOChar,
-            }),
+        let reply = AccountReplyServerPacket {
+            reply_code: AccountReply::Unrecognized(session_id),
+            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Default(
+                AccountReplyServerPacketReplyCodeDataDefault { sequence_start },
+            )),
         };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
-        player.send(PacketAction::Reply, PacketFamily::Account, builder.get());
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            player.close(format!("Error serializing reply: {}", e));
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Account,
+            writer.to_byte_array(),
+        );
     }
 }

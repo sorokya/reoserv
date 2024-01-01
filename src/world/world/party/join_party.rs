@@ -1,12 +1,15 @@
-use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{PartyAddServerPacket, PartyCreateServerPacket, PartyMember},
+        PacketAction, PacketFamily,
+    },
 };
 
 use super::super::World;
 
 impl World {
-    pub async fn join_party(&mut self, player_id: EOShort, party_member_id: EOShort) {
+    pub async fn join_party(&mut self, player_id: i32, party_member_id: i32) {
         let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
@@ -28,14 +31,33 @@ impl World {
             Err(_) => return,
         };
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(player_id);
-        builder.add_char(0);
-        builder.add_char(character.level);
-        builder.add_char(character.get_hp_percentage());
-        builder.add_string(&character.name);
+        let packet = PartyAddServerPacket {
+            member: PartyMember {
+                player_id,
+                leader: false,
+                level: character.level,
+                hp_percentage: character.get_hp_percentage(),
+                name: character.name.clone(),
+            },
+        };
 
-        let buf = builder.get();
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyAddServerPacket: {}", e);
+            return;
+        }
+
+        let buf = writer.to_byte_array();
+
+        let party = match self
+            .parties
+            .iter()
+            .find(|p| p.members.contains(&party_member_id))
+        {
+            Some(party) => party,
+            None => return,
+        };
 
         for member_id in &party.members {
             if *member_id == player_id {
@@ -50,29 +72,21 @@ impl World {
             member.send(PacketAction::Add, PacketFamily::Party, buf.clone());
         }
 
-        let mut builder = StreamBuilder::new();
-        let leader_id = party.leader;
-        for (index, member_id) in party.members.iter().enumerate() {
-            let member = match self.players.get(member_id) {
-                Some(member) => member,
-                None => continue,
-            };
+        let packet = PartyCreateServerPacket {
+            members: self.get_party_members(party).await,
+        };
 
-            let character = match member.get_character().await {
-                Ok(character) => character,
-                Err(_) => continue,
-            };
+        let mut writer = EoWriter::new();
 
-            builder.add_short(*member_id);
-            builder.add_char(if *member_id == leader_id { 1 } else { 0 });
-            builder.add_char(character.level);
-            builder.add_char(character.get_hp_percentage());
-            builder.add_string(&character.name);
-            if index != party.members.len() - 1 {
-                builder.add_byte(EO_BREAK_CHAR);
-            }
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing PartyCreateServerPacket: {}", e);
+            return;
         }
 
-        player.send(PacketAction::Create, PacketFamily::Party, builder.get());
+        player.send(
+            PacketAction::Create,
+            PacketFamily::Party,
+            writer.to_byte_array(),
+        );
     }
 }

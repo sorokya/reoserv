@@ -1,7 +1,9 @@
-use eo::{
-    data::{EOShort, Serializeable, StreamBuilder},
-    protocol::{server::statskill::Remove, PacketAction, PacketFamily},
-    pubs::EnfNpcType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily},
+        r#pub::NpcType,
+    },
 };
 
 use crate::NPC_DB;
@@ -9,12 +11,7 @@ use crate::NPC_DB;
 use super::super::Map;
 
 impl Map {
-    pub async fn forget_skill(
-        &mut self,
-        player_id: EOShort,
-        skill_id: EOShort,
-        session_id: EOShort,
-    ) {
+    pub async fn forget_skill(&mut self, player_id: i32, skill_id: i32, session_id: i32) {
         if skill_id == 0 {
             return;
         }
@@ -61,21 +58,25 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != EnfNpcType::Skills {
+        if npc_data.r#type != NpcType::Trainer {
             return;
         }
 
         character.remove_spell(skill_id);
 
-        let reply = Remove { spell_id: skill_id };
+        let reply = StatSkillRemoveServerPacket { spell_id: skill_id };
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize packet {}", e);
+            return;
+        }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::StatSkill,
-            builder.get(),
+            writer.to_byte_array(),
         );
     }
 }

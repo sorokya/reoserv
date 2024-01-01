@@ -1,7 +1,7 @@
 use bytes::Bytes;
-use eo::{
-    data::{EOByte, EOChar, EOInt, EOShort},
-    protocol::{Coords, PacketAction, PacketFamily, WarpAnimation},
+use eolib::protocol::{
+    net::{server::WarpEffect, PacketAction, PacketFamily, Version},
+    Coords,
 };
 use tokio::sync::oneshot;
 
@@ -16,38 +16,39 @@ use super::{ClientState, PartyRequest};
 #[derive(Debug)]
 pub enum Command {
     AcceptWarp {
-        map_id: EOShort,
-        session_id: EOShort,
+        map_id: i32,
+        session_id: i32,
+    },
+    BeginHandshake {
+        challenge: i32,
+        hdid: String,
+        version: Version,
     },
     CancelTrade,
     Close(String),
     ArenaDie {
         spawn_coords: Coords,
     },
+    CompleteHandshake {
+        player_id: i32,
+        client_encryption_multiple: i32,
+        server_encryption_multiple: i32,
+    },
     Die,
     GenerateSessionId {
-        respond_to: oneshot::Sender<EOShort>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetAccountId {
-        respond_to: oneshot::Sender<Result<EOInt, InvalidStateError>>,
-    },
-    GetBanDuration {
-        respond_to: oneshot::Sender<Option<EOInt>>,
+        respond_to: oneshot::Sender<Result<i32, InvalidStateError>>,
     },
     GetBoardId {
-        respond_to: oneshot::Sender<Option<EOShort>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
     GetChestIndex {
         respond_to: oneshot::Sender<Option<usize>>,
-    },
-    GenEncodingMultiples {
-        respond_to: oneshot::Sender<[EOByte; 2]>,
-    },
-    GetEncodingMultiples {
-        respond_to: oneshot::Sender<[EOByte; 2]>,
     },
     GetIpAddr {
         respond_to: oneshot::Sender<String>,
@@ -56,34 +57,31 @@ pub enum Command {
         respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
     },
     GetMapId {
-        respond_to: oneshot::Sender<Result<EOShort, InvalidStateError>>,
+        respond_to: oneshot::Sender<Result<i32, InvalidStateError>>,
     },
     GetPlayerId {
-        respond_to: oneshot::Sender<EOShort>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetPartyRequest {
         respond_to: oneshot::Sender<PartyRequest>,
     },
     GetSessionId {
-        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
+        respond_to: oneshot::Sender<Result<i32, MissingSessionIdError>>,
     },
     GetInteractNpcIndex {
-        respond_to: oneshot::Sender<Option<EOChar>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetInteractPlayerId {
-        respond_to: oneshot::Sender<Option<EOShort>>,
-    },
-    GetSequenceBytes {
-        respond_to: oneshot::Sender<(EOShort, EOChar)>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     GetSequenceStart {
-        respond_to: oneshot::Sender<EOInt>,
+        respond_to: oneshot::Sender<i32>,
     },
     GetState {
         respond_to: oneshot::Sender<ClientState>,
     },
     GetSleepCost {
-        respond_to: oneshot::Sender<Option<EOInt>>,
+        respond_to: oneshot::Sender<Option<i32>>,
     },
     IsTradeAccepted {
         respond_to: oneshot::Sender<bool>,
@@ -92,7 +90,7 @@ pub enum Command {
         respond_to: oneshot::Sender<bool>,
     },
     GenSequence {
-        respond_to: oneshot::Sender<EOInt>,
+        respond_to: oneshot::Sender<i32>,
     },
     Ping,
     Pong,
@@ -101,31 +99,31 @@ pub enum Command {
     },
     RequestWarp {
         local: bool,
-        map_id: EOShort,
+        map_id: i32,
         coords: Coords,
-        animation: Option<WarpAnimation>,
+        animation: Option<WarpEffect>,
     },
     Send(PacketAction, PacketFamily, Bytes),
-    SetAccountId(EOInt),
-    SetBoardId(EOShort),
+    SetAccountId(i32),
+    SetBoardId(i32),
     SetBusy(bool),
     SetCharacter(Box<Character>),
-    SetInteractNpcIndex(EOChar),
-    SetInteractPlayerId(Option<EOShort>),
+    SetInteractNpcIndex(i32),
+    SetInteractPlayerId(Option<i32>),
     SetPartyRequest(PartyRequest),
     SetTradeAccepted(bool),
     SetTrading(bool),
     SetChestIndex(usize),
     SetMap(MapHandle),
-    SetSleepCost(EOInt),
+    SetSleepCost(i32),
     SetState(ClientState),
     TakeCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
     TakeSessionId {
-        respond_to: oneshot::Sender<Result<EOShort, MissingSessionIdError>>,
+        respond_to: oneshot::Sender<Result<i32, MissingSessionIdError>>,
     },
     UpdatePartyHP {
-        hp_percentage: EOChar,
+        hp_percentage: i32,
     },
 }

@@ -1,9 +1,12 @@
 use std::cmp;
 
 use bytes::Bytes;
-use eo::{
-    data::{EOChar, EOShort, StreamBuilder},
-    protocol::{Item, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::net::{
+        server::{ChestAgreeServerPacket, ChestReplyServerPacket},
+        Item, PacketAction, PacketFamily, ThreeItem,
+    },
 };
 
 use crate::{
@@ -15,7 +18,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    pub async fn add_chest_item(&mut self, player_id: EOShort, item: Item) {
+    pub async fn add_chest_item(&mut self, player_id: i32, item: Item) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -60,7 +63,7 @@ impl Map {
         };
 
         let user_items = chest.items.iter().filter(|i| i.slot == 0).count();
-        let mut chest_slots: Vec<EOChar> = vec![];
+        let mut chest_slots: Vec<i32> = vec![];
 
         for spawn in chest.spawns.iter() {
             if !chest_slots.contains(&spawn.slot) {
@@ -106,31 +109,45 @@ impl Map {
             return;
         }
 
-        let mut builder = StreamBuilder::new();
-        builder.add_short(item.id);
-        builder.add_int(character.get_item_amount(item.id));
-        let weight = character.get_weight();
-        builder.add_char(weight.current);
-        builder.add_char(weight.max);
+        let items: Vec<ThreeItem> = chest
+            .items
+            .iter()
+            .map(|i| ThreeItem {
+                id: i.item_id,
+                amount: i.amount,
+            })
+            .collect();
 
-        for item in chest.items.iter() {
-            builder.add_short(item.item_id);
-            builder.add_three(item.amount);
+        let packet = ChestReplyServerPacket {
+            added_item_id: item.id,
+            remaining_amount: character.get_item_amount(item.id),
+            weight: character.get_weight(),
+            items: items.clone(),
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestReplyServerPacket: {}", e);
+            return;
         }
 
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Chest,
-            builder.get(),
+            writer.to_byte_array(),
         );
 
-        let mut builder = StreamBuilder::new();
-        for item in chest.items.iter() {
-            builder.add_short(item.item_id);
-            builder.add_three(item.amount);
+        let packet = ChestAgreeServerPacket { items };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+            return;
         }
 
-        let buf = builder.get();
+        let buf = writer.to_byte_array();
 
         for (id, character) in self.characters.iter() {
             let distance = get_distance(&character.coords, &chest.coords);

@@ -1,12 +1,18 @@
-use eo::{
-    data::{EOShort, StreamBuilder, EO_BREAK_CHAR},
-    protocol::{Emote, PacketAction, PacketFamily},
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{TradeItemData, TradeUseServerPacket},
+            PacketAction, PacketFamily,
+        },
+        Emote,
+    },
 };
 
 use super::super::Map;
 
 impl Map {
-    pub async fn complete_trade(&mut self, player_id: EOShort, partner_id: EOShort) {
+    pub async fn complete_trade(&mut self, player_id: i32, partner_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -21,14 +27,9 @@ impl Map {
 
         let partner_trade_items = partner_character.trade_items.clone();
 
-        let mut builder = StreamBuilder::new();
-
-        builder.add_short(player_id);
         let character = self.characters.get_mut(&player_id).unwrap();
         character.trade_items.clear();
         for item in &trade_items {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
             character.remove_item(item.id, item.amount);
         }
 
@@ -37,14 +38,9 @@ impl Map {
             character.add_item(item.id, item.amount);
         }
 
-        builder.add_byte(EO_BREAK_CHAR);
-
-        builder.add_short(partner_id);
         let character = self.characters.get_mut(&partner_id).unwrap();
         character.trade_items.clear();
         for item in &partner_trade_items {
-            builder.add_short(item.id);
-            builder.add_int(item.amount);
             character.remove_item(item.id, item.amount);
         }
 
@@ -58,14 +54,53 @@ impl Map {
         let player = character.player.as_ref().unwrap();
         let partner = partner_character.player.as_ref().unwrap();
 
-        let buf = builder.get();
+        let packet = TradeUseServerPacket {
+            trade_data: TradeItemData {
+                partner_player_id: partner_id,
+                partner_items: partner_trade_items.clone(),
+                your_player_id: player_id,
+                your_items: trade_items.clone(),
+            },
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeUseServerPacket: {}", e);
+            return;
+        }
 
         player.set_trading(false);
         player.set_trade_accepted(false);
-        player.send(PacketAction::Use, PacketFamily::Trade, buf.clone());
+        player.send(
+            PacketAction::Use,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
+
+        let packet = TradeUseServerPacket {
+            trade_data: TradeItemData {
+                partner_player_id: player_id,
+                partner_items: trade_items.clone(),
+                your_player_id: partner_id,
+                your_items: partner_trade_items.clone(),
+            },
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize TradeUseServerPacket: {}", e);
+            return;
+        }
+
         partner.set_trading(false);
         partner.set_trade_accepted(false);
-        partner.send(PacketAction::Use, PacketFamily::Trade, buf);
+        partner.send(
+            PacketAction::Use,
+            PacketFamily::Trade,
+            writer.to_byte_array(),
+        );
 
         self.emote(player_id, Emote::Trade);
         self.emote(partner_id, Emote::Trade);

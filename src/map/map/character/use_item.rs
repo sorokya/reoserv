@@ -1,23 +1,29 @@
-use eo::{
-    data::{EOChar, EOInt, EOShort, Serializeable, StreamBuilder},
+use eolib::{
+    data::{EoSerialize, EoWriter},
     protocol::{
-        server::{
-            avatar,
-            item::{self, ReplyCureCurse, ReplyData, ReplyEffectPotion, ReplyHairDye, ReplyHeal},
-            recover,
+        net::{
+            server::{
+                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+                AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
+                AvatarChangeType, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
+                ItemReplyServerPacketItemTypeDataCureCurse,
+                ItemReplyServerPacketItemTypeDataEffectPotion,
+                ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
+                RecoverAgreeServerPacket, WarpEffect,
+            },
+            Item, PacketAction, PacketFamily,
         },
-        AvatarChange, AvatarChangeClothes, AvatarChangeData, AvatarChangeHairColor, AvatarSlot,
-        Coords, Item, ItemType, PacketAction, PacketFamily, WarpAnimation,
+        r#pub::{ItemSpecial, ItemType},
+        Coords,
     },
-    pubs::{EifItemSpecial, EifItemType},
 };
 
-use crate::{character::PaperdollSlot, ITEM_DB};
+use crate::{character::EquipmentSlot, ITEM_DB};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn use_item(&mut self, player_id: EOShort, item_id: EOShort) {
+    pub async fn use_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
@@ -40,27 +46,29 @@ impl Map {
             }
         };
 
-        let mut reply = item::Reply::default();
+        let mut reply = ItemReplyServerPacket::default();
         let player = character.player.as_ref().unwrap().clone();
 
         match item.r#type {
-            EifItemType::Heal => {
+            ItemType::Heal => {
                 let hp_gain = character.heal(item.hp);
                 let tp_gain = character.tp_heal(item.tp);
                 if hp_gain == 0 && tp_gain == 0 {
                     return;
                 }
-                reply.data = ReplyData::Heal(ReplyHeal {
-                    hp_gain: hp_gain as EOInt,
-                    hp: character.hp,
-                    tp: character.tp,
-                });
-                reply.used_item_type = ItemType::Heal;
+                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::Heal(
+                    ItemReplyServerPacketItemTypeDataHeal {
+                        hp_gain,
+                        hp: character.hp,
+                        tp: character.tp,
+                    },
+                ));
+                reply.item_type = ItemType::Heal;
 
                 if hp_gain > 0 {
-                    let packet = recover::Agree {
+                    let packet = RecoverAgreeServerPacket {
                         player_id,
-                        heal_hp: hp_gain as EOInt,
+                        heal_hp: hp_gain,
                         hp_percentage: character.get_hp_percentage(),
                     };
 
@@ -74,50 +82,52 @@ impl Map {
                     );
                 }
             }
-            EifItemType::Teleport => {
-                if self.file.can_scroll == 0 {
+            ItemType::Teleport => {
+                if !self.file.can_scroll {
                     return;
                 }
 
                 player.request_warp(
-                    item.spec1 as EOShort,
+                    item.spec1,
                     Coords {
-                        x: item.spec2 as EOChar,
-                        y: item.spec3 as EOChar,
+                        x: item.spec2,
+                        y: item.spec3,
                     },
-                    character.map_id == item.spec1 as EOShort,
-                    Some(WarpAnimation::Scroll),
+                    character.map_id == item.spec1,
+                    Some(WarpEffect::Scroll),
                 );
-                reply.used_item_type = ItemType::Teleport;
+                reply.item_type = ItemType::Teleport;
             }
-            EifItemType::Spell => todo!(),
-            EifItemType::EXPReward => todo!(),
-            EifItemType::StatReward => todo!(),
-            EifItemType::SkillReward => todo!(),
-            EifItemType::Beer => {
-                reply.used_item_type = ItemType::Beer;
+            ItemType::Alcohol => {
+                reply.item_type = ItemType::Alcohol;
             }
-            EifItemType::EffectPotion => {
-                reply.used_item_type = ItemType::EffectPotion;
-                reply.data = ReplyData::EffectPotion(ReplyEffectPotion {
-                    effect_id: item.spec1 as EOShort,
-                });
+            ItemType::EffectPotion => {
+                reply.item_type = ItemType::EffectPotion;
+                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::EffectPotion(
+                    ItemReplyServerPacketItemTypeDataEffectPotion {
+                        effect_id: item.spec1,
+                    },
+                ));
                 self.play_effect(player_id, item.spec1);
             }
-            EifItemType::HairDye => {
-                reply.used_item_type = ItemType::HairDye;
-                reply.data = ReplyData::HairDye(ReplyHairDye {
-                    hair_color: item.spec1 as EOChar,
-                });
-                character.hair_color = item.spec1 as EOShort;
-                let packet = avatar::Agree {
+            ItemType::HairDye => {
+                reply.item_type = ItemType::HairDye;
+                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::HairDye(
+                    ItemReplyServerPacketItemTypeDataHairDye {
+                        hair_color: item.spec1,
+                    },
+                ));
+                character.hair_color = item.spec1;
+                let packet = AvatarAgreeServerPacket {
                     change: AvatarChange {
                         player_id,
-                        slot: AvatarSlot::HairColor,
-                        sound: 0,
-                        data: AvatarChangeData::HairColor(AvatarChangeHairColor {
-                            color: item.spec1 as EOChar,
-                        }),
+                        change_type: AvatarChangeType::HairColor,
+                        sound: false,
+                        change_type_data: Some(AvatarChangeChangeTypeData::HairColor(
+                            AvatarChangeChangeTypeDataHairColor {
+                                hair_color: item.spec1,
+                            },
+                        )),
                     },
                 };
                 self.send_packet_near_player(
@@ -127,9 +137,9 @@ impl Map {
                     packet,
                 );
             }
-            EifItemType::CureCurse => {
-                let paperdoll = character.get_paperdoll_array();
-                let mut cursed_items: Vec<PaperdollSlot> = Vec::new();
+            ItemType::CureCurse => {
+                let paperdoll = character.get_equipment_array();
+                let mut cursed_items: Vec<EquipmentSlot> = Vec::new();
                 for (index, item_id) in paperdoll.iter().enumerate() {
                     if *item_id == 0 {
                         continue;
@@ -142,8 +152,8 @@ impl Map {
                         }
                     };
 
-                    if item.special == EifItemSpecial::Cursed {
-                        cursed_items.push(PaperdollSlot::from_index(index).unwrap());
+                    if item.special == ItemSpecial::Cursed {
+                        cursed_items.push(EquipmentSlot::from_index(index).unwrap());
                     }
                 }
 
@@ -157,21 +167,25 @@ impl Map {
 
                 character.calculate_stats();
 
-                reply.used_item_type = ItemType::CureCurse;
-                reply.data = ReplyData::CureCurse(ReplyCureCurse {
-                    stats: character.get_item_character_stats(),
-                });
+                reply.item_type = ItemType::CureCurse;
+                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::CureCurse(
+                    ItemReplyServerPacketItemTypeDataCureCurse {
+                        stats: character.get_character_stats_equipment_change(),
+                    },
+                ));
 
                 let visible_change = cursed_items.iter().any(|slot| slot.is_visible());
                 if visible_change {
-                    let packet = avatar::Agree {
+                    let packet = AvatarAgreeServerPacket {
                         change: AvatarChange {
                             player_id,
-                            slot: AvatarSlot::Clothes,
-                            sound: 0,
-                            data: AvatarChangeData::Clothes(AvatarChangeClothes {
-                                paperdoll: character.get_paperdoll_bahws(),
-                            }),
+                            change_type: AvatarChangeType::Equipment,
+                            sound: false,
+                            change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
+                                AvatarChangeChangeTypeDataEquipment {
+                                    equipment: character.get_equipment_change(),
+                                },
+                            )),
                         },
                     };
 
@@ -201,9 +215,17 @@ impl Map {
 
         reply.weight = character.get_weight();
 
-        let mut builder = StreamBuilder::new();
-        reply.serialize(&mut builder);
+        let mut writer = EoWriter::new();
 
-        player.send(PacketAction::Reply, PacketFamily::Item, builder.get());
+        if let Err(e) = reply.serialize(&mut writer) {
+            error!("Failed to serialize ItemReplyServerPacket: {}", e);
+            return;
+        }
+
+        player.send(
+            PacketAction::Reply,
+            PacketFamily::Item,
+            writer.to_byte_array(),
+        );
     }
 }

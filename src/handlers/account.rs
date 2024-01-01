@@ -6,9 +6,9 @@ use eolib::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::player::PlayerHandle;
 
-fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn create(reader: EoReader, player: PlayerHandle) {
     let create = match AccountCreateClientPacket::deserialize(&reader) {
         Ok(create) => create,
         Err(e) => {
@@ -17,10 +17,10 @@ fn create(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.create_account(player_id, create.clone());
+    player.create_account(create);
 }
 
-fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn request(reader: EoReader, player: PlayerHandle) {
     let request = match AccountRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -29,10 +29,10 @@ fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.request_account_creation(player_id, request.username);
+    player.request_account_creation(request.username);
 }
 
-fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn agree(reader: EoReader, player: PlayerHandle) {
     let agree = match AccountAgreeClientPacket::deserialize(&reader) {
         Ok(agree) => agree,
         Err(e) => {
@@ -41,32 +41,14 @@ fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.change_password(
-        player_id,
-        agree.username,
-        agree.old_password,
-        agree.new_password,
-    );
+    player.change_password(agree.username, agree.old_password, agree.new_password);
 }
 
-pub async fn account(
-    action: PacketAction,
-    reader: EoReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
-    let player_id = match player.get_player_id().await {
-        Ok(player_id) => player_id,
-        Err(e) => {
-            error!("Error getting player id {}", e);
-            return;
-        }
-    };
-
+pub async fn account(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
-        PacketAction::Create => create(reader, player_id, world),
-        PacketAction::Request => request(reader, player_id, world),
-        PacketAction::Agree => agree(reader, player_id, world),
+        PacketAction::Create => create(reader, player),
+        PacketAction::Request => request(reader, player),
+        PacketAction::Agree => agree(reader, player),
         _ => error!("Unhandled packet Account_{:?}", action),
     }
 }

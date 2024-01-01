@@ -6,7 +6,7 @@ use eolib::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::player::PlayerHandle;
 
 fn accept(reader: EoReader, player: PlayerHandle) {
     let accept = match WarpAcceptClientPacket::deserialize(&reader) {
@@ -20,7 +20,7 @@ fn accept(reader: EoReader, player: PlayerHandle) {
     player.accept_warp(accept.map_id, accept.session_id);
 }
 
-fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn take(reader: EoReader, player: PlayerHandle) {
     let take = match WarpTakeClientPacket::deserialize(&reader) {
         Ok(take) => take,
         Err(e) => {
@@ -29,26 +29,13 @@ fn take(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.get_file(player_id, FileType::Emf, take.session_id, None, true);
+    player.get_file(FileType::Emf, take.session_id, None, true);
 }
 
-pub async fn warp(
-    action: PacketAction,
-    reader: EoReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
-    let player_id = match player.get_player_id().await {
-        Ok(player_id) => player_id,
-        Err(e) => {
-            error!("Error getting player id {}", e);
-            return;
-        }
-    };
-
+pub async fn warp(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
         PacketAction::Accept => accept(reader, player),
-        PacketAction::Take => take(reader, player_id, world),
+        PacketAction::Take => take(reader, player),
         _ => error!("Unhandled packet Warp_{:?}", action),
     }
 }

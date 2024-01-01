@@ -2,12 +2,11 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use eolib::{
-    data::{EoSerialize, EoWriter, SHORT_MAX},
+    data::{EoSerialize, EoWriter},
     packet::{generate_sequence_start, get_ping_sequence_bytes},
     protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily},
 };
 use mysql_async::Pool;
-use rand::Rng;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
 use crate::{
@@ -46,14 +45,20 @@ pub struct Player {
 }
 
 mod accept_warp;
+mod account;
 mod arena_die;
 mod begin_handshake;
 mod cancel_trade;
 mod close;
 mod complete_handshake;
 mod die;
+mod enter_game;
+mod generate_session_id;
 mod get_ban_duration;
+mod get_file;
+mod get_welcome_request_data;
 mod request_warp;
+mod take_session_id;
 
 impl Player {
     pub fn new(
@@ -95,12 +100,22 @@ impl Player {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }
+            Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::BeginHandshake {
                 challenge,
                 hdid,
                 version,
             } => return self.begin_handshake(challenge, hdid, version).await,
             Command::CancelTrade => self.cancel_trade().await,
+            Command::ChangePassword {
+                username,
+                old_password,
+                new_password,
+            } => {
+                return self
+                    .change_password(username, old_password, new_password)
+                    .await
+            }
             Command::Close(reason) => {
                 self.close(reason).await;
                 return false;
@@ -118,23 +133,16 @@ impl Player {
                     )
                     .await
             }
-            Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
+            Command::CreateAccount(packet) => return self.create_account(packet).await,
+            Command::CreateCharacter(packet) => return self.create_character(packet).await,
+            Command::DeleteCharacter {
+                session_id,
+                character_id,
+            } => return self.delete_character(session_id, character_id).await,
             Command::Die => self.die().await,
+            Command::EnterGame { session_id } => return self.enter_game(session_id).await,
             Command::GenerateSessionId { respond_to } => {
-                let mut rng = rand::thread_rng();
-                let id = rng.gen_range(1..SHORT_MAX) as i32;
-                self.session_id = Some(id);
-                let _ = respond_to.send(id);
-            }
-            Command::GetAccountId { respond_to } => {
-                if let ClientState::LoggedIn | ClientState::InGame = self.state {
-                    let _ = respond_to.send(Ok(self.account_id));
-                } else {
-                    let _ = respond_to.send(Err(InvalidStateError::new(
-                        ClientState::LoggedIn,
-                        self.state,
-                    )));
-                }
+                let _ = respond_to.send(self.generate_session_id());
             }
             Command::GetBoardId { respond_to } => {
                 let _ = respond_to.send(self.board_id);
@@ -154,22 +162,15 @@ impl Player {
             Command::GetChestIndex { respond_to } => {
                 let _ = respond_to.send(self.chest_index);
             }
-            Command::GetIpAddr { respond_to } => {
-                let _ = respond_to.send(self.ip.clone());
-            }
+            Command::GetFile {
+                file_type,
+                session_id,
+                file_id,
+                warp,
+            } => return self.get_file(file_type, session_id, file_id, warp).await,
             Command::GetMap { respond_to } => {
                 if let Some(map) = self.map.as_ref() {
                     let _ = respond_to.send(Ok(map.to_owned()));
-                } else {
-                    let _ = respond_to
-                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
-                }
-            }
-            Command::GetMapId { respond_to } => {
-                if let Some(warp_session) = &self.warp_session {
-                    let _ = respond_to.send(Ok(warp_session.map_id));
-                } else if let Some(character) = self.character.as_ref() {
-                    let _ = respond_to.send(Ok(character.map_id));
                 } else {
                     let _ = respond_to
                         .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
@@ -194,9 +195,6 @@ impl Player {
             Command::GetInteractPlayerId { respond_to } => {
                 let _ = respond_to.send(self.interact_player_id);
             }
-            Command::GetSequenceStart { respond_to } => {
-                let _ = respond_to.send(self.bus.sequencer.get_start());
-            }
             Command::GetSleepCost { respond_to } => {
                 let _ = respond_to.send(self.sleep_cost);
             }
@@ -213,6 +211,7 @@ impl Player {
                 let sequence = self.bus.sequencer.next_sequence();
                 let _ = respond_to.send(sequence);
             }
+            Command::Login { username, password } => return self.login(username, password).await,
             Command::Ping => {
                 if self.state == ClientState::Uninitialized {
                     return true;
@@ -255,26 +254,31 @@ impl Player {
                     .set_start(self.bus.upcoming_sequence_start);
                 let _ = respond_to.send(());
             }
+            Command::RequestAccountCreation { username } => {
+                return self.request_account_creation(username).await
+            }
+            Command::RequestCharacterCreation => return self.request_character_creation().await,
+            Command::RequestCharacterDeletion { character_id } => {
+                return self.request_character_deletion(character_id).await
+            }
             Command::RequestWarp {
                 map_id,
                 coords,
                 local,
                 animation,
             } => self.request_warp(map_id, coords, local, animation).await,
+            Command::SelectCharacter {
+                player_handle,
+                character_id,
+            } => return self.select_character(player_handle, character_id).await,
             Command::Send(action, family, data) => {
                 let _ = self.bus.send(action, family, data).await;
-            }
-            Command::SetAccountId(account_id) => {
-                self.account_id = account_id;
             }
             Command::SetBoardId(board_id) => {
                 self.board_id = Some(board_id);
             }
             Command::SetBusy(busy) => {
                 self.busy = busy;
-            }
-            Command::SetCharacter(character) => {
-                self.character = Some(*character);
             }
             Command::SetChestIndex(index) => {
                 self.chest_index = Some(index);
@@ -288,37 +292,14 @@ impl Player {
             Command::SetPartyRequest(request) => {
                 self.party_request = request;
             }
-            Command::SetMap(map) => {
-                self.map = Some(map);
-            }
             Command::SetSleepCost(cost) => {
                 self.sleep_cost = Some(cost);
-            }
-            Command::SetState(state) => {
-                self.state = state;
             }
             Command::SetTradeAccepted(accepted) => {
                 self.trade_accepted = accepted;
             }
             Command::SetTrading(trading) => {
                 self.trading = trading;
-            }
-            Command::TakeCharacter { respond_to } => {
-                if let Some(character) = self.character.as_ref() {
-                    let _ = respond_to.send(Ok(Box::new(character.to_owned())));
-                    self.character = None;
-                } else {
-                    let _ = respond_to
-                        .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
-                }
-            }
-            Command::TakeSessionId { respond_to } => {
-                if let Some(session_id) = self.session_id {
-                    self.session_id = None;
-                    let _ = respond_to.send(Ok(session_id));
-                } else {
-                    let _ = respond_to.send(Err(MissingSessionIdError));
-                }
             }
             Command::UpdatePartyHP { hp_percentage } => {
                 if self.state == ClientState::InGame {

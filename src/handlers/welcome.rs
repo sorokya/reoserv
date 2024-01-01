@@ -9,9 +9,9 @@ use eolib::{
     },
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::player::PlayerHandle;
 
-fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn agree(reader: EoReader, player: PlayerHandle) {
     let agree = match WelcomeAgreeClientPacket::deserialize(&reader) {
         Ok(agree) => agree,
         Err(e) => {
@@ -20,8 +20,7 @@ fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.get_file(
-        player_id,
+    player.get_file(
         agree.file_type,
         agree.session_id,
         match agree.file_type_data {
@@ -40,7 +39,7 @@ fn agree(reader: EoReader, player_id: i32, world: WorldHandle) {
     );
 }
 
-fn msg(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn msg(reader: EoReader, player: PlayerHandle) {
     let msg = match WelcomeMsgClientPacket::deserialize(&reader) {
         Ok(msg) => msg,
         Err(e) => {
@@ -49,10 +48,10 @@ fn msg(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.enter_game(player_id, msg.session_id);
+    player.enter_game(msg.session_id);
 }
 
-fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
+fn request(reader: EoReader, player: PlayerHandle) {
     let request = match WelcomeRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -61,27 +60,14 @@ fn request(reader: EoReader, player_id: i32, world: WorldHandle) {
         }
     };
 
-    world.select_character(player_id, request.character_id);
+    player.select_character(request.character_id);
 }
 
-pub async fn welcome(
-    action: PacketAction,
-    reader: EoReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
-    let player_id = match player.get_player_id().await {
-        Ok(player_id) => player_id,
-        Err(e) => {
-            error!("Error getting player id {}", e);
-            return;
-        }
-    };
-
+pub async fn welcome(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
-        PacketAction::Agree => agree(reader, player_id, world),
-        PacketAction::Msg => msg(reader, player_id, world),
-        PacketAction::Request => request(reader, player_id, world),
+        PacketAction::Agree => agree(reader, player),
+        PacketAction::Msg => msg(reader, player),
+        PacketAction::Request => request(reader, player),
         _ => error!("Unhandled packet Welcome_{:?}", action),
     }
 }

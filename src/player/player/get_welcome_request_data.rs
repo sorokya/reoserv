@@ -6,33 +6,21 @@ use eolib::protocol::{
 };
 
 use crate::{
-    character::Character, errors::DataNotFoundError, player::PlayerHandle, utils::pad_string,
-    CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB,
+    character::Character, utils::pad_string, CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB,
 };
 
-use super::World;
+use super::Player;
 
-impl World {
+impl Player {
     pub async fn get_welcome_request_data(
-        &self,
-        player: PlayerHandle,
+        &mut self,
         character: &Character,
     ) -> Result<
         WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
         Box<dyn std::error::Error + Send + Sync>,
     > {
         let (map_rid, map_file_size) = {
-            let maps = self.maps.as_ref().expect("Maps not loaded");
-            let map = match maps.get(&character.map_id) {
-                Some(map) => map,
-                None => {
-                    error!("Map not found: {}", character.map_id);
-                    return Err(Box::new(DataNotFoundError::new(
-                        "Map".to_string(),
-                        character.map_id,
-                    )));
-                }
-            };
+            let map = self.world.get_map(character.map_id).await?;
             map.get_rid_and_size().await
         };
 
@@ -54,7 +42,7 @@ impl World {
             high_game_master_flood_rate: 0,
         };
 
-        let session_id = player.generate_session_id().await?;
+        let session_id = self.generate_session_id();
 
         Ok(WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter {
             session_id,

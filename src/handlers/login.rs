@@ -3,17 +3,9 @@ use eolib::{
     protocol::net::{client::LoginRequestClientPacket, PacketAction},
 };
 
-use crate::{player::PlayerHandle, world::WorldHandle};
+use crate::player::PlayerHandle;
 
-async fn request(reader: EoReader, player: PlayerHandle, world: WorldHandle) {
-    let player_id = match player.get_player_id().await {
-        Ok(player_id) => player_id,
-        Err(e) => {
-            error!("Error getting player id {}", e);
-            return;
-        }
-    };
-
+async fn request(reader: EoReader, player: PlayerHandle) {
     let request = match LoginRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -22,17 +14,12 @@ async fn request(reader: EoReader, player: PlayerHandle, world: WorldHandle) {
         }
     };
 
-    world.login(player_id, request.username, request.password);
+    player.login(request.username, request.password);
 }
 
-pub async fn login(
-    action: PacketAction,
-    reader: EoReader,
-    player: PlayerHandle,
-    world: WorldHandle,
-) {
+pub async fn login(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     match action {
-        PacketAction::Request => request(reader, player, world).await,
+        PacketAction::Request => request(reader, player).await,
         _ => error!("Unhandled packet Login_{:?}", action),
     }
 }

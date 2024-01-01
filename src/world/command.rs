@@ -1,8 +1,4 @@
-use eolib::protocol::net::{
-    client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
-    server::PartyExpShare,
-    PartyRequestType,
-};
+use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
@@ -15,6 +11,10 @@ pub enum Command {
         player_id: i32,
         target_player_id: i32,
         request_type: PartyRequestType,
+    },
+    AddCharacter {
+        player_id: i32,
+        name: String,
     },
     AddLoggedInAccount {
         account_id: i32,
@@ -50,34 +50,11 @@ pub enum Command {
         player_id: i32,
         message: String,
     },
-    ChangePassword {
-        player_id: i32,
-        username: String,
-        current_password: String,
-        new_password: String,
-    },
-    CreateAccount {
-        player_id: i32,
-        details: AccountCreateClientPacket,
-    },
-    CreateCharacter {
-        player_id: i32,
-        details: CharacterCreateClientPacket,
-    },
-    DeleteCharacter {
-        player_id: i32,
-        session_id: i32,
-        character_id: i32,
-    },
     DropPlayer {
         player_id: i32,
         account_id: i32,
         character_name: String,
         respond_to: oneshot::Sender<()>,
-    },
-    EnterGame {
-        player_id: i32,
-        session_id: i32,
     },
     FindPlayer {
         player_id: i32,
@@ -94,13 +71,6 @@ pub enum Command {
         name: String,
         respond_to:
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
-    },
-    GetFile {
-        player_id: i32,
-        file_type: FileType,
-        session_id: i32,
-        file_id: Option<i32>,
-        warp: bool,
     },
     GetMap {
         map_id: i32,
@@ -133,11 +103,6 @@ pub enum Command {
         world: WorldHandle,
         respond_to: oneshot::Sender<()>,
     },
-    Login {
-        player_id: i32,
-        name: String,
-        password: String,
-    },
     MutePlayer {
         victim_name: String,
         admin_name: String,
@@ -150,17 +115,6 @@ pub enum Command {
         player_id: i32,
         reportee_name: String,
         message: String,
-    },
-    RequestAccountCreation {
-        player_id: i32,
-        name: String,
-    },
-    RequestCharacterCreation {
-        player_id: i32,
-    },
-    RequestCharacterDeletion {
-        player_id: i32,
-        character_id: i32,
     },
     RequestPartyList {
         player_id: i32,
@@ -184,10 +138,6 @@ pub enum Command {
         target_player_id: i32,
     },
     Save,
-    SelectCharacter {
-        player_id: i32,
-        character_id: i32,
-    },
     SendAdminMessage {
         player_id: i32,
         message: String,

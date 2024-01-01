@@ -1,6 +1,10 @@
 use bytes::Bytes;
 use eolib::protocol::{
-    net::{server::WarpEffect, PacketAction, PacketFamily, Version},
+    net::{
+        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+        server::WarpEffect,
+        PacketAction, PacketFamily, Version,
+    },
     Coords,
 };
 use mysql_async::Pool;
@@ -9,12 +13,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{
-    character::Character,
-    errors::{InvalidStateError, MissingSessionIdError},
-    map::MapHandle,
-    world::WorldHandle,
-};
+use crate::{character::Character, map::MapHandle, world::WorldHandle};
 
 use super::{handle_packet::handle_packet, player::Player, ClientState, Command, PartyRequest};
 
@@ -42,6 +41,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
+    pub fn arena_die(&self, spawn_coords: Coords) {
+        let _ = self.tx.send(Command::ArenaDie { spawn_coords });
+    }
+
     pub fn begin_handshake(&self, challenge: i32, hdid: String, version: Version) {
         let _ = self.tx.send(Command::BeginHandshake {
             challenge,
@@ -52,6 +55,14 @@ impl PlayerHandle {
 
     pub fn cancel_trade(&self) {
         let _ = self.tx.send(Command::CancelTrade);
+    }
+
+    pub fn change_password(&self, username: String, old_password: String, new_password: String) {
+        let _ = self.tx.send(Command::ChangePassword {
+            username,
+            old_password,
+            new_password,
+        });
     }
 
     pub fn close(&self, reason: String) {
@@ -71,12 +82,27 @@ impl PlayerHandle {
         });
     }
 
-    pub fn arena_die(&self, spawn_coords: Coords) {
-        let _ = self.tx.send(Command::ArenaDie { spawn_coords });
+    pub fn create_account(&self, packet: AccountCreateClientPacket) {
+        let _ = self.tx.send(Command::CreateAccount(packet));
+    }
+
+    pub fn create_character(&self, packet: CharacterCreateClientPacket) {
+        let _ = self.tx.send(Command::CreateCharacter(packet));
+    }
+
+    pub fn delete_character(&self, session_id: i32, character_id: i32) {
+        let _ = self.tx.send(Command::DeleteCharacter {
+            session_id,
+            character_id,
+        });
     }
 
     pub fn die(&self) {
         let _ = self.tx.send(Command::Die);
+    }
+
+    pub fn enter_game(&self, session_id: i32) {
+        let _ = self.tx.send(Command::EnterGame { session_id });
     }
 
     pub async fn generate_session_id(
@@ -86,16 +112,6 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
         match rx.await {
             Ok(session_id) => Ok(session_id),
-            Err(_) => Err("Player disconnected".into()),
-        }
-    }
-
-    pub async fn get_account_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetAccountId { respond_to: tx });
-        match rx.await {
-            Ok(Ok(account_id)) => Ok(account_id),
-            Ok(Err(e)) => Err(Box::new(e)),
             Err(_) => Err("Player disconnected".into()),
         }
     }
@@ -127,13 +143,13 @@ impl PlayerHandle {
         rx.await.unwrap()
     }
 
-    pub async fn get_ip_addr(&self) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetIpAddr { respond_to: tx });
-        match rx.await {
-            Ok(ip_addr) => Ok(ip_addr),
-            Err(_) => Err("Player disconnected".into()),
-        }
+    pub fn get_file(&self, file_type: FileType, session_id: i32, file_id: Option<i32>, warp: bool) {
+        let _ = self.tx.send(Command::GetFile {
+            file_type,
+            session_id,
+            file_id,
+            warp,
+        });
     }
 
     pub async fn get_map(&self) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
@@ -141,16 +157,6 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::GetMap { respond_to: tx });
         match rx.await {
             Ok(Ok(map)) => Ok(map),
-            Ok(Err(e)) => Err(Box::new(e)),
-            Err(_) => Err("Player disconnected".into()),
-        }
-    }
-
-    pub async fn get_map_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetMapId { respond_to: tx });
-        match rx.await {
-            Ok(Ok(map_id)) => Ok(map_id),
             Ok(Err(e)) => Err(Box::new(e)),
             Err(_) => Err("Player disconnected".into()),
         }
@@ -206,17 +212,6 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_sequence_start(
-        &self,
-    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetSequenceStart { respond_to: tx });
-        match rx.await {
-            Ok(sequence) => Ok(sequence),
-            Err(_) => Err("Player disconnected".into()),
-        }
-    }
-
     pub async fn gen_sequence(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenSequence { respond_to: tx });
@@ -256,6 +251,10 @@ impl PlayerHandle {
         (rx.await).unwrap_or(false)
     }
 
+    pub fn login(&self, username: String, password: String) {
+        let _ = self.tx.send(Command::Login { username, password });
+    }
+
     pub fn ping(&self) {
         let _ = self.tx.send(Command::Ping);
     }
@@ -268,6 +267,20 @@ impl PlayerHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
         let _ = rx.await;
+    }
+
+    pub fn request_account_creation(&self, username: String) {
+        let _ = self.tx.send(Command::RequestAccountCreation { username });
+    }
+
+    pub fn request_character_creation(&self) {
+        let _ = self.tx.send(Command::RequestCharacterCreation);
+    }
+
+    pub fn request_character_deletion(&self, character_id: i32) {
+        let _ = self
+            .tx
+            .send(Command::RequestCharacterDeletion { character_id });
     }
 
     pub fn request_warp(
@@ -285,12 +298,15 @@ impl PlayerHandle {
         });
     }
 
-    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
-        let _ = self.tx.send(Command::Send(action, family, buf));
+    pub fn select_character(&self, character_id: i32) {
+        let _ = self.tx.send(Command::SelectCharacter {
+            player_handle: self.clone(),
+            character_id,
+        });
     }
 
-    pub fn set_account_id(&self, account_id: i32) {
-        let _ = self.tx.send(Command::SetAccountId(account_id));
+    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
+        let _ = self.tx.send(Command::Send(action, family, buf));
     }
 
     pub fn set_board_id(&self, board_id: i32) {
@@ -303,10 +319,6 @@ impl PlayerHandle {
 
     pub fn set_busy(&self, busy: bool) {
         let _ = self.tx.send(Command::SetBusy(busy));
-    }
-
-    pub fn set_character(&self, character: Box<Character>) {
-        let _ = self.tx.send(Command::SetCharacter(character));
     }
 
     pub fn set_interact_npc_index(&self, index: i32) {
@@ -331,26 +343,6 @@ impl PlayerHandle {
 
     pub fn set_trading(&self, trading: bool) {
         let _ = self.tx.send(Command::SetTrading(trading));
-    }
-
-    pub fn set_map(&self, map: MapHandle) {
-        let _ = self.tx.send(Command::SetMap(map));
-    }
-
-    pub fn set_state(&self, state: ClientState) {
-        let _ = self.tx.send(Command::SetState(state));
-    }
-
-    pub async fn take_character(&self) -> Result<Box<Character>, InvalidStateError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::TakeCharacter { respond_to: tx });
-        rx.await.unwrap()
-    }
-
-    pub async fn take_session_id(&self) -> Result<i32, MissingSessionIdError> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::TakeSessionId { respond_to: tx });
-        rx.await.unwrap()
     }
 
     pub fn update_party_hp(&self, hp_percentage: i32) {

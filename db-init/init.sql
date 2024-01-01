@@ -128,7 +128,6 @@ CREATE TABLE `Ban` (
   `created_by` int NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name_UNIQUE` (`name`),
   KEY `account_id_idx` (`account_id`),
   CONSTRAINT `ban_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
   KEY `created_by_idx` (`created_by`),

@@ -17,10 +17,6 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    if add.deposit_item.id <= 1 || add.deposit_item.amount == 0 {
-        return;
-    }
-
     map.add_locker_item(
         player_id,
         Item {

@@ -1,3 +1,5 @@
+use std::cmp;
+
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -8,6 +10,8 @@ use eolib::{
         Emote,
     },
 };
+
+use crate::SETTINGS;
 
 use super::super::Map;
 
@@ -35,7 +39,11 @@ impl Map {
 
         let character = self.characters.get_mut(&partner_id).unwrap();
         for item in &trade_items {
-            character.add_item(item.id, item.amount);
+            let amount = cmp::min(
+                SETTINGS.limits.max_item - character.get_item_amount(item.id),
+                item.amount,
+            );
+            character.add_item(item.id, amount);
         }
 
         let character = self.characters.get_mut(&partner_id).unwrap();
@@ -46,7 +54,11 @@ impl Map {
 
         let character = self.characters.get_mut(&player_id).unwrap();
         for item in &partner_trade_items {
-            character.add_item(item.id, item.amount);
+            let amount = cmp::min(
+                SETTINGS.limits.max_item - character.get_item_amount(item.id),
+                item.amount,
+            );
+            character.add_item(item.id, amount);
         }
 
         let character = self.characters.get(&player_id).unwrap();

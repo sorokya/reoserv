@@ -35,7 +35,7 @@ save_rate = 5
 
 # Should the server generate pub files from JSON?
 # If false you will need to provide binary pub files yourself
-generate_pub = true
+generate_pub = false
 
 # Server language. Should match a ron file in the lang directory
 lang = "en"
@@ -224,16 +224,16 @@ upgrade_cost_step = 1000
 [limits]
 
 # Maximum amount of gold a player can deposit
-max_bank_gold = 2000000000
+max_bank_gold = 2_000_000_000
 
 # Maximum amount of an item a player can have in their inventory
-max_item = 2000000000
+max_item = 2_000_000_000
 
 # Maximum amount of an item players can trade
-max_trade = 2000000000
+max_trade = 2_000_000_000
 
 # Maximum amount of an item a chest will hold
-max_chest = 10000000
+max_chest = 10_000_000
 
 # Maximum amount of players to one group
 max_party_size = 9

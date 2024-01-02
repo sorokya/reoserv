@@ -481,6 +481,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedArena);
     }
 
+    pub fn jukebox_timer(&self) {
+        let _ = self.tx.send(Command::JukeboxTimer);
+    }
+
     pub fn timed_door_close(&self) {
         let _ = self.tx.send(Command::TimedDoorClose);
     }

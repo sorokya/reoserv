@@ -32,6 +32,7 @@ pub struct Map {
     has_timed_spikes: bool,
     jukebox_player: Option<String>,
     jukebox_ticks: i32,
+    has_jukebox: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -66,6 +67,12 @@ impl Map {
             row.tiles
                 .iter()
                 .any(|tile| tile.tile_spec == MapTileSpec::TimedSpikes)
+        });
+
+        let has_jukebox = file.tile_spec_rows.iter().any(|row| {
+            row.tiles
+                .iter()
+                .any(|tile| tile.tile_spec == MapTileSpec::Jukebox)
         });
 
         let mut doors: Vec<Door> = Vec::new();
@@ -106,6 +113,7 @@ impl Map {
             has_timed_spikes,
             jukebox_player: None,
             jukebox_ticks: 0,
+            has_jukebox,
         }
     }
 
@@ -235,6 +243,8 @@ impl Map {
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
+
+            Command::JukeboxTimer => self.jukebox_timer(),
 
             Command::JunkItem {
                 target_player_id,

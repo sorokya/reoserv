@@ -18,7 +18,7 @@ fn msg(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.play_jukebox_track(player_id, msg.track_id);
+    map.play_jukebox_track(player_id, msg.track_id + 1);
 }
 
 pub async fn jukebox(action: PacketAction, reader: EoReader, player: PlayerHandle) {

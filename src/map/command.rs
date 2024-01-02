@@ -129,6 +129,7 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    JukeboxTimer,
     JunkItem {
         target_player_id: i32,
         item_id: i32,

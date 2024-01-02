@@ -24,7 +24,13 @@ impl Map {
             return;
         }
 
-        if self.jukebox_ticks > 0 || character.get_item_amount(1) < SETTINGS.jukebox.cost {
+        debug!("Requesting track: {}", track_id);
+
+        if self.jukebox_ticks > 0
+            || character.get_item_amount(1) < SETTINGS.jukebox.cost
+            || track_id < 1
+            || track_id > SETTINGS.jukebox.max_track_id
+        {
             let packet = JukeboxReplyServerPacket::new();
 
             let mut writer = EoWriter::new();

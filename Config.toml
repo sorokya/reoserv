@@ -277,5 +277,6 @@ cost = 25
 
 max_track_id = 20
 
-# Number of ticks before the next track can be played
-track_timer = 720
+# Number of seconds before the next track can be played
+# 0 to allow tracks to be played instantly
+track_timer = 90

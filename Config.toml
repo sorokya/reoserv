@@ -157,6 +157,11 @@ quakes = [
 # This should be a multiple of world.door_close_rate
 door_close_rate = 3
 
+[character]
+
+max_hair_style = 20
+max_hair_color = 9
+
 [npcs]
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time
@@ -280,3 +285,7 @@ max_track_id = 20
 # Number of seconds before the next track can be played
 # 0 to allow tracks to be played instantly
 track_timer = 90
+
+[barber]
+
+cost_per_level = 200

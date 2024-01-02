@@ -45,6 +45,12 @@ pub enum Command {
         item: Item,
         session_id: i32,
     },
+    BuyHaircut {
+        player_id: i32,
+        session_id: i32,
+        hair_style: i32,
+        hair_color: i32,
+    },
     CancelTrade {
         player_id: i32,
         partner_player_id: i32,

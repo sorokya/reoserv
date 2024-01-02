@@ -142,6 +142,16 @@ impl Map {
                 session_id,
             } => self.buy_item(player_id, item, session_id).await,
 
+            Command::BuyHaircut {
+                player_id,
+                session_id,
+                hair_style,
+                hair_color,
+            } => {
+                self.buy_haircut(player_id, session_id, hair_style, hair_color)
+                    .await
+            }
+
             Command::CancelTrade {
                 player_id,
                 partner_player_id,

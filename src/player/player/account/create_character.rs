@@ -1,3 +1,4 @@
+use crate::SETTINGS;
 use crate::{character::Character, errors::WrongSessionIdError};
 use eolib::data::{EoSerialize, EoWriter};
 use eolib::protocol::net::client::CharacterCreateClientPacket;
@@ -14,6 +15,14 @@ use super::get_character_list::get_character_list;
 
 impl Player {
     pub async fn create_character(&mut self, packet: CharacterCreateClientPacket) -> bool {
+        if packet.hair_color < 0
+            || packet.hair_color > SETTINGS.character.max_hair_color
+            || packet.hair_style < 0
+            || packet.hair_style > SETTINGS.character.max_hair_style
+        {
+            return true;
+        }
+
         let conn = self.pool.get_conn();
 
         let mut conn = match conn.await {

@@ -12,6 +12,9 @@ pub use attack::attack;
 mod bank;
 pub use bank::bank;
 
+mod barber;
+pub use barber::barber;
+
 mod board;
 pub use board::board;
 

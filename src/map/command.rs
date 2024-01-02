@@ -154,6 +154,10 @@ pub enum Command {
         player_id: i32,
         npc_index: i32,
     },
+    OpenBarber {
+        player_id: i32,
+        npc_index: i32,
+    },
     OpenBoard {
         player_id: i32,
         board_id: i32,

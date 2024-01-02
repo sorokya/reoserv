@@ -255,6 +255,13 @@ impl MapHandle {
         });
     }
 
+    pub fn open_barber(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::OpenBarber {
+            player_id,
+            npc_index,
+        });
+    }
+
     pub fn open_board(&self, player_id: i32, board_id: i32) {
         let _ = self.tx.send(Command::OpenBoard {
             player_id,

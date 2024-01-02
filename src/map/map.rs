@@ -42,6 +42,7 @@ pub struct ArenaPlayer {
 }
 
 mod bank;
+mod barber;
 mod board;
 mod character;
 mod chest;
@@ -273,6 +274,11 @@ impl Map {
                 player_id,
                 npc_index,
             } => self.open_bank(player_id, npc_index).await,
+
+            Command::OpenBarber {
+                player_id,
+                npc_index,
+            } => self.open_barber(player_id, npc_index),
 
             Command::OpenBoard {
                 player_id,

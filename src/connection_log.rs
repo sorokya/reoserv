@@ -22,16 +22,11 @@ impl ConnectionLog {
     }
 
     pub fn get_last_connect(&self, ip: &str) -> Option<DateTime<Utc>> {
-        match self.entries.get(ip) {
-            Some(entry) => Some(entry.last_connect),
-            None => None,
-        }
+        self.entries.get(ip).map(|entry| entry.last_connect)
     }
 
     pub fn len(&self) -> i32 {
-        self.entries
-            .iter()
-            .map(|(_, entry)| entry.connections)
+        self.entries.values().map(|entry| entry.connections)
             .sum()
     }
 
@@ -41,6 +36,15 @@ impl ConnectionLog {
             entry.last_connect = Utc::now();
         } else {
             self.entries.insert(ip.to_string(), Entry::new());
+        }
+    }
+
+    pub fn remove_connection(&mut self, ip: &str) {
+        let entry = self.entries.get_mut(ip).unwrap();
+        if entry.connections > 1 {
+            entry.connections -= 1;
+        } else {
+            self.entries.remove(ip);
         }
     }
 }

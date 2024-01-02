@@ -1,6 +1,7 @@
 use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 use eolib::{
     data::{EoSerialize, EoWriter},
     packet::{generate_sequence_start, get_ping_sequence_bytes},
@@ -29,8 +30,9 @@ pub struct Player {
     pub busy: bool,
     account_id: i32,
     pool: Pool,
-    state: ClientState,
+    pub state: ClientState,
     ip: String,
+    pub connected_at: DateTime<Utc>,
     character: Option<Character>,
     session_id: Option<i32>,
     interact_npc_index: Option<i32>,
@@ -64,6 +66,7 @@ impl Player {
     pub fn new(
         id: i32,
         socket: TcpStream,
+        connected_at: DateTime<Utc>,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
         pool: Pool,
@@ -72,6 +75,7 @@ impl Player {
         Self {
             id,
             bus: PacketBus::new(socket),
+            connected_at,
             rx,
             world,
             pool,

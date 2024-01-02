@@ -1,4 +1,6 @@
-use crate::{errors::DataNotFoundError, map::MapHandle, player::PlayerHandle};
+use crate::{
+    connection_log::ConnectionLog, errors::DataNotFoundError, map::MapHandle, player::PlayerHandle,
+};
 
 use super::{load_maps::load_maps, Command, Party};
 use mysql_async::Pool;
@@ -26,6 +28,7 @@ pub struct World {
     arena_ticks: i32,
     door_close_ticks: i32,
     global_locked: bool,
+    connection_log: ConnectionLog,
 }
 
 mod add_player;
@@ -64,6 +67,7 @@ impl World {
             arena_ticks: 0,
             door_close_ticks: 0,
             global_locked: false,
+            connection_log: ConnectionLog::new(),
         }
     }
 
@@ -76,6 +80,11 @@ impl World {
             } => {
                 self.accept_party_request(player_id, target_player_id, request_type)
                     .await
+            }
+
+            Command::AddConnection { ip, respond_to } => {
+                self.connection_log.add_connection(&ip);
+                let _ = respond_to.send(());
             }
 
             Command::AddLoggedInAccount { account_id } => {
@@ -117,13 +126,26 @@ impl World {
 
             Command::DropPlayer {
                 player_id,
+                ip,
                 account_id,
                 character_name,
                 respond_to,
-            } => self.drop_player(player_id, account_id, &character_name, respond_to),
+            } => self.drop_player(player_id, ip, account_id, &character_name, respond_to),
 
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
+            }
+
+            Command::GetConnectionCount { respond_to } => {
+                let _ = respond_to.send(self.connection_log.len());
+            }
+
+            Command::GetIpConnectionCount { ip, respond_to } => {
+                let _ = respond_to.send(self.connection_log.get_num_of_connections(&ip));
+            }
+
+            Command::GetIpLastConnect { ip, respond_to } => {
+                let _ = respond_to.send(self.connection_log.get_last_connect(&ip));
             }
 
             Command::GetMap { map_id, respond_to } => {
@@ -151,10 +173,6 @@ impl World {
                 respond_to,
             } => {
                 let _ = respond_to.send(self.get_player_party(player_id));
-            }
-
-            Command::GetPlayerCount { respond_to } => {
-                let _ = respond_to.send(self.players.len());
             }
 
             Command::IsLoggedIn {

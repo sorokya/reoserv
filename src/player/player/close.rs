@@ -19,17 +19,16 @@ impl Player {
                 });
             character_name
         } else {
-            self
-            .character
-            .as_ref()
-            .map(|c| c.name.clone())
-            .unwrap_or_default()
+            self.character
+                .as_ref()
+                .map(|c| c.name.clone())
+                .unwrap_or_default()
         };
 
         self.world.remove_party_member(self.id, self.id);
 
         self.world
-            .drop_player(self.id, self.account_id, character_name)
+            .drop_player(self.id, self.ip.clone(), self.account_id, character_name)
             .await
             .unwrap();
         info!("player {} connection closed: {:?}", self.id, reason);

@@ -176,6 +176,10 @@ pub enum Command {
         target_player_id: i32, // TODO: rename to player_id
         door_coords: Coords,   // TODO: rename to coords
     },
+    OpenGuildMaster {
+        player_id: i32,
+        npc_index: i32,
+    },
     OpenInn {
         player_id: i32,
         npc_index: i32,

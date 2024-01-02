@@ -67,6 +67,7 @@ pub async fn handle_packet(
         PacketFamily::Emote => handlers::emote(action, reader, player.clone()).await,
         PacketFamily::Face => handlers::face(action, reader, player.clone()).await,
         PacketFamily::Global => handlers::global(action, reader, player.clone()),
+        PacketFamily::Guild => handlers::guild(action, reader, player.clone()).await,
         PacketFamily::Init => handlers::init(action, reader, player.clone()).await,
         PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
         PacketFamily::Jukebox => handlers::jukebox(action, reader, player.clone()).await,

@@ -47,6 +47,7 @@ mod board;
 mod character;
 mod chest;
 mod events;
+mod guild;
 mod inn;
 mod jukebox;
 mod locker;
@@ -301,6 +302,11 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::OpenGuildMaster {
+                player_id,
+                npc_index,
+            } => self.open_guild_master(player_id, npc_index),
 
             Command::OpenInn {
                 player_id,

@@ -289,6 +289,13 @@ impl MapHandle {
         });
     }
 
+    pub fn open_guild_master(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::OpenGuildMaster {
+            player_id,
+            npc_index,
+        });
+    }
+
     pub fn open_inn(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenInn {
             player_id,

@@ -7,6 +7,7 @@ extern crate serde_derive;
 
 use std::time::Duration;
 
+use chrono::Utc;
 use eolib::protocol::r#pub::{
     server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
     Ecf, Eif, Enf, Esf,
@@ -18,6 +19,7 @@ mod character;
 use arenas::Arenas;
 mod commands;
 use commands::Commands;
+mod connection_log;
 mod formulas;
 use formulas::Formulas;
 mod errors;
@@ -38,6 +40,7 @@ use tokio::{net::TcpListener, signal, time};
 use world::WorldHandle;
 
 use crate::{
+    connection_log::ConnectionLog,
     lang::Lang,
     player::PlayerHandle,
     utils::{
@@ -184,14 +187,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut server_world = world.clone();
     tokio::spawn(async move {
+        let mut connection_log = ConnectionLog::new();
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
+            let ip = addr.ip().to_string();
 
             let player_count = server_world.get_player_count().await.unwrap();
             if player_count >= SETTINGS.server.max_connections as usize {
                 warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
+
+            if let Some(last_connect) = connection_log.get_last_connect(&ip) {
+                let time_since_last_connect = Utc::now() - last_connect;
+                if SETTINGS.server.ip_reconnect_limit != 0
+                    && time_since_last_connect.num_seconds()
+                        < SETTINGS.server.ip_reconnect_limit.into()
+                {
+                    warn!(
+                        "{} has been disconnected because it reconnected too quickly",
+                        addr
+                    );
+                    continue;
+                }
+            }
+
+            let num_of_connections = connection_log.get_num_of_connections(&ip);
+            if SETTINGS.server.max_connections_per_ip != 0
+                && num_of_connections > SETTINGS.server.max_connections_per_ip
+            {
+                warn!(
+                    "{} has been disconnected because there are already {} connections from {}",
+                    addr, num_of_connections, ip
+                );
+                continue;
+            }
+
+            connection_log.add_connection(&ip);
 
             let player_id = server_world.get_next_player_id().await.unwrap();
 
@@ -201,7 +233,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                player_count + 1,
+                connection_log.len(),
                 SETTINGS.server.max_connections
             );
         }

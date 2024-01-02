@@ -35,6 +35,12 @@ pub struct NewCharacter {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Character {
+    pub max_hair_color: i32,
+    pub max_hair_style: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Jail {
     pub map: i32,
     pub x: i32,
@@ -174,6 +180,11 @@ pub struct Jukebox {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Barber {
+    pub cost_per_level: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -181,6 +192,7 @@ pub struct Settings {
     pub jail: Jail,
     pub rescue: Rescue,
     pub world: World,
+    pub character: Character,
     pub npcs: NPCs,
     pub sln: Sln,
     pub bank: Bank,
@@ -190,6 +202,7 @@ pub struct Settings {
     pub map: Map,
     pub combat: Combat,
     pub jukebox: Jukebox,
+    pub barber: Barber,
 }
 
 impl Settings {

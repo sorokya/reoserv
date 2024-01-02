@@ -69,6 +69,15 @@ impl MapHandle {
         });
     }
 
+    pub fn buy_haircut(&self, player_id: i32, session_id: i32, hair_style: i32, hair_color: i32) {
+        let _ = self.tx.send(Command::BuyHaircut {
+            player_id,
+            session_id,
+            hair_style,
+            hair_color,
+        });
+    }
+
     pub fn cancel_trade(&self, player_id: i32, partner_player_id: i32) {
         let _ = self.tx.send(Command::CancelTrade {
             player_id,
@@ -250,6 +259,13 @@ impl MapHandle {
 
     pub fn open_bank(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenBank {
+            player_id,
+            npc_index,
+        });
+    }
+
+    pub fn open_barber(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::OpenBarber {
             player_id,
             npc_index,
         });

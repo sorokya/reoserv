@@ -18,6 +18,10 @@ impl Player {
         player_handle: PlayerHandle,
         character_id: i32,
     ) -> bool {
+        if self.state != ClientState::LoggedIn {
+            return true;
+        }
+
         let player_count = self.world.get_player_count().await;
         if player_count >= SETTINGS.server.max_players {
             let packet = WelcomeReplyServerPacket {

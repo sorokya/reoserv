@@ -21,6 +21,10 @@ use super::{account_exists::account_exists, get_character_list::get_character_li
 
 impl Player {
     pub async fn login(&mut self, username: String, password: String) -> bool {
+        if self.state != ClientState::Accepted {
+            return true;
+        }
+
         let player_count = self.world.get_player_count().await;
         if player_count >= SETTINGS.server.max_players {
             let packet = LoginReplyServerPacket {

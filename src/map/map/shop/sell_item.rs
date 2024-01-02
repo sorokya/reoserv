@@ -11,13 +11,13 @@ use eolib::{
     },
 };
 
-use crate::{NPC_DB, SHOP_DB};
+use crate::{NPC_DB, SETTINGS, SHOP_DB};
 
 use super::super::Map;
 
 impl Map {
     pub async fn sell_item(&mut self, player_id: i32, item: Item, session_id: i32) {
-        if item.amount == 0 {
+        if item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
             return;
         }
 
@@ -91,7 +91,9 @@ impl Map {
             return;
         }
 
-        let price = trade.sell_price * amount;
+        let amount = cmp::min(amount, trade.max_amount);
+
+        let price = cmp::min(trade.sell_price * amount, SETTINGS.limits.max_item);
 
         character.remove_item(item.id, amount);
         character.add_item(1, price);

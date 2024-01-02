@@ -1,3 +1,5 @@
+use std::cmp;
+
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -6,13 +8,13 @@ use eolib::{
     },
 };
 
-use crate::{NPC_DB, SHOP_DB};
+use crate::{NPC_DB, SETTINGS, SHOP_DB};
 
 use super::super::Map;
 
 impl Map {
     pub async fn buy_item(&mut self, player_id: i32, item: Item, session_id: i32) {
-        if item.amount == 0 {
+        if item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
             return;
         }
 
@@ -81,6 +83,8 @@ impl Map {
         if amount == 0 {
             return;
         }
+
+        let amount = cmp::min(amount, trade.max_amount);
 
         let price = trade.buy_price * amount;
 

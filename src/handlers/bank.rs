@@ -17,10 +17,6 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    if add.amount == 0 {
-        return;
-    }
-
     map.deposit_gold(player_id, add.session_id, add.amount);
 }
 
@@ -44,10 +40,6 @@ fn take(reader: EoReader, player_id: i32, map: MapHandle) {
             return;
         }
     };
-
-    if take.amount == 0 {
-        return;
-    }
 
     map.withdraw_gold(player_id, take.session_id, take.amount);
 }

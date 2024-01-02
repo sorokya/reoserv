@@ -18,6 +18,10 @@ use super::super::Map;
 
 impl Map {
     pub async fn add_locker_item(&mut self, player_id: i32, item: Item) {
+        if item.id <= 1 || item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
+            return;
+        }
+
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

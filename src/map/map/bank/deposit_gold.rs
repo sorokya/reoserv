@@ -35,12 +35,12 @@ impl Map {
         }
 
         let amount = cmp::min(character.get_item_amount(1), amount);
-        if amount == 0 {
+        if amount <= 0 {
             return;
         }
 
         let amount = cmp::min(SETTINGS.limits.max_bank_gold - character.gold_bank, amount);
-        if amount == 0 {
+        if amount <= 0 {
             return;
         }
 

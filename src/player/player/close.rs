@@ -3,8 +3,9 @@ use super::Player;
 impl Player {
     pub async fn close(&mut self, reason: String) {
         self.queue.borrow_mut().clear();
-        if let Some(map) = self.map.as_ref() {
+        let character_name = if let Some(map) = self.map.as_ref() {
             let mut character = map.leave(self.id, None, self.interact_player_id).await;
+            let character_name = character.name.clone();
             let pool = self.pool.clone();
             let _ = tokio::task::Builder::new()
                 .name("character_save")
@@ -16,15 +17,17 @@ impl Player {
                     }
                     character.save(&mut conn).await.unwrap();
                 });
-        }
-
-        self.world.remove_party_member(self.id, self.id);
-
-        let character_name = self
+            character_name
+        } else {
+            self
             .character
             .as_ref()
             .map(|c| c.name.clone())
-            .unwrap_or_default();
+            .unwrap_or_default()
+        };
+
+        self.world.remove_party_member(self.id, self.id);
+
         self.world
             .drop_player(self.id, self.account_id, character_name)
             .await

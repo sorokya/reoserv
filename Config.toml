@@ -8,6 +8,22 @@ port = "8078"
 # Maximum amount of connections to allow to the server
 max_connections = 300
 
+# Maximum amount of connections to allow from a single IP
+# 0 for unlimited
+max_connections_per_ip = 3
+
+# Seconds an IP must wait before reconnecting to the server
+ip_reconnect_limit = 10
+
+# Maximum amount of uninitialized connections
+max_uninitialized_connections = 50
+
+# Number of seconds to wait before dropping an uninitialized connection
+hangup_delay = 10
+
+# Maximum amount of players allowed to enter the game
+max_players = 200
+
 # How often to send a ping to connected clients
 # clients are disconnected if they fail to respond to the first
 # ping before the next one is sent.
@@ -17,6 +33,9 @@ ping_rate = 60
 # This should be changed to a random value to prevent
 # rainbow table attacks
 password_salt = "ChangeMe"
+
+# Number of failed login attempts before connection is closed
+max_login_attempts = 3
 
 # Validate the sequence number sent by the client
 # matches the one on the server

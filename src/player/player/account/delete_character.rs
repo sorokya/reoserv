@@ -5,6 +5,7 @@ use eolib::protocol::net::server::{
 };
 use eolib::protocol::net::{PacketAction, PacketFamily};
 
+use crate::player::ClientState;
 use crate::{character::Character, errors::WrongSessionIdError};
 
 use super::super::Player;
@@ -13,6 +14,10 @@ use super::get_character_list::get_character_list;
 
 impl Player {
     pub async fn delete_character(&mut self, session_id: i32, character_id: i32) -> bool {
+        if self.state != ClientState::LoggedIn {
+            return true;
+        }
+
         let conn = self.pool.get_conn();
 
         let mut conn = match conn.await {

@@ -8,6 +8,7 @@ use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::prelude::*;
 
 use crate::errors::WrongSessionIdError;
+use crate::player::ClientState;
 
 use super::super::Player;
 
@@ -15,6 +16,10 @@ use super::{account_exists::account_exists, password_hash::generate_password_has
 
 impl Player {
     pub async fn create_account(&mut self, packet: AccountCreateClientPacket) -> bool {
+        if self.state != ClientState::Accepted {
+            return true;
+        }
+
         let conn = self.pool.get_conn();
 
         let mut conn = match conn.await {

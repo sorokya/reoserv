@@ -7,6 +7,7 @@ extern crate serde_derive;
 
 use std::time::Duration;
 
+use chrono::Utc;
 use eolib::protocol::r#pub::{
     server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
     Ecf, Eif, Enf, Esf,
@@ -18,6 +19,7 @@ mod character;
 use arenas::Arenas;
 mod commands;
 use commands::Commands;
+mod connection_log;
 mod formulas;
 use formulas::Formulas;
 mod errors;
@@ -186,22 +188,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
+            let ip = addr.ip().to_string();
+            let now = Utc::now();
 
-            let player_count = server_world.get_player_count().await.unwrap();
-            if player_count >= SETTINGS.server.max_connections as usize {
+            let player_count = server_world.get_connection_count().await;
+            if player_count >= SETTINGS.server.max_connections {
                 warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
 
+            if let Some(last_connect) = server_world.get_ip_last_connect(&ip).await {
+                let time_since_last_connect = now - last_connect;
+                if SETTINGS.server.ip_reconnect_limit != 0
+                    && time_since_last_connect.num_seconds()
+                        < SETTINGS.server.ip_reconnect_limit.into()
+                {
+                    warn!(
+                        "{} has been disconnected because it reconnected too quickly",
+                        addr
+                    );
+                    continue;
+                }
+            }
+
+            let num_of_connections = server_world.get_ip_connection_count(&ip).await;
+            if SETTINGS.server.max_connections_per_ip != 0
+                && num_of_connections >= SETTINGS.server.max_connections_per_ip
+            {
+                warn!(
+                    "{} has been disconnected because there are already {} connections from {}",
+                    addr, num_of_connections, ip
+                );
+                continue;
+            }
+
+            server_world.add_connection(&ip).await;
+
             let player_id = server_world.get_next_player_id().await.unwrap();
 
-            let player = PlayerHandle::new(player_id, socket, server_world.clone(), pool.clone());
+            let player =
+                PlayerHandle::new(player_id, socket, now, server_world.clone(), pool.clone());
             server_world.add_player(player_id, player).await.unwrap();
 
             info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                player_count + 1,
+                server_world.get_connection_count().await,
                 SETTINGS.server.max_connections
             );
         }

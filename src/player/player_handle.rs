@@ -1,4 +1,7 @@
+use std::time::Duration;
+
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 use eolib::protocol::{
     net::{
         client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
@@ -13,7 +16,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, map::MapHandle, world::WorldHandle};
+use crate::{character::Character, map::MapHandle, world::WorldHandle, SETTINGS};
 
 use super::{handle_packet::handle_packet, player::Player, ClientState, Command, PartyRequest};
 
@@ -23,9 +26,15 @@ pub struct PlayerHandle {
 }
 
 impl PlayerHandle {
-    pub fn new(id: i32, socket: TcpStream, world: WorldHandle, pool: Pool) -> Self {
+    pub fn new(
+        id: i32,
+        socket: TcpStream,
+        connected_at: DateTime<Utc>,
+        world: WorldHandle,
+        pool: Pool,
+    ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(id, socket, rx, world, pool);
+        let player = Player::new(id, socket, connected_at, rx, world, pool);
         let _ = tokio::task::Builder::new()
             .name(&format!("Player {}", id))
             .spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));
@@ -393,5 +402,20 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                     player.world.clone(),
                 ));
         }
+
+        if player.state == ClientState::Uninitialized {
+            let time_since_connection = Utc::now() - player.connected_at;
+            if time_since_connection.num_seconds() > SETTINGS.server.hangup_delay.into() {
+                player
+                    .close(format!(
+                        "Failed to start handshake in {} seconds",
+                        SETTINGS.server.hangup_delay
+                    ))
+                    .await;
+                break;
+            }
+        }
+
+        tokio::time::sleep(Duration::from_millis(60)).await;
     }
 }

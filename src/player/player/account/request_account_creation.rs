@@ -5,12 +5,18 @@ use eolib::protocol::net::server::{
 };
 use eolib::protocol::net::{PacketAction, PacketFamily};
 
+use crate::player::ClientState;
+
 use super::account_exists::account_exists;
 
 use super::super::Player;
 
 impl Player {
     pub async fn request_account_creation(&mut self, username: String) -> bool {
+        if self.state != ClientState::Accepted {
+            return true;
+        }
+
         // TODO: validate name
 
         let mut conn = match self.pool.get_conn().await {

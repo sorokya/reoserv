@@ -12,6 +12,7 @@ use crate::{map::Chest, utils::get_distance};
 use super::super::Map;
 
 impl Map {
+    // TODO: Make sure player can hold item before taking
     pub async fn take_chest_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,

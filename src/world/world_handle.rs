@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
@@ -42,6 +43,15 @@ impl WorldHandle {
 
     pub fn add_character(&self, player_id: i32, name: String) {
         let _ = self.tx.send(Command::AddCharacter { player_id, name });
+    }
+
+    pub async fn add_connection(&self, ip: &str) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::AddConnection {
+            ip: ip.to_string(),
+            respond_to: tx,
+        });
+        rx.await.unwrap();
     }
 
     pub async fn add_player(
@@ -107,6 +117,7 @@ impl WorldHandle {
     pub async fn drop_player(
         &self,
         player_id: i32,
+        ip: String,
         account_id: i32,
         character_name: String,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -114,6 +125,7 @@ impl WorldHandle {
         let _ = self.tx.send(Command::DropPlayer {
             respond_to: tx,
             player_id,
+            ip,
             account_id,
             character_name,
         });
@@ -168,12 +180,34 @@ impl WorldHandle {
         Ok(rx.await.unwrap())
     }
 
-    pub async fn get_player_count(
-        &self,
-    ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_connection_count(&self) -> i32 {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetConnectionCount { respond_to: tx });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_ip_connection_count(&self, ip: &str) -> i32 {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetIpConnectionCount {
+            ip: ip.to_string(),
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_ip_last_connect(&self, ip: &str) -> Option<DateTime<Utc>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetIpLastConnect {
+            ip: ip.to_string(),
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_player_count(&self) -> i32 {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerCount { respond_to: tx });
-        Ok(rx.await.unwrap())
+        rx.await.unwrap()
     }
 
     pub async fn get_player_party(&self, player_id: i32) -> Option<Party> {

@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use tokio::sync::oneshot;
 
@@ -15,6 +16,10 @@ pub enum Command {
     AddCharacter {
         player_id: i32,
         name: String,
+    },
+    AddConnection {
+        ip: String,
+        respond_to: oneshot::Sender<()>,
     },
     AddLoggedInAccount {
         account_id: i32,
@@ -52,6 +57,7 @@ pub enum Command {
     },
     DropPlayer {
         player_id: i32,
+        ip: String,
         account_id: i32,
         character_name: String,
         respond_to: oneshot::Sender<()>,
@@ -72,6 +78,17 @@ pub enum Command {
         respond_to:
             oneshot::Sender<Result<Box<Character>, Box<dyn std::error::Error + Sync + Send>>>,
     },
+    GetConnectionCount {
+        respond_to: oneshot::Sender<i32>,
+    },
+    GetIpConnectionCount {
+        ip: String,
+        respond_to: oneshot::Sender<i32>,
+    },
+    GetIpLastConnect {
+        ip: String,
+        respond_to: oneshot::Sender<Option<DateTime<Utc>>>,
+    },
     GetMap {
         map_id: i32,
         respond_to: oneshot::Sender<Result<MapHandle, Box<dyn std::error::Error + Send + Sync>>>,
@@ -79,12 +96,12 @@ pub enum Command {
     GetNextPlayerId {
         respond_to: oneshot::Sender<i32>,
     },
+    GetPlayerCount {
+        respond_to: oneshot::Sender<i32>,
+    },
     GetPlayerParty {
         player_id: i32,
         respond_to: oneshot::Sender<Option<Party>>,
-    },
-    GetPlayerCount {
-        respond_to: oneshot::Sender<usize>,
     },
     IsLoggedIn {
         account_id: i32,

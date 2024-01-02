@@ -13,7 +13,9 @@ use eolib::{
     },
 };
 
-use crate::{errors::WrongSessionIdError, CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB};
+use crate::{
+    errors::WrongSessionIdError, player::ClientState, CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB,
+};
 
 use super::Player;
 
@@ -25,6 +27,14 @@ impl Player {
         _file_id: Option<i32>,
         warp: bool,
     ) -> bool {
+        if warp && self.state != ClientState::InGame {
+            return true;
+        }
+
+        if !warp && self.state != ClientState::EnteringGame {
+            return true;
+        }
+
         let actual_session_id = match self.session_id {
             Some(session_id) => session_id,
             None => {

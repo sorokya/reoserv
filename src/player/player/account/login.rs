@@ -1,14 +1,16 @@
 use eolib::data::{EoSerialize, EoWriter};
 use eolib::protocol::net::server::{
     LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
-    LoginReplyServerPacketReplyCodeDataBanned, LoginReplyServerPacketReplyCodeDataLoggedIn,
-    LoginReplyServerPacketReplyCodeDataOk, LoginReplyServerPacketReplyCodeDataWrongUser,
+    LoginReplyServerPacketReplyCodeDataBanned, LoginReplyServerPacketReplyCodeDataBusy,
+    LoginReplyServerPacketReplyCodeDataLoggedIn, LoginReplyServerPacketReplyCodeDataOk,
+    LoginReplyServerPacketReplyCodeDataWrongUser,
     LoginReplyServerPacketReplyCodeDataWrongUserPassword,
 };
 use eolib::protocol::net::{PacketAction, PacketFamily};
 use mysql_async::{prelude::*, Params, Row};
 
 use crate::player::ClientState;
+use crate::SETTINGS;
 
 use super::{
     super::Player, account_banned::account_banned, password_hash::validate_password,
@@ -19,6 +21,41 @@ use super::{account_exists::account_exists, get_character_list::get_character_li
 
 impl Player {
     pub async fn login(&mut self, username: String, password: String) -> bool {
+        if self.state != ClientState::Accepted {
+            return true;
+        }
+
+        let player_count = self.world.get_player_count().await;
+        if player_count >= SETTINGS.server.max_players {
+            let packet = LoginReplyServerPacket {
+                reply_code: LoginReply::Busy,
+                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Busy(
+                    LoginReplyServerPacketReplyCodeDataBusy::new(),
+                )),
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                self.close(format!("Error serializing LoginReplyServerPacket: {}", e))
+                    .await;
+                return false;
+            }
+
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    writer.to_byte_array(),
+                )
+                .await;
+
+            self.close("Server busy".to_string()).await;
+
+            return false;
+        }
+
         let conn = self.pool.get_conn();
         let mut conn = match conn.await {
             Ok(conn) => conn,

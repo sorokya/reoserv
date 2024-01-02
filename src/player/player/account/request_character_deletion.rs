@@ -3,12 +3,16 @@ use eolib::{
     protocol::net::{server::CharacterPlayerServerPacket, PacketAction, PacketFamily},
 };
 
-use crate::character::Character;
+use crate::{character::Character, player::ClientState};
 
 use super::super::Player;
 
 impl Player {
     pub async fn request_character_deletion(&mut self, character_id: i32) -> bool {
+        if self.state != ClientState::LoggedIn {
+            return true;
+        }
+
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(e) => {

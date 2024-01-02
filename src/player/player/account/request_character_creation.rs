@@ -5,12 +5,18 @@ use eolib::protocol::net::server::{
 };
 use eolib::protocol::net::{PacketAction, PacketFamily};
 
+use crate::player::ClientState;
+
 use super::get_num_of_characters::get_num_of_characters;
 
 use super::super::Player;
 
 impl Player {
     pub async fn request_character_creation(&mut self) -> bool {
+        if self.state != ClientState::LoggedIn {
+            return true;
+        }
+
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(e) => {

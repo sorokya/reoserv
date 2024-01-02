@@ -12,6 +12,8 @@ use eolib::{
 };
 use mysql_async::{prelude::*, Params, Row};
 
+use crate::player::ClientState;
+
 use super::{
     super::Player,
     password_hash::{generate_password_hash, validate_password},
@@ -26,6 +28,10 @@ impl Player {
         current_password: String,
         new_password: String,
     ) -> bool {
+        if self.state != ClientState::LoggedIn {
+            return true;
+        }
+
         let conn = self.pool.get_conn();
         let mut conn = match conn.await {
             Ok(conn) => conn,

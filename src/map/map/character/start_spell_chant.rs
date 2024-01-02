@@ -7,7 +7,7 @@ use super::super::Map;
 
 impl Map {
     pub fn start_spell_chant(&mut self, player_id: i32, spell_id: i32, timestamp: i32) {
-        if spell_id == 0 {
+        if spell_id <= 0 {
             return;
         }
 

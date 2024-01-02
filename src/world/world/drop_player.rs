@@ -15,11 +15,6 @@ impl World {
             return;
         }
 
-        warn!(
-            "Dropping player! id: {}, account_id: {}, character_name: {}",
-            player_id, account_id, character_name
-        );
-
         self.players.remove(&player_id);
 
         if account_id > 0 {

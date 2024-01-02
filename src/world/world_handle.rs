@@ -204,6 +204,12 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_player_count(&self) -> i32 {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPlayerCount { respond_to: tx });
+        rx.await.unwrap()
+    }
+
     pub async fn get_player_party(&self, player_id: i32) -> Option<Party> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerParty {

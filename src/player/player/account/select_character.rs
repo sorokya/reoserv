@@ -18,6 +18,33 @@ impl Player {
         player_handle: PlayerHandle,
         character_id: i32,
     ) -> bool {
+        let player_count = self.world.get_player_count().await;
+        if player_count >= SETTINGS.server.max_players {
+            let packet = WelcomeReplyServerPacket {
+                welcome_code: WelcomeCode::ServerBusy,
+                welcome_code_data: None,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                self.close(format!("Error serializing WelcomeReplyServerPacket: {}", e))
+                    .await;
+                return false;
+            }
+
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Welcome,
+                    writer.to_byte_array(),
+                )
+                .await;
+
+            return true;
+        }
+
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(e) => {

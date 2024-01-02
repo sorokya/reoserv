@@ -5,6 +5,7 @@ pub struct Server {
     pub host: String,
     pub port: String,
     pub max_connections: i32,
+    pub max_players: i32,
     pub max_connections_per_ip: i32,
     pub ip_reconnect_limit: i32,
     pub max_uninitialized_connections: i32,

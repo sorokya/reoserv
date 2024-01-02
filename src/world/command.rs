@@ -96,6 +96,9 @@ pub enum Command {
     GetNextPlayerId {
         respond_to: oneshot::Sender<i32>,
     },
+    GetPlayerCount {
+        respond_to: oneshot::Sender<i32>,
+    },
     GetPlayerParty {
         player_id: i32,
         respond_to: oneshot::Sender<Option<Party>>,

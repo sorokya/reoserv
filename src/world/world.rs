@@ -168,6 +168,10 @@ impl World {
                 let _ = respond_to.send(self.get_next_player_id(300));
             }
 
+            Command::GetPlayerCount { respond_to } => {
+                let _ = respond_to.send(self.characters.len() as i32);
+            }
+
             Command::GetPlayerParty {
                 player_id,
                 respond_to,

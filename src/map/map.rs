@@ -295,6 +295,11 @@ impl Map {
                 npc_index,
             } => self.open_skill_master(player_id, npc_index).await,
 
+            Command::PlayJukeboxTrack {
+                player_id,
+                track_id,
+            } => self.play_jukebox_track(player_id, track_id),
+
             Command::RecoverNpcs => self.recover_npcs().await,
 
             Command::RecoverPlayers => self.recover_players().await,

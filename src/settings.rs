@@ -167,6 +167,13 @@ pub struct Map {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Jukebox {
+    pub cost: i32,
+    pub max_track_id: i32,
+    pub track_timer: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -182,6 +189,7 @@ pub struct Settings {
     pub chest: Chest,
     pub map: Map,
     pub combat: Combat,
+    pub jukebox: Jukebox,
 }
 
 impl Settings {

@@ -18,9 +18,13 @@ impl Map {
         if self.player_in_range_of_tile(player_id, MapTileSpec::Jukebox) {
             let packet = JukeboxOpenServerPacket {
                 map_id: self.id,
-                jukebox_player: match self.jukebox_player {
-                    Some(ref player) => player.clone(),
-                    None => String::new(),
+                jukebox_player: if self.jukebox_ticks > 0 {
+                    match self.jukebox_player {
+                        Some(ref player) => player.clone(),
+                        None => "Busy".to_string(), // just in case
+                    }
+                } else {
+                    String::new()
                 },
             };
 

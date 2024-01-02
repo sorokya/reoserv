@@ -302,6 +302,13 @@ impl MapHandle {
         });
     }
 
+    pub fn play_jukebox_track(&self, player_id: i32, track_id: i32) {
+        let _ = self.tx.send(Command::PlayJukeboxTrack {
+            player_id,
+            track_id,
+        });
+    }
+
     pub fn recover_npcs(&self) {
         let _ = self.tx.send(Command::RecoverNpcs);
     }

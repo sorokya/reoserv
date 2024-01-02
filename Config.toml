@@ -270,3 +270,12 @@ admin_max_posts = 100
 
 # Numbers of slots in a chest
 slots = 5
+
+[jukebox]
+
+cost = 25
+
+max_track_id = 20
+
+# Number of ticks before the next track can be played
+track_timer = 720

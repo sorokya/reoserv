@@ -66,6 +66,10 @@ impl World {
 
             if self.arena_ticks >= ONE_SECOND {
                 map.timed_arena();
+
+                if SETTINGS.jukebox.track_timer > 0 {
+                    map.jukebox_timer();
+                }
             }
         }
 

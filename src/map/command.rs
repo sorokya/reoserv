@@ -129,6 +129,7 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    JukeboxTimer,
     JunkItem {
         target_player_id: i32,
         item_id: i32,
@@ -169,6 +170,9 @@ pub enum Command {
         player_id: i32,
         npc_index: i32,
     },
+    OpenJukebox {
+        player_id: i32,
+    },
     OpenLocker {
         player_id: i32,
     },
@@ -179,6 +183,10 @@ pub enum Command {
     OpenSkillMaster {
         player_id: i32,
         npc_index: i32,
+    },
+    PlayJukeboxTrack {
+        player_id: i32,
+        track_id: i32,
     },
     RecoverNpcs,
     RecoverPlayers,

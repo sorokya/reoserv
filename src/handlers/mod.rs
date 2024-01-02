@@ -48,6 +48,9 @@ pub use init::init;
 mod item;
 pub use item::item;
 
+mod jukebox;
+pub use jukebox::jukebox;
+
 mod locker;
 pub use locker::locker;
 

@@ -280,6 +280,10 @@ impl MapHandle {
         });
     }
 
+    pub fn open_jukebox(&self, player_id: i32) {
+        let _ = self.tx.send(Command::OpenJukebox { player_id });
+    }
+
     pub fn open_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }
@@ -295,6 +299,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenSkillMaster {
             player_id,
             npc_index,
+        });
+    }
+
+    pub fn play_jukebox_track(&self, player_id: i32, track_id: i32) {
+        let _ = self.tx.send(Command::PlayJukeboxTrack {
+            player_id,
+            track_id,
         });
     }
 
@@ -468,6 +479,10 @@ impl MapHandle {
 
     pub fn timed_arena(&self) {
         let _ = self.tx.send(Command::TimedArena);
+    }
+
+    pub fn jukebox_timer(&self) {
+        let _ = self.tx.send(Command::JukeboxTimer);
     }
 
     pub fn timed_door_close(&self) {

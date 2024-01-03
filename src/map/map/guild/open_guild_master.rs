@@ -58,6 +58,8 @@ impl Map {
                 return;
             }
 
+            player.set_interact_npc_index(npc_index);
+
             player.send(
                 PacketAction::Open,
                 PacketFamily::Guild,

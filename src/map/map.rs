@@ -355,6 +355,13 @@ impl Map {
                     .await
             }
 
+            Command::RequestGuildCreation {
+                player_id,
+                npc_index,
+                guild_tag,
+                guild_name,
+            } => self.request_guild_creation(player_id, npc_index, guild_tag, guild_name),
+
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,

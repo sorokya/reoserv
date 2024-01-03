@@ -220,6 +220,12 @@ pub enum Command {
         session_id: i32,
         answers: [String; 3],
     },
+    RequestGuildCreation {
+        player_id: i32,
+        npc_index: i32,
+        guild_tag: String,
+        guild_name: String,
+    },
     RequestNpcs {
         player_id: i32,
         npc_indexes: Vec<i32>,

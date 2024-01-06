@@ -108,7 +108,6 @@ pub enum Command {
         username: String,
         password: String,
     },
-    Ping,
     Pong,
     PongNewSequence {
         respond_to: oneshot::Sender<()>,
@@ -140,6 +139,7 @@ pub enum Command {
     SetTrading(bool),
     SetChestIndex(usize),
     SetSleepCost(i32),
+    Tick,
     UpdatePartyHP {
         hp_percentage: i32,
     },

@@ -16,6 +16,7 @@ pub struct World {
     pool: Pool,
     maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
+    player_ticks: i32,
     npc_act_ticks: i32,
     npc_spawn_ticks: i32,
     item_spawn_ticks: i32,
@@ -55,6 +56,7 @@ impl World {
             characters: HashMap::new(),
             maps: None,
             parties: Vec::new(),
+            player_ticks: 0,
             npc_act_ticks: 0,
             npc_spawn_ticks: 0,
             item_spawn_ticks: 0,
@@ -196,12 +198,6 @@ impl World {
                         warn!("Failed to load maps: {}", err);
                         let _ = respond_to.send(());
                     }
-                }
-            }
-
-            Command::PingPlayers => {
-                for player in self.players.values() {
-                    player.ping();
                 }
             }
 

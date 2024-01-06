@@ -16,7 +16,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, map::MapHandle, world::WorldHandle, SETTINGS};
+use crate::{character::Character, map::MapHandle, world::WorldHandle};
 
 use super::{handle_packet::handle_packet, player::Player, ClientState, Command, PartyRequest};
 
@@ -264,10 +264,6 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Login { username, password });
     }
 
-    pub fn ping(&self) {
-        let _ = self.tx.send(Command::Ping);
-    }
-
     pub fn pong(&self) {
         let _ = self.tx.send(Command::Pong);
     }
@@ -354,6 +350,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetTrading(trading));
     }
 
+    pub fn tick(&self) {
+        let _ = self.tx.send(Command::Tick);
+    }
+
     pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
     }
@@ -401,19 +401,6 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                     player_handle.clone(),
                     player.world.clone(),
                 ));
-        }
-
-        if player.state == ClientState::Uninitialized {
-            let time_since_connection = Utc::now() - player.connected_at;
-            if time_since_connection.num_seconds() > SETTINGS.server.hangup_delay.into() {
-                player
-                    .close(format!(
-                        "Failed to start handshake in {} seconds",
-                        SETTINGS.server.hangup_delay
-                    ))
-                    .await;
-                break;
-            }
         }
 
         tokio::time::sleep(Duration::from_millis(60)).await;

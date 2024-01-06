@@ -135,15 +135,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         world.load_maps().await;
     }
 
-    let mut ping_interval = time::interval(Duration::from_secs(SETTINGS.server.ping_rate as u64));
-    let ping_timer_world = world.clone();
-    tokio::spawn(async move {
-        loop {
-            ping_interval.tick().await;
-            ping_timer_world.ping_players();
-        }
-    });
-
     let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
     let tick_world = world.clone();
     tokio::spawn(async move {

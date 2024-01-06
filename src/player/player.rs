@@ -2,11 +2,6 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    packet::{generate_sequence_start, get_ping_sequence_bytes},
-    protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily},
-};
 use mysql_async::Pool;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
@@ -44,6 +39,7 @@ pub struct Player {
     trade_accepted: bool,
     sleep_cost: Option<i32>,
     party_request: PartyRequest,
+    ping_ticks: i32,
 }
 
 mod accept_warp;
@@ -59,8 +55,10 @@ mod generate_session_id;
 mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
+mod ping;
 mod request_warp;
 mod take_session_id;
+mod tick;
 
 impl Player {
     pub fn new(
@@ -96,6 +94,7 @@ impl Player {
             trade_accepted: false,
             sleep_cost: None,
             party_request: PartyRequest::None,
+            ping_ticks: 0,
         }
     }
 
@@ -216,39 +215,6 @@ impl Player {
                 let _ = respond_to.send(sequence);
             }
             Command::Login { username, password } => return self.login(username, password).await,
-            Command::Ping => {
-                if self.state == ClientState::Uninitialized {
-                    return true;
-                }
-
-                if self.bus.need_pong {
-                    info!("player {} connection closed: ping timeout", self.id);
-                    return false;
-                } else {
-                    self.bus.upcoming_sequence_start = generate_sequence_start();
-                    let mut writer = EoWriter::with_capacity(3);
-                    let sequence_bytes = get_ping_sequence_bytes(self.bus.upcoming_sequence_start);
-                    let packet = ConnectionPlayerServerPacket {
-                        seq1: sequence_bytes[0],
-                        seq2: sequence_bytes[1],
-                    };
-
-                    if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Error serializing ConnectionPlayerServerPacket: {}", e);
-                        return false;
-                    }
-
-                    self.bus.need_pong = true;
-                    self.bus
-                        .send(
-                            PacketAction::Player,
-                            PacketFamily::Connection,
-                            writer.to_byte_array(),
-                        )
-                        .await
-                        .unwrap();
-                }
-            }
             Command::Pong => {
                 self.bus.need_pong = false;
             }
@@ -305,6 +271,7 @@ impl Player {
             Command::SetTrading(trading) => {
                 self.trading = trading;
             }
+            Command::Tick => return self.tick().await,
             Command::UpdatePartyHP { hp_percentage } => {
                 if self.state == ClientState::InGame {
                     self.world.update_party_hp(self.id, hp_percentage);

@@ -259,10 +259,6 @@ impl WorldHandle {
         });
     }
 
-    pub fn ping_players(&self) {
-        let _ = self.tx.send(Command::PingPlayers);
-    }
-
     pub fn quake(&self, magnitude: i32) {
         let _ = self.tx.send(Command::Quake { magnitude });
     }

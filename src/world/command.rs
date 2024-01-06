@@ -124,7 +124,6 @@ pub enum Command {
         victim_name: String,
         admin_name: String,
     },
-    PingPlayers,
     Quake {
         magnitude: i32,
     },

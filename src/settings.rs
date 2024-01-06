@@ -192,8 +192,16 @@ pub struct Barber {
 
 #[derive(Debug, Deserialize)]
 pub struct Guild {
-    pub min_players: i32,
+    pub min_players: usize,
     pub create_cost: i32,
+    pub min_tag_length: usize,
+    pub max_tag_length: usize,
+    pub max_name_length: usize,
+    pub max_description_length: usize,
+    pub max_rank_length: usize,
+    pub default_leader_rank_name: String,
+    pub default_recruiter_rank_name: String,
+    pub default_new_member_rank_name: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -313,7 +313,28 @@ cost_per_level = 200
 
 
 # Minimum amount of players required to create a guild
-min_players = 2
+min_players = 10
 
 # Cost to create a new guild
 create_cost = 50_000
+
+# Minimum length of a guild tag
+min_tag_length = 2
+
+# Maximum length of a guild tag
+max_tag_length = 3
+
+# Minimum length of a guild name
+max_name_length = 24
+
+# Maximum length of a guild description
+max_description_length = 240
+
+# Maximum length of a guild rank
+max_rank_length = 16
+
+default_leader_rank_name = "Leader"
+
+default_recruiter_rank_name = "Recruiter"
+
+default_new_member_rank_name = "New Member"

@@ -8,12 +8,14 @@ use eolib::{
         r#pub::NpcType,
     },
 };
-use mysql_async::{prelude::Queryable, Conn, Params};
-use mysql_common::{params, Row};
 
-use crate::{utils::capitalize, NPC_DB, SETTINGS};
+use crate::{
+    player::player::guild::{validate_guild_name, validate_guild_tag},
+    utils::capitalize,
+    NPC_DB, SETTINGS,
+};
 
-use super::Player;
+use super::{super::Player, guild_exists};
 
 macro_rules! send_reply {
     ($player:expr, $reply:expr) => {{
@@ -62,6 +64,11 @@ impl Player {
             return;
         }
 
+        if !validate_guild_tag(&guild_tag) || !validate_guild_name(&guild_name) {
+            send_reply!(self, GuildReply::NotApproved);
+            return;
+        }
+
         let map = match self.map {
             Some(ref map) => map,
             None => return,
@@ -99,7 +106,7 @@ impl Player {
             return;
         }
 
-        self.guild_create_members = Vec::with_capacity(SETTINGS.guild.min_players as usize);
+        self.guild_create_members = Vec::with_capacity(SETTINGS.guild.min_players);
 
         send_reply!(self, GuildReply::CreateBegin);
 
@@ -112,18 +119,4 @@ impl Player {
             ),
         );
     }
-}
-
-async fn guild_exists(conn: &mut Conn, guild_tag: &str, guild_name: &str) -> bool {
-    matches!(
-        conn.exec_first::<Row, &str, Params>(
-            "SELECT id FROM Guild WHERE name = :name OR tag = :tag",
-            params! {
-                "name" => guild_name,
-                "tag" => guild_tag,
-            },
-        )
-        .await,
-        Ok(Some(_))
-    )
 }

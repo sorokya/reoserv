@@ -45,7 +45,6 @@ pub struct Player {
 
 mod accept_warp;
 mod account;
-mod add_guild_creation_player;
 mod arena_die;
 mod begin_handshake;
 mod cancel_trade;
@@ -57,8 +56,8 @@ mod generate_session_id;
 mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
+mod guild;
 mod ping;
-mod request_guild_creation;
 mod request_warp;
 mod take_session_id;
 mod tick;
@@ -145,6 +144,15 @@ impl Player {
             }
             Command::CreateAccount(packet) => return self.create_account(packet).await,
             Command::CreateCharacter(packet) => return self.create_character(packet).await,
+            Command::CreateGuild {
+                session_id,
+                guild_name,
+                guild_tag,
+                guild_description,
+            } => {
+                self.create_guild(session_id, guild_name, guild_tag, guild_description)
+                    .await
+            }
             Command::DeleteCharacter {
                 session_id,
                 character_id,

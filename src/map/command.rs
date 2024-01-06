@@ -73,6 +73,14 @@ pub enum Command {
         subject: String,
         body: String,
     },
+    FinishGuildCreation {
+        player_id: i32,
+        member_ids: Vec<i32>,
+        guild_tag: String,
+        guild_name: String,
+        leader_rank_id: i32,
+        member_rank_id: i32,
+    },
     DepositGold {
         player_id: i32,
         session_id: i32,

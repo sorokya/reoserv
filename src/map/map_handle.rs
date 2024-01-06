@@ -112,6 +112,25 @@ impl MapHandle {
         });
     }
 
+    pub fn finish_guild_creation(
+        &self,
+        player_id: i32,
+        member_ids: Vec<i32>,
+        guild_tag: String,
+        guild_name: String,
+        leader_rank_id: i32,
+        member_rank_id: i32,
+    ) {
+        let _ = self.tx.send(Command::FinishGuildCreation {
+            player_id,
+            member_ids,
+            guild_tag,
+            guild_name,
+            leader_rank_id,
+            member_rank_id,
+        });
+    }
+
     pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: i32) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,

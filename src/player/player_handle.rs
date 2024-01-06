@@ -105,6 +105,21 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::CreateCharacter(packet));
     }
 
+    pub fn create_guild(
+        &self,
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+        guild_description: String,
+    ) {
+        let _ = self.tx.send(Command::CreateGuild {
+            session_id,
+            guild_name,
+            guild_tag,
+            guild_description,
+        });
+    }
+
     pub fn delete_character(&self, session_id: i32, character_id: i32) {
         let _ = self.tx.send(Command::DeleteCharacter {
             session_id,

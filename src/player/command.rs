@@ -41,6 +41,12 @@ pub enum Command {
     Close(String),
     CreateAccount(AccountCreateClientPacket),
     CreateCharacter(CharacterCreateClientPacket),
+    CreateGuild {
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+        guild_description: String,
+    },
     ArenaDie {
         spawn_coords: Coords,
     },

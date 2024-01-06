@@ -176,6 +176,22 @@ impl Map {
                 body,
             } => self.create_board_post(player_id, subject, body).await,
 
+            Command::FinishGuildCreation {
+                player_id,
+                member_ids,
+                guild_tag,
+                guild_name,
+                leader_rank_id,
+                member_rank_id,
+            } => self.finish_guild_creation(
+                player_id,
+                member_ids,
+                guild_tag,
+                guild_name,
+                leader_rank_id,
+                member_rank_id,
+            ),
+
             Command::DepositGold {
                 player_id,
                 session_id,

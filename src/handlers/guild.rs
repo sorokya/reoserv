@@ -1,7 +1,10 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{GuildAcceptClientPacket, GuildOpenClientPacket, GuildRequestClientPacket},
+        client::{
+            GuildAcceptClientPacket, GuildCreateClientPacket, GuildOpenClientPacket,
+            GuildRequestClientPacket,
+        },
         PacketAction,
     },
 };
@@ -20,7 +23,7 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
     map.open_guild_master(player_id, open.npc_index);
 }
 
-async fn request(reader: EoReader, player: PlayerHandle) {
+fn request(reader: EoReader, player: PlayerHandle) {
     let request = match GuildRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -44,6 +47,23 @@ fn accept(reader: EoReader, player_id: i32, map: MapHandle) {
     map.accept_guild_creation_request(player_id, accept.inviter_player_id);
 }
 
+fn create(reader: EoReader, player: PlayerHandle) {
+    let create = match GuildCreateClientPacket::deserialize(&reader) {
+        Ok(create) => create,
+        Err(e) => {
+            error!("Error deserializing GuildCreateClientPacket: {}", e);
+            return;
+        }
+    };
+
+    player.create_guild(
+        create.session_id,
+        create.guild_name,
+        create.guild_tag,
+        create.description,
+    );
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(id) => id,
@@ -63,8 +83,9 @@ pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle)
 
     match action {
         PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Request => request(reader, player).await,
+        PacketAction::Request => request(reader, player),
         PacketAction::Accept => accept(reader, player_id, map),
+        PacketAction::Create => create(reader, player),
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

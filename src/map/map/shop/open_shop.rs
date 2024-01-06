@@ -80,20 +80,20 @@ impl Map {
                     item_id: craft.item_id,
                     ingredients: [
                         CharItem {
-                            id: craft.ingredient1_id,
-                            amount: craft.ingredient1_amount,
+                            id: craft.ingredients[0].item_id,
+                            amount: craft.ingredients[0].amount,
                         },
                         CharItem {
-                            id: craft.ingredient2_id,
-                            amount: craft.ingredient2_amount,
+                            id: craft.ingredients[1].item_id,
+                            amount: craft.ingredients[1].amount,
                         },
                         CharItem {
-                            id: craft.ingredient3_id,
-                            amount: craft.ingredient3_amount,
+                            id: craft.ingredients[2].item_id,
+                            amount: craft.ingredients[2].amount,
                         },
                         CharItem {
-                            id: craft.ingredient4_id,
-                            amount: craft.ingredient4_amount,
+                            id: craft.ingredients[3].item_id,
+                            amount: craft.ingredients[3].amount,
                         },
                     ],
                 })

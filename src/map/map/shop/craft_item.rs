@@ -68,44 +68,18 @@ impl Map {
             None => return,
         };
 
-        if craft.ingredient1_id > 0
-            && character.get_item_amount(craft.ingredient1_id) < craft.ingredient1_amount
-        {
-            return;
+        for ingredient in craft.ingredients.iter() {
+            if ingredient.item_id > 0
+                && character.get_item_amount(ingredient.item_id) < ingredient.amount
+            {
+                return;
+            }
         }
 
-        if craft.ingredient2_id > 0
-            && character.get_item_amount(craft.ingredient2_id) < craft.ingredient2_amount
-        {
-            return;
-        }
-
-        if craft.ingredient3_id > 0
-            && character.get_item_amount(craft.ingredient3_id) < craft.ingredient3_amount
-        {
-            return;
-        }
-
-        if craft.ingredient4_id > 0
-            && character.get_item_amount(craft.ingredient4_id) < craft.ingredient4_amount
-        {
-            return;
-        }
-
-        if craft.ingredient1_id > 0 {
-            character.remove_item(craft.ingredient1_id, craft.ingredient1_amount);
-        }
-
-        if craft.ingredient2_id > 0 {
-            character.remove_item(craft.ingredient2_id, craft.ingredient2_amount);
-        }
-
-        if craft.ingredient3_id > 0 {
-            character.remove_item(craft.ingredient3_id, craft.ingredient3_amount);
-        }
-
-        if craft.ingredient4_id > 0 {
-            character.remove_item(craft.ingredient4_id, craft.ingredient4_amount);
+        for ingredient in craft.ingredients.iter() {
+            if ingredient.item_id > 0 {
+                character.remove_item(ingredient.item_id, ingredient.amount);
+            }
         }
 
         character.add_item(item_id, 1);
@@ -115,20 +89,20 @@ impl Map {
             weight: character.get_weight(),
             ingredients: [
                 Item {
-                    id: craft.ingredient1_id,
-                    amount: character.get_item_amount(craft.ingredient1_id),
+                    id: craft.ingredients[0].item_id,
+                    amount: character.get_item_amount(craft.ingredients[0].item_id),
                 },
                 Item {
-                    id: craft.ingredient2_id,
-                    amount: character.get_item_amount(craft.ingredient2_id),
+                    id: craft.ingredients[1].item_id,
+                    amount: character.get_item_amount(craft.ingredients[1].item_id),
                 },
                 Item {
-                    id: craft.ingredient3_id,
-                    amount: character.get_item_amount(craft.ingredient3_id),
+                    id: craft.ingredients[2].item_id,
+                    amount: character.get_item_amount(craft.ingredients[2].item_id),
                 },
                 Item {
-                    id: craft.ingredient4_id,
-                    amount: character.get_item_amount(craft.ingredient4_id),
+                    id: craft.ingredients[3].item_id,
+                    amount: character.get_item_amount(craft.ingredients[3].item_id),
                 },
             ],
         };

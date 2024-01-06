@@ -3,7 +3,9 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::r#pub::server::{ShopCraftRecord, ShopFile, ShopRecord, ShopTradeRecord},
+    protocol::r#pub::server::{
+        ShopCraftIngredientRecord, ShopCraftRecord, ShopFile, ShopRecord, ShopTradeRecord,
+    },
 };
 use glob::glob;
 use serde_json::Value;
@@ -51,16 +53,34 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                 .collect(),
             crafts: crafts
                 .iter()
-                .map(|v| ShopCraftRecord {
-                    item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                    ingredient1_id: v["ingredient1Id"].as_u64().unwrap_or(0) as i32,
-                    ingredient1_amount: v["ingredient1Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient2_id: v["ingredient2Id"].as_u64().unwrap_or(0) as i32,
-                    ingredient2_amount: v["ingredient2Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient3_id: v["ingredient3Id"].as_u64().unwrap_or(0) as i32,
-                    ingredient3_amount: v["ingredient3Amount"].as_u64().unwrap_or(0) as i32,
-                    ingredient4_id: v["ingredient4Id"].as_u64().unwrap_or(0) as i32,
-                    ingredient4_amount: v["ingredient4Amount"].as_u64().unwrap_or(0) as i32,
+                .map(|v| {
+                    let ingredients: Vec<ShopCraftIngredientRecord> = v["ingredients"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|v| ShopCraftIngredientRecord {
+                            item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
+                            amount: v["amount"].as_u64().unwrap_or(0) as i32,
+                        })
+                        .collect();
+
+                    if ingredients.len() != 4 {
+                        panic!(
+                            "Craft {} has {} ingredients, but should have 4",
+                            v["itemId"].as_u64().unwrap_or(0),
+                            ingredients.len()
+                        );
+                    }
+
+                    ShopCraftRecord {
+                        item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
+                        ingredients: [
+                            ingredients[0].clone(),
+                            ingredients[1].clone(),
+                            ingredients[2].clone(),
+                            ingredients[3].clone(),
+                        ],
+                    }
                 })
                 .collect(),
         });

@@ -69,12 +69,7 @@ impl Map {
                     level_requirement: skill.level_requirement,
                     class_requirement: skill.class_requirement,
                     cost: skill.price,
-                    skill_requirements: [
-                        skill.skill_id_requirement1,
-                        skill.skill_id_requirement2,
-                        skill.skill_id_requirement3,
-                        skill.skill_id_requirement4,
-                    ],
+                    skill_requirements: skill.skill_requirements,
                     stat_requirements: CharacterBaseStats {
                         str: skill.str_requirement,
                         intl: skill.int_requirement,

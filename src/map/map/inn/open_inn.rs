@@ -69,9 +69,9 @@ impl Map {
             current_home_id: current_inn_data.behavior_id - 1,
             session_id,
             questions: [
-                inn_data.question1.clone(),
-                inn_data.question2.clone(),
-                inn_data.question3.clone(),
+                inn_data.questions[0].question.clone(),
+                inn_data.questions[1].question.clone(),
+                inn_data.questions[2].question.clone(),
             ],
         };
 

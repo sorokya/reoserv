@@ -26,8 +26,7 @@ impl ConnectionLog {
     }
 
     pub fn len(&self) -> i32 {
-        self.entries.values().map(|entry| entry.connections)
-            .sum()
+        self.entries.values().map(|entry| entry.connections).sum()
     }
 
     pub fn add_connection(&mut self, ip: &str) {

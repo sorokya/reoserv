@@ -65,15 +65,15 @@ impl Map {
         };
 
         let mut questions_wrong = 0;
-        if answers[0] != inn_data.answer1 {
+        if answers[0] != inn_data.questions[0].answer {
             questions_wrong += 1;
         }
 
-        if answers[1] != inn_data.answer2 {
+        if answers[1] != inn_data.questions[1].answer {
             questions_wrong += 1;
         }
 
-        if answers[2] != inn_data.answer3 {
+        if answers[2] != inn_data.questions[2].answer {
             questions_wrong += 1;
         }
 

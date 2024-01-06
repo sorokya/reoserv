@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::r#pub::server::{DropFile, DropNpcDropRecord, DropNpcRecord},
+    protocol::r#pub::server::{DropFile, DropNpcRecord, DropRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -38,7 +38,7 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
                 npc_id,
                 drops: drops
                     .iter()
-                    .map(|v| DropNpcDropRecord {
+                    .map(|v| DropRecord {
                         item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
                         min_amount: v["minAmount"].as_u64().unwrap_or(0) as i32,
                         max_amount: v["maxAmount"].as_u64().unwrap_or(0) as i32,

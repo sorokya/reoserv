@@ -79,6 +79,12 @@ impl Map {
             return;
         }
 
+        recruiter
+            .player
+            .as_ref()
+            .unwrap()
+            .set_interact_player_id(Some(player_id));
+
         let packet = GuildReplyServerPacket {
             reply_code: GuildReply::JoinRequest,
             reply_code_data: Some(GuildReplyServerPacketReplyCodeData::JoinRequest(

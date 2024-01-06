@@ -149,6 +149,13 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    JoinGuild {
+        player_id: i32,
+        recruiter_id: i32,
+        guild_tag: String,
+        guild_name: String,
+        guild_rank_string: String,
+    },
     JukeboxTimer,
     JunkItem {
         target_player_id: i32,

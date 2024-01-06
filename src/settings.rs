@@ -194,6 +194,7 @@ pub struct Barber {
 pub struct Guild {
     pub min_players: usize,
     pub create_cost: i32,
+    pub recruit_cost: i32,
     pub min_tag_length: usize,
     pub max_tag_length: usize,
     pub max_name_length: usize,

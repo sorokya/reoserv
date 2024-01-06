@@ -46,6 +46,10 @@ impl PlayerHandle {
         Self { tx }
     }
 
+    pub fn accept_guild_join_request(&self, player_id: i32) {
+        let _ = self.tx.send(Command::AcceptGuildJoinRequest { player_id });
+    }
+
     pub fn accept_warp(&self, map_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }

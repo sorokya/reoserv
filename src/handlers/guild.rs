@@ -3,7 +3,7 @@ use eolib::{
     protocol::net::{
         client::{
             GuildAcceptClientPacket, GuildCreateClientPacket, GuildOpenClientPacket,
-            GuildPlayerClientPacket, GuildRequestClientPacket,
+            GuildPlayerClientPacket, GuildRequestClientPacket, GuildUseClientPacket,
         },
         PacketAction,
     },
@@ -88,6 +88,18 @@ async fn player(reader: EoReader, player_id: i32, player: PlayerHandle, map: Map
     map.request_to_join_guild(player_id, packet.guild_tag, packet.recruiter_name);
 }
 
+pub async fn r#use(reader: EoReader, player: PlayerHandle) {
+    let packet = match GuildUseClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildUseClientPacket: {}", e);
+            return;
+        }
+    };
+
+    player.accept_guild_join_request(packet.player_id);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -111,6 +123,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Accept => accept(reader, player_id, map),
         PacketAction::Create => create(reader, player_handle),
         PacketAction::Player => player(reader, player_id, player_handle, map).await,
+        PacketAction::Use => r#use(reader, player_handle).await,
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

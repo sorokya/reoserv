@@ -103,6 +103,9 @@ impl Player {
 
     pub async fn handle_command(&mut self, command: Command) -> bool {
         match command {
+            Command::AcceptGuildJoinRequest { player_id } => {
+                self.accept_guild_join_request(player_id).await
+            }
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
             }

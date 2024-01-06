@@ -279,6 +279,20 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::JoinGuild {
+                player_id,
+                recruiter_id,
+                guild_tag,
+                guild_name,
+                guild_rank_string,
+            } => self.join_guild(
+                player_id,
+                recruiter_id,
+                guild_tag,
+                guild_name,
+                guild_rank_string,
+            ),
+
             Command::JukeboxTimer => self.jukebox_timer(),
 
             Command::JunkItem {

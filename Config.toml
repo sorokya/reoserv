@@ -318,6 +318,9 @@ min_players = 10
 # Cost to create a new guild
 create_cost = 50_000
 
+# Cost to recruit a new guild member
+recruit_cost = 1000
+
 # Minimum length of a guild tag
 min_tag_length = 2
 

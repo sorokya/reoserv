@@ -1,3 +1,4 @@
+mod accept_guild_join_request;
 mod add_guild_creation_player;
 mod create_guild;
 mod guild_exists;

@@ -19,6 +19,9 @@ use super::{ClientState, PartyRequest, PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptGuildJoinRequest {
+        player_id: i32,
+    },
     AcceptWarp {
         map_id: i32,
         session_id: i32,

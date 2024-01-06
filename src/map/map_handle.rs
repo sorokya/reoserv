@@ -252,6 +252,23 @@ impl MapHandle {
         });
     }
 
+    pub fn join_guild(
+        &self,
+        player_id: i32,
+        recruiter_id: i32,
+        guild_tag: String,
+        guild_name: String,
+        guild_rank_string: String,
+    ) {
+        let _ = self.tx.send(Command::JoinGuild {
+            player_id,
+            recruiter_id,
+            guild_tag,
+            guild_name,
+            guild_rank_string,
+        });
+    }
+
     pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::JunkItem {
             target_player_id,

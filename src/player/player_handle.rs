@@ -50,6 +50,12 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
     }
 
+    pub fn add_guild_creation_player(&self, player_id: i32, name: String) {
+        let _ = self
+            .tx
+            .send(Command::AddGuildCreationPlayer { player_id, name });
+    }
+
     pub fn arena_die(&self, spawn_coords: Coords) {
         let _ = self.tx.send(Command::ArenaDie { spawn_coords });
     }

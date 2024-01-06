@@ -23,6 +23,10 @@ pub enum Command {
         map_id: i32,
         session_id: i32,
     },
+    AddGuildCreationPlayer {
+        player_id: i32,
+        name: String,
+    },
     BeginHandshake {
         challenge: i32,
         hdid: String,

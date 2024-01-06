@@ -38,6 +38,13 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn accept_guild_creation_request(&self, player_id: i32, invitee_player_id: i32) {
+        let _ = self.tx.send(Command::AcceptGuildCreationRequest {
+            player_id,
+            invitee_player_id,
+        });
+    }
+
     pub fn accept_trade_request(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::AcceptTradeRequest {
             player_id,

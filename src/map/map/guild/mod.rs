@@ -1,2 +1,3 @@
+mod accept_guild_creation_request;
 mod open_guild_master;
 mod send_guild_create_requests;

@@ -121,6 +121,10 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptGuildCreationRequest {
+                player_id,
+                invitee_player_id,
+            } => self.accept_guild_creation_request(player_id, invitee_player_id),
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,

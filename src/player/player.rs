@@ -45,6 +45,7 @@ pub struct Player {
 
 mod accept_warp;
 mod account;
+mod add_guild_creation_player;
 mod arena_die;
 mod begin_handshake;
 mod cancel_trade;
@@ -105,6 +106,9 @@ impl Player {
         match command {
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
+            }
+            Command::AddGuildCreationPlayer { player_id, name } => {
+                self.add_guild_creation_player(player_id, name).await;
             }
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::BeginHandshake {

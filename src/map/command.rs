@@ -16,6 +16,10 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptGuildCreationRequest {
+        player_id: i32,
+        invitee_player_id: i32,
+    },
     AcceptTradeRequest {
         player_id: i32,
         target_player_id: i32,

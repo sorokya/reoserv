@@ -201,6 +201,15 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_npc_id_for_index(&self, npc_index: i32) -> Option<i32> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetNpcIdForIndex {
+            npc_index,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn get_relog_coords(&self) -> Option<Coords> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRelogCoords { respond_to: tx });
@@ -364,21 +373,6 @@ impl MapHandle {
         });
     }
 
-    pub fn request_guild_creation(
-        &self,
-        player_id: i32,
-        npc_index: i32,
-        guild_tag: String,
-        guild_name: String,
-    ) {
-        let _ = self.tx.send(Command::RequestGuildCreation {
-            player_id,
-            npc_index,
-            guild_tag,
-            guild_name,
-        });
-    }
-
     pub fn request_npcs(&self, player_id: i32, npc_indexes: Vec<i32>) {
         let _ = self.tx.send(Command::RequestNpcs {
             player_id,
@@ -490,6 +484,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::SendChatMessage {
             target_player_id,
             message,
+        });
+    }
+
+    pub fn send_guild_create_requests(&self, leader_player_id: i32, guild_identity: String) {
+        let _ = self.tx.send(Command::SendGuildCreateRequests {
+            leader_player_id,
+            guild_identity,
         });
     }
 

@@ -119,6 +119,11 @@ pub enum Command {
     RequestCharacterDeletion {
         character_id: i32,
     },
+    RequestGuildCreation {
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+    },
     RequestWarp {
         local: bool,
         map_id: i32,

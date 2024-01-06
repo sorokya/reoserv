@@ -1,2 +1,2 @@
 mod open_guild_master;
-mod request_guild_creation;
+mod send_guild_create_requests;

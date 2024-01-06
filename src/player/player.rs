@@ -40,6 +40,7 @@ pub struct Player {
     sleep_cost: Option<i32>,
     party_request: PartyRequest,
     ping_ticks: i32,
+    guild_create_members: Vec<i32>,
 }
 
 mod accept_warp;
@@ -56,6 +57,7 @@ mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
 mod ping;
+mod request_guild_creation;
 mod request_warp;
 mod take_session_id;
 mod tick;
@@ -95,6 +97,7 @@ impl Player {
             sleep_cost: None,
             party_request: PartyRequest::None,
             ping_ticks: 0,
+            guild_create_members: Vec::new(),
         }
     }
 
@@ -230,6 +233,14 @@ impl Player {
             Command::RequestCharacterCreation => return self.request_character_creation().await,
             Command::RequestCharacterDeletion { character_id } => {
                 return self.request_character_deletion(character_id).await
+            }
+            Command::RequestGuildCreation {
+                session_id,
+                guild_name,
+                guild_tag,
+            } => {
+                self.request_guild_creation(session_id, guild_name, guild_tag)
+                    .await
             }
             Command::RequestWarp {
                 map_id,

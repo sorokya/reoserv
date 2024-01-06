@@ -235,6 +235,18 @@ impl Map {
                 respond_to,
             } => self.get_nearby_info(target_player_id, respond_to),
 
+            Command::GetNpcIdForIndex {
+                npc_index,
+                respond_to,
+            } => match self.npcs.get(&npc_index) {
+                Some(npc) => {
+                    let _ = respond_to.send(Some(npc.id));
+                }
+                None => {
+                    let _ = respond_to.send(None);
+                }
+            },
+
             Command::GetRelogCoords { respond_to } => {
                 let _ = respond_to.send(if self.file.relog_x > 0 {
                     Some(Coords {
@@ -355,13 +367,6 @@ impl Map {
                     .await
             }
 
-            Command::RequestGuildCreation {
-                player_id,
-                npc_index,
-                guild_tag,
-                guild_name,
-            } => self.request_guild_creation(player_id, npc_index, guild_tag, guild_name),
-
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
@@ -399,6 +404,11 @@ impl Map {
                 target_player_id,
                 message,
             } => self.send_chat_message(target_player_id, message),
+
+            Command::SendGuildCreateRequests {
+                leader_player_id,
+                guild_identity,
+            } => self.send_guild_create_requests(leader_player_id, guild_identity),
 
             Command::Serialize { respond_to } => {
                 self.serialize(respond_to);

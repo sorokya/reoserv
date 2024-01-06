@@ -124,6 +124,10 @@ pub enum Command {
         target_player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
     },
+    GetNpcIdForIndex {
+        npc_index: i32,
+        respond_to: oneshot::Sender<Option<i32>>,
+    },
     GetRelogCoords {
         respond_to: oneshot::Sender<Option<Coords>>,
     },
@@ -220,12 +224,6 @@ pub enum Command {
         session_id: i32,
         answers: [String; 3],
     },
-    RequestGuildCreation {
-        player_id: i32,
-        npc_index: i32,
-        guild_tag: String,
-        guild_name: String,
-    },
     RequestNpcs {
         player_id: i32,
         npc_indexes: Vec<i32>,
@@ -273,6 +271,10 @@ pub enum Command {
     SendChatMessage {
         target_player_id: i32,
         message: String,
+    },
+    SendGuildCreateRequests {
+        leader_player_id: i32,
+        guild_identity: String,
     },
     Serialize {
         respond_to: oneshot::Sender<Bytes>,

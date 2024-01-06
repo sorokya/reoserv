@@ -191,6 +191,12 @@ pub struct Barber {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Guild {
+    pub min_players: i32,
+    pub create_cost: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -209,6 +215,7 @@ pub struct Settings {
     pub combat: Combat,
     pub jukebox: Jukebox,
     pub barber: Barber,
+    pub guild: Guild,
 }
 
 impl Settings {

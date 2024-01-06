@@ -288,6 +288,14 @@ impl PlayerHandle {
             .send(Command::RequestCharacterDeletion { character_id });
     }
 
+    pub fn request_guild_creation(&self, session_id: i32, guild_name: String, guild_tag: String) {
+        let _ = self.tx.send(Command::RequestGuildCreation {
+            session_id,
+            guild_name,
+            guild_tag,
+        });
+    }
+
     pub fn request_warp(
         &self,
         map_id: i32,

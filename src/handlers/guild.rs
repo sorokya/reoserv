@@ -20,7 +20,7 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
     map.open_guild_master(player_id, open.npc_index);
 }
 
-async fn request(reader: EoReader, player: PlayerHandle, player_id: i32, map: MapHandle) {
+async fn request(reader: EoReader, player: PlayerHandle) {
     let request = match GuildRequestClientPacket::deserialize(&reader) {
         Ok(request) => request,
         Err(e) => {
@@ -29,24 +29,7 @@ async fn request(reader: EoReader, player: PlayerHandle, player_id: i32, map: Ma
         }
     };
 
-    let npc_index = match player.get_interact_npc_index().await {
-        Some(npc_index) => npc_index,
-        None => return,
-    };
-
-    let session_id = match player.get_session_id().await {
-        Ok(session_id) => session_id,
-        Err(e) => {
-            error!("Error getting player session id: {}", e);
-            return;
-        }
-    };
-
-    if request.session_id != session_id {
-        return;
-    }
-
-    map.request_guild_creation(player_id, npc_index, request.guild_tag, request.guild_name);
+    player.request_guild_creation(request.session_id, request.guild_name, request.guild_tag);
 }
 
 pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle) {
@@ -68,7 +51,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle)
 
     match action {
         PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Request => request(reader, player, player_id, map).await,
+        PacketAction::Request => request(reader, player).await,
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

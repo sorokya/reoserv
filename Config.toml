@@ -308,3 +308,12 @@ track_timer = 90
 [barber]
 
 cost_per_level = 200
+
+[guild]
+
+
+# Minimum amount of players required to create a guild
+min_players = 2
+
+# Cost to create a new guild
+create_cost = 50_000

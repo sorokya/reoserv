@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use bytes::Bytes;
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::r#pub::server::{InnFile, InnRecord},
+    protocol::r#pub::server::{InnFile, InnQuestionRecord, InnRecord},
 };
 use glob::glob;
 use serde_json::Value;
@@ -31,6 +31,24 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
 
         let v: Value = serde_json::from_str(&json)?;
 
+        let questions: Vec<InnQuestionRecord> = v["questions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| InnQuestionRecord {
+                question: v["question"].as_str().unwrap_or_default().to_string(),
+                answer: v["answer"].as_str().unwrap_or_default().to_string(),
+            })
+            .collect();
+
+        if questions.len() != 3 {
+            panic!(
+                "Inn {} has {} questions, but should have 3",
+                v["name"].as_str().unwrap_or_default(),
+                questions.len()
+            );
+        }
+
         inn_file.inns.push(InnRecord {
             behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
             name: v["name"].as_str().unwrap_or_default().to_string(),
@@ -40,16 +58,15 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
             sleep_map: v["sleepMap"].as_u64().unwrap_or(0) as i32,
             sleep_x: v["sleepX"].as_u64().unwrap_or(0) as i32,
             sleep_y: v["sleepY"].as_u64().unwrap_or(0) as i32,
-            alt_spawn_enabled: v["altSpawnEnabled"].as_u64().unwrap_or(0) == 1,
-            alt_spawn_map: v["altSpawnMap"].as_u64().unwrap_or(0) as i32,
-            alt_spawn_x: v["altSpawnX"].as_u64().unwrap_or(0) as i32,
-            alt_spawn_y: v["altSpawnY"].as_u64().unwrap_or(0) as i32,
-            question1: v["question1"].as_str().unwrap_or_default().to_string(),
-            answer1: v["answer1"].as_str().unwrap_or_default().to_string(),
-            question2: v["question2"].as_str().unwrap_or_default().to_string(),
-            answer2: v["answer2"].as_str().unwrap_or_default().to_string(),
-            question3: v["question3"].as_str().unwrap_or_default().to_string(),
-            answer3: v["answer3"].as_str().unwrap_or_default().to_string(),
+            alternate_spawn_enabled: v["alternateSpawnEnabled"].as_u64().unwrap_or(0) == 1,
+            alternate_spawn_map: v["alternateSpawnMap"].as_u64().unwrap_or(0) as i32,
+            alternate_spawn_x: v["alternateSpawnX"].as_u64().unwrap_or(0) as i32,
+            alternate_spawn_y: v["alternateSpawnY"].as_u64().unwrap_or(0) as i32,
+            questions: [
+                questions[0].clone(),
+                questions[1].clone(),
+                questions[2].clone(),
+            ],
         });
     }
 

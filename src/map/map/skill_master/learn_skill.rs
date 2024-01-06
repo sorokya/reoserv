@@ -90,14 +90,10 @@ impl Map {
             || character.adj_agility < skill.agi_requirement
             || character.adj_constitution < skill.con_requirement
             || character.adj_charisma < skill.cha_requirement
-            || (skill.skill_id_requirement1 > 0
-                && !character.has_spell(skill.skill_id_requirement1))
-            || (skill.skill_id_requirement2 > 0
-                && !character.has_spell(skill.skill_id_requirement2))
-            || (skill.skill_id_requirement3 > 0
-                && !character.has_spell(skill.skill_id_requirement3))
-            || (skill.skill_id_requirement4 > 0
-                && !character.has_spell(skill.skill_id_requirement4))
+            || skill
+                .skill_requirements
+                .iter()
+                .any(|s| *s > 0 && !character.has_spell(*s))
         {
             return;
         }

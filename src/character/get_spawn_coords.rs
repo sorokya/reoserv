@@ -8,10 +8,10 @@ impl Character {
     pub fn get_spawn_coords(&self) -> Coords {
         match INN_DB.inns.iter().find(|inn| inn.name == self.home) {
             Some(inn) => {
-                if inn.alt_spawn_enabled && self.level > 0 {
+                if inn.alternate_spawn_enabled && self.level > 0 {
                     Coords {
-                        x: inn.alt_spawn_x,
-                        y: inn.alt_spawn_y,
+                        x: inn.alternate_spawn_x,
+                        y: inn.alternate_spawn_y,
                     }
                 } else {
                     Coords {

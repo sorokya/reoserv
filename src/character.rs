@@ -58,7 +58,7 @@ pub struct Character {
     pub gold_bank: i32,
     pub guild_name: Option<String>,
     pub guild_tag: Option<String>,
-    pub guild_rank_id: Option<i32>,
+    pub guild_rank_index: Option<i32>,
     pub guild_rank_string: Option<String>,
     pub equipment: EquipmentPaperdoll,
     pub level: i32,

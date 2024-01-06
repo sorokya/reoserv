@@ -118,16 +118,12 @@ impl MapHandle {
         member_ids: Vec<i32>,
         guild_tag: String,
         guild_name: String,
-        leader_rank_id: i32,
-        member_rank_id: i32,
     ) {
         let _ = self.tx.send(Command::FinishGuildCreation {
             player_id,
             member_ids,
             guild_tag,
             guild_name,
-            leader_rank_id,
-            member_rank_id,
         });
     }
 
@@ -448,6 +444,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::PartyRequest {
             target_player_id,
             request,
+        });
+    }
+
+    pub fn request_to_join_guild(&self, player_id: i32, guild_tag: String, recruiter_name: String) {
+        let _ = self.tx.send(Command::RequestToJoinGuild {
+            player_id,
+            guild_tag,
+            recruiter_name,
         });
     }
 

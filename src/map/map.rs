@@ -181,16 +181,7 @@ impl Map {
                 member_ids,
                 guild_tag,
                 guild_name,
-                leader_rank_id,
-                member_rank_id,
-            } => self.finish_guild_creation(
-                player_id,
-                member_ids,
-                guild_tag,
-                guild_name,
-                leader_rank_id,
-                member_rank_id,
-            ),
+            } => self.finish_guild_creation(player_id, member_ids, guild_tag, guild_name),
 
             Command::DepositGold {
                 player_id,
@@ -401,6 +392,12 @@ impl Map {
                 target_player_id,
                 request,
             } => self.party_request(target_player_id, request).await,
+
+            Command::RequestToJoinGuild {
+                player_id,
+                guild_tag,
+                recruiter_name,
+            } => self.request_to_join_guild(player_id, guild_tag, recruiter_name),
 
             Command::RequestTrade {
                 player_id,

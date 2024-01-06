@@ -17,8 +17,6 @@ impl Map {
         member_ids: Vec<i32>,
         guild_tag: String,
         guild_name: String,
-        leader_rank_id: i32,
-        member_rank_id: i32,
     ) {
         {
             let character = match self.characters.get_mut(&player_id) {
@@ -30,7 +28,7 @@ impl Map {
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
-            character.guild_rank_id = Some(leader_rank_id);
+            character.guild_rank_index = Some(0);
 
             let packet = GuildCreateServerPacket {
                 leader_player_id: player_id,
@@ -83,7 +81,7 @@ impl Map {
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
-            character.guild_rank_id = Some(member_rank_id);
+            character.guild_rank_index = Some(8);
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Agree,

@@ -66,7 +66,7 @@ impl Character {
                 "bank_level" => self.bank_level,
                 "gold_bank" => self.gold_bank,
                 "guild_tag" => &self.guild_tag,
-                "guild_rank_id" => self.guild_rank_id,
+                "guild_rank_index" => self.guild_rank_index,
                 "guild_rank_string" => &self.guild_rank_string,
             },
         )

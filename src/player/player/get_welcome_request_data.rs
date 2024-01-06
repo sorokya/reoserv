@@ -70,7 +70,7 @@ impl Player {
             usage: character.usage,
             stats: character.get_character_stats_welcome(),
             equipment: character.get_equipment_welcome(),
-            guild_rank: character.guild_rank_id.unwrap_or_default(),
+            guild_rank: character.guild_rank_index.unwrap_or_default(),
             settings,
             login_message_code: match character.usage {
                 0 => LoginMessageCode::Yes,

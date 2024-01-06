@@ -102,7 +102,7 @@ CREATE TABLE `Character` (
   `bank_level` int NOT NULL DEFAULT '0',
   `gold_bank` int NOT NULL DEFAULT '0',
   `guild_id` int DEFAULT NULL,
-  `guild_rank_id` int DEFAULT NULL,
+  `guild_rank_index` tinyint DEFAULT NULL,
   `guild_rank_string` varchar(16) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
@@ -164,6 +164,7 @@ DROP TABLE IF EXISTS `GuildRank`;
 CREATE TABLE `GuildRank` (
   `id` int NOT NULL AUTO_INCREMENT,
   `guild_id` int NOT NULL,
+  `index` tinyint NOT NULL,
   `rank` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `guild_rank_guild_id` (`guild_id`),

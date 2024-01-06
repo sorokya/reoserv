@@ -78,8 +78,6 @@ pub enum Command {
         member_ids: Vec<i32>,
         guild_tag: String,
         guild_name: String,
-        leader_rank_id: i32,
-        member_rank_id: i32,
     },
     DepositGold {
         player_id: i32,
@@ -263,6 +261,11 @@ pub enum Command {
     PartyRequest {
         target_player_id: i32,
         request: PartyRequest,
+    },
+    RequestToJoinGuild {
+        player_id: i32,
+        guild_tag: String,
+        recruiter_name: String,
     },
     RequestTrade {
         player_id: i32,

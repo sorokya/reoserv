@@ -3,7 +3,7 @@ use eolib::{
     protocol::net::{
         client::{
             GuildAcceptClientPacket, GuildCreateClientPacket, GuildOpenClientPacket,
-            GuildRequestClientPacket,
+            GuildPlayerClientPacket, GuildRequestClientPacket,
         },
         PacketAction,
     },
@@ -64,8 +64,32 @@ fn create(reader: EoReader, player: PlayerHandle) {
     );
 }
 
-pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle) {
-    let player_id = match player.get_player_id().await {
+async fn player(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
+    let packet = match GuildPlayerClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildPlayerClientPacket: {}", e);
+            return;
+        }
+    };
+
+    let session_id = match player.get_session_id().await {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            error!("Error getting player session id: {}", e);
+            return;
+        }
+    };
+
+    if session_id != packet.session_id {
+        return;
+    }
+
+    map.request_to_join_guild(player_id, packet.guild_tag, packet.recruiter_name);
+}
+
+pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
+    let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
         Err(e) => {
             error!("Error getting player id: {}", e);
@@ -73,7 +97,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle)
         }
     };
 
-    let map = match player.get_map().await {
+    let map = match player_handle.get_map().await {
         Ok(map) => map,
         Err(e) => {
             error!("Error getting player map: {}", e);
@@ -83,9 +107,10 @@ pub async fn guild(action: PacketAction, reader: EoReader, player: PlayerHandle)
 
     match action {
         PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Request => request(reader, player),
+        PacketAction::Request => request(reader, player_handle),
         PacketAction::Accept => accept(reader, player_id, map),
-        PacketAction::Create => create(reader, player),
+        PacketAction::Create => create(reader, player_handle),
+        PacketAction::Player => player(reader, player_id, player_handle, map).await,
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

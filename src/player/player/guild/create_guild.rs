@@ -6,7 +6,7 @@ use eolib::{
     },
 };
 use mysql_async::{prelude::Queryable, Conn};
-use mysql_common::{params, Row};
+use mysql_common::params;
 
 use crate::SETTINGS;
 
@@ -93,22 +93,16 @@ impl Player {
             return;
         }
 
-        let (leader_rank_id, member_rank_id) =
-            match create_guild(&mut conn, &guild_tag, &guild_name, &guild_description).await {
-                Ok((leader_rank_id, member_rank_id)) => (leader_rank_id, member_rank_id),
-                Err(e) => {
-                    error!("Error creating guild: {}", e);
-                    return;
-                }
-            };
+        if let Err(e) = create_guild(&mut conn, &guild_tag, &guild_name, &guild_description).await {
+            error!("Error creating guild: {}", e);
+            return;
+        }
 
         map.finish_guild_creation(
             self.id,
             self.guild_create_members.clone(),
             guild_tag,
             guild_name,
-            leader_rank_id,
-            member_rank_id,
         );
     }
 }
@@ -118,7 +112,7 @@ async fn create_guild(
     tag: &str,
     name: &str,
     description: &str,
-) -> Result<(i32, i32), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     conn.exec_drop(
         include_str!("../../../sql/create_guild.sql"),
         params! {
@@ -142,15 +136,5 @@ async fn create_guild(
     )
     .await?;
 
-    let ranks = conn
-        .exec_map(
-            include_str!("../../../sql/get_guild_ranks.sql"),
-            params! {
-                "guild_id" => guild_id,
-            },
-            |row: Row| row.get::<i32, usize>(0).unwrap(),
-        )
-        .await?;
-
-    Ok((ranks[0], ranks[8]))
+    Ok(())
 }

@@ -203,6 +203,7 @@ pub struct Guild {
     pub default_leader_rank_name: String,
     pub default_recruiter_rank_name: String,
     pub default_new_member_rank_name: String,
+    pub kick_rank: i32,
 }
 
 #[derive(Debug, Deserialize)]

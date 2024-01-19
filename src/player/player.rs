@@ -232,6 +232,10 @@ impl Player {
                 let sequence = self.bus.sequencer.next_sequence();
                 let _ = respond_to.send(sequence);
             }
+            Command::KickGuildMember {
+                session_id,
+                member_name,
+            } => self.kick_guild_member(session_id, member_name).await,
             Command::Login { username, password } => return self.login(username, password).await,
             Command::Pong => {
                 self.bus.need_pong = false;

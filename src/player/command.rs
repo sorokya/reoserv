@@ -117,6 +117,10 @@ pub enum Command {
     GenSequence {
         respond_to: oneshot::Sender<i32>,
     },
+    KickGuildMember {
+        session_id: i32,
+        member_name: String,
+    },
     Login {
         username: String,
         password: String,

@@ -273,6 +273,13 @@ impl PlayerHandle {
         }
     }
 
+    pub fn kick_guild_member(&self, session_id: i32, member_name: String) {
+        let _ = self.tx.send(Command::KickGuildMember {
+            session_id,
+            member_name,
+        });
+    }
+
     pub async fn is_trade_accepted(&self) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });

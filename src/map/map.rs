@@ -301,6 +301,8 @@ impl Map {
                 amount,
             } => self.junk_item(target_player_id, item_id, amount).await,
 
+            Command::KickFromGuild { player_id } => self.kick_from_guild(player_id),
+
             Command::LearnSkill {
                 player_id,
                 spell_id,

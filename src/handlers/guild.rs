@@ -2,8 +2,9 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
         client::{
-            GuildAcceptClientPacket, GuildCreateClientPacket, GuildOpenClientPacket,
-            GuildPlayerClientPacket, GuildRequestClientPacket, GuildUseClientPacket,
+            GuildAcceptClientPacket, GuildCreateClientPacket, GuildKickClientPacket,
+            GuildOpenClientPacket, GuildPlayerClientPacket, GuildRequestClientPacket,
+            GuildUseClientPacket,
         },
         PacketAction,
     },
@@ -100,6 +101,18 @@ pub async fn r#use(reader: EoReader, player: PlayerHandle) {
     player.accept_guild_join_request(packet.player_id);
 }
 
+pub fn kick(reader: EoReader, player: PlayerHandle) {
+    let packet = match GuildKickClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildKickClientPacket: {}", e);
+            return;
+        }
+    };
+
+    player.kick_guild_member(packet.session_id, packet.member_name);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -124,6 +137,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Create => create(reader, player_handle),
         PacketAction::Player => player(reader, player_id, player_handle, map).await,
         PacketAction::Use => r#use(reader, player_handle).await,
+        PacketAction::Kick => kick(reader, player_handle),
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

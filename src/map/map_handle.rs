@@ -277,6 +277,10 @@ impl MapHandle {
         });
     }
 
+    pub fn kick_from_guild(&self, player_id: i32) {
+        let _ = self.tx.send(Command::KickFromGuild { player_id });
+    }
+
     pub fn learn_skill(&self, player_id: i32, spell_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::LearnSkill {
             player_id,

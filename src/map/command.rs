@@ -162,6 +162,9 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    KickFromGuild {
+        player_id: i32,
+    },
     LearnSkill {
         player_id: i32,
         spell_id: i32,

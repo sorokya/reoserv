@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType, GuildInfoType},
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -140,6 +140,10 @@ pub enum Command {
         session_id: i32,
         guild_name: String,
         guild_tag: String,
+    },
+    RequestGuildInfo {
+        session_id: i32,
+        info_type: GuildInfoType,
     },
     RequestWarp {
         local: bool,

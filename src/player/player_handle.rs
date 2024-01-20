@@ -4,7 +4,7 @@ use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType, GuildInfoType},
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -325,6 +325,13 @@ impl PlayerHandle {
             session_id,
             guild_name,
             guild_tag,
+        });
+    }
+
+    pub fn request_guild_info(&self, session_id: i32, info_type: GuildInfoType) {
+        let _ = self.tx.send(Command::RequestGuildInfo {
+            session_id,
+            info_type,
         });
     }
 

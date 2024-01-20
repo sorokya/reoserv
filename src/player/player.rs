@@ -261,6 +261,10 @@ impl Player {
                 self.request_guild_creation(session_id, guild_name, guild_tag)
                     .await
             }
+            Command::RequestGuildInfo {
+                session_id,
+                info_type,
+            } => self.request_guild_info(session_id, info_type).await,
             Command::RequestWarp {
                 map_id,
                 coords,

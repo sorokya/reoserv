@@ -84,6 +84,10 @@ pub enum Command {
         session_id: i32,
         amount: i32,
     },
+    DepositGuildGold {
+        player_id: i32,
+        amount: i32,
+    },
     DisagreeTrade {
         player_id: i32,
     },

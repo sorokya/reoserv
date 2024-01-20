@@ -189,6 +189,10 @@ impl Map {
                 amount,
             } => self.deposit_gold(player_id, session_id, amount).await,
 
+            Command::DepositGuildGold { player_id, amount } => {
+                self.deposit_guild_gold(player_id, amount)
+            }
+
             Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
 
             Command::DropItem {

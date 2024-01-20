@@ -135,6 +135,12 @@ impl MapHandle {
         });
     }
 
+    pub fn deposit_guild_gold(&self, player_id: i32, amount: i32) {
+        let _ = self
+            .tx
+            .send(Command::DepositGuildGold { player_id, amount });
+    }
+
     pub fn disagree_trade(&self, player_id: i32) {
         let _ = self.tx.send(Command::DisagreeTrade { player_id });
     }

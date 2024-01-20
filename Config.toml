@@ -344,3 +344,7 @@ default_new_member_rank_name = "New Member"
 
 kick_rank = 1
 
+min_deposit = 1000
+
+bank_max_gold = 2_000_000_000
+

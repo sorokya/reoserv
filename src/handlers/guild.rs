@@ -1,16 +1,19 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{
-        client::{
-            GuildAcceptClientPacket, GuildCreateClientPacket, GuildKickClientPacket,
-            GuildOpenClientPacket, GuildPlayerClientPacket, GuildRequestClientPacket,
-            GuildTakeClientPacket, GuildUseClientPacket,
+    protocol::{
+        net::{
+            client::{
+                GuildAcceptClientPacket, GuildBuyClientPacket, GuildCreateClientPacket,
+                GuildKickClientPacket, GuildOpenClientPacket, GuildPlayerClientPacket,
+                GuildRequestClientPacket, GuildTakeClientPacket, GuildUseClientPacket,
+            },
+            PacketAction,
         },
-        PacketAction,
+        r#pub::NpcType,
     },
 };
 
-use crate::{map::MapHandle, player::PlayerHandle};
+use crate::{map::MapHandle, player::PlayerHandle, NPC_DB, SETTINGS};
 
 fn open(reader: EoReader, player_id: i32, map: MapHandle) {
     let open = match GuildOpenClientPacket::deserialize(&reader) {
@@ -74,17 +77,17 @@ async fn player(reader: EoReader, player_id: i32, player: PlayerHandle, map: Map
         }
     };
 
-    let session_id = match player.get_session_id().await {
-        Ok(session_id) => session_id,
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != packet.session_id {
+                return;
+            }
+        }
         Err(e) => {
             error!("Error getting player session id: {}", e);
             return;
         }
     };
-
-    if session_id != packet.session_id {
-        return;
-    }
 
     map.request_to_join_guild(player_id, packet.guild_tag, packet.recruiter_name);
 }
@@ -125,6 +128,53 @@ pub fn take(reader: EoReader, player: PlayerHandle) {
     player.request_guild_info(packet.session_id, packet.info_type);
 }
 
+pub async fn buy(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
+    let packet = match GuildBuyClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildBuyClientPacket: {}", e);
+            return;
+        }
+    };
+
+    if packet.gold_amount < SETTINGS.guild.min_deposit {
+        return;
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != packet.session_id {
+                return;
+            }
+        }
+        Err(e) => {
+            error!("Error getting player session id: {}", e);
+            return;
+        }
+    };
+
+    match map.get_npc_id_for_index(npc_index).await {
+        Some(npc_id) => {
+            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
+
+            if npc_data.r#type != NpcType::Guild {
+                return;
+            }
+        }
+        None => return,
+    }
+
+    map.deposit_guild_gold(player_id, packet.gold_amount);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -151,6 +201,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Use => r#use(reader, player_handle).await,
         PacketAction::Kick => kick(reader, player_handle),
         PacketAction::Take => take(reader, player_handle),
+        PacketAction::Buy => buy(reader, player_id, player_handle, map).await,
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

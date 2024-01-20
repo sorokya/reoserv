@@ -1,4 +1,5 @@
 mod accept_guild_creation_request;
+mod deposit_guild_gold;
 mod finish_guild_creation;
 mod join_guild;
 mod kick_from_guild;

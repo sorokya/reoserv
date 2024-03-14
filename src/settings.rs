@@ -206,6 +206,7 @@ pub struct Guild {
     pub kick_rank: i32,
     pub min_deposit: i32,
     pub bank_max_gold: i32,
+    pub edit_rank: i32,
 }
 
 #[derive(Debug, Deserialize)]

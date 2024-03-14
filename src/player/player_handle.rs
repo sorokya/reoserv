@@ -4,7 +4,10 @@ use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType, GuildInfoType},
+        client::{
+            AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
+            GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+        },
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -403,6 +406,17 @@ impl PlayerHandle {
 
     pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
+    }
+
+    pub fn update_guild(
+        &self,
+        session_id: i32,
+        info_type_data: GuildAgreeClientPacketInfoTypeData,
+    ) {
+        let _ = self.tx.send(Command::UpdateGuild {
+            session_id,
+            info_type_data,
+        });
     }
 }
 

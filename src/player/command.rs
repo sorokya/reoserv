@@ -1,7 +1,10 @@
 use bytes::Bytes;
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType, GuildInfoType},
+        client::{
+            AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
+            GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+        },
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -166,6 +169,10 @@ pub enum Command {
     SetChestIndex(usize),
     SetSleepCost(i32),
     Tick,
+    UpdateGuild {
+        session_id: i32,
+        info_type_data: GuildAgreeClientPacketInfoTypeData,
+    },
     UpdatePartyHP {
         hp_percentage: i32,
     },

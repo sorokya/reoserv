@@ -3,9 +3,10 @@ use eolib::{
     protocol::{
         net::{
             client::{
-                GuildAcceptClientPacket, GuildBuyClientPacket, GuildCreateClientPacket,
-                GuildKickClientPacket, GuildOpenClientPacket, GuildPlayerClientPacket,
-                GuildRequestClientPacket, GuildTakeClientPacket, GuildUseClientPacket,
+                GuildAcceptClientPacket, GuildAgreeClientPacket, GuildBuyClientPacket,
+                GuildCreateClientPacket, GuildKickClientPacket, GuildOpenClientPacket,
+                GuildPlayerClientPacket, GuildRequestClientPacket, GuildTakeClientPacket,
+                GuildUseClientPacket,
             },
             PacketAction,
         },
@@ -175,6 +176,23 @@ pub async fn buy(reader: EoReader, player_id: i32, player: PlayerHandle, map: Ma
     map.deposit_guild_gold(player_id, packet.gold_amount);
 }
 
+pub fn agree(reader: EoReader, player: PlayerHandle) {
+    let packet = match GuildAgreeClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildAgreeClientPacket: {}", e);
+            return;
+        }
+    };
+
+    let info_type_data = match packet.info_type_data {
+        Some(info_type_data) => info_type_data,
+        None => return,
+    };
+
+    player.update_guild(packet.session_id, info_type_data);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -202,6 +220,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Kick => kick(reader, player_handle),
         PacketAction::Take => take(reader, player_handle),
         PacketAction::Buy => buy(reader, player_id, player_handle, map).await,
+        PacketAction::Agree => agree(reader, player_handle),
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

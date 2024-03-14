@@ -12,7 +12,7 @@ use eolib::{
 use mysql_async::{prelude::Queryable, Conn, Params};
 use mysql_common::{params, Row};
 
-use crate::NPC_DB;
+use crate::{utils::get_guild_ranks, NPC_DB};
 
 use super::super::Player;
 
@@ -148,38 +148,26 @@ impl Player {
 async fn get_guild_description(conn: &mut Conn, tag: &str) -> String {
     match conn
         .exec_first::<Row, &str, Params>(
-            "SELECT `description` FROM Guild WHERE `tag` = :tag",
+            include_str!("../../../sql/get_guild_description.sql"),
             params! {
                 "tag" => tag,
             },
         )
         .await
     {
-        Ok(Some(row)) => row.get(0).unwrap(),
+        Ok(Some(row)) => {
+            let description: String = row.get(0).unwrap();
+            if description.is_empty() {
+                " ".to_owned()
+            } else {
+                description
+            }
+        }
         Err(e) => {
             error!("Error getting guild description: {}", e);
-            "".to_owned()
+            " ".to_owned()
         }
-        _ => "".to_owned(),
-    }
-}
-
-async fn get_guild_ranks(conn: &mut Conn, tag: &str) -> Vec<String> {
-    match conn
-        .exec_map(
-            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` WHERE `tag` = :tag ORDER BY `index` ASC",
-            params! {
-                "tag" => tag,
-            },
-            |row: Row| row.get::<String, usize>(0).unwrap(),
-        )
-        .await
-    {
-        Ok(ranks) => ranks,
-        Err(e) => {
-            error!("Error getting guild ranks: {}", e);
-            vec!["".to_owned(); 9]
-        }
+        _ => " ".to_owned(),
     }
 }
 

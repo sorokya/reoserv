@@ -311,6 +311,10 @@ impl Player {
                     self.world.update_party_hp(self.id, hp_percentage);
                 }
             }
+            Command::UpdateGuild {
+                session_id,
+                info_type_data,
+            } => self.update_guild(session_id, info_type_data).await,
         }
 
         true

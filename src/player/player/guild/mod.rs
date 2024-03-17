@@ -1,5 +1,6 @@
 mod accept_guild_join_request;
 mod add_guild_creation_player;
+mod assign_guild_rank;
 mod create_guild;
 mod guild_exists;
 pub use guild_exists::guild_exists;

@@ -148,6 +148,7 @@ impl WorldHandle {
         });
     }
 
+    // TODO: pass name  as reference
     pub async fn get_character_by_name(
         &self,
         name: String,

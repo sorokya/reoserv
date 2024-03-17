@@ -87,7 +87,7 @@ impl Player {
             }
         };
 
-        match character.guild_rank_index {
+        match character.guild_rank {
             Some(rank_index) => {
                 if rank_index > SETTINGS.guild.edit_rank {
                     return;
@@ -170,7 +170,7 @@ impl Player {
                     params! {
                         "rank" => rank,
                         "tag" => tag,
-                        "index" => index,
+                        "index" => index + 1,
                     },
                 )
                 .await

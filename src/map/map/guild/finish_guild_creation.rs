@@ -28,7 +28,7 @@ impl Map {
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
-            character.guild_rank_index = Some(0);
+            character.guild_rank = Some(1);
 
             let packet = GuildCreateServerPacket {
                 leader_player_id: player_id,
@@ -81,7 +81,7 @@ impl Map {
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
-            character.guild_rank_index = Some(8);
+            character.guild_rank = Some(9);
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Agree,

@@ -40,7 +40,7 @@ impl Player {
             None => return,
         };
 
-        if character.guild_rank_index.unwrap() > 1 {
+        if character.guild_rank.unwrap() > 1 {
             return;
         }
 

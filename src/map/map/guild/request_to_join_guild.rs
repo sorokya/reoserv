@@ -74,7 +74,7 @@ impl Map {
             }
         }
 
-        if recruiter.guild_rank_index.unwrap() > 1 {
+        if recruiter.guild_rank.unwrap() > 1 {
             send_reply!(character.player.as_ref().unwrap(), GuildReply::NotRecruiter);
             return;
         }

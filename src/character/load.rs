@@ -45,7 +45,7 @@ impl Character {
         character.hair_color = row.take("hair_color").unwrap();
         character.bank_level = row.take("bank_level").unwrap();
         character.gold_bank = row.take("gold_bank").unwrap();
-        character.guild_rank_index = row.take("guild_rank_index").unwrap();
+        character.guild_rank = row.take("guild_rank").unwrap();
         character.guild_rank_string = row.take("guild_rank_string").unwrap();
         character.equipment.boots = row.take("boots").unwrap();
         character.equipment.accessory = row.take("accessory").unwrap();

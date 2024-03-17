@@ -6,3 +6,4 @@ mod kick_from_guild;
 mod open_guild_master;
 mod request_to_join_guild;
 mod send_guild_create_requests;
+mod update_guild_rank;

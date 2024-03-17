@@ -502,6 +502,12 @@ impl Map {
                 sub_loc,
             } => self.unequip(player_id, item_id, sub_loc),
 
+            Command::UpdateGuildRank {
+                player_id,
+                rank,
+                rank_str,
+            } => self.update_guild_rank(player_id, rank, rank_str),
+
             Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,

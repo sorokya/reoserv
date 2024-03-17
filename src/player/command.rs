@@ -173,6 +173,11 @@ pub enum Command {
         session_id: i32,
         info_type_data: GuildAgreeClientPacketInfoTypeData,
     },
+    AssignGuildRank {
+        session_id: i32,
+        member_name: String,
+        rank: i32,
+    },
     UpdatePartyHP {
         hp_percentage: i32,
     },

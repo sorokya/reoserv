@@ -14,7 +14,7 @@ impl Map {
 
         character.guild_tag = None;
         character.guild_name = None;
-        character.guild_rank_index = None;
+        character.guild_rank = None;
         character.guild_rank_string = None;
 
         let packet = GuildKickServerPacket::default();

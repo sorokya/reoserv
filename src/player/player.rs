@@ -315,6 +315,11 @@ impl Player {
                 session_id,
                 info_type_data,
             } => self.update_guild(session_id, info_type_data).await,
+            Command::AssignGuildRank {
+                session_id,
+                member_name,
+                rank,
+            } => self.assign_guild_rank(session_id, member_name, rank).await,
         }
 
         true

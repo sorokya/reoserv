@@ -12,7 +12,7 @@ SET `title` = :title,
     `bank_level` = :bank_level,
     `gold_bank` = :gold_bank,
     `guild_id` = (SELECT `id` FROM `Guild` WHERE `tag` = :guild_tag),
-    `guild_rank_index` = :guild_rank_index,
+    `guild_rank` = :guild_rank,
     `guild_rank_string` = :guild_rank_string,
     `updated_at` = CURRENT_TIMESTAMP()
 WHERE `id` = :character_id;

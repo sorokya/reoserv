@@ -350,3 +350,7 @@ bank_max_gold = 2_000_000_000
 
 edit_rank = 1
 
+promote_rank = 1
+
+demote_rank = 1
+

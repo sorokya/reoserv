@@ -349,6 +349,11 @@ pub enum Command {
         item_id: i32,
         sub_loc: i32,
     },
+    UpdateGuildRank {
+        player_id: i32,
+        rank: i32,
+        rank_str: String,
+    },
     UpgradeLocker {
         player_id: i32,
     },

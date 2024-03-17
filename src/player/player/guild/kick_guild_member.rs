@@ -1,5 +1,3 @@
-use crate::SETTINGS;
-
 use super::super::Player;
 use eolib::{
     data::{EoSerialize, EoWriter},
@@ -54,14 +52,9 @@ impl Player {
             None => return,
         };
 
-        match character.guild_rank_index {
-            Some(rank_index) => {
-                if rank_index > SETTINGS.guild.kick_rank {
-                    return;
-                }
-            }
-            None => return,
-        };
+        if !character.is_guild_leader() {
+            return;
+        }
 
         match self.world.get_character_by_name(member_name.clone()).await {
             Ok(member) => {
@@ -70,7 +63,7 @@ impl Player {
                     return;
                 }
 
-                if member.guild_rank_index.unwrap() <= character.guild_rank_index.unwrap() {
+                if member.is_guild_leader() {
                     send_reply!(self, GuildReply::RemoveLeader);
                     return;
                 }

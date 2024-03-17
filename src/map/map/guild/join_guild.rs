@@ -22,7 +22,7 @@ impl Map {
         character.guild_tag = Some(guild_tag.clone());
         character.guild_name = Some(guild_name.clone());
         character.guild_rank_string = Some(guild_rank_string.clone());
-        character.guild_rank_index = Some(8);
+        character.guild_rank = Some(9);
 
         let packet = GuildAgreeServerPacket {
             recruiter_id,

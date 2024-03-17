@@ -418,6 +418,14 @@ impl PlayerHandle {
             info_type_data,
         });
     }
+
+    pub fn assign_guild_rank(&self, session_id: i32, member_name: String, rank: i32) {
+        let _ = self.tx.send(Command::AssignGuildRank {
+            session_id,
+            member_name,
+            rank,
+        });
+    }
 }
 
 async fn run_player(mut player: Player, player_handle: PlayerHandle) {

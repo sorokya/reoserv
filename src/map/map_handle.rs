@@ -617,6 +617,14 @@ impl MapHandle {
         });
     }
 
+    pub fn update_guild_rank(&self, player_id: i32, rank: i32, rank_str: &str) {
+        let _ = self.tx.send(Command::UpdateGuildRank {
+            player_id,
+            rank,
+            rank_str: rank_str.to_owned(),
+        });
+    }
+
     pub fn upgrade_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::UpgradeLocker { player_id });
     }

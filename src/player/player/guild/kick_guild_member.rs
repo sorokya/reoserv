@@ -2,7 +2,7 @@ use super::super::Player;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{GuildReply, GuildReplyServerPacket},
+        server::{GuildReply, GuildReplyServerPacket, TalkServerServerPacket},
         PacketAction, PacketFamily,
     },
 };
@@ -85,6 +85,25 @@ impl Player {
             }
             Err(_) => {
                 // TODO: Offline kick
+                let packet = TalkServerServerPacket {
+                    message: "Offline kicking not currently supported".to_owned(),
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Error serializing TalkServerServerPacket: {}", e);
+                    return;
+                }
+
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Server,
+                        PacketFamily::Talk,
+                        writer.to_byte_array(),
+                    )
+                    .await;
             }
         }
     }

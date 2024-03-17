@@ -6,6 +6,7 @@ mod guild_exists;
 pub use guild_exists::guild_exists;
 mod kick_guild_member;
 mod request_guild_creation;
+mod request_guild_details;
 mod request_guild_info;
 mod update_guild;
 mod validate_guild_tag;

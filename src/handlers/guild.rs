@@ -5,8 +5,8 @@ use eolib::{
             client::{
                 GuildAcceptClientPacket, GuildAgreeClientPacket, GuildBuyClientPacket,
                 GuildCreateClientPacket, GuildKickClientPacket, GuildOpenClientPacket,
-                GuildPlayerClientPacket, GuildRankClientPacket, GuildRequestClientPacket,
-                GuildTakeClientPacket, GuildUseClientPacket,
+                GuildPlayerClientPacket, GuildRankClientPacket, GuildReportClientPacket,
+                GuildRequestClientPacket, GuildTakeClientPacket, GuildUseClientPacket,
             },
             PacketAction,
         },
@@ -205,6 +205,18 @@ pub fn rank(reader: EoReader, player: PlayerHandle) {
     player.assign_guild_rank(packet.session_id, packet.member_name, packet.rank);
 }
 
+pub fn report(reader: EoReader, player: PlayerHandle) {
+    let packet = match GuildReportClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildReportClientPacket: {}", e);
+            return;
+        }
+    };
+
+    player.request_guild_details(packet.session_id, packet.guild_identity);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -234,6 +246,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Buy => buy(reader, player_id, player_handle, map).await,
         PacketAction::Agree => agree(reader, player_handle),
         PacketAction::Rank => rank(reader, player_handle),
+        PacketAction::Report => report(reader, player_handle),
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

@@ -331,6 +331,13 @@ impl PlayerHandle {
         });
     }
 
+    pub fn request_guild_details(&self, session_id: i32, guild_identity: String) {
+        let _ = self.tx.send(Command::RequestGuildDetails {
+            session_id,
+            guild_identity,
+        });
+    }
+
     pub fn request_guild_info(&self, session_id: i32, info_type: GuildInfoType) {
         let _ = self.tx.send(Command::RequestGuildInfo {
             session_id,

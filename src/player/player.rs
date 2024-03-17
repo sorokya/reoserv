@@ -261,6 +261,10 @@ impl Player {
                 self.request_guild_creation(session_id, guild_name, guild_tag)
                     .await
             }
+            Command::RequestGuildDetails {
+                session_id,
+                guild_identity,
+            } => self.request_guild_details(session_id, guild_identity).await,
             Command::RequestGuildInfo {
                 session_id,
                 info_type,

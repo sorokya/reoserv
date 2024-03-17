@@ -144,6 +144,10 @@ pub enum Command {
         guild_name: String,
         guild_tag: String,
     },
+    RequestGuildDetails {
+        session_id: i32,
+        guild_identity: String,
+    },
     RequestGuildInfo {
         session_id: i32,
         info_type: GuildInfoType,

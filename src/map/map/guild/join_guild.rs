@@ -24,6 +24,8 @@ impl Map {
         character.guild_rank_string = Some(guild_rank_string.clone());
         character.guild_rank = Some(9);
 
+        self.world.add_guild_member(player_id, guild_tag.clone());
+
         let packet = GuildAgreeServerPacket {
             recruiter_id,
             guild_tag,

@@ -41,8 +41,19 @@ impl WorldHandle {
         let _ = self.tx.send(Command::AddLoggedInAccount { account_id });
     }
 
-    pub fn add_character(&self, player_id: i32, name: String) {
-        let _ = self.tx.send(Command::AddCharacter { player_id, name });
+    pub fn add_character(&self, player_id: i32, name: String, guild_tag: Option<String>) {
+        let _ = self.tx.send(Command::AddCharacter {
+            player_id,
+            name,
+            guild_tag,
+        });
+    }
+
+    pub fn add_guild_member(&self, player_id: i32, guild_tag: String) {
+        let _ = self.tx.send(Command::AddGuildMember {
+            player_id,
+            guild_tag,
+        });
     }
 
     pub async fn add_connection(&self, ip: &str) {
@@ -110,8 +121,19 @@ impl WorldHandle {
             .send(Command::BroadcastPartyMessage { player_id, message });
     }
 
-    pub fn _broadcast_server_message(&self, message: String) {
-        let _ = self.tx.send(Command::_BroadcastServerMessage { message });
+    pub fn broadcast_guild_message(
+        &self,
+        player_id: Option<i32>,
+        guild_tag: String,
+        name: String,
+        message: String,
+    ) {
+        let _ = self.tx.send(Command::BroadcastGuildMessage {
+            player_id,
+            guild_tag,
+            name,
+            message,
+        });
     }
 
     pub async fn drop_player(
@@ -120,6 +142,7 @@ impl WorldHandle {
         ip: String,
         account_id: i32,
         character_name: String,
+        guild_tag: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DropPlayer {
@@ -128,6 +151,7 @@ impl WorldHandle {
             ip,
             account_id,
             character_name,
+            guild_tag,
         });
         rx.await.unwrap();
         Ok(())
@@ -274,6 +298,13 @@ impl WorldHandle {
 
     pub fn request_party_list(&self, player_id: i32) {
         let _ = self.tx.send(Command::RequestPartyList { player_id });
+    }
+
+    pub fn remove_guild_member(&self, player_id: i32, guild_tag: String) {
+        let _ = self.tx.send(Command::RemoveGuildMember {
+            player_id,
+            guild_tag,
+        });
     }
 
     pub fn remove_party_member(&self, player_id: i32, target_player_id: i32) {

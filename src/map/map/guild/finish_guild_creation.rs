@@ -30,6 +30,8 @@ impl Map {
             character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
             character.guild_rank = Some(1);
 
+            self.world.add_guild_member(player_id, guild_tag.clone());
+
             let packet = GuildCreateServerPacket {
                 leader_player_id: player_id,
                 guild_tag: guild_tag.clone(),
@@ -82,6 +84,8 @@ impl Map {
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
             character.guild_rank = Some(9);
+
+            self.world.add_guild_member(*player_id, guild_tag.clone());
 
             character.player.as_ref().unwrap().send(
                 PacketAction::Agree,

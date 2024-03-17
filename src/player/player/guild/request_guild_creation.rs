@@ -1,12 +1,6 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{GuildReply, GuildReplyServerPacket},
-            PacketAction, PacketFamily,
-        },
-        r#pub::NpcType,
-    },
+    data::EoSerialize,
+    protocol::{net::server::GuildReply, r#pub::NpcType},
 };
 
 use crate::{
@@ -16,30 +10,6 @@ use crate::{
 };
 
 use super::{super::Player, guild_exists};
-
-macro_rules! send_reply {
-    ($player:expr, $reply:expr) => {{
-        let mut writer = EoWriter::new();
-        let packet = GuildReplyServerPacket {
-            reply_code: $reply,
-            reply_code_data: None,
-        };
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildReplyServerPacket: {}", e);
-            return;
-        }
-
-        let _ = $player
-            .bus
-            .send(
-                PacketAction::Reply,
-                PacketFamily::Guild,
-                writer.to_byte_array(),
-            )
-            .await;
-    }};
-}
 
 impl Player {
     pub async fn request_guild_creation(

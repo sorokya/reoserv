@@ -148,6 +148,10 @@ pub enum Command {
         session_id: i32,
         guild_identity: String,
     },
+    RequestGuildMemberlist {
+        session_id: i32,
+        guild_identity: String,
+    },
     RequestGuildInfo {
         session_id: i32,
         info_type: GuildInfoType,

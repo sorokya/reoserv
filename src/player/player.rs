@@ -56,6 +56,7 @@ mod generate_session_id;
 mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
+#[macro_use]
 mod guild;
 mod ping;
 mod request_warp;
@@ -265,6 +266,13 @@ impl Player {
                 session_id,
                 guild_identity,
             } => self.request_guild_details(session_id, guild_identity).await,
+            Command::RequestGuildMemberlist {
+                session_id,
+                guild_identity,
+            } => {
+                self.request_guild_memberlist(session_id, guild_identity)
+                    .await
+            }
             Command::RequestGuildInfo {
                 session_id,
                 info_type,

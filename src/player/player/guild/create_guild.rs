@@ -1,10 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{GuildReply, GuildReplyServerPacket},
-        PacketAction, PacketFamily,
-    },
-};
+use eolib::{data::EoSerialize, protocol::net::server::GuildReply};
 use mysql_async::{prelude::Queryable, Conn};
 use mysql_common::params;
 
@@ -14,30 +8,6 @@ use super::{
     super::Player, guild_exists, validate_guild_description, validate_guild_name,
     validate_guild_tag,
 };
-
-macro_rules! send_reply {
-    ($player:expr, $reply:expr) => {{
-        let mut writer = EoWriter::new();
-        let packet = GuildReplyServerPacket {
-            reply_code: $reply,
-            reply_code_data: None,
-        };
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildReplyServerPacket: {}", e);
-            return;
-        }
-
-        let _ = $player
-            .bus
-            .send(
-                PacketAction::Reply,
-                PacketFamily::Guild,
-                writer.to_byte_array(),
-            )
-            .await;
-    }};
-}
 
 impl Player {
     pub async fn create_guild(

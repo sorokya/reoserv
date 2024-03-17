@@ -291,7 +291,7 @@ CREATE TABLE `Stats` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 CREATE PROCEDURE `GetGuildDetails`(
-	IN `guild_identifier` VARCHAR(32)
+	IN `guild_identity` VARCHAR(32)
 )
 LANGUAGE SQL
 NOT DETERMINISTIC
@@ -306,13 +306,13 @@ SELECT `tag`,
        `created_at`,
        `bank`
 FROM `Guild`
-WHERE `guild_identifier` IN (`tag`, `name`);
+WHERE `guild_identity` IN (`tag`, `name`);
 
 SELECT `rank`
 FROM `GuildRank`
 INNER JOIN `Guild`
 	ON `Guild`.id = `GuildRank`.`guild_id`
-WHERE `guild_identifier` IN (`Guild`.`tag`, `Guild`.`name`)
+WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`)
 ORDER BY `guild_id`, `index`
 LIMIT 9;
 
@@ -322,7 +322,7 @@ FROM `Guild`
 INNER JOIN `Character`
 	ON `Character`.`guild_id` = `Guild`.id
 	AND `Character`.`guild_rank` <= 2
-WHERE `guild_identifier` IN (`Guild`.`tag`, `Guild`.`name`);
+WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`);
 
 END
 

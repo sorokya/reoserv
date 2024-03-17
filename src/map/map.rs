@@ -47,6 +47,7 @@ mod board;
 mod character;
 mod chest;
 mod events;
+#[macro_use]
 mod guild;
 mod inn;
 mod jukebox;

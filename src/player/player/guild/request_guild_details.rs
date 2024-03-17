@@ -3,7 +3,7 @@ use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
         net::{
-            server::{GuildReportServerPacket, GuildStaff},
+            server::{GuildReply, GuildReportServerPacket, GuildStaff},
             PacketAction, PacketFamily,
         },
         r#pub::NpcType,
@@ -18,7 +18,7 @@ use crate::NPC_DB;
 use super::super::Player;
 
 impl Player {
-    pub async fn request_guild_details(&mut self, session_id: i32, guild_identifier: String) {
+    pub async fn request_guild_details(&mut self, session_id: i32, guild_identity: String) {
         let npc_index = match self.interact_npc_index {
             Some(npc_index) => npc_index,
             None => return,
@@ -62,9 +62,9 @@ impl Player {
 
         let mut result = match conn
             .exec_iter(
-                "CALL GetGuildDetails(:guild_identifier);",
+                "CALL GetGuildDetails(:guild_identity);",
                 params! {
-                    "guild_identifier" => &guild_identifier,
+                    "guild_identity" => &guild_identity,
                 },
             )
             .await
@@ -82,7 +82,7 @@ impl Player {
             let mut stream = match result.stream::<Row>().await {
                 Ok(Some(stream)) => stream,
                 Ok(None) => {
-                    error!("Error getting guild details: no rows returned");
+                    send_reply!(self, GuildReply::NotFound);
                     return;
                 }
                 Err(e) => {
@@ -128,7 +128,7 @@ impl Player {
             let mut stream = match result.stream::<Row>().await {
                 Ok(Some(stream)) => stream,
                 Ok(None) => {
-                    error!("Error getting guild details: no rows returned");
+                    send_reply!(self, GuildReply::NotFound);
                     return;
                 }
                 Err(e) => {
@@ -158,7 +158,7 @@ impl Player {
             let mut stream = match result.stream::<Row>().await {
                 Ok(Some(stream)) => stream,
                 Ok(None) => {
-                    error!("Error getting guild details: no rows returned");
+                    send_reply!(self, GuildReply::NotFound);
                     return;
                 }
                 Err(e) => {

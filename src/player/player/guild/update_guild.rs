@@ -1,11 +1,7 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
+    data::EoSerialize,
     protocol::{
-        net::{
-            client::GuildAgreeClientPacketInfoTypeData,
-            server::{GuildReply, GuildReplyServerPacket},
-            PacketAction, PacketFamily,
-        },
+        net::{client::GuildAgreeClientPacketInfoTypeData, server::GuildReply},
         r#pub::NpcType,
     },
 };
@@ -16,30 +12,6 @@ use mysql_common::params;
 use crate::{utils::get_guild_ranks, NPC_DB, SETTINGS};
 
 use super::{super::Player, validate_guild_description, validate_guild_rank};
-
-macro_rules! send_reply {
-    ($player:expr, $reply:expr) => {{
-        let mut writer = EoWriter::new();
-        let packet = GuildReplyServerPacket {
-            reply_code: $reply,
-            reply_code_data: None,
-        };
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildReplyServerPacket: {}", e);
-            return;
-        }
-
-        let _ = $player
-            .bus
-            .send(
-                PacketAction::Reply,
-                PacketFamily::Guild,
-                writer.to_byte_array(),
-            )
-            .await;
-    }};
-}
 
 impl Player {
     pub async fn update_guild(
@@ -139,7 +111,6 @@ impl Player {
             }
             Err(e) => {
                 error!("Error updating guild description: {}", e);
-                return;
             }
         };
     }

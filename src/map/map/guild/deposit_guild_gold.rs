@@ -88,7 +88,6 @@ impl Map {
                 .await
             {
                 error!("Error updating guild bank: {}", e);
-                return;
             }
         });
     }

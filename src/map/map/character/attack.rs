@@ -19,6 +19,7 @@ use crate::{
     character::Character,
     map::map::ArenaPlayer,
     utils::{get_distance, get_next_coords},
+    world::Party,
     ITEM_DB, NPC_DB, SETTINGS,
 };
 
@@ -55,7 +56,9 @@ impl Map {
             );
         }
 
-        match self.get_attack_target(player_id, direction) {
+        let player_party = self.world.get_player_party(player_id).await;
+
+        match self.get_attack_target(player_id, direction, player_party) {
             Some(AttackTarget::Npc(npc_index)) => {
                 self.attack_npc(player_id, npc_index, direction).await
             }
@@ -66,10 +69,20 @@ impl Map {
         };
     }
 
-    fn get_attack_target(&self, player_id: i32, direction: Direction) -> Option<AttackTarget> {
+    fn get_attack_target(
+        &self,
+        player_id: i32,
+        direction: Direction,
+        player_party: Option<Party>,
+    ) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
+        };
+
+        let party_player_ids = match player_party {
+            Some(party) => party.members,
+            None => Vec::new(),
         };
 
         let range = get_weapon_range(attacker);
@@ -106,13 +119,13 @@ impl Map {
                 return Some(AttackTarget::Npc(*index));
             }
 
-            if let Some((player_id, _)) = self
-                .characters
-                .iter()
-                .find(|(_, character)| !character.hidden && character.coords == coords)
-            {
+            if let Some((player_id, _)) = self.characters.iter().find(|(_, character)| {
+                !character.hidden
+                    && character.coords == coords
+                    && !party_player_ids.contains(&character.player_id.unwrap())
+            }) {
                 return Some(AttackTarget::Player(*player_id));
-            };
+            }
         }
 
         None
@@ -291,10 +304,6 @@ impl Map {
             Some(character) => character,
             None => return,
         };
-
-        if get_distance(&coords, &target_character.coords) > 1 {
-            return;
-        }
 
         let amount = {
             let mut rng = rand::thread_rng();

@@ -163,6 +163,7 @@ impl Player {
                 character_id,
             } => return self.delete_character(session_id, character_id).await,
             Command::Die => self.die().await,
+            Command::DisbandGuild { session_id } => self.disband_guild(session_id).await,
             Command::EnterGame { session_id } => return self.enter_game(session_id).await,
             Command::GenerateSessionId { respond_to } => {
                 let _ = respond_to.send(self.generate_session_id());

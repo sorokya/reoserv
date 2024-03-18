@@ -36,6 +36,7 @@ pub struct World {
 mod add_player;
 mod admin;
 mod chat;
+mod disband_guild;
 mod drop_player;
 mod find_player;
 mod get_character_by_name;
@@ -160,6 +161,8 @@ impl World {
             } => {
                 self.broadcast_guild_message(player_id, guild_tag, name, message);
             }
+
+            Command::DisbandGuild { guild_tag } => self.disband_guild(guild_tag),
 
             Command::DropPlayer {
                 player_id,

@@ -136,6 +136,10 @@ impl WorldHandle {
         });
     }
 
+    pub fn disband_guild(&self, guild_tag: String) {
+        let _ = self.tx.send(Command::DisbandGuild { guild_tag });
+    }
+
     pub async fn drop_player(
         &self,
         player_id: i32,

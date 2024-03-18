@@ -138,6 +138,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Die);
     }
 
+    pub fn disband_guild(&self, session_id: i32) {
+        let _ = self.tx.send(Command::DisbandGuild { session_id });
+    }
+
     pub fn enter_game(&self, session_id: i32) {
         let _ = self.tx.send(Command::EnterGame { session_id });
     }

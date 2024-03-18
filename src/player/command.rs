@@ -66,6 +66,9 @@ pub enum Command {
         character_id: i32,
     },
     Die,
+    DisbandGuild {
+        session_id: i32,
+    },
     EnterGame {
         session_id: i32,
     },

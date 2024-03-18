@@ -63,6 +63,9 @@ pub enum Command {
         name: String,
         message: String,
     },
+    DisbandGuild {
+        guild_tag: String,
+    },
     DropPlayer {
         player_id: i32,
         ip: String,

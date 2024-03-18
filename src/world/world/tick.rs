@@ -11,6 +11,7 @@ impl World {
             None => return,
         };
 
+        self.player_ticks += 1;
         self.npc_act_ticks += 1;
         self.npc_spawn_ticks += 1;
         self.item_spawn_ticks += 1;
@@ -22,6 +23,13 @@ impl World {
         self.warp_suck_ticks += 1;
         self.arena_ticks += 1;
         self.door_close_ticks += 1;
+
+        if self.player_ticks >= ONE_SECOND {
+            for player in self.players.values() {
+                player.tick();
+            }
+            self.player_ticks = 0;
+        }
 
         for map in maps {
             if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
@@ -71,6 +79,10 @@ impl World {
                     map.jukebox_timer();
                 }
             }
+        }
+
+        if self.player_ticks >= ONE_SECOND {
+            self.player_ticks = 0;
         }
 
         if self.npc_act_ticks >= SETTINGS.npcs.act_rate {

@@ -16,6 +16,11 @@ pub enum Command {
     AddCharacter {
         player_id: i32,
         name: String,
+        guild_tag: Option<String>,
+    },
+    AddGuildMember {
+        player_id: i32,
+        guild_tag: String,
     },
     AddConnection {
         ip: String,
@@ -48,18 +53,25 @@ pub enum Command {
         name: String,
         message: String,
     },
-    _BroadcastServerMessage {
-        message: String,
-    },
     BroadcastPartyMessage {
         player_id: i32,
         message: String,
+    },
+    BroadcastGuildMessage {
+        player_id: Option<i32>,
+        guild_tag: String,
+        name: String,
+        message: String,
+    },
+    DisbandGuild {
+        guild_tag: String,
     },
     DropPlayer {
         player_id: i32,
         ip: String,
         account_id: i32,
         character_name: String,
+        guild_tag: Option<String>,
         respond_to: oneshot::Sender<()>,
     },
     FindPlayer {
@@ -124,7 +136,6 @@ pub enum Command {
         victim_name: String,
         admin_name: String,
     },
-    PingPlayers,
     Quake {
         magnitude: i32,
     },
@@ -149,6 +160,10 @@ pub enum Command {
     RequestPlayerInventory {
         player_id: i32,
         victim_name: String,
+    },
+    RemoveGuildMember {
+        player_id: i32,
+        guild_tag: String,
     },
     RemovePartyMember {
         player_id: i32,

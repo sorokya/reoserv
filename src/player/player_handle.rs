@@ -4,7 +4,10 @@ use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+        client::{
+            AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
+            GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+        },
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -16,7 +19,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 
-use crate::{character::Character, map::MapHandle, world::WorldHandle, SETTINGS};
+use crate::{character::Character, map::MapHandle, world::WorldHandle};
 
 use super::{handle_packet::handle_packet, player::Player, ClientState, Command, PartyRequest};
 
@@ -46,8 +49,18 @@ impl PlayerHandle {
         Self { tx }
     }
 
+    pub fn accept_guild_join_request(&self, player_id: i32) {
+        let _ = self.tx.send(Command::AcceptGuildJoinRequest { player_id });
+    }
+
     pub fn accept_warp(&self, map_id: i32, session_id: i32) {
         let _ = self.tx.send(Command::AcceptWarp { map_id, session_id });
+    }
+
+    pub fn add_guild_creation_player(&self, player_id: i32, name: String) {
+        let _ = self
+            .tx
+            .send(Command::AddGuildCreationPlayer { player_id, name });
     }
 
     pub fn arena_die(&self, spawn_coords: Coords) {
@@ -99,6 +112,21 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::CreateCharacter(packet));
     }
 
+    pub fn create_guild(
+        &self,
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+        guild_description: String,
+    ) {
+        let _ = self.tx.send(Command::CreateGuild {
+            session_id,
+            guild_name,
+            guild_tag,
+            guild_description,
+        });
+    }
+
     pub fn delete_character(&self, session_id: i32, character_id: i32) {
         let _ = self.tx.send(Command::DeleteCharacter {
             session_id,
@@ -108,6 +136,10 @@ impl PlayerHandle {
 
     pub fn die(&self) {
         let _ = self.tx.send(Command::Die);
+    }
+
+    pub fn disband_guild(&self, session_id: i32) {
+        let _ = self.tx.send(Command::DisbandGuild { session_id });
     }
 
     pub fn enter_game(&self, session_id: i32) {
@@ -248,6 +280,13 @@ impl PlayerHandle {
         }
     }
 
+    pub fn kick_guild_member(&self, session_id: i32, member_name: String) {
+        let _ = self.tx.send(Command::KickGuildMember {
+            session_id,
+            member_name,
+        });
+    }
+
     pub async fn is_trade_accepted(&self) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });
@@ -260,12 +299,12 @@ impl PlayerHandle {
         (rx.await).unwrap_or(false)
     }
 
-    pub fn login(&self, username: String, password: String) {
-        let _ = self.tx.send(Command::Login { username, password });
+    pub fn leave_guild(&self, session_id: i32) {
+        let _ = self.tx.send(Command::LeaveGuild { session_id });
     }
 
-    pub fn ping(&self) {
-        let _ = self.tx.send(Command::Ping);
+    pub fn login(&self, username: String, password: String) {
+        let _ = self.tx.send(Command::Login { username, password });
     }
 
     pub fn pong(&self) {
@@ -290,6 +329,35 @@ impl PlayerHandle {
         let _ = self
             .tx
             .send(Command::RequestCharacterDeletion { character_id });
+    }
+
+    pub fn request_guild_creation(&self, session_id: i32, guild_name: String, guild_tag: String) {
+        let _ = self.tx.send(Command::RequestGuildCreation {
+            session_id,
+            guild_name,
+            guild_tag,
+        });
+    }
+
+    pub fn request_guild_details(&self, session_id: i32, guild_identity: String) {
+        let _ = self.tx.send(Command::RequestGuildDetails {
+            session_id,
+            guild_identity,
+        });
+    }
+
+    pub fn request_guild_memberlist(&self, session_id: i32, guild_identity: String) {
+        let _ = self.tx.send(Command::RequestGuildMemberlist {
+            session_id,
+            guild_identity,
+        });
+    }
+
+    pub fn request_guild_info(&self, session_id: i32, info_type: GuildInfoType) {
+        let _ = self.tx.send(Command::RequestGuildInfo {
+            session_id,
+            info_type,
+        });
     }
 
     pub fn request_warp(
@@ -354,8 +422,31 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetTrading(trading));
     }
 
+    pub fn tick(&self) {
+        let _ = self.tx.send(Command::Tick);
+    }
+
     pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
+    }
+
+    pub fn update_guild(
+        &self,
+        session_id: i32,
+        info_type_data: GuildAgreeClientPacketInfoTypeData,
+    ) {
+        let _ = self.tx.send(Command::UpdateGuild {
+            session_id,
+            info_type_data,
+        });
+    }
+
+    pub fn assign_guild_rank(&self, session_id: i32, member_name: String, rank: i32) {
+        let _ = self.tx.send(Command::AssignGuildRank {
+            session_id,
+            member_name,
+            rank,
+        });
     }
 }
 
@@ -401,19 +492,6 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
                     player_handle.clone(),
                     player.world.clone(),
                 ));
-        }
-
-        if player.state == ClientState::Uninitialized {
-            let time_since_connection = Utc::now() - player.connected_at;
-            if time_since_connection.num_seconds() > SETTINGS.server.hangup_delay.into() {
-                player
-                    .close(format!(
-                        "Failed to start handshake in {} seconds",
-                        SETTINGS.server.hangup_delay
-                    ))
-                    .await;
-                break;
-            }
         }
 
         tokio::time::sleep(Duration::from_millis(60)).await;

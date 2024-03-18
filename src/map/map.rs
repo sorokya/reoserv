@@ -47,6 +47,8 @@ mod board;
 mod character;
 mod chest;
 mod events;
+#[macro_use]
+mod guild;
 mod inn;
 mod jukebox;
 mod locker;
@@ -120,6 +122,10 @@ impl Map {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
+            Command::AcceptGuildCreationRequest {
+                player_id,
+                invitee_player_id,
+            } => self.accept_guild_creation_request(player_id, invitee_player_id),
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
@@ -171,11 +177,22 @@ impl Map {
                 body,
             } => self.create_board_post(player_id, subject, body).await,
 
+            Command::FinishGuildCreation {
+                player_id,
+                member_ids,
+                guild_tag,
+                guild_name,
+            } => self.finish_guild_creation(player_id, member_ids, guild_tag, guild_name),
+
             Command::DepositGold {
                 player_id,
                 session_id,
                 amount,
             } => self.deposit_gold(player_id, session_id, amount).await,
+
+            Command::DepositGuildGold { player_id, amount } => {
+                self.deposit_guild_gold(player_id, amount)
+            }
 
             Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
 
@@ -234,6 +251,18 @@ impl Map {
                 respond_to,
             } => self.get_nearby_info(target_player_id, respond_to),
 
+            Command::GetNpcIdForIndex {
+                npc_index,
+                respond_to,
+            } => match self.npcs.get(&npc_index) {
+                Some(npc) => {
+                    let _ = respond_to.send(Some(npc.id));
+                }
+                None => {
+                    let _ = respond_to.send(None);
+                }
+            },
+
             Command::GetRelogCoords { respond_to } => {
                 let _ = respond_to.send(if self.file.relog_x > 0 {
                     Some(Coords {
@@ -255,6 +284,20 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::JoinGuild {
+                player_id,
+                recruiter_id,
+                guild_tag,
+                guild_name,
+                guild_rank_string,
+            } => self.join_guild(
+                player_id,
+                recruiter_id,
+                guild_tag,
+                guild_name,
+                guild_rank_string,
+            ),
+
             Command::JukeboxTimer => self.jukebox_timer(),
 
             Command::JunkItem {
@@ -262,6 +305,8 @@ impl Map {
                 item_id,
                 amount,
             } => self.junk_item(target_player_id, item_id, amount).await,
+
+            Command::KickFromGuild { player_id } => self.kick_from_guild(player_id),
 
             Command::LearnSkill {
                 player_id,
@@ -277,6 +322,8 @@ impl Map {
             } => {
                 self.leave(player_id, warp_animation, respond_to, interact_player_id);
             }
+
+            Command::LeaveGuild { player_id } => self.leave_guild(player_id),
 
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
@@ -301,6 +348,11 @@ impl Map {
                 target_player_id,
                 door_coords,
             } => self.open_door(target_player_id, door_coords),
+
+            Command::OpenGuildMaster {
+                player_id,
+                npc_index,
+            } => self.open_guild_master(player_id, npc_index),
 
             Command::OpenInn {
                 player_id,
@@ -364,6 +416,12 @@ impl Map {
                 request,
             } => self.party_request(target_player_id, request).await,
 
+            Command::RequestToJoinGuild {
+                player_id,
+                guild_tag,
+                recruiter_name,
+            } => self.request_to_join_guild(player_id, guild_tag, recruiter_name),
+
             Command::RequestTrade {
                 player_id,
                 target_player_id,
@@ -386,6 +444,11 @@ impl Map {
                 target_player_id,
                 message,
             } => self.send_chat_message(target_player_id, message),
+
+            Command::SendGuildCreateRequests {
+                leader_player_id,
+                guild_identity,
+            } => self.send_guild_create_requests(leader_player_id, guild_identity),
 
             Command::Serialize { respond_to } => {
                 self.serialize(respond_to);
@@ -441,6 +504,12 @@ impl Map {
                 item_id,
                 sub_loc,
             } => self.unequip(player_id, item_id, sub_loc),
+
+            Command::UpdateGuildRank {
+                player_id,
+                rank,
+                rank_str,
+            } => self.update_guild_rank(player_id, rank, rank_str),
 
             Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
 

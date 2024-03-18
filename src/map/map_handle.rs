@@ -38,6 +38,13 @@ impl MapHandle {
         Self { tx }
     }
 
+    pub fn accept_guild_creation_request(&self, player_id: i32, invitee_player_id: i32) {
+        let _ = self.tx.send(Command::AcceptGuildCreationRequest {
+            player_id,
+            invitee_player_id,
+        });
+    }
+
     pub fn accept_trade_request(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::AcceptTradeRequest {
             player_id,
@@ -105,12 +112,33 @@ impl MapHandle {
         });
     }
 
+    pub fn finish_guild_creation(
+        &self,
+        player_id: i32,
+        member_ids: Vec<i32>,
+        guild_tag: String,
+        guild_name: String,
+    ) {
+        let _ = self.tx.send(Command::FinishGuildCreation {
+            player_id,
+            member_ids,
+            guild_tag,
+            guild_name,
+        });
+    }
+
     pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: i32) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
             session_id,
             amount,
         });
+    }
+
+    pub fn deposit_guild_gold(&self, player_id: i32, amount: i32) {
+        let _ = self
+            .tx
+            .send(Command::DepositGuildGold { player_id, amount });
     }
 
     pub fn disagree_trade(&self, player_id: i32) {
@@ -201,6 +229,15 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_npc_id_for_index(&self, npc_index: i32) -> Option<i32> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetNpcIdForIndex {
+            npc_index,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn get_relog_coords(&self) -> Option<Coords> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRelogCoords { respond_to: tx });
@@ -221,12 +258,33 @@ impl MapHandle {
         });
     }
 
+    pub fn join_guild(
+        &self,
+        player_id: i32,
+        recruiter_id: i32,
+        guild_tag: String,
+        guild_name: String,
+        guild_rank_string: String,
+    ) {
+        let _ = self.tx.send(Command::JoinGuild {
+            player_id,
+            recruiter_id,
+            guild_tag,
+            guild_name,
+            guild_rank_string,
+        });
+    }
+
     pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::JunkItem {
             target_player_id,
             item_id,
             amount,
         });
+    }
+
+    pub fn kick_from_guild(&self, player_id: i32) {
+        let _ = self.tx.send(Command::KickFromGuild { player_id });
     }
 
     pub fn learn_skill(&self, player_id: i32, spell_id: i32, session_id: i32) {
@@ -251,6 +309,10 @@ impl MapHandle {
             interact_player_id,
         });
         rx.await.unwrap()
+    }
+
+    pub fn leave_guild(&self, player_id: i32) {
+        let _ = self.tx.send(Command::LeaveGuild { player_id });
     }
 
     pub fn level_stat(&self, player_id: i32, stat_id: StatId) {
@@ -286,6 +348,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenDoor {
             target_player_id,
             door_coords,
+        });
+    }
+
+    pub fn open_guild_master(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::OpenGuildMaster {
+            player_id,
+            npc_index,
         });
     }
 
@@ -409,6 +478,14 @@ impl MapHandle {
         });
     }
 
+    pub fn request_to_join_guild(&self, player_id: i32, guild_tag: String, recruiter_name: String) {
+        let _ = self.tx.send(Command::RequestToJoinGuild {
+            player_id,
+            guild_tag,
+            recruiter_name,
+        });
+    }
+
     pub fn request_trade(&self, player_id: i32, target_player_id: i32) {
         let _ = self.tx.send(Command::RequestTrade {
             player_id,
@@ -468,6 +545,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::SendChatMessage {
             target_player_id,
             message,
+        });
+    }
+
+    pub fn send_guild_create_requests(&self, leader_player_id: i32, guild_identity: String) {
+        let _ = self.tx.send(Command::SendGuildCreateRequests {
+            leader_player_id,
+            guild_identity,
         });
     }
 
@@ -534,6 +618,14 @@ impl MapHandle {
             player_id,
             item_id,
             sub_loc,
+        });
+    }
+
+    pub fn update_guild_rank(&self, player_id: i32, rank: i32, rank_str: &str) {
+        let _ = self.tx.send(Command::UpdateGuildRank {
+            player_id,
+            rank,
+            rank_str: rank_str.to_owned(),
         });
     }
 

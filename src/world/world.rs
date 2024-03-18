@@ -13,9 +13,11 @@ pub struct World {
     players: HashMap<i32, PlayerHandle>,
     accounts: Vec<i32>,
     characters: HashMap<String, i32>,
+    guilds: HashMap<String, Vec<i32>>,
     pool: Pool,
     maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
+    player_ticks: i32,
     npc_act_ticks: i32,
     npc_spawn_ticks: i32,
     item_spawn_ticks: i32,
@@ -34,6 +36,7 @@ pub struct World {
 mod add_player;
 mod admin;
 mod chat;
+mod disband_guild;
 mod drop_player;
 mod find_player;
 mod get_character_by_name;
@@ -53,8 +56,10 @@ impl World {
             players: HashMap::new(),
             accounts: Vec::new(),
             characters: HashMap::new(),
+            guilds: HashMap::new(),
             maps: None,
             parties: Vec::new(),
+            player_ticks: 0,
             npc_act_ticks: 0,
             npc_spawn_ticks: 0,
             item_spawn_ticks: 0,
@@ -91,9 +96,35 @@ impl World {
                 self.accounts.push(account_id);
             }
 
-            Command::AddCharacter { player_id, name } => {
+            Command::AddCharacter {
+                player_id,
+                name,
+                guild_tag,
+            } => {
                 self.characters.insert(name, player_id);
+                if let Some(guild_tag) = guild_tag {
+                    match self.guilds.get_mut(&guild_tag) {
+                        Some(guild) => {
+                            guild.push(player_id);
+                        }
+                        None => {
+                            self.guilds.insert(guild_tag, vec![player_id]);
+                        }
+                    }
+                }
             }
+
+            Command::AddGuildMember {
+                player_id,
+                guild_tag,
+            } => match self.guilds.get_mut(&guild_tag) {
+                Some(guild) => {
+                    guild.push(player_id);
+                }
+                None => {
+                    self.guilds.insert(guild_tag, vec![player_id]);
+                }
+            },
 
             Command::AddPlayer {
                 respond_to,
@@ -122,15 +153,32 @@ impl World {
                 self.broadcast_party_message(player_id, message);
             }
 
-            Command::_BroadcastServerMessage { message } => self.broadcast_server_message(&message),
+            Command::BroadcastGuildMessage {
+                player_id,
+                guild_tag,
+                name,
+                message,
+            } => {
+                self.broadcast_guild_message(player_id, guild_tag, name, message);
+            }
+
+            Command::DisbandGuild { guild_tag } => self.disband_guild(guild_tag),
 
             Command::DropPlayer {
                 player_id,
                 ip,
                 account_id,
                 character_name,
+                guild_tag,
                 respond_to,
-            } => self.drop_player(player_id, ip, account_id, &character_name, respond_to),
+            } => self.drop_player(
+                player_id,
+                ip,
+                account_id,
+                &character_name,
+                guild_tag,
+                respond_to,
+            ),
 
             Command::GetCharacterByName { name, respond_to } => {
                 let _ = respond_to.send(self.get_character_by_name(&name).await);
@@ -199,9 +247,20 @@ impl World {
                 }
             }
 
-            Command::PingPlayers => {
-                for player in self.players.values() {
-                    player.ping();
+            Command::RemoveGuildMember {
+                player_id,
+                guild_tag,
+            } => {
+                let remaining = match self.guilds.get_mut(&guild_tag) {
+                    Some(guild) => {
+                        guild.retain(|&id| id != player_id);
+                        guild.len()
+                    }
+                    None => 0,
+                };
+
+                if remaining == 0 {
+                    self.guilds.remove(&guild_tag);
                 }
             }
 

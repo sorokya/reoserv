@@ -58,7 +58,7 @@ pub struct Character {
     pub gold_bank: i32,
     pub guild_name: Option<String>,
     pub guild_tag: Option<String>,
-    pub guild_rank_id: Option<i32>,
+    pub guild_rank: Option<i32>,
     pub guild_rank_string: Option<String>,
     pub equipment: EquipmentPaperdoll,
     pub level: i32,
@@ -196,6 +196,10 @@ impl Character {
 
     pub fn has_spell(&self, spell_id: i32) -> bool {
         self.spells.iter().any(|spell| spell.id == spell_id)
+    }
+
+    pub fn is_guild_leader(&self) -> bool {
+        self.guild_rank == Some(1)
     }
 
     pub async fn save(

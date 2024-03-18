@@ -65,6 +65,9 @@ impl Character {
                 "hair_color" => self.hair_color as u32,
                 "bank_level" => self.bank_level,
                 "gold_bank" => self.gold_bank,
+                "guild_tag" => &self.guild_tag,
+                "guild_rank" => self.guild_rank,
+                "guild_rank_string" => &self.guild_rank_string,
             },
         )
         .await?;

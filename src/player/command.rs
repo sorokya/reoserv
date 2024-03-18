@@ -1,7 +1,10 @@
 use bytes::Bytes;
 use eolib::protocol::{
     net::{
-        client::{AccountCreateClientPacket, CharacterCreateClientPacket, FileType},
+        client::{
+            AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
+            GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+        },
         server::WarpEffect,
         PacketAction, PacketFamily, Version,
     },
@@ -19,9 +22,16 @@ use super::{ClientState, PartyRequest, PlayerHandle};
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptGuildJoinRequest {
+        player_id: i32,
+    },
     AcceptWarp {
         map_id: i32,
         session_id: i32,
+    },
+    AddGuildCreationPlayer {
+        player_id: i32,
+        name: String,
     },
     BeginHandshake {
         challenge: i32,
@@ -37,6 +47,12 @@ pub enum Command {
     Close(String),
     CreateAccount(AccountCreateClientPacket),
     CreateCharacter(CharacterCreateClientPacket),
+    CreateGuild {
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+        guild_description: String,
+    },
     ArenaDie {
         spawn_coords: Coords,
     },
@@ -50,6 +66,9 @@ pub enum Command {
         character_id: i32,
     },
     Die,
+    DisbandGuild {
+        session_id: i32,
+    },
     EnterGame {
         session_id: i32,
     },
@@ -104,11 +123,17 @@ pub enum Command {
     GenSequence {
         respond_to: oneshot::Sender<i32>,
     },
+    KickGuildMember {
+        session_id: i32,
+        member_name: String,
+    },
+    LeaveGuild {
+        session_id: i32,
+    },
     Login {
         username: String,
         password: String,
     },
-    Ping,
     Pong,
     PongNewSequence {
         respond_to: oneshot::Sender<()>,
@@ -119,6 +144,23 @@ pub enum Command {
     RequestCharacterCreation,
     RequestCharacterDeletion {
         character_id: i32,
+    },
+    RequestGuildCreation {
+        session_id: i32,
+        guild_name: String,
+        guild_tag: String,
+    },
+    RequestGuildDetails {
+        session_id: i32,
+        guild_identity: String,
+    },
+    RequestGuildMemberlist {
+        session_id: i32,
+        guild_identity: String,
+    },
+    RequestGuildInfo {
+        session_id: i32,
+        info_type: GuildInfoType,
     },
     RequestWarp {
         local: bool,
@@ -140,6 +182,16 @@ pub enum Command {
     SetTrading(bool),
     SetChestIndex(usize),
     SetSleepCost(i32),
+    Tick,
+    UpdateGuild {
+        session_id: i32,
+        info_type_data: GuildAgreeClientPacketInfoTypeData,
+    },
+    AssignGuildRank {
+        session_id: i32,
+        member_name: String,
+        rank: i32,
+    },
     UpdatePartyHP {
         hp_percentage: i32,
     },

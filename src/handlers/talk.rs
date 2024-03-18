@@ -4,7 +4,8 @@ use eolib::{
         net::{
             client::{
                 TalkAdminClientPacket, TalkAnnounceClientPacket, TalkMsgClientPacket,
-                TalkOpenClientPacket, TalkReportClientPacket, TalkTellClientPacket,
+                TalkOpenClientPacket, TalkReportClientPacket, TalkRequestClientPacket,
+                TalkTellClientPacket,
             },
             PacketAction,
         },
@@ -114,6 +115,36 @@ fn open(reader: EoReader, player_id: i32, world: WorldHandle) {
     world.broadcast_party_message(player_id, open.message);
 }
 
+async fn request(reader: EoReader, player: PlayerHandle, world: WorldHandle) {
+    let request = match TalkRequestClientPacket::deserialize(&reader) {
+        Ok(request) => request,
+        Err(e) => {
+            error!("Error deserializing TalkRequestClientPacket {}", e);
+            return;
+        }
+    };
+
+    let character = match player.get_character().await {
+        Ok(character) => character,
+        Err(e) => {
+            error!("Error getting character: {}", e);
+            return;
+        }
+    };
+
+    let guild_tag = match character.guild_tag {
+        Some(guild_tag) => guild_tag,
+        None => return,
+    };
+
+    world.broadcast_guild_message(
+        character.player_id,
+        guild_tag,
+        character.name,
+        request.message,
+    );
+}
+
 pub async fn talk(
     action: PacketAction,
     reader: EoReader,
@@ -135,6 +166,7 @@ pub async fn talk(
         PacketAction::Report => report(reader, player, world).await,
         PacketAction::Tell => tell(reader, player, world).await,
         PacketAction::Open => open(reader, player_id, world),
+        PacketAction::Request => request(reader, player, world).await,
         _ => error!("Unhandled packet Talk_{:?}", action),
     }
 }

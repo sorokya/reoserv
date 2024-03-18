@@ -308,3 +308,40 @@ track_timer = 90
 [barber]
 
 cost_per_level = 200
+
+[guild]
+
+
+# Minimum amount of players required to create a guild
+min_players = 10
+
+# Cost to create a new guild
+create_cost = 50_000
+
+# Cost to recruit a new guild member
+recruit_cost = 1000
+
+# Minimum length of a guild tag
+min_tag_length = 2
+
+# Maximum length of a guild tag
+max_tag_length = 3
+
+# Minimum length of a guild name
+max_name_length = 24
+
+# Maximum length of a guild description
+max_description_length = 240
+
+# Maximum length of a guild rank
+max_rank_length = 16
+
+default_leader_rank_name = "Leader"
+
+default_recruiter_rank_name = "Recruiter"
+
+default_new_member_rank_name = "New Member"
+
+min_deposit = 1000
+
+bank_max_gold = 2_000_000_000

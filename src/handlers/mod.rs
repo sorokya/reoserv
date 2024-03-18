@@ -45,6 +45,9 @@ pub use face::face;
 mod global;
 pub use global::global;
 
+mod guild;
+pub use guild::guild;
+
 mod init;
 pub use init::init;
 

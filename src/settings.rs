@@ -191,6 +191,23 @@ pub struct Barber {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Guild {
+    pub min_players: usize,
+    pub create_cost: i32,
+    pub recruit_cost: i32,
+    pub min_tag_length: usize,
+    pub max_tag_length: usize,
+    pub max_name_length: usize,
+    pub max_description_length: usize,
+    pub max_rank_length: usize,
+    pub default_leader_rank_name: String,
+    pub default_recruiter_rank_name: String,
+    pub default_new_member_rank_name: String,
+    pub min_deposit: i32,
+    pub bank_max_gold: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -209,6 +226,7 @@ pub struct Settings {
     pub combat: Combat,
     pub jukebox: Jukebox,
     pub barber: Barber,
+    pub guild: Guild,
 }
 
 impl Settings {

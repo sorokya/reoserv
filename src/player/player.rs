@@ -2,11 +2,6 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    packet::{generate_sequence_start, get_ping_sequence_bytes},
-    protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily},
-};
 use mysql_async::Pool;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
@@ -44,6 +39,8 @@ pub struct Player {
     trade_accepted: bool,
     sleep_cost: Option<i32>,
     party_request: PartyRequest,
+    ping_ticks: i32,
+    guild_create_members: Vec<i32>,
 }
 
 mod accept_warp;
@@ -59,8 +56,13 @@ mod generate_session_id;
 mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
+#[macro_use]
+mod guild;
+mod ping;
 mod request_warp;
+mod send_server_message;
 mod take_session_id;
+mod tick;
 
 impl Player {
     pub fn new(
@@ -96,13 +98,21 @@ impl Player {
             trade_accepted: false,
             sleep_cost: None,
             party_request: PartyRequest::None,
+            ping_ticks: 0,
+            guild_create_members: Vec::new(),
         }
     }
 
     pub async fn handle_command(&mut self, command: Command) -> bool {
         match command {
+            Command::AcceptGuildJoinRequest { player_id } => {
+                self.accept_guild_join_request(player_id).await
+            }
             Command::AcceptWarp { map_id, session_id } => {
                 self.accept_warp(map_id, session_id).await
+            }
+            Command::AddGuildCreationPlayer { player_id, name } => {
+                self.add_guild_creation_player(player_id, name).await;
             }
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::BeginHandshake {
@@ -139,11 +149,21 @@ impl Player {
             }
             Command::CreateAccount(packet) => return self.create_account(packet).await,
             Command::CreateCharacter(packet) => return self.create_character(packet).await,
+            Command::CreateGuild {
+                session_id,
+                guild_name,
+                guild_tag,
+                guild_description,
+            } => {
+                self.create_guild(session_id, guild_name, guild_tag, guild_description)
+                    .await
+            }
             Command::DeleteCharacter {
                 session_id,
                 character_id,
             } => return self.delete_character(session_id, character_id).await,
             Command::Die => self.die().await,
+            Command::DisbandGuild { session_id } => self.disband_guild(session_id).await,
             Command::EnterGame { session_id } => return self.enter_game(session_id).await,
             Command::GenerateSessionId { respond_to } => {
                 let _ = respond_to.send(self.generate_session_id());
@@ -215,40 +235,12 @@ impl Player {
                 let sequence = self.bus.sequencer.next_sequence();
                 let _ = respond_to.send(sequence);
             }
+            Command::KickGuildMember {
+                session_id,
+                member_name,
+            } => self.kick_guild_member(session_id, member_name).await,
+            Command::LeaveGuild { session_id } => self.leave_guild(session_id).await,
             Command::Login { username, password } => return self.login(username, password).await,
-            Command::Ping => {
-                if self.state == ClientState::Uninitialized {
-                    return true;
-                }
-
-                if self.bus.need_pong {
-                    info!("player {} connection closed: ping timeout", self.id);
-                    return false;
-                } else {
-                    self.bus.upcoming_sequence_start = generate_sequence_start();
-                    let mut writer = EoWriter::with_capacity(3);
-                    let sequence_bytes = get_ping_sequence_bytes(self.bus.upcoming_sequence_start);
-                    let packet = ConnectionPlayerServerPacket {
-                        seq1: sequence_bytes[0],
-                        seq2: sequence_bytes[1],
-                    };
-
-                    if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Error serializing ConnectionPlayerServerPacket: {}", e);
-                        return false;
-                    }
-
-                    self.bus.need_pong = true;
-                    self.bus
-                        .send(
-                            PacketAction::Player,
-                            PacketFamily::Connection,
-                            writer.to_byte_array(),
-                        )
-                        .await
-                        .unwrap();
-                }
-            }
             Command::Pong => {
                 self.bus.need_pong = false;
             }
@@ -265,6 +257,29 @@ impl Player {
             Command::RequestCharacterDeletion { character_id } => {
                 return self.request_character_deletion(character_id).await
             }
+            Command::RequestGuildCreation {
+                session_id,
+                guild_name,
+                guild_tag,
+            } => {
+                self.request_guild_creation(session_id, guild_name, guild_tag)
+                    .await
+            }
+            Command::RequestGuildDetails {
+                session_id,
+                guild_identity,
+            } => self.request_guild_details(session_id, guild_identity).await,
+            Command::RequestGuildMemberlist {
+                session_id,
+                guild_identity,
+            } => {
+                self.request_guild_memberlist(session_id, guild_identity)
+                    .await
+            }
+            Command::RequestGuildInfo {
+                session_id,
+                info_type,
+            } => self.request_guild_info(session_id, info_type).await,
             Command::RequestWarp {
                 map_id,
                 coords,
@@ -305,11 +320,21 @@ impl Player {
             Command::SetTrading(trading) => {
                 self.trading = trading;
             }
+            Command::Tick => return self.tick().await,
             Command::UpdatePartyHP { hp_percentage } => {
                 if self.state == ClientState::InGame {
                     self.world.update_party_hp(self.id, hp_percentage);
                 }
             }
+            Command::UpdateGuild {
+                session_id,
+                info_type_data,
+            } => self.update_guild(session_id, info_type_data).await,
+            Command::AssignGuildRank {
+                session_id,
+                member_name,
+                rank,
+            } => self.assign_guild_rank(session_id, member_name, rank).await,
         }
 
         true

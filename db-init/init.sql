@@ -102,14 +102,16 @@ CREATE TABLE `Character` (
   `bank_level` int NOT NULL DEFAULT '0',
   `gold_bank` int NOT NULL DEFAULT '0',
   `guild_id` int DEFAULT NULL,
-  `guild_rank_id` int DEFAULT NULL,
+  `guild_rank` tinyint DEFAULT NULL,
   `guild_rank_string` varchar(16) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`),
   KEY `account_id_idx` (`account_id`),
-  CONSTRAINT `character_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE
+  KEY `guild_id_idx` (`guild_id`),
+  CONSTRAINT `character_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `character_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -164,6 +166,7 @@ DROP TABLE IF EXISTS `GuildRank`;
 CREATE TABLE `GuildRank` (
   `id` int NOT NULL AUTO_INCREMENT,
   `guild_id` int NOT NULL,
+  `index` tinyint NOT NULL,
   `rank` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `guild_rank_guild_id` (`guild_id`),
@@ -288,5 +291,41 @@ CREATE TABLE `Stats` (
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+CREATE PROCEDURE `GetGuildDetails`(
+	IN `guild_identity` VARCHAR(32)
+)
+LANGUAGE SQL
+NOT DETERMINISTIC
+CONTAINS SQL
+SQL SECURITY DEFINER
+COMMENT ''
+BEGIN
+
+SELECT `tag`,
+       `name`,
+       `description`,
+       `created_at`,
+       `bank`
+FROM `Guild`
+WHERE `guild_identity` IN (`tag`, `name`);
+
+SELECT `rank`
+FROM `GuildRank`
+INNER JOIN `Guild`
+	ON `Guild`.id = `GuildRank`.`guild_id`
+WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`)
+ORDER BY `guild_id`, `index`
+LIMIT 9;
+
+SELECT `Character`.`name`,
+		 `Character`.guild_rank
+FROM `Guild`
+INNER JOIN `Character`
+	ON `Character`.`guild_id` = `Guild`.id
+	AND `Character`.`guild_rank` <= 2
+WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`);
+
+END
 
 -- Dump completed on 2022-02-11  1:06:02

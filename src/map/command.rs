@@ -16,6 +16,10 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Command {
+    AcceptGuildCreationRequest {
+        player_id: i32,
+        invitee_player_id: i32,
+    },
     AcceptTradeRequest {
         player_id: i32,
         target_player_id: i32,
@@ -69,9 +73,19 @@ pub enum Command {
         subject: String,
         body: String,
     },
+    FinishGuildCreation {
+        player_id: i32,
+        member_ids: Vec<i32>,
+        guild_tag: String,
+        guild_name: String,
+    },
     DepositGold {
         player_id: i32,
         session_id: i32,
+        amount: i32,
+    },
+    DepositGuildGold {
+        player_id: i32,
         amount: i32,
     },
     DisagreeTrade {
@@ -124,6 +138,10 @@ pub enum Command {
         target_player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
     },
+    GetNpcIdForIndex {
+        npc_index: i32,
+        respond_to: oneshot::Sender<Option<i32>>,
+    },
     GetRelogCoords {
         respond_to: oneshot::Sender<Option<Coords>>,
     },
@@ -135,11 +153,21 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    JoinGuild {
+        player_id: i32,
+        recruiter_id: i32,
+        guild_tag: String,
+        guild_name: String,
+        guild_rank_string: String,
+    },
     JukeboxTimer,
     JunkItem {
         target_player_id: i32,
         item_id: i32,
         amount: i32,
+    },
+    KickFromGuild {
+        player_id: i32,
     },
     LearnSkill {
         player_id: i32,
@@ -151,6 +179,9 @@ pub enum Command {
         warp_animation: Option<WarpEffect>,
         interact_player_id: Option<i32>,
         respond_to: oneshot::Sender<Character>,
+    },
+    LeaveGuild {
+        player_id: i32,
     },
     LevelStat {
         player_id: i32,
@@ -175,6 +206,10 @@ pub enum Command {
     OpenDoor {
         target_player_id: i32, // TODO: rename to player_id
         door_coords: Coords,   // TODO: rename to coords
+    },
+    OpenGuildMaster {
+        player_id: i32,
+        npc_index: i32,
     },
     OpenInn {
         player_id: i32,
@@ -244,6 +279,11 @@ pub enum Command {
         target_player_id: i32,
         request: PartyRequest,
     },
+    RequestToJoinGuild {
+        player_id: i32,
+        guild_tag: String,
+        recruiter_name: String,
+    },
     RequestTrade {
         player_id: i32,
         target_player_id: i32,
@@ -263,6 +303,10 @@ pub enum Command {
     SendChatMessage {
         target_player_id: i32,
         message: String,
+    },
+    SendGuildCreateRequests {
+        leader_player_id: i32,
+        guild_identity: String,
     },
     Serialize {
         respond_to: oneshot::Sender<Bytes>,
@@ -307,6 +351,11 @@ pub enum Command {
         player_id: i32,
         item_id: i32,
         sub_loc: i32,
+    },
+    UpdateGuildRank {
+        player_id: i32,
+        rank: i32,
+        rank_str: String,
     },
     UpgradeLocker {
         player_id: i32,

@@ -111,7 +111,8 @@ impl Player {
             }
         };
 
-        self.world.add_character(self.id, character.name.clone());
+        self.world
+            .add_character(self.id, character.name.clone(), character.guild_tag.clone());
 
         self.character = Some(character);
         self.state = ClientState::EnteringGame;

@@ -5,7 +5,7 @@ use eolib::{
     protocol::{
         net::{
             server::{
-                RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
+                AvatarAdminServerPacket, RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
                 SpellTargetSelfServerPacket,
             },
             PacketAction, PacketFamily,
@@ -169,7 +169,9 @@ impl Map {
         );
     }
 
-    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfRecord) {}
+    fn cast_heal_group(&mut self, _player_id: i32, _spell: &EsfRecord) {
+        warn!("SpellTarget::Group not implemented");
+    }
 
     fn cast_heal_player(
         &mut self,
@@ -301,7 +303,10 @@ impl Map {
                 self.cast_damage_npc(player_id, npc_index, spell_id, spell_data)
                     .await
             }
-            SpellTarget::OtherPlayer(_) => warn!("Spell PVP not implemented yet"),
+            SpellTarget::OtherPlayer(target_player_id) => {
+                self.cast_damage_player(player_id, target_player_id, spell_id, spell_data)
+                    .await
+            }
             _ => {}
         }
     }
@@ -313,7 +318,7 @@ impl Map {
         spell_id: i32,
         spell_data: &EsfRecord,
     ) {
-        let character = match self.characters.get(&player_id) {
+        let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };
@@ -338,6 +343,9 @@ impl Map {
             return;
         }
 
+        character.spell_state = SpellState::None;
+        character.tp -= spell_data.tp_cost;
+
         let amount = {
             let mut rng = rand::thread_rng();
             rng.gen_range(
@@ -349,6 +357,24 @@ impl Map {
         let critical = npc.hp == npc.max_hp;
 
         let damage_dealt = npc.damage(player_id, amount, character.accuracy, critical);
+
+        let packet = RecoverPlayerServerPacket {
+            hp: character.hp,
+            tp: character.tp,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
+
+        character.player.as_ref().unwrap().send(
+            PacketAction::Player,
+            PacketFamily::Recover,
+            writer.to_byte_array(),
+        );
 
         if npc.alive {
             self.attack_npc_reply(
@@ -362,5 +388,123 @@ impl Map {
             self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, Some(spell_id))
                 .await;
         }
+    }
+
+    async fn cast_damage_player(
+        &mut self,
+        player_id: i32,
+        target_player_id: i32,
+        spell_id: i32,
+        spell_data: &EsfRecord,
+    ) {
+        let (tp, direction, min_damage, max_damage, accuracy) =
+            match self.characters.get(&player_id) {
+                Some(character) => (
+                    character.tp,
+                    character.direction,
+                    character.min_damage,
+                    character.max_damage,
+                    character.accuracy,
+                ),
+                None => return,
+            };
+
+        if tp < spell_data.tp_cost {
+            return;
+        }
+
+        let amount = {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(min_damage + spell_data.min_damage..=max_damage + spell_data.max_damage)
+        };
+
+        let damage_dealt = {
+            let target_character = match self.characters.get_mut(&target_player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
+            let critical = target_character.hp == target_character.max_hp;
+
+            target_character.damage(amount, accuracy, critical)
+        };
+
+        {
+            let character = match self.characters.get_mut(&player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
+            character.spell_state = SpellState::None;
+            character.tp -= spell_data.tp_cost;
+
+            let packet = RecoverPlayerServerPacket {
+                hp: character.hp,
+                tp: character.tp,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+                return;
+            }
+
+            character.player.as_ref().unwrap().send(
+                PacketAction::Player,
+                PacketFamily::Recover,
+                writer.to_byte_array(),
+            );
+        }
+
+        let target_character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let packet = AvatarAdminServerPacket {
+            caster_id: player_id,
+            victim_id: target_player_id,
+            caster_direction: direction,
+            damage: damage_dealt,
+            hp_percentage: target_character.get_hp_percentage(),
+            victim_died: target_character.hp == 0,
+            spell_id,
+        };
+
+        self.send_packet_near(
+            &target_character.coords,
+            PacketAction::Admin,
+            PacketFamily::Avatar,
+            packet,
+        );
+
+        if target_character.hp == 0 {
+            target_character.player.as_ref().unwrap().die();
+        }
+
+        let packet = RecoverPlayerServerPacket {
+            hp: target_character.hp,
+            tp: target_character.tp,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
+
+        target_character.player.as_ref().unwrap().send(
+            PacketAction::Player,
+            PacketFamily::Recover,
+            writer.to_byte_array(),
+        );
+
+        target_character
+            .player
+            .as_ref()
+            .unwrap()
+            .update_party_hp(target_character.get_hp_percentage());
     }
 }

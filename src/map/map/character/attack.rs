@@ -156,10 +156,10 @@ impl Map {
             rng.gen_range(attacker.min_damage..=attacker.max_damage)
         };
 
-        let attacker_facing_npc =
+        let attacking_back_or_side =
             (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
 
-        let critical = npc.hp == npc.max_hp || attacker_facing_npc;
+        let critical = npc.hp == npc.max_hp || attacking_back_or_side;
 
         let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
 
@@ -310,7 +310,10 @@ impl Map {
             rng.gen_range(min_damage..=max_damage)
         };
 
-        let critical = target_character.hp == target_character.max_hp;
+        let attacking_back_or_side =
+            (i32::from(target_character.direction) - i32::from(direction)).abs() != 2;
+
+        let critical = target_character.hp == target_character.max_hp || attacking_back_or_side;
 
         let damage_dealt = target_character.damage(amount, accuracy, critical);
 
@@ -332,31 +335,31 @@ impl Map {
 
         if target_character.hp == 0 {
             target_character.player.as_ref().unwrap().die();
-        } else {
-            let packet = RecoverPlayerServerPacket {
-                hp: target_character.hp,
-                tp: target_character.tp,
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-                return;
-            }
-
-            target_character.player.as_ref().unwrap().send(
-                PacketAction::Player,
-                PacketFamily::Recover,
-                writer.to_byte_array(),
-            );
-
-            target_character
-                .player
-                .as_ref()
-                .unwrap()
-                .update_party_hp(target_character.get_hp_percentage());
         }
+
+        let packet = RecoverPlayerServerPacket {
+            hp: target_character.hp,
+            tp: target_character.tp,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
+
+        target_character.player.as_ref().unwrap().send(
+            PacketAction::Player,
+            PacketFamily::Recover,
+            writer.to_byte_array(),
+        );
+
+        target_character
+            .player
+            .as_ref()
+            .unwrap()
+            .update_party_hp(target_character.get_hp_percentage());
     }
 }
 

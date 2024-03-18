@@ -150,7 +150,7 @@ async fn get_guild_name(conn: &mut Conn, tag: &str) -> Option<String> {
 async fn get_new_member_guild_rank(conn: &mut Conn, tag: &str) -> Option<String> {
     match conn
         .exec_first::<Row, &str, Params>(
-            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 8 WHERE `tag` = :tag",
+            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 9 WHERE `tag` = :tag",
             params! {
                 "tag" => tag,
             },

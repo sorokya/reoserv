@@ -29,6 +29,7 @@ mod create_guild;
 mod guild_exists;
 pub use guild_exists::guild_exists;
 mod kick_guild_member;
+mod leave_guild;
 mod request_guild_creation;
 mod request_guild_details;
 mod request_guild_info;

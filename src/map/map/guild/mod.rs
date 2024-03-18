@@ -24,6 +24,7 @@ mod deposit_guild_gold;
 mod finish_guild_creation;
 mod join_guild;
 mod kick_from_guild;
+mod leave_guild;
 mod open_guild_master;
 mod request_to_join_guild;
 mod send_guild_create_requests;

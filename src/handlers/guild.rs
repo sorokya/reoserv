@@ -5,9 +5,9 @@ use eolib::{
             client::{
                 GuildAcceptClientPacket, GuildAgreeClientPacket, GuildBuyClientPacket,
                 GuildCreateClientPacket, GuildKickClientPacket, GuildOpenClientPacket,
-                GuildPlayerClientPacket, GuildRankClientPacket, GuildReportClientPacket,
-                GuildRequestClientPacket, GuildTakeClientPacket, GuildTellClientPacket,
-                GuildUseClientPacket,
+                GuildPlayerClientPacket, GuildRankClientPacket, GuildRemoveClientPacket,
+                GuildReportClientPacket, GuildRequestClientPacket, GuildTakeClientPacket,
+                GuildTellClientPacket, GuildUseClientPacket,
             },
             PacketAction,
         },
@@ -230,6 +230,18 @@ pub fn tell(reader: EoReader, player: PlayerHandle) {
     player.request_guild_memberlist(packet.session_id, packet.guild_identity);
 }
 
+pub fn remove(reader: EoReader, player: PlayerHandle) {
+    let packet = match GuildRemoveClientPacket::deserialize(&reader) {
+        Ok(packet) => packet,
+        Err(e) => {
+            error!("Error deserializing GuildRemoveClientPacket: {}", e);
+            return;
+        }
+    };
+
+    player.leave_guild(packet.session_id);
+}
+
 pub async fn guild(action: PacketAction, reader: EoReader, player_handle: PlayerHandle) {
     let player_id = match player_handle.get_player_id().await {
         Ok(id) => id,
@@ -261,6 +273,7 @@ pub async fn guild(action: PacketAction, reader: EoReader, player_handle: Player
         PacketAction::Rank => rank(reader, player_handle),
         PacketAction::Report => report(reader, player_handle),
         PacketAction::Tell => tell(reader, player_handle),
+        PacketAction::Remove => remove(reader, player_handle),
         _ => error!("Unhandled packet Guild_{:?}", action),
     }
 }

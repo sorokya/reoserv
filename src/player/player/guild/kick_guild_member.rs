@@ -1,11 +1,5 @@
 use super::super::Player;
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{GuildReply, TalkServerServerPacket},
-        PacketAction, PacketFamily,
-    },
-};
+use eolib::{data::EoSerialize, protocol::net::server::GuildReply};
 
 impl Player {
     pub async fn kick_guild_member(&mut self, session_id: i32, member_name: String) {
@@ -61,24 +55,7 @@ impl Player {
             }
             Err(_) => {
                 // TODO: Offline kick
-                let packet = TalkServerServerPacket {
-                    message: "Offline kicking not currently supported".to_owned(),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Error serializing TalkServerServerPacket: {}", e);
-                    return;
-                }
-
-                let _ = self
-                    .bus
-                    .send(
-                        PacketAction::Server,
-                        PacketFamily::Talk,
-                        writer.to_byte_array(),
-                    )
+                self.send_server_message("Offline kicking not currently supported")
                     .await;
             }
         }

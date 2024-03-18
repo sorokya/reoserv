@@ -180,6 +180,9 @@ pub enum Command {
         interact_player_id: Option<i32>,
         respond_to: oneshot::Sender<Character>,
     },
+    LeaveGuild {
+        player_id: i32,
+    },
     LevelStat {
         player_id: i32,
         stat_id: StatId,

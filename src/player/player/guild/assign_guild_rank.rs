@@ -1,12 +1,6 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{GuildReply, TalkServerServerPacket},
-            PacketAction, PacketFamily,
-        },
-        r#pub::NpcType,
-    },
+    data::EoSerialize,
+    protocol::{net::server::GuildReply, r#pub::NpcType},
 };
 
 use crate::{utils::get_guild_ranks, NPC_DB};
@@ -89,26 +83,8 @@ impl Player {
         {
             Ok(character) => character,
             Err(_) => {
-                let packet = TalkServerServerPacket {
-                    message: "Offline rank updating not currently supported".to_owned(),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Error serializing TalkServerServerPacket: {}", e);
-                    return;
-                }
-
-                let _ = self
-                    .bus
-                    .send(
-                        PacketAction::Server,
-                        PacketFamily::Talk,
-                        writer.to_byte_array(),
-                    )
+                self.send_server_message("Offline rank updating not currently supported")
                     .await;
-
                 return;
                 // TODO: handle offline
                 /* self.assign_guild_rank_offline(guild_tag, member_name, rank, rank_str)

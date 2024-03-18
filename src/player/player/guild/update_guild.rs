@@ -9,7 +9,7 @@ use eolib::{
 use mysql_async::prelude::Queryable;
 use mysql_common::params;
 
-use crate::{utils::get_guild_ranks, NPC_DB, SETTINGS};
+use crate::{utils::get_guild_ranks, NPC_DB};
 
 use super::{super::Player, validate_guild_description, validate_guild_rank};
 
@@ -61,7 +61,7 @@ impl Player {
 
         match character.guild_rank {
             Some(rank_index) => {
-                if rank_index > SETTINGS.guild.edit_rank {
+                if rank_index > 1 {
                     return;
                 }
             }

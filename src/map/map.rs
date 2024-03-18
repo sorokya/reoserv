@@ -323,6 +323,8 @@ impl Map {
                 self.leave(player_id, warp_animation, respond_to, interact_player_id);
             }
 
+            Command::LeaveGuild { player_id } => self.leave_guild(player_id),
+
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
             Command::OpenBank {

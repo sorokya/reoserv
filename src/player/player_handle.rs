@@ -295,6 +295,10 @@ impl PlayerHandle {
         (rx.await).unwrap_or(false)
     }
 
+    pub fn leave_guild(&self, session_id: i32) {
+        let _ = self.tx.send(Command::LeaveGuild { session_id });
+    }
+
     pub fn login(&self, username: String, password: String) {
         let _ = self.tx.send(Command::Login { username, password });
     }

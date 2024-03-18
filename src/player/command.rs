@@ -124,6 +124,9 @@ pub enum Command {
         session_id: i32,
         member_name: String,
     },
+    LeaveGuild {
+        session_id: i32,
+    },
     Login {
         username: String,
         password: String,

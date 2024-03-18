@@ -60,6 +60,7 @@ mod get_welcome_request_data;
 mod guild;
 mod ping;
 mod request_warp;
+mod send_server_message;
 mod take_session_id;
 mod tick;
 
@@ -237,6 +238,7 @@ impl Player {
                 session_id,
                 member_name,
             } => self.kick_guild_member(session_id, member_name).await,
+            Command::LeaveGuild { session_id } => self.leave_guild(session_id).await,
             Command::Login { username, password } => return self.login(username, password).await,
             Command::Pong => {
                 self.bus.need_pong = false;

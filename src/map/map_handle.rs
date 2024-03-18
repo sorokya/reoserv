@@ -311,6 +311,10 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn leave_guild(&self, player_id: i32) {
+        let _ = self.tx.send(Command::LeaveGuild { player_id });
+    }
+
     pub fn level_stat(&self, player_id: i32, stat_id: StatId) {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }

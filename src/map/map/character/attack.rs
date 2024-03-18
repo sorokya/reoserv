@@ -1,8 +1,12 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
+        map::MapType,
         net::{
-            server::{ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket},
+            server::{
+                ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket,
+                AvatarReplyServerPacket, RecoverPlayerServerPacket,
+            },
             PacketAction, PacketFamily,
         },
         r#pub::{ItemSubtype, NpcType},
@@ -159,7 +163,9 @@ impl Map {
             return self.attack_player_arena(player_id, target_player_id, direction);
         }
 
-        error!("PVP is not implemented yet!");
+        if self.file.r#type == MapType::Pk {
+            return self.attack_player_pk(player_id, target_player_id, direction);
+        }
     }
 
     fn attack_player_arena(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
@@ -267,6 +273,80 @@ impl Map {
                 PacketFamily::Arena,
                 buf.clone(),
             );
+        }
+    }
+
+    fn attack_player_pk(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
+        let (coords, min_damage, max_damage, accuracy) = match self.characters.get(&player_id) {
+            Some(character) => (
+                character.coords,
+                character.min_damage,
+                character.max_damage,
+                character.accuracy,
+            ),
+            None => return,
+        };
+
+        let target_character = match self.characters.get_mut(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if get_distance(&coords, &target_character.coords) > 1 {
+            return;
+        }
+
+        let amount = {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(min_damage..=max_damage)
+        };
+
+        let critical = target_character.hp == target_character.max_hp;
+
+        let damage_dealt = target_character.damage(amount, accuracy, critical);
+
+        let target_character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let packet = AvatarReplyServerPacket {
+            player_id,
+            victim_id: target_player_id,
+            damage: damage_dealt,
+            direction,
+            hp_percentage: target_character.get_hp_percentage(),
+            dead: target_character.hp == 0,
+        };
+
+        self.send_packet_near(&coords, PacketAction::Reply, PacketFamily::Avatar, packet);
+
+        if target_character.hp == 0 {
+            target_character.player.as_ref().unwrap().die();
+        } else {
+            let packet = RecoverPlayerServerPacket {
+                hp: target_character.hp,
+                tp: target_character.tp,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+                return;
+            }
+
+            target_character.player.as_ref().unwrap().send(
+                PacketAction::Player,
+                PacketFamily::Recover,
+                writer.to_byte_array(),
+            );
+
+            target_character
+                .player
+                .as_ref()
+                .unwrap()
+                .update_party_hp(target_character.get_hp_percentage());
         }
     }
 }

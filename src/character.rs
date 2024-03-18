@@ -7,10 +7,12 @@ use eolib::protocol::{
     },
     AdminLevel, Coords, Direction, Gender,
 };
+use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::Conn;
+use rand::Rng;
 use std::cmp;
 
-use crate::{player::PlayerHandle, EXP_TABLE, SETTINGS};
+use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, SETTINGS};
 
 mod add_bank_item;
 mod add_item;
@@ -132,6 +134,50 @@ impl Character {
         let amount = cmp::min(amount, self.max_tp - self.tp);
         self.tp += amount;
         amount
+    }
+
+    pub fn damage(&mut self, amount: i32, accuracy: i32, critical: bool) -> i32 {
+        let context = match context_map! {
+            "critical" => critical,
+            "damage" => amount as f64,
+            "target_armor" => self.armor as f64,
+            "target_sitting" => false,
+            "accuracy" => accuracy as f64,
+            "target_evade" => self.evasion as f64,
+        } {
+            Ok(context) => context,
+            Err(e) => {
+                error!("Failed to generate formula context: {}", e);
+                return 0;
+            }
+        };
+
+        let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+            Ok(hit_rate) => hit_rate,
+            Err(e) => {
+                error!("Failed to calculate hit rate: {}", e);
+                0.0
+            }
+        };
+
+        let mut rng = rand::thread_rng();
+        let rand = rng.gen_range(0.0..1.0);
+
+        let damage = if hit_rate < rand {
+            0
+        } else {
+            match eval_float_with_context(&FORMULAS.damage, &context) {
+                Ok(amount) => amount.floor() as i32,
+                Err(e) => {
+                    error!("Failed to calculate damage: {}", e);
+                    0
+                }
+            }
+        };
+
+        self.hp -= cmp::min(damage, self.hp) as i32;
+
+        damage
     }
 
     pub fn get_weight(&self) -> Weight {

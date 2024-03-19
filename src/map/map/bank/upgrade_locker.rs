@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::LockerBuyServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::LockerBuyServerPacket, PacketAction, PacketFamily};
 
 use crate::SETTINGS;
 
@@ -33,22 +30,13 @@ impl Map {
         character.remove_item(1, cost);
         character.bank_level += 1;
 
-        let buy = LockerBuyServerPacket {
-            gold_amount: character.get_item_amount(1),
-            locker_upgrades: character.bank_level,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = buy.serialize(&mut writer) {
-            error!("Failed to serialize LockerBuyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,
             PacketFamily::Locker,
-            writer.to_byte_array(),
+            &LockerBuyServerPacket {
+                gold_amount: character.get_item_amount(1),
+                locker_upgrades: character.bank_level,
+            },
         );
     }
 }

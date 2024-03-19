@@ -27,7 +27,7 @@ impl World {
                 if character.name != name
                     && i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian)
                 {
-                    player.send(PacketAction::Admin, PacketFamily::Talk, buf.clone());
+                    player.send_buf(PacketAction::Admin, PacketFamily::Talk, buf.clone());
                 }
             }
         }

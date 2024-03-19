@@ -1,4 +1,3 @@
-use eolib::data::{EoSerialize, EoWriter};
 use eolib::protocol::net::server::{TalkServerServerPacket, WarpEffect};
 use eolib::protocol::net::{PacketAction, PacketFamily};
 use eolib::protocol::Coords;
@@ -177,16 +176,10 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
 }
 
 fn send_error_message(player: &PlayerHandle, message: String) {
-    let packet = TalkServerServerPacket { message };
-    let mut writer = EoWriter::new();
-    if let Err(e) = packet.serialize(&mut writer) {
-        error!("Failed to serialize TalkServerServerPacket: {}", e);
-        return;
-    }
     player.send(
         PacketAction::Server,
         PacketFamily::Talk,
-        writer.to_byte_array(),
+        &TalkServerServerPacket { message },
     );
 }
 

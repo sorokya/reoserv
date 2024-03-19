@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{
-            InitInitServerPacket, InitInitServerPacketReplyCodeData,
-            InitInitServerPacketReplyCodeDataPlayersList, InitReply, OnlinePlayer, PlayersList,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        InitInitServerPacket, InitInitServerPacketReplyCodeData,
+        InitInitServerPacketReplyCodeDataPlayersList, InitReply, OnlinePlayer, PlayersList,
     },
+    PacketAction, PacketFamily,
 };
 
 use crate::utils::pad_string;
@@ -49,26 +46,17 @@ impl World {
                 });
             }
 
-            let packet = InitInitServerPacket {
-                reply_code: InitReply::PlayersList,
-                reply_code_data: Some(InitInitServerPacketReplyCodeData::PlayersList(
-                    InitInitServerPacketReplyCodeDataPlayersList {
-                        players_list: PlayersList { players },
-                    },
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing InitInitServerPacket: {}", e);
-                return;
-            }
-
             player.send(
                 PacketAction::Init,
                 PacketFamily::Init,
-                writer.to_byte_array(),
+                &InitInitServerPacket {
+                    reply_code: InitReply::PlayersList,
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::PlayersList(
+                        InitInitServerPacketReplyCodeDataPlayersList {
+                            players_list: PlayersList { players },
+                        },
+                    )),
+                },
             );
         });
     }

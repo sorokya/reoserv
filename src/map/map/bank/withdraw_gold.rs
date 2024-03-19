@@ -1,9 +1,6 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::BankReplyServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::BankReplyServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -55,22 +52,13 @@ impl Map {
         character.gold_bank -= amount;
         character.add_item(1, amount);
 
-        let reply = BankReplyServerPacket {
-            gold_inventory: character.get_item_amount(1),
-            gold_bank: character.gold_bank,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize BankReplyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Bank,
-            writer.to_byte_array(),
+            &BankReplyServerPacket {
+                gold_inventory: character.get_item_amount(1),
+                gold_bank: character.gold_bank,
+            },
         );
     }
 }

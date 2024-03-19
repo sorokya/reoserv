@@ -1,18 +1,14 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
-                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket,
-                NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
-                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
-                RecoverTargetGroupServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
+            CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcKillStealProtectionState,
+            NpcKilledData, NpcReplyServerPacket, NpcSpecServerPacket, PartyExpShare,
+            RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
         },
-        Coords, Direction,
+        PacketAction, PacketFamily,
     },
+    Coords, Direction,
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -48,7 +44,7 @@ impl Map {
                 player_id,
                 PacketAction::Player,
                 PacketFamily::Attack,
-                reply,
+                &reply,
             );
         }
 
@@ -77,7 +73,7 @@ impl Map {
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send_packet(
+            character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Cast,
                 &packet,
@@ -90,7 +86,7 @@ impl Map {
                 player_id,
                 PacketAction::Reply,
                 PacketFamily::Cast,
-                packet,
+                &packet,
             );
         } else {
             let mut packet = NpcReplyServerPacket {
@@ -107,7 +103,7 @@ impl Map {
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send_packet(
+            character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Npc,
                 &packet,
@@ -120,7 +116,7 @@ impl Map {
                 player_id,
                 PacketAction::Reply,
                 PacketFamily::Npc,
-                packet,
+                &packet,
             );
         }
     }
@@ -317,23 +313,14 @@ impl Map {
         experience: i32,
         level_up: LevelUpStats,
     ) {
-        let packet = NpcAcceptServerPacket {
-            npc_killed_data,
-            experience,
-            level_up,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize NpcAcceptServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Accept,
             PacketFamily::Npc,
-            writer.to_byte_array(),
+            &NpcAcceptServerPacket {
+                npc_killed_data,
+                experience,
+                level_up,
+            },
         );
     }
 
@@ -343,22 +330,13 @@ impl Map {
         npc_killed_data: NpcKilledData,
         experience: Option<i32>,
     ) {
-        let packet = NpcSpecServerPacket {
-            npc_killed_data,
-            experience,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize NpcSpecServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Spec,
             PacketFamily::Npc,
-            writer.to_byte_array(),
+            &NpcSpecServerPacket {
+                npc_killed_data,
+                experience,
+            },
         );
     }
 
@@ -371,25 +349,16 @@ impl Map {
         experience: i32,
         level_up: LevelUpStats,
     ) {
-        let packet = CastAcceptServerPacket {
-            spell_id,
-            npc_killed_data,
-            caster_tp,
-            experience,
-            level_up,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CastAcceptServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Accept,
             PacketFamily::Cast,
-            writer.to_byte_array(),
+            &CastAcceptServerPacket {
+                spell_id,
+                npc_killed_data,
+                caster_tp,
+                experience,
+                level_up,
+            },
         );
     }
 
@@ -401,24 +370,15 @@ impl Map {
         caster_tp: i32,
         experience: Option<i32>,
     ) {
-        let packet = CastSpecServerPacket {
-            spell_id,
-            npc_killed_data,
-            caster_tp,
-            experience,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CastSpecServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Spec,
             PacketFamily::Cast,
-            writer.to_byte_array(),
+            &CastSpecServerPacket {
+                spell_id,
+                npc_killed_data,
+                caster_tp,
+                experience,
+            },
         );
     }
 
@@ -430,46 +390,28 @@ impl Map {
                     None => continue,
                 };
 
-                let packet = RecoverTargetGroupServerPacket {
-                    stat_points: character.stat_points,
-                    skill_points: character.skill_points,
-                    max_hp: character.max_hp,
-                    max_tp: character.max_tp,
-                    max_sp: character.max_sp,
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Failed to serialize RecoverTargetGroupServerPacket: {}", e);
-                    return;
-                }
-
                 character.player.as_ref().unwrap().send(
                     PacketAction::TargetGroup,
                     PacketFamily::Recover,
-                    writer.to_byte_array(),
+                    &RecoverTargetGroupServerPacket {
+                        stat_points: character.stat_points,
+                        skill_points: character.skill_points,
+                        max_hp: character.max_hp,
+                        max_tp: character.max_tp,
+                        max_sp: character.max_sp,
+                    },
                 );
-
-                let packet = RecoverReplyServerPacket {
-                    experience: character.experience,
-                    karma: character.karma,
-                    level_up: Some(character.level),
-                    stat_points: Some(character.stat_points),
-                    skill_points: Some(character.skill_points),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Failed to serialize RecoverReplyServerPacket: {}", e);
-                    return;
-                }
 
                 character.player.as_ref().unwrap().send(
                     PacketAction::Reply,
                     PacketFamily::Recover,
-                    writer.to_byte_array(),
+                    &RecoverReplyServerPacket {
+                        experience: character.experience,
+                        karma: character.karma,
+                        level_up: Some(character.level),
+                        stat_points: Some(character.stat_points),
+                        skill_points: Some(character.skill_points),
+                    },
                 );
             }
         }

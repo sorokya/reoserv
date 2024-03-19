@@ -18,11 +18,14 @@ impl Map {
             return;
         }
 
-        let packet = FacePlayerServerPacket {
+        self.send_packet_near_player(
             player_id,
-            direction,
-        };
-
-        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Face, packet);
+            PacketAction::Player,
+            PacketFamily::Face,
+            &FacePlayerServerPacket {
+                player_id,
+                direction,
+            },
+        );
     }
 }

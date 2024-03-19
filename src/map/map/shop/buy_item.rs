@@ -1,11 +1,8 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::ShopBuyServerPacket, Item, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::ShopBuyServerPacket, Item, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SETTINGS, SHOP_DB};
@@ -97,26 +94,17 @@ impl Map {
 
         let weight = character.get_weight();
 
-        let reply = ShopBuyServerPacket {
-            gold_amount: character.get_item_amount(1),
-            bought_item: Item {
-                id: item.id,
-                amount,
-            },
-            weight,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ShopBuyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,
             PacketFamily::Shop,
-            writer.to_byte_array(),
+            &ShopBuyServerPacket {
+                gold_amount: character.get_item_amount(1),
+                bought_item: Item {
+                    id: item.id,
+                    amount,
+                },
+                weight,
+            },
         );
     }
 }

@@ -28,7 +28,7 @@ impl World {
                     None => continue,
                 };
 
-                member.send(PacketAction::Agree, PacketFamily::Party, buf.clone());
+                member.send_buf(PacketAction::Agree, PacketFamily::Party, buf.clone());
             }
         }
     }

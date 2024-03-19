@@ -1,9 +1,6 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem},
-};
+use eolib::protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem};
 
 use crate::SETTINGS;
 
@@ -39,30 +36,21 @@ impl Map {
         }
 
         let character = self.characters.get(&target_player_id).unwrap();
-        let reply = ItemJunkServerPacket {
-            junked_item: ThreeItem {
-                id: item_id,
-                amount: amount_to_junk,
+
+        character.player.as_ref().unwrap().send(
+            PacketAction::Junk,
+            PacketFamily::Item,
+            &ItemJunkServerPacket {
+                junked_item: ThreeItem {
+                    id: item_id,
+                    amount: amount_to_junk,
+                },
+                remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
+                    Some(item) => item.amount,
+                    None => 0,
+                },
+                weight: character.get_weight(),
             },
-            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
-                Some(item) => item.amount,
-                None => 0,
-            },
-            weight: character.get_weight(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ItemJunkServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-        character
-            .player
-            .as_ref()
-            .unwrap()
-            .send(PacketAction::Junk, PacketFamily::Item, buf);
+        );
     }
 }

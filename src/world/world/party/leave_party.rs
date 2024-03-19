@@ -26,19 +26,10 @@ impl World {
 
         party.members.retain(|&id| id != player_id);
 
-        let packet = PartyCloseServerPacket::new();
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing PartyCloseServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Close,
             PacketFamily::Party,
-            writer.to_byte_array(),
+            &PartyCloseServerPacket::new(),
         );
 
         let packet = PartyRemoveServerPacket { player_id };
@@ -58,7 +49,7 @@ impl World {
                 None => continue,
             };
 
-            member.send(PacketAction::Remove, PacketFamily::Party, buf.clone());
+            member.send_buf(PacketAction::Remove, PacketFamily::Party, buf.clone());
         }
     }
 }

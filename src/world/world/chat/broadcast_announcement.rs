@@ -22,7 +22,7 @@ impl World {
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
                 if character.name != name {
-                    player.send(PacketAction::Announce, PacketFamily::Talk, buf.clone());
+                    player.send_buf(PacketAction::Announce, PacketFamily::Talk, buf.clone());
                 }
             }
         }

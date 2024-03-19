@@ -1,10 +1,7 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::CitizenAcceptServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-        Coords,
-    },
+use eolib::protocol::{
+    net::{server::CitizenAcceptServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
+    Coords,
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -97,21 +94,12 @@ impl Map {
         character.hp = character.max_hp;
         character.tp = character.max_tp;
 
-        let packet = CitizenAcceptServerPacket {
-            gold_amount: character.get_item_amount(1),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CitizenAcceptServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Accept,
             PacketFamily::Citizen,
-            writer.to_byte_array(),
+            &CitizenAcceptServerPacket {
+                gold_amount: character.get_item_amount(1),
+            },
         );
 
         character.player.as_ref().unwrap().request_warp(

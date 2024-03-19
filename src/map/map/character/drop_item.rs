@@ -1,16 +1,13 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            client::ByteCoords,
-            server::{ItemAddServerPacket, ItemDropServerPacket},
-            PacketAction, PacketFamily, ThreeItem,
-        },
-        r#pub::ItemSpecial,
-        Coords,
+use eolib::protocol::{
+    net::{
+        client::ByteCoords,
+        server::{ItemAddServerPacket, ItemDropServerPacket},
+        PacketAction, PacketFamily, ThreeItem,
     },
+    r#pub::ItemSpecial,
+    Coords,
 };
 
 use crate::{utils::get_distance, ITEM_DB, SETTINGS};
@@ -97,18 +94,11 @@ impl Map {
             weight,
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ItemDropServerPacket: {}", e);
-            return;
-        }
-
-        character.player.as_ref().unwrap().send(
-            PacketAction::Drop,
-            PacketFamily::Item,
-            writer.to_byte_array(),
-        );
+        character
+            .player
+            .as_ref()
+            .unwrap()
+            .send(PacketAction::Drop, PacketFamily::Item, &reply);
 
         self.items.insert(
             item_index,
@@ -120,19 +110,17 @@ impl Map {
             },
         );
 
-        let reply = ItemAddServerPacket {
-            item_id: item.id,
-            item_index,
-            item_amount: amount_to_drop,
-            coords,
-        };
-
         self.send_packet_near_exclude_player(
             &coords,
             target_player_id,
             PacketAction::Add,
             PacketFamily::Item,
-            reply,
+            &ItemAddServerPacket {
+                item_id: item.id,
+                item_index,
+                item_amount: amount_to_drop,
+                coords,
+            },
         );
     }
 }

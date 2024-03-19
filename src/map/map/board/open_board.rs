@@ -1,10 +1,7 @@
 use chrono::NaiveDateTime;
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{BoardOpenServerPacket, BoardPostListing},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{BoardOpenServerPacket, BoardPostListing},
+    PacketAction, PacketFamily,
 };
 use mysql_async::{params, prelude::Queryable, Row};
 
@@ -51,8 +48,6 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut writer = EoWriter::new();
-
             let mut conn = pool.get_conn().await.unwrap();
             let limit = if board_id == SETTINGS.board.admin_board {
                 SETTINGS.board.admin_max_posts
@@ -77,31 +72,24 @@ impl Map {
                 .await
                 .unwrap();
 
-            let open = BoardOpenServerPacket {
-                board_id,
-                posts: posts
-                    .iter()
-                    .map(|post| BoardPostListing {
-                        post_id: post.id,
-                        author: post.author.to_owned(),
-                        subject: if SETTINGS.board.date_posts {
-                            format!("{} ({})", post.subject, format_duration(&post.created_at))
-                        } else {
-                            post.subject.to_owned()
-                        },
-                    })
-                    .collect(),
-            };
-
-            if let Err(e) = open.serialize(&mut writer) {
-                error!("Failed to serialize BoardOpenServerPacket: {}", e);
-                return;
-            }
-
             player.send(
                 PacketAction::Open,
                 PacketFamily::Board,
-                writer.to_byte_array(),
+                &BoardOpenServerPacket {
+                    board_id,
+                    posts: posts
+                        .iter()
+                        .map(|post| BoardPostListing {
+                            post_id: post.id,
+                            author: post.author.to_owned(),
+                            subject: if SETTINGS.board.date_posts {
+                                format!("{} ({})", post.subject, format_duration(&post.created_at))
+                            } else {
+                                post.subject.to_owned()
+                            },
+                        })
+                        .collect(),
+                },
             );
         });
     }

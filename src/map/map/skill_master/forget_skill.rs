@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::StatSkillRemoveServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::NPC_DB;
@@ -64,19 +61,10 @@ impl Map {
 
         character.remove_spell(skill_id);
 
-        let reply = StatSkillRemoveServerPacket { spell_id: skill_id };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize packet {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::StatSkill,
-            writer.to_byte_array(),
+            &StatSkillRemoveServerPacket { spell_id: skill_id },
         );
     }
 }

@@ -69,24 +69,15 @@ impl World {
                 None => continue,
             };
 
-            member.send(PacketAction::Add, PacketFamily::Party, buf.clone());
-        }
-
-        let packet = PartyCreateServerPacket {
-            members: self.get_party_members(party).await,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing PartyCreateServerPacket: {}", e);
-            return;
+            member.send_buf(PacketAction::Add, PacketFamily::Party, buf.clone());
         }
 
         player.send(
             PacketAction::Create,
             PacketFamily::Party,
-            writer.to_byte_array(),
+            &PartyCreateServerPacket {
+                members: self.get_party_members(party).await,
+            },
         );
     }
 }

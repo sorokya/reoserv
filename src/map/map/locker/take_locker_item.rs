@@ -1,12 +1,9 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        map::MapTileSpec,
-        net::{server::LockerGetServerPacket, PacketAction, PacketFamily, ThreeItem},
-        Coords,
-    },
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{server::LockerGetServerPacket, PacketAction, PacketFamily, ThreeItem},
+    Coords,
 };
 
 use super::super::Map;
@@ -62,33 +59,24 @@ impl Map {
         character.remove_bank_item(item_id, amount);
         character.add_item(item_id, amount);
 
-        let packet = LockerGetServerPacket {
-            taken_item: ThreeItem {
-                id: item_id,
-                amount: character.get_item_amount(item_id),
-            },
-            weight: character.get_weight(),
-            locker_items: character
-                .bank
-                .iter()
-                .map(|i| ThreeItem {
-                    id: i.id,
-                    amount: i.amount,
-                })
-                .collect(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize LockerGetServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Locker,
-            writer.to_byte_array(),
+            &LockerGetServerPacket {
+                taken_item: ThreeItem {
+                    id: item_id,
+                    amount: character.get_item_amount(item_id),
+                },
+                weight: character.get_weight(),
+                locker_items: character
+                    .bank
+                    .iter()
+                    .map(|i| ThreeItem {
+                        id: i.id,
+                        amount: i.amount,
+                    })
+                    .collect(),
+            },
         );
     }
 }

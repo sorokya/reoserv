@@ -1,17 +1,14 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        map::MapTimedEffect,
-        net::{
-            server::{
-                EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
-                EffectSpecServerPacketMapDamageTypeDataTpDrain, EffectTargetOtherServerPacket,
-                MapDamageType, MapDrainDamageOther,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    map::MapTimedEffect,
+    net::{
+        server::{
+            EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
+            EffectSpecServerPacketMapDamageTypeDataTpDrain, EffectTargetOtherServerPacket,
+            MapDamageType, MapDrainDamageOther,
         },
+        PacketAction, PacketFamily,
     },
 };
 
@@ -75,57 +72,48 @@ impl Map {
                     .update_party_hp(character.get_hp_percentage());
             }
 
-            let packet = EffectTargetOtherServerPacket {
-                damage,
-                hp: character.hp,
-                max_hp: character.max_hp,
-                others: player_ids
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(other_index, id)| {
-                        if id == player_id {
-                            None
-                        } else {
-                            match self.characters.get(id) {
-                                Some(other) => {
-                                    if other.hidden
-                                        || !in_client_range(&character.coords, &other.coords)
-                                    {
-                                        None
-                                    } else {
-                                        let other_damage = match damage_list.get(other_index) {
-                                            Some(damage) => *damage,
-                                            None => 0,
-                                        };
-                                        if other_damage > 0 {
-                                            Some(MapDrainDamageOther {
-                                                player_id: *id,
-                                                hp_percentage: other.get_hp_percentage(),
-                                                damage: other_damage,
-                                            })
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                }
-                                None => None,
-                            }
-                        }
-                    })
-                    .collect(),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize EffectTargetOtherServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::TargetOther,
                 PacketFamily::Effect,
-                writer.to_byte_array(),
+                &EffectTargetOtherServerPacket {
+                    damage,
+                    hp: character.hp,
+                    max_hp: character.max_hp,
+                    others: player_ids
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(other_index, id)| {
+                            if id == player_id {
+                                None
+                            } else {
+                                match self.characters.get(id) {
+                                    Some(other) => {
+                                        if other.hidden
+                                            || !in_client_range(&character.coords, &other.coords)
+                                        {
+                                            None
+                                        } else {
+                                            let other_damage = match damage_list.get(other_index) {
+                                                Some(damage) => *damage,
+                                                None => 0,
+                                            };
+                                            if other_damage > 0 {
+                                                Some(MapDrainDamageOther {
+                                                    player_id: *id,
+                                                    hp_percentage: other.get_hp_percentage(),
+                                                    damage: other_damage,
+                                                })
+                                            } else {
+                                                None
+                                            }
+                                        }
+                                    }
+                                    None => None,
+                                }
+                            }
+                        })
+                        .collect(),
+                },
             );
         }
     }
@@ -142,28 +130,19 @@ impl Map {
 
             character.tp -= damage;
 
-            let packet = EffectSpecServerPacket {
-                map_damage_type: MapDamageType::TpDrain,
-                map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::TpDrain(
-                    EffectSpecServerPacketMapDamageTypeDataTpDrain {
-                        tp_damage: damage,
-                        tp: character.tp,
-                        max_tp: character.max_tp,
-                    },
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize EffectSpecServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Effect,
-                writer.to_byte_array(),
+                &EffectSpecServerPacket {
+                    map_damage_type: MapDamageType::TpDrain,
+                    map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::TpDrain(
+                        EffectSpecServerPacketMapDamageTypeDataTpDrain {
+                            tp_damage: damage,
+                            tp: character.tp,
+                            max_tp: character.max_tp,
+                        },
+                    )),
+                },
             );
         }
     }

@@ -1,21 +1,18 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
-                AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
-                AvatarChangeType, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
-                ItemReplyServerPacketItemTypeDataCureCurse,
-                ItemReplyServerPacketItemTypeDataEffectPotion,
-                ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
-                RecoverAgreeServerPacket, WarpEffect,
-            },
-            Item, PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+            AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
+            AvatarChangeType, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
+            ItemReplyServerPacketItemTypeDataCureCurse,
+            ItemReplyServerPacketItemTypeDataEffectPotion,
+            ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
+            RecoverAgreeServerPacket, WarpEffect,
         },
-        r#pub::{ItemSpecial, ItemType},
-        Coords,
+        Item, PacketAction, PacketFamily,
     },
+    r#pub::{ItemSpecial, ItemType},
+    Coords,
 };
 
 use crate::{character::EquipmentSlot, ITEM_DB};
@@ -46,7 +43,7 @@ impl Map {
             }
         };
 
-        let mut reply = ItemReplyServerPacket::default();
+        let mut packet = ItemReplyServerPacket::default();
         let player = character.player.as_ref().unwrap().clone();
 
         match item.r#type {
@@ -56,14 +53,14 @@ impl Map {
                 if hp_gain == 0 && tp_gain == 0 {
                     return;
                 }
-                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::Heal(
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::Heal(
                     ItemReplyServerPacketItemTypeDataHeal {
                         hp_gain,
                         hp: character.hp,
                         tp: character.tp,
                     },
                 ));
-                reply.item_type = ItemType::Heal;
+                packet.item_type = ItemType::Heal;
 
                 if hp_gain > 0 {
                     let packet = RecoverAgreeServerPacket {
@@ -78,7 +75,7 @@ impl Map {
                         player_id,
                         PacketAction::Agree,
                         PacketFamily::Recover,
-                        packet,
+                        &packet,
                     );
                 }
             }
@@ -96,14 +93,14 @@ impl Map {
                     character.map_id == item.spec1,
                     Some(WarpEffect::Scroll),
                 );
-                reply.item_type = ItemType::Teleport;
+                packet.item_type = ItemType::Teleport;
             }
             ItemType::Alcohol => {
-                reply.item_type = ItemType::Alcohol;
+                packet.item_type = ItemType::Alcohol;
             }
             ItemType::EffectPotion => {
-                reply.item_type = ItemType::EffectPotion;
-                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::EffectPotion(
+                packet.item_type = ItemType::EffectPotion;
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::EffectPotion(
                     ItemReplyServerPacketItemTypeDataEffectPotion {
                         effect_id: item.spec1,
                     },
@@ -111,8 +108,8 @@ impl Map {
                 self.play_effect(player_id, item.spec1);
             }
             ItemType::HairDye => {
-                reply.item_type = ItemType::HairDye;
-                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::HairDye(
+                packet.item_type = ItemType::HairDye;
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::HairDye(
                     ItemReplyServerPacketItemTypeDataHairDye {
                         hair_color: item.spec1,
                     },
@@ -134,7 +131,7 @@ impl Map {
                     player_id,
                     PacketAction::Agree,
                     PacketFamily::Avatar,
-                    packet,
+                    &packet,
                 );
             }
             ItemType::CureCurse => {
@@ -167,8 +164,8 @@ impl Map {
 
                 character.calculate_stats();
 
-                reply.item_type = ItemType::CureCurse;
-                reply.item_type_data = Some(ItemReplyServerPacketItemTypeData::CureCurse(
+                packet.item_type = ItemType::CureCurse;
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::CureCurse(
                     ItemReplyServerPacketItemTypeDataCureCurse {
                         stats: character.get_character_stats_equipment_change(),
                     },
@@ -193,7 +190,7 @@ impl Map {
                         player_id,
                         PacketAction::Agree,
                         PacketFamily::Avatar,
-                        packet,
+                        &packet,
                     );
                 }
             }
@@ -205,7 +202,7 @@ impl Map {
         let character = self.characters.get_mut(&player_id).unwrap();
         character.remove_item(item_id, 1);
 
-        reply.used_item = Item {
+        packet.used_item = Item {
             id: item_id,
             amount: match character.items.iter().find(|i| i.id == item_id) {
                 Some(item) => item.amount,
@@ -213,19 +210,8 @@ impl Map {
             },
         };
 
-        reply.weight = character.get_weight();
+        packet.weight = character.get_weight();
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ItemReplyServerPacket: {}", e);
-            return;
-        }
-
-        player.send(
-            PacketAction::Reply,
-            PacketFamily::Item,
-            writer.to_byte_array(),
-        );
+        player.send(PacketAction::Reply, PacketFamily::Item, &packet);
     }
 }

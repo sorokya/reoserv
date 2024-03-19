@@ -26,7 +26,7 @@ impl Map {
                 continue;
             }
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Request,
                 PacketFamily::Guild,
                 buf.clone(),

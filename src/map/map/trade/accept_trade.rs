@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{TradeAgreeServerPacket, TradeSpecServerPacket},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{TradeAgreeServerPacket, TradeSpecServerPacket},
+    PacketAction, PacketFamily,
 };
 
 use super::super::Map;
@@ -50,35 +47,19 @@ impl Map {
             return;
         }
 
-        let packet = TradeSpecServerPacket { agree: true };
-
-        let mut writer = EoWriter::new();
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TradeSpecServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Spec,
             PacketFamily::Trade,
-            writer.to_byte_array(),
+            &TradeSpecServerPacket { agree: true },
         );
-
-        let packet = TradeAgreeServerPacket {
-            agree: true,
-            partner_player_id: player_id,
-        };
-
-        let mut writer = EoWriter::new();
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TradeAgreeServerPacket: {}", e);
-            return;
-        }
 
         partner.send(
             PacketAction::Agree,
             PacketFamily::Trade,
-            writer.to_byte_array(),
+            &TradeAgreeServerPacket {
+                agree: true,
+                partner_player_id: player_id,
+            },
         );
     }
 }

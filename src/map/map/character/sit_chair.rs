@@ -1,13 +1,10 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        map::MapTileSpec,
-        net::{
-            server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
-            PacketAction, PacketFamily,
-        },
-        Coords, Direction,
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{
+        server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
+        PacketAction, PacketFamily,
     },
+    Coords, Direction,
 };
 
 use crate::utils::get_distance;
@@ -101,35 +98,31 @@ impl Map {
         character.coords = coords;
         character.sit_state = SitState::Chair;
 
-        let reply = ChairReplyServerPacket {
-            player_id,
-            coords,
-            direction: character.direction,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ChairReplyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Chair,
-            writer.to_byte_array(),
+            &ChairReplyServerPacket {
+                player_id,
+                coords,
+                direction: character.direction,
+            },
         );
 
         if character.hidden {
             return;
         }
 
-        let reply = ChairPlayerServerPacket {
-            player_id,
-            coords,
-            direction: character.direction,
-        };
+        let direction = character.direction;
 
-        self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Chair, reply);
+        self.send_packet_near_player(
+            player_id,
+            PacketAction::Player,
+            PacketFamily::Chair,
+            &ChairPlayerServerPacket {
+                player_id,
+                coords,
+                direction,
+            },
+        );
     }
 }

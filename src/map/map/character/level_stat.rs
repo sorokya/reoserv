@@ -1,8 +1,5 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily,
 };
 
 use super::super::Map;
@@ -46,22 +43,13 @@ impl Map {
 
         character.calculate_stats();
 
-        let reply = StatSkillPlayerServerPacket {
-            stat_points: character.stat_points,
-            stats: character.get_character_stats_update(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize StatSkillPlayerServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::StatSkill,
-            writer.to_byte_array(),
+            &StatSkillPlayerServerPacket {
+                stat_points: character.stat_points,
+                stats: character.get_character_stats_update(),
+            },
         );
     }
 }

@@ -99,7 +99,7 @@ impl Map {
                             continue;
                         }
 
-                        character.player.as_ref().unwrap().send(
+                        character.player.as_ref().unwrap().send_buf(
                             PacketAction::Agree,
                             PacketFamily::Chest,
                             buf.clone(),

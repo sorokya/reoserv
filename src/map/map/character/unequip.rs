@@ -1,15 +1,12 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
-                AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollRemoveServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+            AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollRemoveServerPacket,
         },
-        r#pub::ItemType,
+        PacketAction, PacketFamily,
     },
+    r#pub::ItemType,
 };
 
 use crate::ITEM_DB;
@@ -41,24 +38,15 @@ impl Map {
             )),
         };
 
-        let reply = PaperdollRemoveServerPacket {
-            change: change.clone(),
-            item_id,
-            sub_loc,
-            stats: target.get_character_stats_equipment_change(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize PaperdollRemoveServerPacket: {}", e);
-            return;
-        }
-
         target.player.as_ref().unwrap().send(
             PacketAction::Remove,
             PacketFamily::Paperdoll,
-            writer.to_byte_array(),
+            &PaperdollRemoveServerPacket {
+                change: change.clone(),
+                item_id,
+                sub_loc,
+                stats: target.get_character_stats_equipment_change(),
+            },
         );
 
         if target.hidden {
@@ -71,13 +59,11 @@ impl Map {
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = AvatarAgreeServerPacket { change };
-
             self.send_packet_near_player(
                 player_id,
                 PacketAction::Agree,
                 PacketFamily::Avatar,
-                reply,
+                &AvatarAgreeServerPacket { change },
             );
         }
     }

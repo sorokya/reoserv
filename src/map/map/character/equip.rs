@@ -1,15 +1,12 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
-                AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollAgreeServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+            AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollAgreeServerPacket,
         },
-        r#pub::ItemType,
+        PacketAction, PacketFamily,
     },
+    r#pub::ItemType,
 };
 
 use crate::ITEM_DB;
@@ -53,26 +50,19 @@ impl Map {
             )),
         };
 
-        let reply = PaperdollAgreeServerPacket {
-            change: change.clone(),
-            item_id,
-            remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
-                Some(item) => item.amount,
-                None => 0,
-            },
-            sub_loc,
-            stats: character.get_character_stats_equipment_change(),
-        };
-
-        let mut writer = EoWriter::new();
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize PaperdollAgreeServerPacket: {}", e);
-            return;
-        }
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Paperdoll,
-            writer.to_byte_array(),
+            &PaperdollAgreeServerPacket {
+                change: change.clone(),
+                item_id,
+                remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
+                    Some(item) => item.amount,
+                    None => 0,
+                },
+                sub_loc,
+                stats: character.get_character_stats_equipment_change(),
+            },
         );
 
         if character.hidden {
@@ -85,13 +75,11 @@ impl Map {
         );
 
         if is_visible_change && self.characters.len() > 1 {
-            let reply = AvatarAgreeServerPacket { change };
-
             self.send_packet_near_player(
                 player_id,
                 PacketAction::Agree,
                 PacketFamily::Avatar,
-                reply,
+                &AvatarAgreeServerPacket { change },
             );
         }
     }

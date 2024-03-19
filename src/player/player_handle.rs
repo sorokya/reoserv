@@ -385,11 +385,11 @@ impl PlayerHandle {
         });
     }
 
-    pub fn send(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
+    pub fn send_buf(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
         let _ = self.tx.send(Command::Send(action, family, buf));
     }
 
-    pub fn send_packet<T>(&self, action: PacketAction, family: PacketFamily, packet: &T)
+    pub fn send<T>(&self, action: PacketAction, family: PacketFamily, packet: &T)
     where
         T: EoSerialize,
     {
@@ -400,7 +400,7 @@ impl PlayerHandle {
             return;
         }
 
-        self.send(action, family, writer.to_byte_array());
+        self.send_buf(action, family, writer.to_byte_array());
     }
 
     pub fn set_board_id(&self, board_id: i32) {

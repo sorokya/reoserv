@@ -16,14 +16,13 @@ impl World {
         };
 
         if self.global_locked {
-            let mut writer = EoWriter::new();
-            writer.add_string("Server");
-            writer.add_byte(0xff);
-            writer.add_string(&LANG.global_locked);
             player.send(
                 PacketAction::Msg,
                 PacketFamily::Talk,
-                writer.to_byte_array(),
+                &TalkMsgServerPacket {
+                    player_name: "Server".to_string(),
+                    message: LANG.global_locked.to_owned(),
+                },
             );
             return;
         }
@@ -32,6 +31,7 @@ impl World {
             player_name: name.to_string(),
             message: message.to_string(),
         };
+
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
@@ -58,7 +58,7 @@ impl World {
             let player_id = player_id.unwrap();
 
             if state == ClientState::InGame && player_id != target_player_id {
-                player.send(PacketAction::Msg, PacketFamily::Talk, buf.clone());
+                player.send_buf(PacketAction::Msg, PacketFamily::Talk, buf.clone());
             }
         }
     }

@@ -1,9 +1,6 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::ItemGetServerPacket, PacketAction, PacketFamily, ThreeItem},
-};
+use eolib::protocol::net::{server::ItemGetServerPacket, PacketAction, PacketFamily, ThreeItem};
 
 use crate::SETTINGS;
 
@@ -19,29 +16,18 @@ impl Map {
 
             character.add_item(item_id, amount);
 
-            let reply = ItemGetServerPacket {
-                taken_item_index: 0,
-                taken_item: ThreeItem {
-                    id: item_id,
-                    amount,
+            character.player.as_ref().unwrap().send(
+                PacketAction::Get,
+                PacketFamily::Item,
+                &ItemGetServerPacket {
+                    taken_item_index: 0,
+                    taken_item: ThreeItem {
+                        id: item_id,
+                        amount,
+                    },
+                    weight: character.get_weight(),
                 },
-                weight: character.get_weight(),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                error!("Failed to serialize ItemGetServerPacket: {}", e);
-                return;
-            }
-
-            let buf = writer.to_byte_array();
-
-            character
-                .player
-                .as_ref()
-                .unwrap()
-                .send(PacketAction::Get, PacketFamily::Item, buf);
+            );
         }
     }
 }

@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
+    PacketAction, PacketFamily,
 };
 
 use crate::utils::get_next_coords;
@@ -29,17 +26,10 @@ impl Map {
                     coords: character.coords,
                 };
 
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = reply.serialize(&mut writer) {
-                    error!("Failed to serialize SitCloseServerPacket: {}", e);
-                    return;
-                }
-
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Sit,
-                    writer.to_byte_array(),
+                    &reply,
                 );
 
                 if !character.hidden {
@@ -47,7 +37,7 @@ impl Map {
                         player_id,
                         PacketAction::Remove,
                         PacketFamily::Sit,
-                        reply,
+                        &reply,
                     );
                 }
             }
@@ -61,22 +51,15 @@ impl Map {
                     self.file.height,
                 );
 
-                let reply = ChairCloseServerPacket {
+                let packet = ChairCloseServerPacket {
                     player_id,
                     coords: character.coords,
                 };
 
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = reply.serialize(&mut writer) {
-                    error!("Failed to serialize ChairCloseServerPacket: {}", e);
-                    return;
-                }
-
                 character.player.as_ref().unwrap().send(
                     PacketAction::Close,
                     PacketFamily::Chair,
-                    writer.to_byte_array(),
+                    &packet,
                 );
 
                 if !character.hidden {
@@ -84,7 +67,7 @@ impl Map {
                         player_id,
                         PacketAction::Remove,
                         PacketFamily::Sit,
-                        reply,
+                        &packet,
                     );
                 }
             }

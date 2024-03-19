@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{
-            InitInitServerPacket, InitInitServerPacketReplyCodeData,
-            InitInitServerPacketReplyCodeDataPlayersListFriends, InitReply, PlayersListFriends,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        InitInitServerPacket, InitInitServerPacketReplyCodeData,
+        InitInitServerPacketReplyCodeDataPlayersListFriends, InitReply, PlayersListFriends,
     },
+    PacketAction, PacketFamily,
 };
 
 use super::World;
@@ -44,18 +41,7 @@ impl World {
                 )),
             };
 
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing InitInitServerPacket: {}", e);
-                return;
-            }
-
-            player.send(
-                PacketAction::Init,
-                PacketFamily::Init,
-                writer.to_byte_array(),
-            );
+            player.send(PacketAction::Init, PacketFamily::Init, &packet);
         });
     }
 }

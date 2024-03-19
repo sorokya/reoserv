@@ -33,7 +33,7 @@ impl World {
                 None => continue,
             };
 
-            member.send(PacketAction::Remove, PacketFamily::Party, buf.clone());
+            member.send_buf(PacketAction::Remove, PacketFamily::Party, buf.clone());
         }
     }
 }

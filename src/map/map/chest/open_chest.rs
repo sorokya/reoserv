@@ -1,10 +1,7 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::ChestOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
-        r#pub::ItemType,
-        Coords,
-    },
+use eolib::protocol::{
+    net::{server::ChestOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
+    r#pub::ItemType,
+    Coords,
 };
 
 use crate::{utils::in_client_range, ITEM_DB};
@@ -53,29 +50,20 @@ impl Map {
 
         player.set_chest_index(chest_index);
 
-        let reply = ChestOpenServerPacket {
-            coords,
-            items: chest
-                .items
-                .iter()
-                .map(|item| ThreeItem {
-                    id: item.item_id,
-                    amount: item.amount,
-                })
-                .collect(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ChestOpenServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Open,
             PacketFamily::Chest,
-            writer.to_byte_array(),
+            &ChestOpenServerPacket {
+                coords,
+                items: chest
+                    .items
+                    .iter()
+                    .map(|item| ThreeItem {
+                        id: item.item_id,
+                        amount: item.amount,
+                    })
+                    .collect(),
+            },
         );
     }
 }

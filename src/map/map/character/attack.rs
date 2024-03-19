@@ -52,7 +52,7 @@ impl Map {
                 player_id,
                 PacketAction::Player,
                 PacketFamily::Attack,
-                reply,
+                &reply,
             );
         }
 
@@ -253,7 +253,7 @@ impl Map {
         let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Spec,
                 PacketFamily::Arena,
                 buf.clone(),
@@ -281,7 +281,7 @@ impl Map {
         let buf = writer.to_byte_array();
 
         for character in self.characters.values() {
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Accept,
                 PacketFamily::Arena,
                 buf.clone(),
@@ -337,22 +337,13 @@ impl Map {
             target_character.player.as_ref().unwrap().die();
         }
 
-        let packet = RecoverPlayerServerPacket {
-            hp: target_character.hp,
-            tp: target_character.tp,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-            return;
-        }
-
         target_character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            writer.to_byte_array(),
+            &RecoverPlayerServerPacket {
+                hp: target_character.hp,
+                tp: target_character.tp,
+            },
         );
 
         target_character

@@ -11,9 +11,9 @@ pub struct Item {
 
 impl Item {
     // TODO: Implement as a trait
-    pub fn to_item_map_info(&self, uid: i32) -> ItemMapInfo {
+    pub fn to_map_info(&self, uid: &i32) -> ItemMapInfo {
         ItemMapInfo {
-            uid,
+            uid: *uid,
             id: self.id,
             amount: self.amount,
             coords: self.coords,

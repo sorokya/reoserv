@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{CharacterDetails, PaperdollReplyServerPacket},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{CharacterDetails, PaperdollReplyServerPacket},
+    PacketAction, PacketFamily,
 };
 
 use super::super::Map;
@@ -32,46 +29,37 @@ impl Map {
             .await
             .is_some();
 
-        let reply = PaperdollReplyServerPacket {
-            details: CharacterDetails {
-                name: target.name.clone(),
-                home: target.home.clone(),
-                admin: target.admin_level,
-                partner: match &target.partner {
-                    Some(partner) => partner.clone(),
-                    None => "".to_string(),
-                },
-                title: match &target.title {
-                    Some(title) => title.clone(),
-                    None => "".to_string(),
-                },
-                guild: match &target.guild_name {
-                    Some(guild) => guild.clone(),
-                    None => "".to_string(),
-                },
-                guild_rank: match &target.guild_rank_string {
-                    Some(guild_rank) => guild_rank.clone(),
-                    None => "".to_string(),
-                },
-                player_id: target_player_id,
-                class_id: target.class,
-                gender: target.gender,
-            },
-            equipment: target.equipment.clone(),
-            icon: target.get_icon(in_party),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize PaperdollReplyServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Reply,
             PacketFamily::Paperdoll,
-            writer.to_byte_array(),
+            &PaperdollReplyServerPacket {
+                details: CharacterDetails {
+                    name: target.name.clone(),
+                    home: target.home.clone(),
+                    admin: target.admin_level,
+                    partner: match &target.partner {
+                        Some(partner) => partner.clone(),
+                        None => "".to_string(),
+                    },
+                    title: match &target.title {
+                        Some(title) => title.clone(),
+                        None => "".to_string(),
+                    },
+                    guild: match &target.guild_name {
+                        Some(guild) => guild.clone(),
+                        None => "".to_string(),
+                    },
+                    guild_rank: match &target.guild_rank_string {
+                        Some(guild_rank) => guild_rank.clone(),
+                        None => "".to_string(),
+                    },
+                    player_id: target_player_id,
+                    class_id: target.class,
+                    gender: target.gender,
+                },
+                equipment: target.equipment.clone(),
+                icon: target.get_icon(in_party),
+            },
         );
     }
 }

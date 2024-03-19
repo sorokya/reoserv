@@ -13,16 +13,14 @@ impl Map {
             return;
         }
 
-        let packet = TalkPlayerServerPacket {
-            player_id: target_player_id,
-            message,
-        };
-
         self.send_packet_near_player(
             target_player_id,
             PacketAction::Player,
             PacketFamily::Talk,
-            packet,
+            &TalkPlayerServerPacket {
+                player_id: target_player_id,
+                message,
+            },
         );
     }
 }

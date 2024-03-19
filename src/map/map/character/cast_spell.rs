@@ -146,26 +146,17 @@ impl Map {
             writer.to_byte_array(),
         );
 
-        let packet = SpellTargetSelfServerPacket {
-            player_id,
-            spell_id,
-            spell_heal_hp: spell.hp_heal,
-            hp_percentage,
-            hp: Some(character.hp),
-            tp: Some(character.tp),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            writer.to_byte_array(),
+            &SpellTargetSelfServerPacket {
+                player_id,
+                spell_id,
+                spell_heal_hp: spell.hp_heal,
+                hp_percentage,
+                hp: Some(character.hp),
+                tp: Some(character.tp),
+            },
         );
     }
 
@@ -227,7 +218,7 @@ impl Map {
             None => return,
         };
 
-        let mut packet: SpellTargetOtherServerPacket = SpellTargetOtherServerPacket {
+        let mut packet = SpellTargetOtherServerPacket {
             victim_id: target_player_id,
             caster_id: player_id,
             caster_direction: character.direction,
@@ -237,33 +228,19 @@ impl Map {
             hp: None,
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
-            return;
-        }
-
-        self.send_buf_near_player(
+        self.send_packet_near_player(
             target_player_id,
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            writer.to_byte_array(),
+            &packet,
         );
 
         packet.hp = Some(target.hp);
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize SpellTargetOtherServerPacket: {}", e);
-            return;
-        }
-
         target.player.as_ref().unwrap().send(
             PacketAction::TargetOther,
             PacketFamily::Spell,
-            writer.to_byte_array(),
+            &packet,
         );
 
         let packet = RecoverPlayerServerPacket {
@@ -271,17 +248,10 @@ impl Map {
             tp: character.tp,
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            writer.to_byte_array(),
+            &packet,
         );
     }
 
@@ -358,22 +328,13 @@ impl Map {
 
         let damage_dealt = npc.damage(player_id, amount, character.accuracy, critical);
 
-        let packet = RecoverPlayerServerPacket {
-            hp: character.hp,
-            tp: character.tp,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            writer.to_byte_array(),
+            &RecoverPlayerServerPacket {
+                hp: character.hp,
+                tp: character.tp,
+            },
         );
 
         if npc.alive {
@@ -438,22 +399,13 @@ impl Map {
             character.spell_state = SpellState::None;
             character.tp -= spell_data.tp_cost;
 
-            let packet = RecoverPlayerServerPacket {
-                hp: character.hp,
-                tp: character.tp,
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Player,
                 PacketFamily::Recover,
-                writer.to_byte_array(),
+                &RecoverPlayerServerPacket {
+                    hp: character.hp,
+                    tp: character.tp,
+                },
             );
         }
 
@@ -483,22 +435,13 @@ impl Map {
             target_character.player.as_ref().unwrap().die();
         }
 
-        let packet = RecoverPlayerServerPacket {
-            hp: target_character.hp,
-            tp: target_character.tp,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
-            return;
-        }
-
         target_character.player.as_ref().unwrap().send(
             PacketAction::Player,
             PacketFamily::Recover,
-            writer.to_byte_array(),
+            &RecoverPlayerServerPacket {
+                hp: target_character.hp,
+                tp: target_character.tp,
+            },
         );
 
         target_character

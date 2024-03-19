@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::GuildKickServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::GuildKickServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -24,19 +21,10 @@ impl Map {
 
         self.world.remove_guild_member(player_id, guild_tag);
 
-        let packet = GuildKickServerPacket::default();
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildKickServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Kick,
             PacketFamily::Guild,
-            writer.to_byte_array(),
+            &GuildKickServerPacket::default(),
         );
 
         let mut character = character.to_owned();

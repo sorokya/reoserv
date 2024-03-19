@@ -57,7 +57,6 @@ impl Map {
             None => return,
         };
 
-        let mut writer = EoWriter::new();
         if let Some(spell_id) = spell_id {
             let mut packet = CastReplyServerPacket {
                 spell_id,
@@ -73,20 +72,15 @@ impl Map {
                 kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
             };
 
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize CastReplyServerPacket: {}", e);
-                return;
-            }
-
             let character = match self.characters.get(&player_id) {
                 Some(character) => character,
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_packet(
                 PacketAction::Reply,
                 PacketFamily::Cast,
-                writer.to_byte_array(),
+                &packet,
             );
 
             packet.kill_steal_protection = None;
@@ -108,20 +102,15 @@ impl Map {
                 kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
             };
 
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize NpcReplyServerPacket: {}", e);
-                return;
-            }
-
             let character = match self.characters.get(&player_id) {
                 Some(character) => character,
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_packet(
                 PacketAction::Reply,
                 PacketFamily::Npc,
-                writer.to_byte_array(),
+                &packet,
             );
 
             packet.kill_steal_protection = None;

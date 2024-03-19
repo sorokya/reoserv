@@ -4,8 +4,9 @@ use eolib::{
         net::{
             server::{
                 AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
-                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcKilledData,
-                NpcReplyServerPacket, NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
+                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket,
+                NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
+                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
                 RecoverTargetGroupServerPacket,
             },
             PacketAction, PacketFamily,
@@ -58,7 +59,7 @@ impl Map {
 
         let mut writer = EoWriter::new();
         if let Some(spell_id) = spell_id {
-            let packet = CastReplyServerPacket {
+            let mut packet = CastReplyServerPacket {
                 spell_id,
                 caster_id: player_id,
                 caster_direction: direction,
@@ -69,7 +70,7 @@ impl Map {
                     Some(character) => character.tp,
                     None => 0,
                 },
-                kill_steal_protection: None,
+                kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
             };
 
             if let Err(e) = packet.serialize(&mut writer) {
@@ -77,20 +78,34 @@ impl Map {
                 return;
             }
 
-            self.send_buf_near(
-                &npc.coords,
+            let character = match self.characters.get(&player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
+            character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Cast,
                 writer.to_byte_array(),
             );
+
+            packet.kill_steal_protection = None;
+
+            self.send_packet_near_exclude_player(
+                &npc.coords,
+                player_id,
+                PacketAction::Reply,
+                PacketFamily::Cast,
+                packet,
+            );
         } else {
-            let packet = NpcReplyServerPacket {
+            let mut packet = NpcReplyServerPacket {
                 player_id,
                 player_direction: direction,
                 npc_index,
                 damage: damage_dealt,
                 hp_percentage: npc.get_hp_percentage(),
-                kill_steal_protection: None,
+                kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
             };
 
             if let Err(e) = packet.serialize(&mut writer) {
@@ -98,11 +113,25 @@ impl Map {
                 return;
             }
 
-            self.send_buf_near(
-                &npc.coords,
+            let character = match self.characters.get(&player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
+            character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Npc,
                 writer.to_byte_array(),
+            );
+
+            packet.kill_steal_protection = None;
+
+            self.send_packet_near_exclude_player(
+                &npc.coords,
+                player_id,
+                PacketAction::Reply,
+                PacketFamily::Npc,
+                packet,
             );
         }
     }

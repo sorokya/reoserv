@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -29,6 +30,17 @@ impl Map {
         }
 
         let buf = writer.to_byte_array();
+        self.send_buf_near_exclude_player(coords, exclude_player_id, action, family, buf);
+    }
+
+    pub fn send_buf_near_exclude_player(
+        &self,
+        coords: &Coords,
+        exclude_player_id: i32,
+        action: PacketAction,
+        family: PacketFamily,
+        buf: Bytes,
+    ) {
         for (player_id, character) in self.characters.iter() {
             if *player_id != exclude_player_id && in_range(coords, &character.coords) {
                 character

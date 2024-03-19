@@ -177,7 +177,7 @@ impl Map {
         }
 
         if self.file.r#type == MapType::Pk {
-            return self.attack_player_pk(player_id, target_player_id, direction);
+            self.attack_player_pk(player_id, target_player_id, direction);
         }
     }
 

@@ -2,16 +2,19 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::protocol::{
-    net::{
-        client::{
-            AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
-            GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            client::{
+                AccountCreateClientPacket, CharacterCreateClientPacket, FileType,
+                GuildAgreeClientPacketInfoTypeData, GuildInfoType,
+            },
+            server::WarpEffect,
+            PacketAction, PacketFamily, Version,
         },
-        server::WarpEffect,
-        PacketAction, PacketFamily, Version,
+        Coords,
     },
-    Coords,
 };
 use mysql_async::Pool;
 use tokio::{
@@ -384,6 +387,20 @@ impl PlayerHandle {
 
     pub fn send(&self, action: PacketAction, family: PacketFamily, buf: Bytes) {
         let _ = self.tx.send(Command::Send(action, family, buf));
+    }
+
+    pub fn send_packet<T>(&self, action: PacketAction, family: PacketFamily, packet: &T)
+    where
+        T: EoSerialize,
+    {
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize packet: {}", e);
+            return;
+        }
+
+        self.send(action, family, writer.to_byte_array());
     }
 
     pub fn set_board_id(&self, board_id: i32) {

@@ -695,9 +695,9 @@ dependencies = [
 
 [[package]]
 name = "eolib"
-version = "1.0.0-RC5"
+version = "1.0.0-RC6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63877a4752508b1d7f35b1939c2692356c15bf7100a41c79add4e01305a33a3c"
+checksum = "8b08fe62ee3593d6ae94ea3ac42c4319db1495d1f94f350b08226fd419c6ec58"
 dependencies = [
  "bytes",
  "convert_case",

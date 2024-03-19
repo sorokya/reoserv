@@ -1,8 +1,12 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
+        map::MapType,
         net::{
-            server::{ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket},
+            server::{
+                ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket,
+                AvatarReplyServerPacket, RecoverPlayerServerPacket,
+            },
             PacketAction, PacketFamily,
         },
         r#pub::{ItemSubtype, NpcType},
@@ -15,6 +19,7 @@ use crate::{
     character::Character,
     map::map::ArenaPlayer,
     utils::{get_distance, get_next_coords},
+    world::Party,
     ITEM_DB, NPC_DB, SETTINGS,
 };
 
@@ -51,7 +56,9 @@ impl Map {
             );
         }
 
-        match self.get_attack_target(player_id, direction) {
+        let player_party = self.world.get_player_party(player_id).await;
+
+        match self.get_attack_target(player_id, direction, player_party) {
             Some(AttackTarget::Npc(npc_index)) => {
                 self.attack_npc(player_id, npc_index, direction).await
             }
@@ -62,10 +69,20 @@ impl Map {
         };
     }
 
-    fn get_attack_target(&self, player_id: i32, direction: Direction) -> Option<AttackTarget> {
+    fn get_attack_target(
+        &self,
+        player_id: i32,
+        direction: Direction,
+        player_party: Option<Party>,
+    ) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
+        };
+
+        let party_player_ids = match player_party {
+            Some(party) => party.members,
+            None => Vec::new(),
         };
 
         let range = get_weapon_range(attacker);
@@ -102,13 +119,13 @@ impl Map {
                 return Some(AttackTarget::Npc(*index));
             }
 
-            if let Some((player_id, _)) = self
-                .characters
-                .iter()
-                .find(|(_, character)| !character.hidden && character.coords == coords)
-            {
+            if let Some((player_id, _)) = self.characters.iter().find(|(_, character)| {
+                !character.hidden
+                    && character.coords == coords
+                    && !party_player_ids.contains(&character.player_id.unwrap())
+            }) {
                 return Some(AttackTarget::Player(*player_id));
-            };
+            }
         }
 
         None
@@ -139,10 +156,10 @@ impl Map {
             rng.gen_range(attacker.min_damage..=attacker.max_damage)
         };
 
-        let attacker_facing_npc =
+        let attacking_back_or_side =
             (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
 
-        let critical = npc.hp == npc.max_hp || attacker_facing_npc;
+        let critical = npc.hp == npc.max_hp || attacking_back_or_side;
 
         let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
 
@@ -159,7 +176,9 @@ impl Map {
             return self.attack_player_arena(player_id, target_player_id, direction);
         }
 
-        error!("PVP is not implemented yet!");
+        if self.file.r#type == MapType::Pk {
+            self.attack_player_pk(player_id, target_player_id, direction);
+        }
     }
 
     fn attack_player_arena(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
@@ -268,6 +287,79 @@ impl Map {
                 buf.clone(),
             );
         }
+    }
+
+    fn attack_player_pk(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
+        let (coords, min_damage, max_damage, accuracy) = match self.characters.get(&player_id) {
+            Some(character) => (
+                character.coords,
+                character.min_damage,
+                character.max_damage,
+                character.accuracy,
+            ),
+            None => return,
+        };
+
+        let target_character = match self.characters.get_mut(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let amount = {
+            let mut rng = rand::thread_rng();
+            rng.gen_range(min_damage..=max_damage)
+        };
+
+        let attacking_back_or_side =
+            (i32::from(target_character.direction) - i32::from(direction)).abs() != 2;
+
+        let critical = target_character.hp == target_character.max_hp || attacking_back_or_side;
+
+        let damage_dealt = target_character.damage(amount, accuracy, critical);
+
+        let target_character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let packet = AvatarReplyServerPacket {
+            player_id,
+            victim_id: target_player_id,
+            damage: damage_dealt,
+            direction,
+            hp_percentage: target_character.get_hp_percentage(),
+            dead: target_character.hp == 0,
+        };
+
+        self.send_packet_near(&coords, PacketAction::Reply, PacketFamily::Avatar, packet);
+
+        if target_character.hp == 0 {
+            target_character.player.as_ref().unwrap().die();
+        }
+
+        let packet = RecoverPlayerServerPacket {
+            hp: target_character.hp,
+            tp: target_character.tp,
+        };
+
+        let mut writer = EoWriter::new();
+
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Failed to serialize RecoverPlayerServerPacket: {}", e);
+            return;
+        }
+
+        target_character.player.as_ref().unwrap().send(
+            PacketAction::Player,
+            PacketFamily::Recover,
+            writer.to_byte_array(),
+        );
+
+        target_character
+            .player
+            .as_ref()
+            .unwrap()
+            .update_party_hp(target_character.get_hp_percentage());
     }
 }
 

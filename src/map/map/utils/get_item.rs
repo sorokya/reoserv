@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
-        PacketAction, PacketFamily, ThreeItem,
-    },
+use eolib::protocol::net::{
+    server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
+    PacketAction, PacketFamily, ThreeItem,
 };
 
 use crate::{utils::get_distance, SETTINGS};
@@ -34,29 +31,18 @@ impl Map {
 
         character.add_item(item_id, amount_picked_up);
 
-        let reply = ItemGetServerPacket {
-            taken_item_index: item_index,
-            taken_item: ThreeItem {
-                id: item_id,
-                amount: amount_picked_up,
+        character.player.as_ref().unwrap().send(
+            PacketAction::Get,
+            PacketFamily::Item,
+            &ItemGetServerPacket {
+                taken_item_index: item_index,
+                taken_item: ThreeItem {
+                    id: item_id,
+                    amount: amount_picked_up,
+                },
+                weight: character.get_weight(),
             },
-            weight: character.get_weight(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ItemGetServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-
-        character
-            .player
-            .as_ref()
-            .unwrap()
-            .send(PacketAction::Get, PacketFamily::Item, buf);
+        );
 
         if amount_picked_up == item_amount {
             self.items.remove(&item_index);

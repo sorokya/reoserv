@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{TalkReply, TalkReplyServerPacket, TalkTellServerPacket},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{TalkReply, TalkReplyServerPacket, TalkTellServerPacket},
+    PacketAction, PacketFamily,
 };
 
 use crate::player::PlayerHandle;
@@ -26,40 +23,23 @@ impl World {
 }
 
 fn send_private_message(from: &str, to: &PlayerHandle, message: &str) {
-    let packet = TalkTellServerPacket {
-        message: message.to_string(),
-        player_name: from.to_string(),
-    };
-    let mut writer = EoWriter::new();
-
-    if let Err(e) = packet.serialize(&mut writer) {
-        error!("Failed to serialize TalkTellServerPacket: {}", e);
-        return;
-    }
-
     to.send(
         PacketAction::Tell,
         PacketFamily::Talk,
-        writer.to_byte_array(),
+        &TalkTellServerPacket {
+            message: message.to_string(),
+            player_name: from.to_string(),
+        },
     );
 }
 
 fn send_player_not_found(player: &PlayerHandle, to: &str) {
-    let packet = TalkReplyServerPacket {
-        reply_code: TalkReply::NotFound,
-        name: to.to_string(),
-    };
-
-    let mut writer = EoWriter::new();
-
-    if let Err(e) = packet.serialize(&mut writer) {
-        error!("Failed to serialize TalkReplyServerPacket: {}", e);
-        return;
-    }
-
     player.send(
         PacketAction::Reply,
         PacketFamily::Talk,
-        writer.to_byte_array(),
+        &TalkReplyServerPacket {
+            reply_code: TalkReply::NotFound,
+            name: to.to_string(),
+        },
     );
 }

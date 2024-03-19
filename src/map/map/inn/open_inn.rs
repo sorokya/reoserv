@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::CitizenOpenServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::CitizenOpenServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{utils::in_client_range, INN_DB, NPC_DB};
@@ -64,28 +61,19 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let packet = CitizenOpenServerPacket {
-            behavior_id: inn_data.behavior_id + 1,
-            current_home_id: current_inn_data.behavior_id - 1,
-            session_id,
-            questions: [
-                inn_data.questions[0].question.clone(),
-                inn_data.questions[1].question.clone(),
-                inn_data.questions[2].question.clone(),
-            ],
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing CitizenOpenServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Open,
             PacketFamily::Citizen,
-            writer.to_byte_array(),
+            &CitizenOpenServerPacket {
+                behavior_id: inn_data.behavior_id + 1,
+                current_home_id: current_inn_data.behavior_id - 1,
+                session_id,
+                questions: [
+                    inn_data.questions[0].question.clone(),
+                    inn_data.questions[1].question.clone(),
+                    inn_data.questions[2].question.clone(),
+                ],
+            },
         );
     }
 }

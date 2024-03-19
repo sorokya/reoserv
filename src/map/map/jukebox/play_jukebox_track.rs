@@ -31,19 +31,10 @@ impl Map {
             || track_id < 1
             || track_id > SETTINGS.jukebox.max_track_id
         {
-            let packet = JukeboxReplyServerPacket::new();
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize JukeboxOpenServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::Jukebox,
-                writer.to_byte_array(),
+                &JukeboxReplyServerPacket::new(),
             );
 
             return;
@@ -58,21 +49,12 @@ impl Map {
         self.jukebox_player = Some(character.name.clone());
         self.jukebox_ticks = SETTINGS.jukebox.track_timer;
 
-        let packet = JukeboxAgreeServerPacket {
-            gold_amount: character.get_item_amount(1),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize JukeboxAgreeServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Jukebox,
-            writer.to_byte_array(),
+            &JukeboxAgreeServerPacket {
+                gold_amount: character.get_item_amount(1),
+            },
         );
 
         let packet = JukeboxUseServerPacket { track_id };
@@ -86,7 +68,7 @@ impl Map {
 
         let buf = writer.to_byte_array();
         for character in self.characters.values() {
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Use,
                 PacketFamily::Jukebox,
                 buf.clone(),

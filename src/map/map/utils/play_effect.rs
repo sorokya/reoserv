@@ -1,9 +1,4 @@
-use std::mem;
-
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::EffectPlayerServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::EffectPlayerServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -18,26 +13,14 @@ impl Map {
             return;
         }
 
-        let packet = EffectPlayerServerPacket {
+        self.send_packet_near_player(
             player_id,
-            effect_id,
-        };
-
-        let mut writer = EoWriter::with_capacity(mem::size_of::<EffectPlayerServerPacket>());
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize EffectPlayerServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-
-        for (id, character) in self.characters.iter() {
-            if let Some(player) = character.player.as_ref() {
-                if &player_id != id {
-                    player.send(PacketAction::Player, PacketFamily::Effect, buf.clone());
-                }
-            }
-        }
+            PacketAction::Player,
+            PacketFamily::Effect,
+            &EffectPlayerServerPacket {
+                player_id,
+                effect_id,
+            },
+        );
     }
 }

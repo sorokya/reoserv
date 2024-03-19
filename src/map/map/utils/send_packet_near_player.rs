@@ -14,7 +14,7 @@ impl Map {
         player_id: i32,
         action: PacketAction,
         family: PacketFamily,
-        packet: T,
+        packet: &T,
     ) where
         T: EoSerialize,
     {
@@ -46,7 +46,7 @@ impl Map {
                         .player
                         .as_ref()
                         .unwrap()
-                        .send(action, family, buf.clone());
+                        .send_buf(action, family, buf.clone());
                 }
             }
         }

@@ -76,7 +76,7 @@ impl Map {
             let buf = writer.to_byte_array();
 
             for character in self.characters.values() {
-                character.player.as_ref().unwrap().send(
+                character.player.as_ref().unwrap().send_buf(
                     PacketAction::Use,
                     PacketFamily::Effect,
                     buf.clone(),

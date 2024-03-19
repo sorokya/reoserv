@@ -1,15 +1,12 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        map::MapTileSpec,
-        net::{
-            server::{LockerReplyServerPacket, LockerSpecServerPacket},
-            Item, PacketAction, PacketFamily, ThreeItem,
-        },
-        Coords,
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{
+        server::{LockerReplyServerPacket, LockerSpecServerPacket},
+        Item, PacketAction, PacketFamily, ThreeItem,
     },
+    Coords,
 };
 
 use crate::SETTINGS;
@@ -33,21 +30,12 @@ impl Map {
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as i32 >= bank_size {
-            let packet = LockerSpecServerPacket {
-                locker_max_items: bank_size,
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize LockerSpecServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Spec,
                 PacketFamily::Locker,
-                writer.to_byte_array(),
+                &LockerSpecServerPacket {
+                    locker_max_items: bank_size,
+                },
             );
             return;
         }
@@ -96,33 +84,24 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_bank_item(item.id, amount);
 
-        let packet = LockerReplyServerPacket {
-            deposited_item: Item {
-                id: item.id,
-                amount: character.get_item_amount(item.id),
-            },
-            weight: character.get_weight(),
-            locker_items: character
-                .bank
-                .iter()
-                .map(|i| ThreeItem {
-                    id: i.id,
-                    amount: i.amount,
-                })
-                .collect(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize LockerReplyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Locker,
-            writer.to_byte_array(),
+            &LockerReplyServerPacket {
+                deposited_item: Item {
+                    id: item.id,
+                    amount: character.get_item_amount(item.id),
+                },
+                weight: character.get_weight(),
+                locker_items: character
+                    .bank
+                    .iter()
+                    .map(|i| ThreeItem {
+                        id: i.id,
+                        amount: i.amount,
+                    })
+                    .collect(),
+            },
         );
     }
 }

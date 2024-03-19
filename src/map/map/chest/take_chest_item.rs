@@ -73,26 +73,17 @@ impl Map {
 
         character.add_item(item.item_id, item.amount);
 
-        let reply = ChestGetServerPacket {
-            taken_item: ThreeItem {
-                id: item.item_id,
-                amount: item.amount,
-            },
-            weight: character.get_weight(),
-            items: remaining_items.clone(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ChestGetServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Get,
             PacketFamily::Chest,
-            writer.to_byte_array(),
+            &ChestGetServerPacket {
+                taken_item: ThreeItem {
+                    id: item.item_id,
+                    amount: item.amount,
+                },
+                weight: character.get_weight(),
+                items: remaining_items.clone(),
+            },
         );
 
         let packet = ChestAgreeServerPacket {
@@ -128,7 +119,7 @@ impl Map {
                 continue;
             }
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Agree,
                 PacketFamily::Chest,
                 buf.clone(),

@@ -19,7 +19,7 @@ impl World {
 
         let buf = writer.to_byte_array();
         for player in self.players.values() {
-            player.send(PacketAction::Server, PacketFamily::Talk, buf.clone());
+            player.send_buf(PacketAction::Server, PacketFamily::Talk, buf.clone());
         }
     }
 }

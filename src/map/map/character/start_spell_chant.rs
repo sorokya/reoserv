@@ -30,16 +30,14 @@ impl Map {
             return;
         }
 
-        let packet = SpellRequestServerPacket {
-            player_id,
-            spell_id,
-        };
-
         self.send_packet_near_player(
             player_id,
             PacketAction::Request,
             PacketFamily::Spell,
-            packet,
+            &SpellRequestServerPacket {
+                player_id,
+                spell_id,
+            },
         );
     }
 }

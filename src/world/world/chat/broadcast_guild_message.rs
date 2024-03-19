@@ -33,7 +33,7 @@ impl World {
                 .filter(|member_id| player_id != Some(**member_id))
                 .for_each(|member_id| {
                     if let Some(player) = self.players.get(member_id) {
-                        player.send(PacketAction::Request, PacketFamily::Talk, buf.clone());
+                        player.send_buf(PacketAction::Request, PacketFamily::Talk, buf.clone());
                     }
                 });
         }

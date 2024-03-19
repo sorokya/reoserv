@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily};
 use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::utils::get_board_tile_spec;
@@ -36,8 +33,6 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut writer = EoWriter::new();
-
             let mut conn = pool.get_conn().await.unwrap();
 
             let row = conn
@@ -55,20 +50,13 @@ impl Map {
                 _ => return,
             };
 
-            let packet = BoardPlayerServerPacket {
-                post_id,
-                post_body: row.take::<String, &str>("body").unwrap(),
-            };
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize BoardPlayerServerPacket: {}", e);
-                return;
-            }
-
             player.send(
                 PacketAction::Player,
                 PacketFamily::Board,
-                writer.to_byte_array(),
+                &BoardPlayerServerPacket {
+                    post_id,
+                    post_body: row.take::<String, &str>("body").unwrap(),
+                },
             );
         });
     }

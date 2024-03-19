@@ -21,7 +21,7 @@ impl World {
 
         let buf = writer.to_byte_array();
         for player in self.players.values() {
-            player.send(PacketAction::Close, PacketFamily::Message, buf.clone());
+            player.send_buf(PacketAction::Close, PacketFamily::Message, buf.clone());
         }
 
         // wait a bit for the packets to be sent

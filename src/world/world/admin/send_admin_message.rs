@@ -59,7 +59,7 @@ impl World {
         for player in self.players.values() {
             if let Ok(character) = player.get_character().await {
                 if character.name != player_name && i32::from(character.admin_level) >= 1 {
-                    player.send(
+                    player.send_buf(
                         PacketAction::Reply,
                         PacketFamily::AdminInteract,
                         buf.clone(),

@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::BarberOpenServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::BarberOpenServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{utils::in_client_range, NPC_DB};
@@ -49,21 +46,12 @@ impl Map {
                 }
             };
 
-            let packet = BarberOpenServerPacket { session_id };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize BarberOpenServerPacket: {}", e);
-                return;
-            }
-
             player.set_interact_npc_index(npc_index);
 
             player.send(
                 PacketAction::Open,
                 PacketFamily::Barber,
-                writer.to_byte_array(),
+                &BarberOpenServerPacket { session_id },
             );
         });
     }

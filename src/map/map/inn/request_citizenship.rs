@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::CitizenReplyServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::CitizenReplyServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -81,19 +78,10 @@ impl Map {
             character.home = inn_data.name.clone();
         }
 
-        let packet = CitizenReplyServerPacket { questions_wrong };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CitizenReplyServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Reply,
             PacketFamily::Citizen,
-            writer.to_byte_array(),
+            &CitizenReplyServerPacket { questions_wrong },
         );
     }
 }

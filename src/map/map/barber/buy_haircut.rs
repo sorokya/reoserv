@@ -1,17 +1,14 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
-                AvatarChangeChangeTypeDataHair, AvatarChangeType, BarberAgreeServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+            AvatarChangeChangeTypeDataHair, AvatarChangeType, BarberAgreeServerPacket,
         },
-        r#pub::NpcType,
+        PacketAction, PacketFamily,
     },
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SETTINGS};
@@ -103,26 +100,20 @@ impl Map {
             )),
         };
 
-        let packet = BarberAgreeServerPacket {
-            gold_amount: character.get_item_amount(1),
-            change: change.clone(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize BarberAgreeServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Barber,
-            writer.to_byte_array(),
+            &BarberAgreeServerPacket {
+                gold_amount: character.get_item_amount(1),
+                change: change.clone(),
+            },
         );
 
-        let packet = AvatarAgreeServerPacket { change };
-
-        self.send_packet_near_player(player_id, PacketAction::Agree, PacketFamily::Avatar, packet);
+        self.send_packet_near_player(
+            player_id,
+            PacketAction::Agree,
+            PacketFamily::Avatar,
+            &AvatarAgreeServerPacket { change },
+        );
     }
 }

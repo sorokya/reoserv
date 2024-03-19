@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
-            PacketAction, PacketFamily,
-        },
-        r#pub::NpcType,
+use eolib::protocol::{
+    net::{
+        server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
+        PacketAction, PacketFamily,
     },
+    r#pub::NpcType,
 };
 
 use crate::{INN_DB, NPC_DB, SETTINGS};
@@ -53,28 +50,19 @@ impl Map {
             None => return,
         };
 
-        let packet = CitizenRemoveServerPacket {
-            reply_code: if character.home == SETTINGS.new_character.home
-                || character.home != inn_data.name
-            {
-                InnUnsubscribeReply::NotCitizen
-            } else {
-                character.home = SETTINGS.new_character.home.to_owned();
-                InnUnsubscribeReply::Unsubscribed
-            },
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CitizenRemoveServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Remove,
             PacketFamily::Citizen,
-            writer.to_byte_array(),
+            &CitizenRemoveServerPacket {
+                reply_code: if character.home == SETTINGS.new_character.home
+                    || character.home != inn_data.name
+                {
+                    InnUnsubscribeReply::NotCitizen
+                } else {
+                    character.home = SETTINGS.new_character.home.to_owned();
+                    InnUnsubscribeReply::Unsubscribed
+                },
+            },
         );
     }
 }

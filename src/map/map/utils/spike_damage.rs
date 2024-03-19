@@ -1,15 +1,11 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{
-            EffectAdminServerPacket, EffectSpecServerPacket,
-            EffectSpecServerPacketMapDamageTypeData, EffectSpecServerPacketMapDamageTypeDataSpikes,
-            MapDamageType,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        EffectAdminServerPacket, EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
+        EffectSpecServerPacketMapDamageTypeDataSpikes, MapDamageType,
     },
+    PacketAction, PacketFamily,
 };
 
 use crate::SETTINGS;
@@ -30,24 +26,6 @@ impl Map {
 
         let hp_percentage = character.get_hp_percentage();
 
-        let packet = EffectSpecServerPacket {
-            map_damage_type: MapDamageType::Spikes,
-            map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::Spikes(
-                EffectSpecServerPacketMapDamageTypeDataSpikes {
-                    hp_damage: damage,
-                    hp: character.hp,
-                    max_hp: character.max_hp,
-                },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize EffectSpecServerPacket: {}", e);
-            return;
-        }
-
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -56,28 +34,28 @@ impl Map {
         character.player.as_ref().unwrap().send(
             PacketAction::Spec,
             PacketFamily::Effect,
-            writer.to_byte_array(),
+            &EffectSpecServerPacket {
+                map_damage_type: MapDamageType::Spikes,
+                map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::Spikes(
+                    EffectSpecServerPacketMapDamageTypeDataSpikes {
+                        hp_damage: damage,
+                        hp: character.hp,
+                        max_hp: character.max_hp,
+                    },
+                )),
+            },
         );
 
-        let packet = EffectAdminServerPacket {
-            player_id,
-            hp_percentage,
-            died: character.hp == 0,
-            damage,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize EffectAdminServerPacket: {}", e);
-            return;
-        }
-
-        self.send_buf_near_player(
+        self.send_packet_near_player(
             player_id,
             PacketAction::Admin,
             PacketFamily::Effect,
-            writer.to_byte_array(),
+            &EffectAdminServerPacket {
+                player_id,
+                hp_percentage,
+                died: character.hp == 0,
+                damage,
+            },
         );
 
         character

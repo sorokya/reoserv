@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::CitizenRequestServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::CitizenRequestServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{INN_DB, NPC_DB};
@@ -69,20 +66,11 @@ impl Map {
 
         let cost = (character.max_hp - character.hp) + (character.max_tp - character.tp);
 
-        let packet = CitizenRequestServerPacket { cost };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize CitizenRequestServerPacket: {}", e);
-            return;
-        }
-
         player.set_sleep_cost(cost);
         player.send(
             PacketAction::Request,
             PacketFamily::Citizen,
-            writer.to_byte_array(),
+            &CitizenRequestServerPacket { cost },
         );
     }
 }

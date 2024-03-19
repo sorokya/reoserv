@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{SitReplyServerPacket, SitState},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{SitReplyServerPacket, SitState},
+    PacketAction, PacketFamily,
 };
 
 use super::super::Map;
@@ -24,27 +21,25 @@ impl Map {
 
         character.sit_state = SitState::Floor;
 
-        let reply = SitReplyServerPacket {
+        let packet = SitReplyServerPacket {
             player_id,
             coords: character.coords,
             direction: character.direction,
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize SitReplyServerPacket: {}", e);
-            return;
-        }
-
-        character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Sit,
-            writer.to_byte_array(),
-        );
+        character
+            .player
+            .as_ref()
+            .unwrap()
+            .send(PacketAction::Reply, PacketFamily::Sit, &packet);
 
         if !character.hidden {
-            self.send_packet_near_player(player_id, PacketAction::Player, PacketFamily::Sit, reply);
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Player,
+                PacketFamily::Sit,
+                &packet,
+            );
         }
     }
 }

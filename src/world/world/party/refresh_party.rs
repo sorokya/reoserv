@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::PartyListServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::PartyListServerPacket, PacketAction, PacketFamily};
 
 use super::super::World;
 
@@ -17,21 +14,12 @@ impl World {
             None => return,
         };
 
-        let packet = PartyListServerPacket {
-            members: self.get_party_members(&party).await,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize party list packet: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::List,
             PacketFamily::Party,
-            writer.to_byte_array(),
+            &PartyListServerPacket {
+                members: self.get_party_members(&party).await,
+            },
         );
     }
 }

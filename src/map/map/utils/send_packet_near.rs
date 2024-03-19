@@ -44,7 +44,7 @@ impl Map {
                     .player
                     .as_ref()
                     .unwrap()
-                    .send(action, family, buf.clone());
+                    .send_buf(action, family, buf.clone());
             }
         }
     }

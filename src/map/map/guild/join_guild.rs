@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::GuildAgreeServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::GuildAgreeServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -26,24 +23,15 @@ impl Map {
 
         self.world.add_guild_member(player_id, guild_tag.clone());
 
-        let packet = GuildAgreeServerPacket {
-            recruiter_id,
-            guild_tag,
-            guild_name,
-            rank_name: guild_rank_string,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildAgreeServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Agree,
             PacketFamily::Guild,
-            writer.to_byte_array(),
+            &GuildAgreeServerPacket {
+                recruiter_id,
+                guild_tag,
+                guild_name,
+                rank_name: guild_rank_string,
+            },
         );
 
         let mut character = character.to_owned();

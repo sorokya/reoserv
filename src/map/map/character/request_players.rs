@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{NearbyInfo, RangeReplyServerPacket},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{NearbyInfo, RangeReplyServerPacket},
+    PacketAction, PacketFamily,
 };
 
 use super::super::Map;
@@ -15,34 +12,25 @@ impl Map {
             None => return,
         };
 
-        let packet = RangeReplyServerPacket {
-            nearby: NearbyInfo {
-                characters: self
-                    .characters
-                    .iter()
-                    .filter_map(|(index, character)| {
-                        if !character.hidden && player_ids.contains(index) {
-                            Some(character.to_map_info())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-                ..Default::default()
-            },
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing RangeReplyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Range,
-            writer.to_byte_array(),
+            &RangeReplyServerPacket {
+                nearby: NearbyInfo {
+                    characters: self
+                        .characters
+                        .iter()
+                        .filter_map(|(index, character)| {
+                            if !character.hidden && player_ids.contains(index) {
+                                Some(character.to_map_info())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                    ..Default::default()
+                },
+            },
         );
     }
 }

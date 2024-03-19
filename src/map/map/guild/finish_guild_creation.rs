@@ -36,25 +36,16 @@ impl Map {
 
             self.world.add_guild_member(player_id, guild_tag.clone());
 
-            let packet = GuildCreateServerPacket {
-                leader_player_id: player_id,
-                guild_tag: guild_tag.clone(),
-                guild_name: guild_name.clone(),
-                rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
-                gold_amount: character.get_item_amount(1),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing GuildCreateServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Create,
                 PacketFamily::Guild,
-                writer.to_byte_array(),
+                &GuildCreateServerPacket {
+                    leader_player_id: player_id,
+                    guild_tag: guild_tag.clone(),
+                    guild_name: guild_name.clone(),
+                    rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
+                    gold_amount: character.get_item_amount(1),
+                },
             );
         }
 
@@ -93,7 +84,7 @@ impl Map {
 
             self.world.add_guild_member(*player_id, guild_tag.clone());
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Agree,
                 PacketFamily::Guild,
                 buf.clone(),

@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily},
-        r#pub::ItemType,
-    },
+use eolib::protocol::{
+    net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily},
+    r#pub::ItemType,
 };
 
 use crate::ITEM_DB;
@@ -42,21 +39,14 @@ impl Character {
         }
 
         if item_record.class_requirement != 0 && item_record.class_requirement != self.class {
-            let reply = PaperdollPingServerPacket {
-                class_id: self.class,
-            };
-
-            let mut writer = EoWriter::new();
-            if let Err(e) = reply.serialize(&mut writer) {
-                error!("Failed to serialize PaperdollPingServerPacket: {}", e);
-                return false;
-            }
-
             self.player.as_ref().unwrap().send(
                 PacketAction::Ping,
                 PacketFamily::Paperdoll,
-                writer.to_byte_array(),
+                &PaperdollPingServerPacket {
+                    class_id: self.class,
+                },
             );
+
             return false;
         }
 

@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::GuildAcceptServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::GuildAcceptServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -15,19 +12,10 @@ impl Map {
         character.guild_rank = Some(rank);
         character.guild_rank_string = Some(rank_str.clone());
 
-        let packet = GuildAcceptServerPacket { rank };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildAcceptServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Accept,
             PacketFamily::Guild,
-            writer.to_byte_array(),
+            &GuildAcceptServerPacket { rank },
         );
 
         let mut character = character.to_owned();

@@ -33,7 +33,7 @@ impl Map {
             {
                 damaged_player_ids.push(character.player_id.unwrap());
             } else {
-                character.player.as_ref().unwrap().send(
+                character.player.as_ref().unwrap().send_buf(
                     PacketAction::Report,
                     PacketFamily::Effect,
                     buf.clone(),

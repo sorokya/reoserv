@@ -34,7 +34,7 @@ impl Map {
                 y: self.file.relog_y,
             });
 
-            character.player.as_ref().unwrap().send(
+            character.player.as_ref().unwrap().send_buf(
                 PacketAction::Server,
                 PacketFamily::Talk,
                 buf.clone(),

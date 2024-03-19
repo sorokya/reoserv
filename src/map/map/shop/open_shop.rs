@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{ShopCraftItem, ShopOpenServerPacket, ShopTradeItem},
-            CharItem, PacketAction, PacketFamily,
-        },
-        r#pub::NpcType,
+use eolib::protocol::{
+    net::{
+        server::{ShopCraftItem, ShopOpenServerPacket, ShopTradeItem},
+        CharItem, PacketAction, PacketFamily,
     },
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SHOP_DB};
@@ -60,57 +57,48 @@ impl Map {
 
         // TODO: stupid that I have to map over the shop data here
         // they should be compatible in protocol
-        let reply = ShopOpenServerPacket {
-            session_id,
-            shop_name: shop.name.clone(),
-            trade_items: shop
-                .trades
-                .iter()
-                .map(|trade| ShopTradeItem {
-                    item_id: trade.item_id,
-                    buy_price: trade.buy_price,
-                    sell_price: trade.sell_price,
-                    max_buy_amount: trade.max_amount,
-                })
-                .collect(),
-            craft_items: shop
-                .crafts
-                .iter()
-                .map(|craft| ShopCraftItem {
-                    item_id: craft.item_id,
-                    ingredients: [
-                        CharItem {
-                            id: craft.ingredients[0].item_id,
-                            amount: craft.ingredients[0].amount,
-                        },
-                        CharItem {
-                            id: craft.ingredients[1].item_id,
-                            amount: craft.ingredients[1].amount,
-                        },
-                        CharItem {
-                            id: craft.ingredients[2].item_id,
-                            amount: craft.ingredients[2].amount,
-                        },
-                        CharItem {
-                            id: craft.ingredients[3].item_id,
-                            amount: craft.ingredients[3].amount,
-                        },
-                    ],
-                })
-                .collect(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ShopOpenServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Open,
             PacketFamily::Shop,
-            writer.to_byte_array(),
+            &ShopOpenServerPacket {
+                session_id,
+                shop_name: shop.name.clone(),
+                trade_items: shop
+                    .trades
+                    .iter()
+                    .map(|trade| ShopTradeItem {
+                        item_id: trade.item_id,
+                        buy_price: trade.buy_price,
+                        sell_price: trade.sell_price,
+                        max_buy_amount: trade.max_amount,
+                    })
+                    .collect(),
+                craft_items: shop
+                    .crafts
+                    .iter()
+                    .map(|craft| ShopCraftItem {
+                        item_id: craft.item_id,
+                        ingredients: [
+                            CharItem {
+                                id: craft.ingredients[0].item_id,
+                                amount: craft.ingredients[0].amount,
+                            },
+                            CharItem {
+                                id: craft.ingredients[1].item_id,
+                                amount: craft.ingredients[1].amount,
+                            },
+                            CharItem {
+                                id: craft.ingredients[2].item_id,
+                                amount: craft.ingredients[2].amount,
+                            },
+                            CharItem {
+                                id: craft.ingredients[3].item_id,
+                                amount: craft.ingredients[3].amount,
+                            },
+                        ],
+                    })
+                    .collect(),
+            },
         );
     }
 }

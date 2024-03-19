@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::TradeRequestServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::TradeRequestServerPacket, PacketAction, PacketFamily};
 
 use crate::{utils::in_client_range, SETTINGS};
 
@@ -48,22 +45,13 @@ impl Map {
         if in_client_range(&character.coords, &target.coords) {
             player.set_interact_player_id(Some(target_player_id));
 
-            let packet = TradeRequestServerPacket {
-                partner_player_id: player_id,
-                partner_player_name: character.name.clone(),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize TradeRequestServerPacket: {}", e);
-                return;
-            }
-
             target_player.send(
                 PacketAction::Request,
                 PacketFamily::Trade,
-                writer.to_byte_array(),
+                &TradeRequestServerPacket {
+                    partner_player_id: player_id,
+                    partner_player_name: character.name.clone(),
+                },
             );
         }
     }

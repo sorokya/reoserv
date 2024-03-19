@@ -1,9 +1,6 @@
 use std::cmp;
 
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::GuildBuyServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::GuildBuyServerPacket, PacketAction, PacketFamily};
 use mysql_async::{prelude::Queryable, Params};
 use mysql_common::{params, Row};
 
@@ -26,21 +23,12 @@ impl Map {
 
         character.remove_item(1, amount);
 
-        let packet = GuildBuyServerPacket {
-            gold_amount: character.get_item_amount(1),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildBuyServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Buy,
             PacketFamily::Guild,
-            writer.to_byte_array(),
+            &GuildBuyServerPacket {
+                gold_amount: character.get_item_amount(1),
+            },
         );
 
         let pool = self.pool.clone();

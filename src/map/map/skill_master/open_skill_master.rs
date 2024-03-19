@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
-            PacketAction, PacketFamily,
-        },
-        r#pub::NpcType,
+use eolib::protocol::{
+    net::{
+        server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
+        PacketAction, PacketFamily,
     },
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
@@ -58,41 +55,32 @@ impl Map {
 
         player.set_interact_npc_index(npc_index);
 
-        let reply = StatSkillOpenServerPacket {
-            session_id,
-            shop_name: skill_master.name.clone(),
-            skills: skill_master
-                .skills
-                .iter()
-                .map(|skill| SkillLearn {
-                    id: skill.skill_id,
-                    level_requirement: skill.level_requirement,
-                    class_requirement: skill.class_requirement,
-                    cost: skill.price,
-                    skill_requirements: skill.skill_requirements,
-                    stat_requirements: CharacterBaseStats {
-                        str: skill.str_requirement,
-                        intl: skill.int_requirement,
-                        wis: skill.wis_requirement,
-                        agi: skill.agi_requirement,
-                        con: skill.con_requirement,
-                        cha: skill.cha_requirement,
-                    },
-                })
-                .collect(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize packet {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Open,
             PacketFamily::StatSkill,
-            writer.to_byte_array(),
+            &StatSkillOpenServerPacket {
+                session_id,
+                shop_name: skill_master.name.clone(),
+                skills: skill_master
+                    .skills
+                    .iter()
+                    .map(|skill| SkillLearn {
+                        id: skill.skill_id,
+                        level_requirement: skill.level_requirement,
+                        class_requirement: skill.class_requirement,
+                        cost: skill.price,
+                        skill_requirements: skill.skill_requirements,
+                        stat_requirements: CharacterBaseStats {
+                            str: skill.str_requirement,
+                            intl: skill.int_requirement,
+                            wis: skill.wis_requirement,
+                            agi: skill.agi_requirement,
+                            con: skill.con_requirement,
+                            cha: skill.cha_requirement,
+                        },
+                    })
+                    .collect(),
+            },
         );
     }
 }

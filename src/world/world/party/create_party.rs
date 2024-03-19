@@ -62,7 +62,7 @@ impl World {
 
         let buf = writer.to_byte_array();
 
-        leader.send(PacketAction::Create, PacketFamily::Party, buf.clone());
-        member.send(PacketAction::Create, PacketFamily::Party, buf);
+        leader.send_buf(PacketAction::Create, PacketFamily::Party, buf.clone());
+        member.send_buf(PacketAction::Create, PacketFamily::Party, buf);
     }
 }

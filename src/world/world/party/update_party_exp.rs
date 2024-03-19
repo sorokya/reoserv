@@ -30,7 +30,7 @@ impl World {
                     None => continue,
                 };
 
-                member.send(PacketAction::TargetGroup, PacketFamily::Party, buf.clone());
+                member.send_buf(PacketAction::TargetGroup, PacketFamily::Party, buf.clone());
             }
         }
     }

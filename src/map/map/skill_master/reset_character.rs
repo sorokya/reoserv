@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::NPC_DB;
@@ -56,21 +53,12 @@ impl Map {
 
         character.reset();
 
-        let reply = StatSkillJunkServerPacket {
-            stats: character.get_character_stats_reset(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize StatSkillJunkServerPacket {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Junk,
             PacketFamily::StatSkill,
-            writer.to_byte_array(),
+            &StatSkillJunkServerPacket {
+                stats: character.get_character_stats_reset(),
+            },
         );
     }
 }

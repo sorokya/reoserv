@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{PlayersNet242ServerPacket, PlayersPingServerPacket},
-        PacketAction, PacketFamily,
-    },
+use eolib::protocol::net::{
+    server::{PlayersNet242ServerPacket, PlayersPingServerPacket},
+    PacketAction, PacketFamily,
 };
 
 use super::World;
@@ -16,34 +13,16 @@ impl World {
         };
 
         if self.characters.contains_key(&name) {
-            let packet = PlayersNet242ServerPacket { name };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing PlayersNet242ServerPacket: {}", e);
-                return;
-            }
-
             player.send(
                 PacketAction::Net242,
                 PacketFamily::Players,
-                writer.to_byte_array(),
+                &PlayersNet242ServerPacket { name },
             );
         } else {
-            let packet = PlayersPingServerPacket { name };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing PlayersPingServerPacket: {}", e);
-                return;
-            }
-
             player.send(
                 PacketAction::Ping,
                 PacketFamily::Players,
-                writer.to_byte_array(),
+                &PlayersPingServerPacket { name },
             );
         }
     }

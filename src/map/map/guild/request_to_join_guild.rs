@@ -1,12 +1,9 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{
-        server::{
-            GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
-            GuildReplyServerPacketReplyCodeDataJoinRequest,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
+        GuildReplyServerPacketReplyCodeDataJoinRequest,
     },
+    PacketAction, PacketFamily,
 };
 
 use crate::utils::capitalize;
@@ -64,27 +61,18 @@ impl Map {
             .unwrap()
             .set_interact_player_id(Some(player_id));
 
-        let packet = GuildReplyServerPacket {
-            reply_code: GuildReply::JoinRequest,
-            reply_code_data: Some(GuildReplyServerPacketReplyCodeData::JoinRequest(
-                GuildReplyServerPacketReplyCodeDataJoinRequest {
-                    player_id,
-                    name: capitalize(&character.name),
-                },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildReplyServerPacket: {}", e);
-            return;
-        }
-
         recruiter.player.as_ref().unwrap().send(
             PacketAction::Reply,
             PacketFamily::Guild,
-            writer.to_byte_array(),
+            &GuildReplyServerPacket {
+                reply_code: GuildReply::JoinRequest,
+                reply_code_data: Some(GuildReplyServerPacketReplyCodeData::JoinRequest(
+                    GuildReplyServerPacketReplyCodeDataJoinRequest {
+                        player_id,
+                        name: capitalize(&character.name),
+                    },
+                )),
+            },
         );
     }
 }

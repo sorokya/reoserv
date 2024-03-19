@@ -1,13 +1,10 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        map::MapTileSpec,
-        net::{
-            server::{WalkPlayerServerPacket, WalkReplyServerPacket},
-            PacketAction, PacketFamily,
-        },
-        Coords, Direction,
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{
+        server::{WalkPlayerServerPacket, WalkReplyServerPacket},
+        PacketAction, PacketFamily,
     },
+    Coords, Direction,
 };
 
 use crate::utils::{get_next_coords, in_client_range};
@@ -102,7 +99,7 @@ impl Map {
                     if in_client_range(&target_coords, &item.coords)
                         && !in_client_range(&target_previous_coords, &item.coords)
                     {
-                        packet.items.push(item.to_item_map_info(*index));
+                        packet.items.push(item.to_map_info(index));
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
@@ -116,18 +113,10 @@ impl Map {
                 packet
             };
 
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize WalkReplyServerPacket: {}", e);
-                return;
-            }
-
-            target_player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::Walk,
-                writer.to_byte_array(),
-            );
+            target_player
+                .as_ref()
+                .unwrap()
+                .send(PacketAction::Reply, PacketFamily::Walk, &packet);
 
             if !target_hidden {
                 let walk_packet = WalkPlayerServerPacket {
@@ -140,7 +129,7 @@ impl Map {
                     target_player_id,
                     PacketAction::Player,
                     PacketFamily::Walk,
-                    walk_packet,
+                    &walk_packet,
                 );
 
                 if let Some(tile) = self.get_tile(&target_coords) {

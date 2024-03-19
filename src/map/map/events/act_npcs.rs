@@ -1,19 +1,16 @@
 use std::cmp;
 
 use chrono::Utc;
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                NpcPlayerServerPacket, NpcUpdateAttack, NpcUpdateChat, NpcUpdatePosition,
-                PlayerKilledState, SitState,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            NpcPlayerServerPacket, NpcUpdateAttack, NpcUpdateChat, NpcUpdatePosition,
+            PlayerKilledState, SitState,
         },
-        r#pub::{EnfRecord, NpcType},
-        Coords, Direction,
+        PacketAction, PacketFamily,
     },
+    r#pub::{EnfRecord, NpcType},
+    Coords, Direction,
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::{seq::SliceRandom, Rng};
@@ -551,17 +548,10 @@ impl Map {
                         tp: None,
                     };
 
-                    let mut writer = EoWriter::new();
-
-                    if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize NpcPlayerServerPacket: {}", e);
-                        return;
-                    }
-
                     character.player.as_ref().unwrap().send(
                         PacketAction::Player,
                         PacketFamily::Npc,
-                        writer.to_byte_array(),
+                        &packet,
                     );
 
                     if let Some(player_id) = character.player_id {

@@ -33,7 +33,7 @@ impl World {
                 None => continue,
             };
 
-            member.send(PacketAction::Open, PacketFamily::Talk, buf.clone());
+            member.send_buf(PacketAction::Open, PacketFamily::Talk, buf.clone());
         }
     }
 }

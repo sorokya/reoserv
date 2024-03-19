@@ -1,9 +1,6 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily},
-        r#pub::NpcType,
-    },
+use eolib::protocol::{
+    net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily},
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SHOP_DB};
@@ -84,40 +81,31 @@ impl Map {
 
         character.add_item(item_id, 1);
 
-        let reply = ShopCreateServerPacket {
-            craft_item_id: item_id,
-            weight: character.get_weight(),
-            ingredients: [
-                Item {
-                    id: craft.ingredients[0].item_id,
-                    amount: character.get_item_amount(craft.ingredients[0].item_id),
-                },
-                Item {
-                    id: craft.ingredients[1].item_id,
-                    amount: character.get_item_amount(craft.ingredients[1].item_id),
-                },
-                Item {
-                    id: craft.ingredients[2].item_id,
-                    amount: character.get_item_amount(craft.ingredients[2].item_id),
-                },
-                Item {
-                    id: craft.ingredients[3].item_id,
-                    amount: character.get_item_amount(craft.ingredients[3].item_id),
-                },
-            ],
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize ShopCreateServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Create,
             PacketFamily::Shop,
-            writer.to_byte_array(),
+            &ShopCreateServerPacket {
+                craft_item_id: item_id,
+                weight: character.get_weight(),
+                ingredients: [
+                    Item {
+                        id: craft.ingredients[0].item_id,
+                        amount: character.get_item_amount(craft.ingredients[0].item_id),
+                    },
+                    Item {
+                        id: craft.ingredients[1].item_id,
+                        amount: character.get_item_amount(craft.ingredients[1].item_id),
+                    },
+                    Item {
+                        id: craft.ingredients[2].item_id,
+                        amount: character.get_item_amount(craft.ingredients[2].item_id),
+                    },
+                    Item {
+                        id: craft.ingredients[3].item_id,
+                        amount: character.get_item_amount(craft.ingredients[3].item_id),
+                    },
+                ],
+            },
         );
     }
 }

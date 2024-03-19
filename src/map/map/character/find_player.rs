@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::PlayersPongServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::PlayersPongServerPacket, PacketAction, PacketFamily};
 
 use super::super::Map;
 
@@ -17,19 +14,10 @@ impl Map {
             .iter()
             .any(|(_, character)| character.name == name)
         {
-            let packet = PlayersPongServerPacket { name };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing PlayersPongServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Pong,
                 PacketFamily::Players,
-                writer.to_byte_array(),
+                &PlayersPongServerPacket { name },
             );
         } else {
             self.world.find_player(player_id, name);

@@ -1,7 +1,4 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::net::{server::WalkOpenServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::WalkOpenServerPacket, PacketAction, PacketFamily};
 
 use crate::LANG;
 
@@ -19,19 +16,10 @@ impl World {
             None => return,
         };
 
-        let packet = WalkOpenServerPacket::new();
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing WalkOpenServerPacket: {}", e);
-            return;
-        }
-
         player.send(
             PacketAction::Open,
             PacketFamily::Walk,
-            writer.to_byte_array(),
+            &WalkOpenServerPacket::new(),
         );
 
         self.broadcast_server_message(&get_lang_string!(

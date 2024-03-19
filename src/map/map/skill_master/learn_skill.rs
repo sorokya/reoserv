@@ -1,16 +1,12 @@
-use eolib::{
-    data::{EoSerialize, EoWriter},
-    protocol::{
-        net::{
-            server::{
-                SkillMasterReply, StatSkillReplyServerPacket,
-                StatSkillReplyServerPacketReplyCodeData,
-                StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            SkillMasterReply, StatSkillReplyServerPacket, StatSkillReplyServerPacketReplyCodeData,
+            StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket,
         },
-        r#pub::NpcType,
+        PacketAction, PacketFamily,
     },
+    r#pub::NpcType,
 };
 
 use crate::{NPC_DB, SKILL_MASTER_DB};
@@ -99,26 +95,17 @@ impl Map {
         }
 
         if skill.class_requirement > 0 && character.class != skill.class_requirement {
-            let reply = StatSkillReplyServerPacket {
-                reply_code: SkillMasterReply::WrongClass,
-                reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
-                    StatSkillReplyServerPacketReplyCodeDataWrongClass {
-                        class_id: character.class,
-                    },
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                error!("Failed to serialize StatSkillReplyServerPacket: {}", e);
-                return;
-            }
-
             character.player.as_ref().unwrap().send(
                 PacketAction::Reply,
                 PacketFamily::StatSkill,
-                writer.to_byte_array(),
+                &StatSkillReplyServerPacket {
+                    reply_code: SkillMasterReply::WrongClass,
+                    reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
+                        StatSkillReplyServerPacketReplyCodeDataWrongClass {
+                            class_id: character.class,
+                        },
+                    )),
+                },
             );
 
             return;
@@ -127,22 +114,13 @@ impl Map {
         character.remove_item(1, skill.price);
         character.add_spell(skill.skill_id);
 
-        let reply = StatSkillTakeServerPacket {
-            spell_id,
-            gold_amount: character.get_item_amount(1),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize StatSkillTakeServerPacket: {}", e);
-            return;
-        }
-
         character.player.as_ref().unwrap().send(
             PacketAction::Take,
             PacketFamily::StatSkill,
-            writer.to_byte_array(),
+            &StatSkillTakeServerPacket {
+                spell_id,
+                gold_amount: character.get_item_amount(1),
+            },
         );
     }
 }

@@ -13,7 +13,7 @@ impl Map {
         let mut nearby_characters = Vec::new();
         for (index, item) in self.items.iter() {
             if in_client_range(&target.coords, &item.coords) {
-                nearby_items.push(item.to_item_map_info(*index));
+                nearby_items.push(item.to_map_info(index));
             }
         }
         for (index, npc) in self.npcs.iter() {

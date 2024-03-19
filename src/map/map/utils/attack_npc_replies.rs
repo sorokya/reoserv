@@ -1,14 +1,19 @@
-use eolib::protocol::{
-    net::{
-        server::{
-            AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
-            CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcKillStealProtectionState,
-            NpcKilledData, NpcReplyServerPacket, NpcSpecServerPacket, PartyExpShare,
-            RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
+use chrono::Utc;
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
+                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
+                NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
+                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
+                RecoverTargetGroupServerPacket,
+            },
+            PacketAction, PacketFamily,
         },
-        PacketAction, PacketFamily,
+        Coords, Direction,
     },
-    Coords, Direction,
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -128,8 +133,8 @@ impl Map {
         damage_dealt: i32,
         spell_id: Option<i32>,
     ) {
-        let (npc_id, npc_coords) = match self.npcs.get(&npc_index) {
-            Some(npc) => (npc.id, npc.coords),
+        let (npc_id, npc_coords, is_boss) = match self.npcs.get(&npc_index) {
+            Some(npc) => (npc.id, npc.coords, npc.boss),
             None => return,
         };
 
@@ -302,6 +307,41 @@ impl Map {
             if !level_up_gains.is_empty() {
                 self.world
                     .update_party_exp(killer_player_id, level_up_gains);
+            }
+        }
+
+        if is_boss {
+            self.npcs
+                .iter_mut()
+                .filter(|(_, n)| n.child)
+                .for_each(|(_, child)| {
+                    child.alive = false;
+                    child.hp = 0;
+                    child.opponents.clear();
+                    child.dead_since = Utc::now();
+                });
+
+            if let Some((_, child_npc)) = self.npcs.iter().find(|(_, n)| n.child) {
+                let packet = NpcJunkServerPacket {
+                    npc_id: child_npc.id,
+                };
+
+                let mut writer = EoWriter::new();
+
+                if let Err(e) = packet.serialize(&mut writer) {
+                    error!("Failed to serialize NpcJunkServerPacket packet: {}", e);
+                    return;
+                }
+
+                let buf = writer.to_byte_array();
+
+                self.characters.iter().for_each(|(_, character)| {
+                    character.player.as_ref().unwrap().send_buf(
+                        PacketAction::Junk,
+                        PacketFamily::Npc,
+                        buf.clone(),
+                    );
+                });
             }
         }
     }

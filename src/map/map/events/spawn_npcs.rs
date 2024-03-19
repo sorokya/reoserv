@@ -48,6 +48,8 @@ impl Map {
                             .dead_since(dead_since)
                             .hp(data_record.hp)
                             .max_hp(data_record.hp)
+                            .boss(data_record.boss)
+                            .child(data_record.child)
                             .build(),
                     );
                     npc_index += 1;
@@ -58,11 +60,12 @@ impl Map {
         let mut rng = rand::thread_rng();
         let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
         for index in indexes {
-            let (alive, spawn_time, dead_since, spawn_coords, spawn_type) = {
+            let (child, alive, spawn_time, dead_since, spawn_coords, spawn_type) = {
                 match self.npcs.get(&index) {
                     Some(npc) => {
                         let spawn = &self.file.npcs[npc.spawn_index];
                         (
+                            npc.child,
                             npc.alive,
                             spawn.spawn_time,
                             npc.dead_since,
@@ -73,6 +76,14 @@ impl Map {
                     None => continue,
                 }
             };
+
+            if child {
+                if let Some((_, boss)) = self.npcs.iter().find(|(_, n)| n.boss) {
+                    if !boss.alive {
+                        continue;
+                    }
+                }
+            }
 
             if alive || now.timestamp() - dead_since.timestamp() < spawn_time.into() {
                 continue;

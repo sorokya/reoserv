@@ -218,6 +218,10 @@ pub enum Command {
     OpenJukebox {
         player_id: i32,
     },
+    OpenLaw {
+        player_id: i32,
+        npc_index: i32,
+    },
     OpenLocker {
         player_id: i32,
     },

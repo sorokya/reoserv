@@ -369,6 +369,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenJukebox { player_id });
     }
 
+    pub fn open_law(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::OpenLaw {
+            player_id,
+            npc_index,
+        });
+    }
+
     pub fn open_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }

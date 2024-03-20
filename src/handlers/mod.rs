@@ -63,6 +63,9 @@ pub use locker::locker;
 mod login;
 pub use login::login;
 
+mod marriage;
+pub use marriage::marriage;
+
 mod message;
 pub use message::message;
 

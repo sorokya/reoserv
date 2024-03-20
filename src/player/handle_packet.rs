@@ -73,6 +73,7 @@ pub async fn handle_packet(
         PacketFamily::Jukebox => handlers::jukebox(action, reader, player.clone()).await,
         PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
         PacketFamily::Login => handlers::login(action, reader, player.clone()).await,
+        PacketFamily::Marriage => handlers::marriage(action, reader, player.clone()).await,
         PacketFamily::Message => handlers::message(action, reader, player.clone()),
         PacketFamily::NpcRange => handlers::npc_range(action, reader, player.clone()).await,
         PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,

@@ -52,6 +52,7 @@ mod guild;
 mod inn;
 mod jukebox;
 mod locker;
+mod marriage;
 mod shop;
 mod skill_master;
 mod trade;
@@ -360,6 +361,11 @@ impl Map {
             } => self.open_inn(player_id, npc_index).await,
 
             Command::OpenJukebox { player_id } => self.open_jukebox(player_id),
+
+            Command::OpenLaw {
+                player_id,
+                npc_index,
+            } => self.open_law(player_id, npc_index),
 
             Command::OpenLocker { player_id } => self.open_locker(player_id),
 

@@ -208,6 +208,11 @@ pub struct Guild {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Marriage {
+    pub approval_cost: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -227,6 +232,7 @@ pub struct Settings {
     pub jukebox: Jukebox,
     pub barber: Barber,
     pub guild: Guild,
+    pub marriage: Marriage,
 }
 
 impl Settings {

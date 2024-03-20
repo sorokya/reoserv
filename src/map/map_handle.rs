@@ -369,10 +369,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenJukebox { player_id });
     }
 
-    pub fn open_law(&self, player_id: i32, npc_index: i32) {
+    pub fn open_law(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenLaw {
             player_id,
             npc_index,
+            session_id,
         });
     }
 
@@ -430,6 +431,22 @@ impl MapHandle {
             player_id,
             session_id,
             answers,
+        });
+    }
+
+    pub fn request_divorce(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestDivorce {
+            player_id,
+            npc_index,
+            name,
+        });
+    }
+
+    pub fn request_marriage_approval(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestMarriageApproval {
+            player_id,
+            npc_index,
+            name,
         });
     }
 

@@ -8,9 +8,14 @@ use crate::{utils::in_client_range, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_law(&self, player_id: i32, npc_index: i32) {
+    pub fn open_law(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
+            None => return,
+        };
+
+        let player = match character.player {
+            Some(ref player) => player,
             None => return,
         };
 
@@ -32,25 +37,11 @@ impl Map {
             return;
         }
 
-        let player = match character.player {
-            Some(ref player) => player.to_owned(),
-            None => return,
-        };
-
-        tokio::spawn(async move {
-            let session_id = match player.generate_session_id().await {
-                Ok(session_id) => session_id,
-                Err(e) => {
-                    error!("Error generating session_id {}", e);
-                    return;
-                }
-            };
-
-            player.send(
-                PacketAction::Open,
-                PacketFamily::Marriage,
-                &MarriageOpenServerPacket { session_id },
-            );
-        });
+        player.set_interact_npc_index(npc_index);
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Marriage,
+            &MarriageOpenServerPacket { session_id },
+        );
     }
 }

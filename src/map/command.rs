@@ -221,6 +221,7 @@ pub enum Command {
     OpenLaw {
         player_id: i32,
         npc_index: i32,
+        session_id: i32,
     },
     OpenLocker {
         player_id: i32,
@@ -254,6 +255,16 @@ pub enum Command {
         player_id: i32,
         session_id: i32,
         answers: [String; 3],
+    },
+    RequestDivorce {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
+    },
+    RequestMarriageApproval {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
     },
     RequestNpcs {
         player_id: i32,

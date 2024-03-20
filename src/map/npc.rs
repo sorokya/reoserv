@@ -7,7 +7,7 @@ use rand::Rng;
 
 use crate::{FORMULAS, NPC_DB};
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Npc {
     pub id: i32,
     pub coords: Coords,

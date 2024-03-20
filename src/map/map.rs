@@ -365,7 +365,8 @@ impl Map {
             Command::OpenLaw {
                 player_id,
                 npc_index,
-            } => self.open_law(player_id, npc_index),
+                session_id,
+            } => self.open_law(player_id, npc_index, session_id),
 
             Command::OpenLocker { player_id } => self.open_locker(player_id),
 
@@ -406,6 +407,18 @@ impl Map {
                 self.request_citizenship(player_id, session_id, answers)
                     .await
             }
+
+            Command::RequestDivorce {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_divorce(player_id, npc_index, name),
+
+            Command::RequestMarriageApproval {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_marriage_approval(player_id, npc_index, name),
 
             Command::RequestPaperdoll {
                 player_id,

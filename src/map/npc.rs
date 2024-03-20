@@ -21,9 +21,11 @@ pub struct Npc {
     pub hp: i32,
     pub max_hp: i32,
     pub opponents: Vec<NpcOpponent>,
+    pub boss: bool,
+    pub child: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct NpcOpponent {
     pub player_id: i32,
     pub damage_dealt: i32,
@@ -130,6 +132,8 @@ pub struct NPCBuilder {
     walk_idle_for: Option<i32>,
     hp: i32,
     max_hp: i32,
+    boss: bool,
+    child: bool,
 }
 
 impl NPCBuilder {
@@ -177,6 +181,16 @@ impl NPCBuilder {
         self
     }
 
+    pub fn boss(mut self, boss: bool) -> Self {
+        self.boss = boss;
+        self
+    }
+
+    pub fn child(mut self, child: bool) -> Self {
+        self.child = child;
+        self
+    }
+
     pub fn build(&self) -> Npc {
         Npc {
             id: self.id,
@@ -191,6 +205,8 @@ impl NPCBuilder {
             hp: self.hp,
             max_hp: self.max_hp,
             opponents: Vec::new(),
+            boss: self.boss,
+            child: self.child,
         }
     }
 }

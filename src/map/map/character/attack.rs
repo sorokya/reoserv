@@ -137,33 +137,58 @@ impl Map {
             None => return,
         };
 
-        let npc = match self.npcs.get_mut(&npc_index) {
-            Some(npc) => npc,
-            None => return,
+        let (is_boss, is_alive, damage_dealt, opponents) = {
+            let npc = match self.npcs.get_mut(&npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
+
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
+
+            if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
+                return;
+            }
+
+            let amount = {
+                let mut rng = rand::thread_rng();
+                rng.gen_range(attacker.min_damage..=attacker.max_damage)
+            };
+
+            let attacking_back_or_side =
+                (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
+
+            let critical = npc.hp == npc.max_hp || attacking_back_or_side;
+
+            let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
+            (npc.boss, npc.alive, damage_dealt, npc.opponents.clone())
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
-
-        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
-            return;
+        if is_boss {
+            self.npcs
+                .iter_mut()
+                .filter(|(_, n)| n.child)
+                .for_each(|(_, child)| {
+                    opponents.iter().for_each(|opponent| {
+                        if let Some(child_opponent) = child
+                            .opponents
+                            .iter_mut()
+                            .find(|o| o.player_id == opponent.player_id)
+                        {
+                            child_opponent.last_hit = opponent.last_hit;
+                            if child_opponent.player_id == player_id {
+                                child_opponent.damage_dealt += damage_dealt;
+                            }
+                        } else {
+                            child.opponents.push(opponent.clone());
+                        }
+                    });
+                });
         }
 
-        let amount = {
-            let mut rng = rand::thread_rng();
-            rng.gen_range(attacker.min_damage..=attacker.max_damage)
-        };
-
-        let attacking_back_or_side =
-            (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
-
-        let critical = npc.hp == npc.max_hp || attacking_back_or_side;
-
-        let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
-
-        if npc.alive {
+        if is_alive {
             self.attack_npc_reply(player_id, npc_index, direction, damage_dealt, None);
         } else {
             self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, None)

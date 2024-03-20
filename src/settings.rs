@@ -215,6 +215,8 @@ pub struct Marriage {
     pub min_level: i32,
     pub mfx_id: i32,
     pub ring_item_id: i32,
+    pub ceremony_start_delay_seconds: i32,
+    pub celebration_effect_id: i32,
 }
 
 #[derive(Debug, Deserialize)]

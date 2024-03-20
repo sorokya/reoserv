@@ -1,3 +1,4 @@
+mod accept_wedding_request;
 mod open_law;
 mod open_priest;
 mod request_divorce;

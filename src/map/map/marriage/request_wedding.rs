@@ -6,7 +6,11 @@ use eolib::protocol::{
     r#pub::NpcType,
 };
 
-use crate::{utils::dressed_for_wedding, NPC_DB};
+use crate::{
+    map::{Wedding, WeddingState},
+    utils::dressed_for_wedding,
+    NPC_DB,
+};
 
 use super::super::Map;
 
@@ -110,6 +114,13 @@ impl Map {
         };
 
         let partner_name = character.name.to_owned();
+
+        self.wedding = Some(Wedding {
+            player_id,
+            partner_id: fiance.player_id.unwrap(),
+            npc_index,
+            state: WeddingState::Requested,
+        });
 
         tokio::spawn(async move {
             let session_id = match player.generate_session_id().await {

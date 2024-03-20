@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, world::WorldHandle};
 
-use super::{Chest, Command, Door, Item, Npc};
+use super::{Chest, Command, Door, Item, Npc, Wedding};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -33,6 +33,8 @@ pub struct Map {
     jukebox_player: Option<String>,
     jukebox_ticks: i32,
     has_jukebox: bool,
+    wedding: Option<Wedding>,
+    wedding_ticks: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -118,6 +120,8 @@ impl Map {
             jukebox_player: None,
             jukebox_ticks: 0,
             has_jukebox,
+            wedding: None,
+            wedding_ticks: 0,
         }
     }
 
@@ -131,6 +135,7 @@ impl Map {
                 player_id,
                 target_player_id,
             } => self.accept_trade_request(player_id, target_player_id).await,
+            Command::AcceptWeddingRequest { player_id } => self.accept_wedding_request(player_id),
             Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
             Command::AddLockerItem { player_id, item } => {
                 self.add_locker_item(player_id, item).await
@@ -525,6 +530,8 @@ impl Map {
             Command::TimedSpikes => self.timed_spikes(),
 
             Command::TimedWarpSuck => self.timed_warp_suck(),
+
+            Command::TimedWedding => self.timed_wedding(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

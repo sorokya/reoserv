@@ -16,6 +16,7 @@ mod is_in_bounds;
 mod is_tile_occupied;
 mod is_tile_walkable;
 mod is_tile_walkable_npc;
+mod npc_chat;
 mod play_effect;
 mod player_in_range_of_tile;
 mod recover_npcs;

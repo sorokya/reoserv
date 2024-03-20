@@ -367,7 +367,7 @@ mfx_id = 40
 ring_item_id = 374
 
 # How long to wait before starting the ceremony
-ceremony_start_delay_seconds = 20
+ceremony_start_delay_seconds = 3
 
 # Effect that plays on the couple after the ceremony
 celebration_effect_id = 12

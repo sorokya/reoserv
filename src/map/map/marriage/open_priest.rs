@@ -7,6 +7,7 @@ use eolib::protocol::{
 };
 
 use crate::{
+    map::WeddingState,
     utils::{dressed_for_wedding, in_client_range},
     NPC_DB, SETTINGS,
 };
@@ -24,12 +25,23 @@ impl Map {
             return;
         }
 
-        // TODO: Show busy if wedding in progress
-
         let player = match character.player {
             Some(ref player) => player,
             None => return,
         };
+
+        if let Some(wedding) = &self.wedding {
+            if !matches!(wedding.state, WeddingState::Requested | WeddingState::Done) {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Priest,
+                    &PriestReplyServerPacket {
+                        reply_code: PriestReply::Busy,
+                    },
+                );
+                return;
+            }
+        }
 
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,

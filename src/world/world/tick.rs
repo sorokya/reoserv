@@ -23,6 +23,7 @@ impl World {
         self.warp_suck_ticks += 1;
         self.arena_ticks += 1;
         self.door_close_ticks += 1;
+        self.wedding_ticks += 1;
 
         if self.player_ticks >= ONE_SECOND {
             for player in self.players.values() {
@@ -70,6 +71,10 @@ impl World {
 
             if self.door_close_ticks >= SETTINGS.world.door_close_rate {
                 map.timed_door_close();
+            }
+
+            if self.wedding_ticks >= ONE_SECOND {
+                map.timed_wedding();
             }
 
             if self.arena_ticks >= ONE_SECOND {
@@ -127,6 +132,7 @@ impl World {
 
         if self.arena_ticks >= ONE_SECOND {
             self.arena_ticks = 0;
+            self.wedding_ticks = 0;
         }
     }
 }

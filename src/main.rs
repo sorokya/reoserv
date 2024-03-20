@@ -14,6 +14,8 @@ use eolib::protocol::r#pub::{
 };
 use lazy_static::lazy_static;
 
+#[macro_use]
+mod utils;
 mod arenas;
 mod character;
 use arenas::Arenas;
@@ -31,8 +33,6 @@ mod settings;
 use settings::Settings;
 mod sln;
 use sln::ping_sln;
-#[macro_use]
-mod utils;
 mod world;
 use mysql_async::prelude::*;
 

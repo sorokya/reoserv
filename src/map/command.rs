@@ -24,6 +24,9 @@ pub enum Command {
         player_id: i32,
         target_player_id: i32,
     },
+    AcceptWeddingRequest {
+        player_id: i32,
+    },
     AddChestItem {
         player_id: i32,
         item: Item,
@@ -369,6 +372,7 @@ pub enum Command {
     TimedQuake,
     TimedSpikes,
     TimedWarpSuck,
+    TimedWedding,
     ToggleHidden {
         player_id: i32,
     },

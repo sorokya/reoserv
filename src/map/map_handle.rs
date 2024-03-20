@@ -52,6 +52,10 @@ impl MapHandle {
         });
     }
 
+    pub fn accept_wedding_request(&self, player_id: i32) {
+        let _ = self.tx.send(Command::AcceptWeddingRequest { player_id });
+    }
+
     pub fn add_chest_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddChestItem { player_id, item });
     }
@@ -643,6 +647,10 @@ impl MapHandle {
 
     pub fn timed_warp_suck(&self) {
         let _ = self.tx.send(Command::TimedWarpSuck);
+    }
+
+    pub fn timed_wedding(&self) {
+        let _ = self.tx.send(Command::TimedWedding);
     }
 
     pub fn toggle_hidden(&self, player_id: i32) {

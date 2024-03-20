@@ -210,6 +210,11 @@ pub struct Guild {
 #[derive(Debug, Deserialize)]
 pub struct Marriage {
     pub approval_cost: i32,
+    pub female_armor_id: i32,
+    pub male_armor_id: i32,
+    pub min_level: i32,
+    pub mfx_id: i32,
+    pub ring_item_id: i32,
 }
 
 #[derive(Debug, Deserialize)]

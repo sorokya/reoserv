@@ -1,5 +1,7 @@
 mod capitalize;
 pub use capitalize::capitalize;
+mod dressed_for_wedding;
+pub use dressed_for_wedding::dressed_for_wedding;
 #[macro_use]
 mod get_lang_string;
 mod get_guild_ranks;

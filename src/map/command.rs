@@ -266,6 +266,11 @@ pub enum Command {
         npc_index: i32,
         name: String,
     },
+    RequestWedding {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
+    },
     RequestMarriageApproval {
         player_id: i32,
         npc_index: i32,

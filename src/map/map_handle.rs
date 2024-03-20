@@ -450,6 +450,14 @@ impl MapHandle {
         });
     }
 
+    pub fn request_wedding(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestWedding {
+            player_id,
+            npc_index,
+            name,
+        });
+    }
+
     pub fn request_marriage_approval(&self, player_id: i32, npc_index: i32, name: String) {
         let _ = self.tx.send(Command::RequestMarriageApproval {
             player_id,

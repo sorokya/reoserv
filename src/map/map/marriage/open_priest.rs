@@ -1,9 +1,15 @@
 use eolib::protocol::{
-    net::{server::PriestOpenServerPacket, PacketAction, PacketFamily},
+    net::{
+        server::{PriestOpenServerPacket, PriestReply, PriestReplyServerPacket},
+        PacketAction, PacketFamily,
+    },
     r#pub::NpcType,
 };
 
-use crate::{utils::in_client_range, NPC_DB};
+use crate::{
+    utils::{dressed_for_wedding, in_client_range},
+    NPC_DB, SETTINGS,
+};
 
 use super::super::Map;
 
@@ -40,6 +46,28 @@ impl Map {
         }
 
         if !in_client_range(&character.coords, &npc.coords) {
+            return;
+        }
+
+        if character.level < SETTINGS.marriage.min_level {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Priest,
+                &PriestReplyServerPacket {
+                    reply_code: PriestReply::LowLevel,
+                },
+            );
+            return;
+        }
+
+        if !dressed_for_wedding(&character) {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Priest,
+                &PriestReplyServerPacket {
+                    reply_code: PriestReply::NotDressed,
+                },
+            );
             return;
         }
 

@@ -420,6 +420,12 @@ impl Map {
                 name,
             } => self.request_divorce(player_id, npc_index, name),
 
+            Command::RequestWedding {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_wedding(player_id, npc_index, name),
+
             Command::RequestMarriageApproval {
                 player_id,
                 npc_index,

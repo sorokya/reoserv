@@ -348,4 +348,27 @@ bank_max_gold = 2_000_000_000
 
 [marriage]
 
+# Cost to get married
 approval_cost = 500
+
+# Armor (item id) females must wear during marriage
+female_armor_id = 163
+
+# Armor (item id) males must wear during marriage
+male_armor_id = 133
+
+# Minimum level to get married
+min_level = 5
+
+# Music id played during marriage
+mfx_id = 40
+
+# Item id of wedding ring given to both players
+ring_item_id = 374
+
+# How long to wait before starting the ceremony
+ceremony_start_delay_seconds = 20
+
+# Effect that plays on the couple after the ceremony
+celebration_effect_id = 12
+

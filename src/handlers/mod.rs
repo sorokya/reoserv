@@ -84,6 +84,9 @@ pub use player_range::player_range;
 mod players;
 pub use players::players;
 
+mod priest;
+pub use priest::priest;
+
 mod range;
 pub use range::range;
 

@@ -381,6 +381,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenLocker { player_id });
     }
 
+    pub fn open_priest(&self, player_id: i32, npc_index: i32, session_id: i32) {
+        let _ = self.tx.send(Command::OpenPriest {
+            player_id,
+            npc_index,
+            session_id,
+        });
+    }
+
     pub fn open_shop(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::OpenShop {
             player_id,

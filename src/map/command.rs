@@ -226,6 +226,11 @@ pub enum Command {
     OpenLocker {
         player_id: i32,
     },
+    OpenPriest {
+        player_id: i32,
+        npc_index: i32,
+        session_id: i32,
+    },
     OpenShop {
         player_id: i32,
         npc_index: i32,

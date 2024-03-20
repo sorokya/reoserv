@@ -370,6 +370,12 @@ impl Map {
 
             Command::OpenLocker { player_id } => self.open_locker(player_id),
 
+            Command::OpenPriest {
+                player_id,
+                npc_index,
+                session_id,
+            } => self.open_priest(player_id, npc_index, session_id),
+
             Command::OpenShop {
                 player_id,
                 npc_index,

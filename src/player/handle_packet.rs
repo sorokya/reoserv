@@ -82,6 +82,7 @@ pub async fn handle_packet(
         PacketFamily::Players => {
             handlers::players(action, reader, player.clone(), world.clone()).await
         }
+        PacketFamily::Priest => handlers::priest(action, reader, player.clone()).await,
         PacketFamily::Range => handlers::range(action, reader, player.clone()).await,
         PacketFamily::Refresh => handlers::refresh(action, player.clone()).await,
         PacketFamily::Shop => handlers::shop(action, reader, player.clone()).await,

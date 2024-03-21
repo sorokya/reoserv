@@ -323,6 +323,9 @@ pub enum Command {
     Save {
         respond_to: oneshot::Sender<()>,
     },
+    SayIDo {
+        player_id: i32,
+    },
     SellItem {
         player_id: i32,
         item: Item,

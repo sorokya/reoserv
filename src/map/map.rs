@@ -470,6 +470,8 @@ impl Map {
 
             Command::Save { respond_to } => self.save(respond_to).await,
 
+            Command::SayIDo { player_id } => self.say_i_do(player_id),
+
             Command::SellItem {
                 player_id,
                 item,

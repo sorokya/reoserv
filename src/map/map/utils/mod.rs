@@ -18,6 +18,7 @@ mod is_tile_walkable;
 mod is_tile_walkable_npc;
 mod npc_chat;
 mod play_effect;
+mod player_chat;
 mod player_in_range_of_tile;
 mod recover_npcs;
 mod recover_players;

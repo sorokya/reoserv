@@ -585,6 +585,10 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
+    pub fn say_i_do(&self, player_id: i32) {
+        let _ = self.tx.send(Command::SayIDo { player_id });
+    }
+
     pub fn send_chat_message(&self, target_player_id: i32, message: String) {
         let _ = self.tx.send(Command::SendChatMessage {
             target_player_id,

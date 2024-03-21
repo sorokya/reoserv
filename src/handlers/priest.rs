@@ -1,7 +1,10 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{PriestAcceptClientPacket, PriestOpenClientPacket, PriestRequestClientPacket},
+        client::{
+            PriestAcceptClientPacket, PriestOpenClientPacket, PriestRequestClientPacket,
+            PriestUseClientPacket,
+        },
         PacketAction,
     },
 };
@@ -79,6 +82,29 @@ async fn accept(reader: EoReader, player: PlayerHandle, player_id: i32, map: Map
     map.accept_wedding_request(player_id);
 }
 
+pub async fn r#use(reader: EoReader, player: PlayerHandle, player_id: i32, map: MapHandle) {
+    let r#use = match PriestUseClientPacket::deserialize(&reader) {
+        Ok(r#use) => r#use,
+        Err(e) => {
+            error!("Error deserializing PriestUseClientPacket {}", e);
+            return;
+        }
+    };
+
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != r#use.session_id {
+                return;
+            }
+        }
+        Err(_) => {
+            return;
+        }
+    }
+
+    map.say_i_do(player_id);
+}
+
 pub async fn priest(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
@@ -99,6 +125,7 @@ pub async fn priest(action: PacketAction, reader: EoReader, player: PlayerHandle
         PacketAction::Open => open(reader, player, player_id, map).await,
         PacketAction::Request => request(reader, player, player_id, map).await,
         PacketAction::Accept => accept(reader, player, player_id, map).await,
+        PacketAction::Use => r#use(reader, player, player_id, map).await,
         _ => error!("Unhandled packet Priest_{:?}", action),
     }
 }

@@ -149,6 +149,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::DisagreeTrade { player_id });
     }
 
+    pub fn divorce_partner(&self, player_id: i32) {
+        let _ = self.tx.send(Command::DivorcePartner { player_id });
+    }
+
     pub fn drop_item(&self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
         let _ = self.tx.send(Command::DropItem {
             target_player_id,

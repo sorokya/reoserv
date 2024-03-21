@@ -202,6 +202,8 @@ impl Map {
 
             Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
 
+            Command::DivorcePartner { player_id } => self.divorce_partner(player_id),
+
             Command::DropItem {
                 target_player_id,
                 item,

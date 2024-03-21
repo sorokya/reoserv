@@ -351,6 +351,9 @@ bank_max_gold = 2_000_000_000
 # Cost to get married
 approval_cost = 500
 
+# Cost to get divorced
+divorce_cost = 10000
+
 # Armor (item id) females must wear during marriage
 female_armor_id = 163
 

@@ -76,6 +76,9 @@ pub enum Command {
         subject: String,
         body: String,
     },
+    DivorcePartner {
+        player_id: i32,
+    },
     FinishGuildCreation {
         player_id: i32,
         member_ids: Vec<i32>,

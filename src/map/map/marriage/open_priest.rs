@@ -72,7 +72,7 @@ impl Map {
             return;
         }
 
-        if !dressed_for_wedding(&character) {
+        if !dressed_for_wedding(character) {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Priest,

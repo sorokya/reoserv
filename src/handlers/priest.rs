@@ -94,6 +94,10 @@ pub async fn r#use(reader: EoReader, player: PlayerHandle, player_id: i32, map: 
     match player.get_session_id().await {
         Ok(session_id) => {
             if session_id != r#use.session_id {
+                warn!(
+                    "Invalid session_id: {}, expected: {}",
+                    r#use.session_id, session_id
+                );
                 return;
             }
         }

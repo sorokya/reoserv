@@ -73,6 +73,7 @@ pub async fn handle_packet(
         PacketFamily::Jukebox => handlers::jukebox(action, reader, player.clone()).await,
         PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
         PacketFamily::Login => handlers::login(action, reader, player.clone()).await,
+        PacketFamily::Marriage => handlers::marriage(action, reader, player.clone()).await,
         PacketFamily::Message => handlers::message(action, reader, player.clone()),
         PacketFamily::NpcRange => handlers::npc_range(action, reader, player.clone()).await,
         PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,
@@ -81,6 +82,7 @@ pub async fn handle_packet(
         PacketFamily::Players => {
             handlers::players(action, reader, player.clone(), world.clone()).await
         }
+        PacketFamily::Priest => handlers::priest(action, reader, player.clone()).await,
         PacketFamily::Range => handlers::range(action, reader, player.clone()).await,
         PacketFamily::Refresh => handlers::refresh(action, player.clone()).await,
         PacketFamily::Shop => handlers::shop(action, reader, player.clone()).await,

@@ -29,6 +29,7 @@ pub struct World {
     warp_suck_ticks: i32,
     arena_ticks: i32,
     door_close_ticks: i32,
+    wedding_ticks: i32,
     global_locked: bool,
     connection_log: ConnectionLog,
 }
@@ -71,6 +72,7 @@ impl World {
             warp_suck_ticks: 0,
             arena_ticks: 0,
             door_close_ticks: 0,
+            wedding_ticks: 0,
             global_locked: false,
             connection_log: ConnectionLog::new(),
         }

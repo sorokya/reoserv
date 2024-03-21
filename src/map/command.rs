@@ -24,6 +24,9 @@ pub enum Command {
         player_id: i32,
         target_player_id: i32,
     },
+    AcceptWeddingRequest {
+        player_id: i32,
+    },
     AddChestItem {
         player_id: i32,
         item: Item,
@@ -72,6 +75,9 @@ pub enum Command {
         player_id: i32,
         subject: String,
         body: String,
+    },
+    DivorcePartner {
+        player_id: i32,
     },
     FinishGuildCreation {
         player_id: i32,
@@ -218,8 +224,18 @@ pub enum Command {
     OpenJukebox {
         player_id: i32,
     },
+    OpenLaw {
+        player_id: i32,
+        npc_index: i32,
+        session_id: i32,
+    },
     OpenLocker {
         player_id: i32,
+    },
+    OpenPriest {
+        player_id: i32,
+        npc_index: i32,
+        session_id: i32,
     },
     OpenShop {
         player_id: i32,
@@ -250,6 +266,21 @@ pub enum Command {
         player_id: i32,
         session_id: i32,
         answers: [String; 3],
+    },
+    RequestDivorce {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
+    },
+    RequestWedding {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
+    },
+    RequestMarriageApproval {
+        player_id: i32,
+        npc_index: i32,
+        name: String,
     },
     RequestNpcs {
         player_id: i32,
@@ -294,6 +325,9 @@ pub enum Command {
     },
     Save {
         respond_to: oneshot::Sender<()>,
+    },
+    SayIDo {
+        player_id: i32,
     },
     SellItem {
         player_id: i32,
@@ -344,6 +378,7 @@ pub enum Command {
     TimedQuake,
     TimedSpikes,
     TimedWarpSuck,
+    TimedWedding,
     ToggleHidden {
         player_id: i32,
     },

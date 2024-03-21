@@ -9,7 +9,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, world::WorldHandle};
 
-use super::{Chest, Command, Door, Item, Npc};
+use super::{Chest, Command, Door, Item, Npc, Wedding};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
@@ -33,6 +33,8 @@ pub struct Map {
     jukebox_player: Option<String>,
     jukebox_ticks: i32,
     has_jukebox: bool,
+    wedding: Option<Wedding>,
+    wedding_ticks: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -52,6 +54,7 @@ mod guild;
 mod inn;
 mod jukebox;
 mod locker;
+mod marriage;
 mod shop;
 mod skill_master;
 mod trade;
@@ -117,6 +120,8 @@ impl Map {
             jukebox_player: None,
             jukebox_ticks: 0,
             has_jukebox,
+            wedding: None,
+            wedding_ticks: 0,
         }
     }
 
@@ -130,6 +135,7 @@ impl Map {
                 player_id,
                 target_player_id,
             } => self.accept_trade_request(player_id, target_player_id).await,
+            Command::AcceptWeddingRequest { player_id } => self.accept_wedding_request(player_id),
             Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
             Command::AddLockerItem { player_id, item } => {
                 self.add_locker_item(player_id, item).await
@@ -195,6 +201,8 @@ impl Map {
             }
 
             Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
+
+            Command::DivorcePartner { player_id } => self.divorce_partner(player_id),
 
             Command::DropItem {
                 target_player_id,
@@ -361,7 +369,19 @@ impl Map {
 
             Command::OpenJukebox { player_id } => self.open_jukebox(player_id),
 
+            Command::OpenLaw {
+                player_id,
+                npc_index,
+                session_id,
+            } => self.open_law(player_id, npc_index, session_id),
+
             Command::OpenLocker { player_id } => self.open_locker(player_id),
+
+            Command::OpenPriest {
+                player_id,
+                npc_index,
+                session_id,
+            } => self.open_priest(player_id, npc_index, session_id),
 
             Command::OpenShop {
                 player_id,
@@ -401,6 +421,24 @@ impl Map {
                     .await
             }
 
+            Command::RequestDivorce {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_divorce(player_id, npc_index, name),
+
+            Command::RequestWedding {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_wedding(player_id, npc_index, name),
+
+            Command::RequestMarriageApproval {
+                player_id,
+                npc_index,
+                name,
+            } => self.request_marriage_approval(player_id, npc_index, name),
+
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
@@ -433,6 +471,8 @@ impl Map {
             } => self.reset_character(player_id, session_id).await,
 
             Command::Save { respond_to } => self.save(respond_to).await,
+
+            Command::SayIDo { player_id } => self.say_i_do(player_id),
 
             Command::SellItem {
                 player_id,
@@ -494,6 +534,8 @@ impl Map {
             Command::TimedSpikes => self.timed_spikes(),
 
             Command::TimedWarpSuck => self.timed_warp_suck(),
+
+            Command::TimedWedding => self.timed_wedding(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

@@ -52,6 +52,10 @@ impl MapHandle {
         });
     }
 
+    pub fn accept_wedding_request(&self, player_id: i32) {
+        let _ = self.tx.send(Command::AcceptWeddingRequest { player_id });
+    }
+
     pub fn add_chest_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddChestItem { player_id, item });
     }
@@ -143,6 +147,10 @@ impl MapHandle {
 
     pub fn disagree_trade(&self, player_id: i32) {
         let _ = self.tx.send(Command::DisagreeTrade { player_id });
+    }
+
+    pub fn divorce_partner(&self, player_id: i32) {
+        let _ = self.tx.send(Command::DivorcePartner { player_id });
     }
 
     pub fn drop_item(&self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
@@ -369,8 +377,24 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenJukebox { player_id });
     }
 
+    pub fn open_law(&self, player_id: i32, npc_index: i32, session_id: i32) {
+        let _ = self.tx.send(Command::OpenLaw {
+            player_id,
+            npc_index,
+            session_id,
+        });
+    }
+
     pub fn open_locker(&self, player_id: i32) {
         let _ = self.tx.send(Command::OpenLocker { player_id });
+    }
+
+    pub fn open_priest(&self, player_id: i32, npc_index: i32, session_id: i32) {
+        let _ = self.tx.send(Command::OpenPriest {
+            player_id,
+            npc_index,
+            session_id,
+        });
     }
 
     pub fn open_shop(&self, player_id: i32, npc_index: i32) {
@@ -423,6 +447,30 @@ impl MapHandle {
             player_id,
             session_id,
             answers,
+        });
+    }
+
+    pub fn request_divorce(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestDivorce {
+            player_id,
+            npc_index,
+            name,
+        });
+    }
+
+    pub fn request_wedding(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestWedding {
+            player_id,
+            npc_index,
+            name,
+        });
+    }
+
+    pub fn request_marriage_approval(&self, player_id: i32, npc_index: i32, name: String) {
+        let _ = self.tx.send(Command::RequestMarriageApproval {
+            player_id,
+            npc_index,
+            name,
         });
     }
 
@@ -541,6 +589,10 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
+    pub fn say_i_do(&self, player_id: i32) {
+        let _ = self.tx.send(Command::SayIDo { player_id });
+    }
+
     pub fn send_chat_message(&self, target_player_id: i32, message: String) {
         let _ = self.tx.send(Command::SendChatMessage {
             target_player_id,
@@ -603,6 +655,10 @@ impl MapHandle {
 
     pub fn timed_warp_suck(&self) {
         let _ = self.tx.send(Command::TimedWarpSuck);
+    }
+
+    pub fn timed_wedding(&self) {
+        let _ = self.tx.send(Command::TimedWedding);
     }
 
     pub fn toggle_hidden(&self, player_id: i32) {

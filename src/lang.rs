@@ -10,6 +10,16 @@ pub struct Lang {
     pub announce_mute: String,
     pub announce_global: String,
     pub global_locked: String,
+    pub wedding_start: String,
+    pub wedding_one: String,
+    pub wedding_two: String,
+    pub wedding_do_you: String,
+    pub wedding_i_do: String,
+    pub wedding_three: String,
+    pub wedding_four: String,
+    pub wedding_five: String,
+    pub wedding_end: String,
+    pub wedding_error: String,
 }
 
 impl Lang {

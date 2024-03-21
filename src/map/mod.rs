@@ -13,3 +13,5 @@ mod npc;
 pub use npc::{NPCBuilder, Npc};
 mod map_handle;
 pub use map_handle::MapHandle;
+mod wedding;
+pub use wedding::{Wedding, WeddingState};

@@ -8,3 +8,4 @@ mod timed_drain;
 mod timed_quake;
 mod timed_spikes;
 mod timed_warp_suck;
+mod timed_wedding;

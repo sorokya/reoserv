@@ -1,5 +1,7 @@
 mod capitalize;
 pub use capitalize::capitalize;
+mod dressed_for_wedding;
+pub use dressed_for_wedding::dressed_for_wedding;
 #[macro_use]
 mod get_lang_string;
 mod get_guild_ranks;
@@ -34,3 +36,5 @@ mod save_pub_file;
 pub use save_pub_file::save_pub_file;
 mod pad_string;
 pub use pad_string::pad_string;
+mod validate_character_name;
+pub use validate_character_name::validate_character_name;

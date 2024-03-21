@@ -208,6 +208,19 @@ pub struct Guild {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Marriage {
+    pub approval_cost: i32,
+    pub divorce_cost: i32,
+    pub female_armor_id: i32,
+    pub male_armor_id: i32,
+    pub min_level: i32,
+    pub mfx_id: i32,
+    pub ring_item_id: i32,
+    pub ceremony_start_delay_seconds: i32,
+    pub celebration_effect_id: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -227,6 +240,7 @@ pub struct Settings {
     pub jukebox: Jukebox,
     pub barber: Barber,
     pub guild: Guild,
+    pub marriage: Marriage,
 }
 
 impl Settings {

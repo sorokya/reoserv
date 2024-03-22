@@ -1,4 +1,5 @@
 use bytes::{BufMut, Bytes, BytesMut};
+use chrono::Utc;
 use eolib::{
     data::{decode_number, encode_number},
     encrypt::{decrypt_packet, encrypt_packet, generate_swap_multiple},
@@ -7,8 +8,13 @@ use eolib::{
 };
 use tokio::net::TcpStream;
 
+use crate::PACKET_RATE_LIMITS;
+
+use super::PacketLog;
+
 pub struct PacketBus {
     socket: TcpStream,
+    pub log: PacketLog,
     pub need_pong: bool,
     pub sequencer: Sequencer,
     pub upcoming_sequence_start: i32,
@@ -21,6 +27,7 @@ impl PacketBus {
         let sequencer = Sequencer::new(generate_sequence_start());
         Self {
             socket,
+            log: PacketLog::new(),
             need_pong: false,
             sequencer,
             upcoming_sequence_start: 0,
@@ -86,6 +93,29 @@ impl PacketBus {
                             decrypt_packet(&mut data_buf, self.client_enryption_multiple);
 
                             let data_buf = Bytes::from(data_buf);
+
+                            if let Some(rate_limit) = PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                                l.action == PacketAction::from(data_buf[0])
+                                    && l.family == PacketFamily::from(data_buf[1])
+                            }) {
+                                if let Some(last_processed) = self.log.last_processed(&data_buf) {
+                                    if Utc::now()
+                                        .signed_duration_since(last_processed)
+                                        .num_milliseconds()
+                                        < rate_limit.limit
+                                    {
+                                        let mut buf = BytesMut::new();
+                                        buf.put_u8(0xfe);
+                                        buf.put_u8(0xfe);
+                                        buf.put_u8(data_buf[2]);
+
+                                        return Some(Ok(buf.freeze()));
+                                    }
+                                }
+
+                                self.log.add_entry(&data_buf);
+                            }
+
                             Some(Ok(data_buf))
                         }
                         Some(Err(e)) => Some(Err(e)),

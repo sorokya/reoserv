@@ -1,0 +1,40 @@
+/*
+ * Set a rate limit in milliseconds of how often a packet is processed (packets sent too fast are ignored)
+ * 
+ * The maximum limit is 1000 (1 second)
+ */
+
+(
+  packets: [
+    (family: "Attack", action: "Use", limit: 500),
+    (family: "Bank", action: "Open", limit: 1000),
+    (family: "Barber", action: "Open", limit: 1000),
+    (family: "Board", action: "Open", limit: 1000),
+    (family: "Board", action: "Take", limit: 1000),
+    (family: "Board", action: "Create", limit: 1000),
+    (family: "Book", action: "Request", limit: 1000),
+    (family: "Chair", action: "Request", limit: 1000),
+    (family: "Chest", action: "Open", limit: 1000),
+    (family: "Citizen", action: "Open", limit: 1000),
+    (family: "Door", action: "Open", limit: 500),
+    (family: "Emote", action: "Report", limit: 120),
+    (family: "Face", action: "Player", limit: 120),
+    (family: "Guild", action: "Request", limit: 1000),
+    (family: "Guild", action: "Player", limit: 1000),
+    (family: "Guild", action: "Take", limit: 1000),
+    (family: "Guild", action: "Open", limit: 1000),
+    (family: "Guild", action: "Tell", limit: 1000),
+    (family: "Guild", action: "Report", limit: 1000),
+    (family: "Locker", action: "Open", limit: 1000),
+    (family: "Paperdoll", action: "Request", limit: 1000),
+    (family: "Players", action: "Request", limit: 1000),
+    (family: "Players", action: "List", limit: 1000),
+    (family: "Refresh", action: "Request", limit: 1000),
+    (family: "Shop", action: "Open", limit: 1000),
+    (family: "Sit", action: "Request", limit: 120),
+    (family: "Trade", action: "Request", limit: 1000),
+    (family: "Walk", action: "Admin", limit: 400),
+    (family: "Walk", action: "Player", limit: 400),
+    (family: "Walk", action: "Spec", limit: 400),
+  ]
+)

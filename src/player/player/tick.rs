@@ -28,6 +28,8 @@ impl Player {
             }
         }
 
+        self.bus.log.clean_old_entries();
+
         true
     }
 }

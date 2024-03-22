@@ -17,15 +17,19 @@ pub async fn handle_packet(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let reader = EoReader::new(packet);
     let action = PacketAction::from(reader.get_byte()?);
-    if let PacketAction::Unrecognized(_) = action {
-        player.close("invalid packet action".to_string());
-        return Ok(());
+    if let PacketAction::Unrecognized(id) = action {
+        if id != 0xfe {
+            player.close("invalid packet action".to_string());
+            return Ok(());
+        }
     }
 
     let family = PacketFamily::from(reader.get_byte()?);
-    if let PacketFamily::Unrecognized(_) = family {
-        player.close("invalid packet family".to_string());
-        return Ok(());
+    if let PacketFamily::Unrecognized(id) = family {
+        if id != 0xfe {
+            player.close("invalid packet family".to_string());
+            return Ok(());
+        }
     }
 
     if player.get_state().await? != ClientState::Uninitialized {
@@ -93,6 +97,7 @@ pub async fn handle_packet(
         PacketFamily::Trade => handlers::trade(action, reader, player.clone()).await,
         PacketFamily::Walk => handlers::walk(reader, player.clone()).await,
         PacketFamily::Warp => handlers::warp(action, reader, player.clone()).await,
+        PacketFamily::Unrecognized(0xfe) => {} // ignored packet
         PacketFamily::Welcome => handlers::welcome(action, reader, player.clone()).await,
         _ => {
             error!("Unhandled packet {:?}_{:?}", action, family);

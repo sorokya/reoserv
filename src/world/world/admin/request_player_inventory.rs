@@ -17,7 +17,7 @@ impl World {
             None => return,
         };
 
-        let target = match self.players.get(&target_player_id) {
+        let target = match self.players.get(target_player_id) {
             Some(player) => player.to_owned(),
             None => return,
         };

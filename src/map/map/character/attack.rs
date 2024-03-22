@@ -76,7 +76,7 @@ impl Map {
         &self,
         player_id: i32,
         direction: Direction,
-        party_player_ids: &Vec<i32>,
+        party_player_ids: &[i32],
     ) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
@@ -157,7 +157,7 @@ impl Map {
         player_id: i32,
         npc_index: i32,
         direction: Direction,
-        party_player_ids: &Vec<i32>,
+        party_player_ids: &[i32],
     ) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,

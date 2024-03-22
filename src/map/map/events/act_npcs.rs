@@ -1,6 +1,5 @@
 use std::cmp;
 
-use chrono::Utc;
 use eolib::protocol::{
     net::{
         server::{
@@ -161,7 +160,6 @@ impl Map {
         };
 
         if !npc.opponents.is_empty() {
-            let now = Utc::now();
             let opponents_in_range = npc.opponents.iter().filter(|opponent| {
                 let character = match self.characters.get(&opponent.player_id) {
                     Some(opponent) => opponent,
@@ -170,8 +168,7 @@ impl Map {
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
                     && distance <= SETTINGS.npcs.chase_distance
-                    && now.signed_duration_since(opponent.last_hit).num_seconds()
-                        < SETTINGS.npcs.bored_timer as i64
+                    && opponent.bored_ticks < SETTINGS.npcs.bored_timer
             });
 
             // get opponent with max damage dealt
@@ -216,15 +213,12 @@ impl Map {
             .map(|(player_id, _)| *player_id)
             .collect::<Vec<_>>();
 
-        let now = Utc::now();
-
         let adjacent_opponent = npc
             .opponents
             .iter()
             .filter(|opponent| {
                 adjacent_player_ids.contains(&opponent.player_id)
-                    && now.signed_duration_since(opponent.last_hit).num_seconds()
-                        < SETTINGS.npcs.bored_timer as i64
+                    && opponent.bored_ticks < SETTINGS.npcs.bored_timer
             })
             .max_by_key(|opponent| opponent.damage_dealt);
 
@@ -427,6 +421,10 @@ impl Map {
                 if !npc.alive || out_of_range {
                     return (None, None, None);
                 } else {
+                    for opponent in npc.opponents.iter_mut() {
+                        opponent.bored_ticks += SETTINGS.npcs.act_rate;
+                    }
+
                     npc.act_ticks += SETTINGS.npcs.act_rate;
                     npc.talk_ticks += SETTINGS.npcs.act_rate;
                     (npc.id, npc.spawn_index, npc.act_ticks)

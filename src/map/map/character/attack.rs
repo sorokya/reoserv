@@ -19,7 +19,6 @@ use crate::{
     character::Character,
     map::map::ArenaPlayer,
     utils::{get_distance, get_next_coords},
-    world::Party,
     ITEM_DB, NPC_DB, SETTINGS,
 };
 
@@ -56,11 +55,15 @@ impl Map {
             );
         }
 
-        let player_party = self.world.get_player_party(player_id).await;
+        let party_player_ids = match self.world.get_player_party(player_id).await {
+            Some(party) => party.members,
+            None => Vec::new(),
+        };
 
-        match self.get_attack_target(player_id, direction, player_party) {
+        match self.get_attack_target(player_id, direction, &party_player_ids) {
             Some(AttackTarget::Npc(npc_index)) => {
-                self.attack_npc(player_id, npc_index, direction).await
+                self.attack_npc(player_id, npc_index, direction, &party_player_ids)
+                    .await
             }
             Some(AttackTarget::Player(target_player_id)) => {
                 self.attack_player(player_id, target_player_id, direction)
@@ -73,19 +76,23 @@ impl Map {
         &self,
         player_id: i32,
         direction: Direction,
-        player_party: Option<Party>,
+        party_player_ids: &Vec<i32>,
     ) -> Option<AttackTarget> {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return None,
         };
 
-        let party_player_ids = match player_party {
-            Some(party) => party.members,
-            None => Vec::new(),
+        let range = if self
+            .arena_players
+            .iter()
+            .any(|arena_player| arena_player.player_id == player_id)
+        {
+            1
+        } else {
+            get_weapon_range(attacker)
         };
 
-        let range = get_weapon_range(attacker);
         let mut target_coords: Vec<Coords> = Vec::with_capacity(range as usize);
         for _ in 0..range {
             let next_coords = get_next_coords(
@@ -119,25 +126,45 @@ impl Map {
                 return Some(AttackTarget::Npc(*index));
             }
 
-            if let Some((player_id, _)) = self.characters.iter().find(|(_, character)| {
+            if let Some((target_player_id, _)) = self.characters.iter().find(|(_, character)| {
                 !character.hidden
                     && character.coords == coords
                     && !party_player_ids.contains(&character.player_id.unwrap())
             }) {
-                return Some(AttackTarget::Player(*player_id));
+                if self.file.r#type == MapType::Pk {
+                    return Some(AttackTarget::Player(*target_player_id));
+                }
+
+                if self
+                    .arena_players
+                    .iter()
+                    .any(|arena_player| arena_player.player_id == player_id)
+                    && self
+                        .arena_players
+                        .iter()
+                        .any(|arena_player| arena_player.player_id == *target_player_id)
+                {
+                    return Some(AttackTarget::Player(*target_player_id));
+                }
             }
         }
 
         None
     }
 
-    async fn attack_npc(&mut self, player_id: i32, npc_index: i32, direction: Direction) {
+    async fn attack_npc(
+        &mut self,
+        player_id: i32,
+        npc_index: i32,
+        direction: Direction,
+        party_player_ids: &Vec<i32>,
+    ) {
         let attacker = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
 
-        let (is_boss, is_alive, damage_dealt, opponents) = {
+        let (is_boss, is_alive, damage_dealt, opponents, protected) = {
             let npc = match self.npcs.get_mut(&npc_index) {
                 Some(npc) => npc,
                 None => return,
@@ -152,21 +179,40 @@ impl Map {
                 return;
             }
 
-            let amount = {
-                let mut rng = rand::thread_rng();
-                rng.gen_range(attacker.min_damage..=attacker.max_damage)
+            let protected = npc_data.behavior_id == 0
+                && !npc.opponents.is_empty()
+                && !npc.opponents.iter().any(|o| {
+                    o.player_id == player_id
+                        || party_player_ids.contains(&o.player_id)
+                        || o.bored_ticks >= SETTINGS.npcs.bored_timer
+                });
+
+            let damage_dealt = if protected {
+                0
+            } else {
+                let amount = {
+                    let mut rng = rand::thread_rng();
+                    rng.gen_range(attacker.min_damage..=attacker.max_damage)
+                };
+
+                let attacking_back_or_side =
+                    (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
+
+                let critical = npc.hp == npc.max_hp || attacking_back_or_side;
+
+                npc.damage(player_id, amount, attacker.accuracy, critical)
             };
 
-            let attacking_back_or_side =
-                (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
-
-            let critical = npc.hp == npc.max_hp || attacking_back_or_side;
-
-            let damage_dealt = npc.damage(player_id, amount, attacker.accuracy, critical);
-            (npc.boss, npc.alive, damage_dealt, npc.opponents.clone())
+            (
+                npc.boss,
+                npc.alive,
+                damage_dealt,
+                npc.opponents.clone(),
+                protected,
+            )
         };
 
-        if is_boss {
+        if !protected && is_boss {
             self.npcs
                 .iter_mut()
                 .filter(|(_, n)| n.child)
@@ -177,7 +223,7 @@ impl Map {
                             .iter_mut()
                             .find(|o| o.player_id == opponent.player_id)
                         {
-                            child_opponent.last_hit = opponent.last_hit;
+                            child_opponent.bored_ticks = 0;
                             if child_opponent.player_id == player_id {
                                 child_opponent.damage_dealt += damage_dealt;
                             }
@@ -189,7 +235,14 @@ impl Map {
         }
 
         if is_alive {
-            self.attack_npc_reply(player_id, npc_index, direction, damage_dealt, None);
+            self.attack_npc_reply(
+                player_id,
+                npc_index,
+                direction,
+                damage_dealt,
+                None,
+                protected,
+            );
         } else {
             self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, None)
                 .await;

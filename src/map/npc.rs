@@ -29,7 +29,7 @@ pub struct Npc {
 pub struct NpcOpponent {
     pub player_id: i32,
     pub damage_dealt: i32,
-    pub last_hit: DateTime<Utc>,
+    pub bored_ticks: i32,
 }
 
 impl Npc {
@@ -99,13 +99,13 @@ impl Npc {
                 Some(index) => {
                     let opponent = self.opponents.get_mut(index).unwrap();
                     opponent.damage_dealt += damage;
-                    opponent.last_hit = Utc::now();
+                    opponent.bored_ticks = 0;
                 }
                 None => {
                     self.opponents.push(NpcOpponent {
                         player_id,
                         damage_dealt: damage,
-                        last_hit: Utc::now(),
+                        bored_ticks: 0,
                     });
                 }
             }

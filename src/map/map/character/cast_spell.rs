@@ -17,7 +17,7 @@ use rand::Rng;
 
 use crate::{
     character::{SpellState, SpellTarget},
-    NPC_DB, SPELL_DB,
+    NPC_DB, SETTINGS, SPELL_DB,
 };
 
 use super::super::Map;
@@ -316,17 +316,34 @@ impl Map {
         character.spell_state = SpellState::None;
         character.tp -= spell_data.tp_cost;
 
-        let amount = {
-            let mut rng = rand::thread_rng();
-            rng.gen_range(
-                character.min_damage + spell_data.min_damage
-                    ..=character.max_damage + spell_data.max_damage,
-            )
+        let party_player_ids = match self.world.get_player_party(player_id).await {
+            Some(party) => party.members,
+            None => Vec::new(),
         };
 
-        let critical = npc.hp == npc.max_hp;
+        let protected = npc_data.behavior_id == 0
+            && !npc.opponents.is_empty()
+            && !npc.opponents.iter().any(|o| {
+                o.player_id == player_id
+                    || party_player_ids.contains(&o.player_id)
+                    || o.bored_ticks >= SETTINGS.npcs.bored_timer
+            });
 
-        let damage_dealt = npc.damage(player_id, amount, character.accuracy, critical);
+        let damage_dealt = if protected {
+            0
+        } else {
+            let amount = {
+                let mut rng = rand::thread_rng();
+                rng.gen_range(
+                    character.min_damage + spell_data.min_damage
+                        ..=character.max_damage + spell_data.max_damage,
+                )
+            };
+
+            let critical = npc.hp == npc.max_hp;
+
+            npc.damage(player_id, amount, character.accuracy, critical)
+        };
 
         character.player.as_ref().unwrap().send(
             PacketAction::Player,
@@ -344,6 +361,7 @@ impl Map {
                 direction,
                 damage_dealt,
                 Some(spell_id),
+                protected,
             );
         } else {
             self.attack_npc_killed_reply(player_id, npc_index, damage_dealt, Some(spell_id))

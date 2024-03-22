@@ -38,6 +38,7 @@ impl Map {
         direction: Direction,
         damage_dealt: i32,
         spell_id: Option<i32>,
+        protected: bool,
     ) {
         if spell_id.is_none() {
             let reply = AttackPlayerServerPacket {
@@ -70,7 +71,11 @@ impl Map {
                     Some(character) => character.tp,
                     None => 0,
                 },
-                kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
+                kill_steal_protection: Some(if protected {
+                    NpcKillStealProtectionState::Protected
+                } else {
+                    NpcKillStealProtectionState::Unprotected
+                }),
             };
 
             let character = match self.characters.get(&player_id) {
@@ -100,7 +105,11 @@ impl Map {
                 npc_index,
                 damage: damage_dealt,
                 hp_percentage: npc.get_hp_percentage(),
-                kill_steal_protection: Some(NpcKillStealProtectionState::Unprotected),
+                kill_steal_protection: Some(if protected {
+                    NpcKillStealProtectionState::Protected
+                } else {
+                    NpcKillStealProtectionState::Unprotected
+                }),
             };
 
             let character = match self.characters.get(&player_id) {

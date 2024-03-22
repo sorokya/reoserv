@@ -9,6 +9,7 @@ use eolib::protocol::net::{
 use super::super::World;
 
 impl World {
+    // TODO: Work when player offline
     pub fn request_player_info(&mut self, player_id: i32, name: String) {
         let player = match self.players.get(&player_id) {
             Some(player) => player.to_owned(),

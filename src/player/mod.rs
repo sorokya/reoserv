@@ -4,6 +4,8 @@ mod command;
 pub use command::Command;
 mod handle_packet;
 mod packet_bus;
+mod packet_log;
+pub use packet_log::PacketLog;
 #[allow(clippy::module_inception)]
 mod player;
 mod player_handle;

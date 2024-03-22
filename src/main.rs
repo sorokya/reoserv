@@ -31,6 +31,8 @@ mod map;
 mod player;
 mod settings;
 use settings::Settings;
+mod packet_rate_limits;
+use packet_rate_limits::PacketRateLimits;
 mod sln;
 use sln::ping_sln;
 mod world;
@@ -51,6 +53,8 @@ use crate::{
 lazy_static! {
     static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
     static ref ARENAS: Arenas = Arenas::new().expect("Failed to load arenas!");
+    static ref PACKET_RATE_LIMITS: PacketRateLimits =
+        PacketRateLimits::new().expect("Failed to load packet rate limits!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref LANG: Lang = Lang::new().expect("Failed to load lang!");

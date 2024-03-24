@@ -104,6 +104,13 @@ pub struct Character {
     pub spells: Vec<Spell>,
     pub logged_in_at: Option<DateTime<Utc>>,
     pub spell_state: SpellState,
+    pub quests: Vec<QuestProgress>,
+}
+
+#[derive(Clone, Debug)]
+pub struct QuestProgress {
+    pub id: i32,
+    pub state: i32,
 }
 
 impl Character {
@@ -246,6 +253,26 @@ impl Character {
 
     pub fn is_guild_leader(&self) -> bool {
         self.guild_rank == Some(1)
+    }
+
+    pub fn get_quest_progress(&self, quest_id: i32) -> QuestProgress {
+        match self.quests.iter().find(|q| q.id == quest_id) {
+            Some(progress) => progress.to_owned(),
+            None => QuestProgress {
+                id: quest_id,
+                state: 0,
+            },
+        }
+    }
+
+    pub fn save_quest_progress(&mut self, quest_id: i32, state: i32) {
+        match self.quests.iter_mut().find(|q| q.id == quest_id) {
+            Some(progress) => progress.state = state,
+            None => self.quests.push(QuestProgress {
+                id: quest_id,
+                state,
+            }),
+        }
     }
 
     pub async fn save(

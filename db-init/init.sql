@@ -284,6 +284,23 @@ CREATE TABLE `Stats` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
+--
+-- Table structure for table `QuestProgress`
+--
+
+DROP TABLE IF EXISTS `QuestProgress`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QuestProgress` (
+  `character_id` int NOT NULL,
+  `quest_id` int NOT NULL,
+  `state` int NOT NULL,
+  PRIMARY KEY (`character_id`,`quest_id`),
+  CONSTRAINT `quest_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;

@@ -55,6 +55,7 @@ mod inn;
 mod jukebox;
 mod locker;
 mod marriage;
+mod quest;
 mod shop;
 mod skill_master;
 mod trade;
@@ -514,6 +515,13 @@ impl Map {
             Command::SpawnItems => self.spawn_items().await,
 
             Command::SpawnNpcs => self.spawn_npcs().await,
+
+            Command::TalkToQuestNpc {
+                player_id,
+                npc_index,
+                quest_id,
+                session_id,
+            } => self.talk_to_quest_npc(player_id, npc_index, quest_id, session_id),
 
             Command::TakeChestItem { player_id, item_id } => {
                 self.take_chest_item(player_id, item_id).await;

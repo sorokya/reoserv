@@ -364,6 +364,12 @@ pub enum Command {
         spell_id: i32,
         timestamp: i32,
     },
+    TalkToQuestNpc {
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+    },
     TakeChestItem {
         player_id: i32,
         item_id: i32,

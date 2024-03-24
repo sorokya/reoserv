@@ -4,7 +4,7 @@ use eolib::protocol::{
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
 
-use super::Character;
+use super::{Character, QuestProgress};
 
 impl Character {
     pub async fn load(
@@ -120,6 +120,19 @@ impl Character {
                 |mut row: Row| Spell {
                     id: row.take(0).unwrap(),
                     level: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
+        character.quests = conn
+            .exec_map(
+                include_str!("../sql/get_character_quest_progress.sql"),
+                params! {
+                    "character_id" => id,
+                },
+                |mut row: Row| QuestProgress {
+                    id: row.take(0).unwrap(),
+                    state: row.take(1).unwrap(),
                 },
             )
             .await?;

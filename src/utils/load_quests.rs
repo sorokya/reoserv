@@ -27,7 +27,7 @@ pub fn load_quests() -> HashMap<i32, Quest> {
 fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
     let id = match path.file_name() {
         Some(name) => match name.to_str().to_owned() {
-            Some(name) => match name.split(".").collect::<Vec<&str>>()[0].parse::<i32>() {
+            Some(name) => match name.split('.').collect::<Vec<&str>>()[0].parse::<i32>() {
                 Ok(id) => id,
                 Err(e) => {
                     error!("Failed to parse id: {}", e);

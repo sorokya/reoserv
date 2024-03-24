@@ -87,6 +87,9 @@ pub use players::players;
 mod priest;
 pub use priest::priest;
 
+mod quest;
+pub use quest::quest;
+
 mod range;
 pub use range::range;
 

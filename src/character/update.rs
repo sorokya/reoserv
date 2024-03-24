@@ -269,6 +269,21 @@ impl Character {
         }
 
         for quest in &self.quests {
+            let mut npc_kills = String::from('{');
+            for (index, (npc_id, kills)) in quest.npc_kills.iter().enumerate() {
+                npc_kills.push_str(&format!(
+                    "\"{}\":{}{}",
+                    npc_id,
+                    kills,
+                    if index < quest.npc_kills.len() - 1 {
+                        ","
+                    } else {
+                        ""
+                    }
+                ));
+            }
+            npc_kills.push('}');
+
             if !old_quests.iter().any(|q| q.id == quest.id) {
                 tx.exec_drop(
                     include_str!("../sql/create_quest_progress.sql"),
@@ -276,6 +291,8 @@ impl Character {
                         "character_id" => self.id,
                         "quest_id" => quest.id,
                         "state" => quest.state,
+                        "npc_kills" => npc_kills,
+                        "player_kills" => quest.player_kills,
                     },
                 )
                 .await?;
@@ -286,6 +303,8 @@ impl Character {
                         "character_id" => self.id,
                         "quest_id" => quest.id,
                         "state" => quest.state,
+                        "npc_kills" => npc_kills,
+                        "player_kills" => quest.player_kills,
                     },
                 )
                 .await?;

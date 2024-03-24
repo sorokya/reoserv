@@ -133,6 +133,25 @@ impl Character {
                 |mut row: Row| QuestProgress {
                     id: row.take(0).unwrap(),
                     state: row.take(1).unwrap(),
+                    npc_kills: {
+                        let json = row.take::<String, usize>(2).unwrap();
+                        match serde_json::from_str::<serde_json::Value>(&json) {
+                            Ok(value) => match value.as_object() {
+                                Some(object) => object
+                                    .iter()
+                                    .map(|(id, amount)| {
+                                        (
+                                            id.parse::<i32>().unwrap(),
+                                            amount.as_i64().unwrap() as i32,
+                                        )
+                                    })
+                                    .collect::<Vec<_>>(),
+                                None => Vec::new(),
+                            },
+                            Err(_) => Vec::new(),
+                        }
+                    },
+                    player_kills: row.take(3).unwrap(),
                     ..Default::default()
                 },
             )

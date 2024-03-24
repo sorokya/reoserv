@@ -112,13 +112,23 @@ pub struct Character {
 pub struct QuestProgress {
     pub id: i32,
     pub state: i32,
-    pub killed_npcs: Vec<(i32, i32)>,
-    pub killed_players: i32,
+    pub npc_kills: Vec<(i32, i32)>,
+    pub player_kills: i32,
 }
 
 impl QuestProgress {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn add_npc_kill(&mut self, npc_id: i32) {
+        match self.npc_kills.iter_mut().find(|(id, _)| npc_id == *id) {
+            Some((_, kills)) => *kills += 1,
+            None => self.npc_kills.push((npc_id, 1)),
+        }
+    }
+
+    pub fn get_npc_kills(&self, npc_id: i32) -> i32 {
+        match self.npc_kills.iter().find(|(id, _)| npc_id == *id) {
+            Some((_, kills)) => *kills,
+            None => 0,
+        }
     }
 }
 

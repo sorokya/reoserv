@@ -293,6 +293,12 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::LoseItem {
+                player_id,
+                item_id,
+                amount,
+            } => self.lose_item(player_id, item_id, amount),
+
             Command::JoinGuild {
                 player_id,
                 recruiter_id,

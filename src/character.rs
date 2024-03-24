@@ -7,12 +7,13 @@ use eolib::protocol::{
     },
     AdminLevel, Coords, Direction, Gender,
 };
+use eoplus::Arg;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::Conn;
 use rand::Rng;
 use std::cmp;
 
-use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, SETTINGS};
+use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS};
 
 mod add_bank_item;
 mod add_item;
@@ -107,10 +108,18 @@ pub struct Character {
     pub quests: Vec<QuestProgress>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct QuestProgress {
     pub id: i32,
     pub state: i32,
+    pub killed_npcs: Vec<(i32, i32)>,
+    pub killed_players: i32,
+}
+
+impl QuestProgress {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl Character {
@@ -260,7 +269,7 @@ impl Character {
             Some(progress) => progress.to_owned(),
             None => QuestProgress {
                 id: quest_id,
-                state: 0,
+                ..Default::default()
             },
         }
     }
@@ -271,6 +280,7 @@ impl Character {
             None => self.quests.push(QuestProgress {
                 id: quest_id,
                 state,
+                ..Default::default()
             }),
         }
     }
@@ -302,5 +312,71 @@ impl Character {
 
         self.calculate_stats();
         leveled_up
+    }
+
+    pub fn talked_to_npc(&mut self, behavior_id: i32) {
+        let mut updated_quests: Vec<i32> = Vec::new();
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule =
+                match state.rules.iter().find(|rule| {
+                    rule.name == "TalkedToNpc" && rule.args[0] == Arg::Int(behavior_id)
+                }) {
+                    Some(rule) => rule,
+                    None => continue,
+                };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    updated_quests.push(progress.id);
+                }
+                None => continue,
+            };
+        }
+
+        for quest_id in updated_quests {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    fn do_quest_actions(&self, quest_id: i32) {
+        let state = match self.quests.iter().find(|progress| progress.id == quest_id) {
+            Some(progress) => progress.state,
+            None => return,
+        };
+
+        let state = match QUEST_DB.get(&quest_id) {
+            Some(quest) => match quest.states.get(state as usize) {
+                Some(state) => state,
+                None => return,
+            },
+            None => return,
+        };
+
+        let player = match self.player {
+            Some(ref player) => player,
+            None => return,
+        };
+
+        for action in state.actions.iter() {
+            match action.name.as_str() {
+                "AddNpcText" | "AddNpcChat" | "AddNpcInput" => {}
+                _ => player.quest_action(action.name.to_owned(), action.args.to_owned()),
+            }
+        }
     }
 }

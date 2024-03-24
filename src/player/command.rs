@@ -10,6 +10,7 @@ use eolib::protocol::{
     },
     Coords,
 };
+use eoplus::Arg;
 use tokio::sync::oneshot;
 
 use crate::{
@@ -137,6 +138,10 @@ pub enum Command {
     Pong,
     PongNewSequence {
         respond_to: oneshot::Sender<()>,
+    },
+    QuestAction {
+        action: String,
+        args: Vec<Arg>,
     },
     RequestAccountCreation {
         username: String,

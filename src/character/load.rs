@@ -133,6 +133,7 @@ impl Character {
                 |mut row: Row| QuestProgress {
                     id: row.take(0).unwrap(),
                     state: row.take(1).unwrap(),
+                    ..Default::default()
                 },
             )
             .await?;

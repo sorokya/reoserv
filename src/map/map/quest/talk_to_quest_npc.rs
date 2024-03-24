@@ -41,11 +41,10 @@ impl Map {
             return;
         }
 
-        let progress = character.get_quest_progress(quest_id);
-
         let quests_for_npc = QUEST_DB
             .iter()
-            .filter(|(_, quest)| {
+            .filter(|(id, quest)| {
+                let progress = character.get_quest_progress(**id);
                 quest.states[progress.state as usize]
                     .actions
                     .iter()
@@ -68,6 +67,8 @@ impl Map {
         } else {
             (&quests_for_npc[0].0, &quests_for_npc[0].1)
         };
+
+        let progress = character.get_quest_progress(**quest_id);
 
         let dialog_entries = quest.states[progress.state as usize]
             .actions
@@ -135,6 +136,7 @@ impl Map {
             .collect::<Vec<DialogQuestEntry>>();
 
         character.save_quest_progress(**quest_id, progress.state);
+        character.talked_to_npc(npc_data.behavior_id);
 
         let player = match character.player {
             Some(ref player) => player,

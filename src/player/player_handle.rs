@@ -16,6 +16,7 @@ use eolib::{
         Coords,
     },
 };
+use eoplus::Arg;
 use mysql_async::Pool;
 use tokio::{
     net::TcpStream,
@@ -318,6 +319,10 @@ impl PlayerHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::PongNewSequence { respond_to: tx });
         let _ = rx.await;
+    }
+
+    pub fn quest_action(&self, action: String, args: Vec<Arg>) {
+        let _ = self.tx.send(Command::QuestAction { action, args });
     }
 
     pub fn request_account_creation(&self, username: String) {

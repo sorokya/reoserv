@@ -9,6 +9,7 @@ mod find_player;
 mod junk_item;
 mod leave;
 mod level_stat;
+mod lose_item;
 mod open_door;
 mod party_request;
 mod request_npcs;

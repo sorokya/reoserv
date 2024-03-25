@@ -10,17 +10,18 @@ use eolib::protocol::{
 };
 use eoplus::{Arg, Quest};
 
-use crate::{utils::in_client_range, NPC_DB, QUEST_DB};
+use crate::{NPC_DB, QUEST_DB};
 
 use super::super::Map;
 
 impl Map {
-    pub fn talk_to_quest_npc(
+    pub fn reply_to_quest_npc(
         &mut self,
         player_id: i32,
         npc_index: i32,
         quest_id: i32,
         session_id: i32,
+        action_id: Option<i32>,
     ) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
@@ -37,9 +38,13 @@ impl Map {
             None => return,
         };
 
-        if npc_data.r#type != NpcType::Quest || !in_client_range(&character.coords, &npc.coords) {
+        if npc_data.r#type != NpcType::Quest {
             return;
         }
+
+        let previous_state = character.get_quest_progress(quest_id).state;
+
+        character.talked_to_npc(npc_data.behavior_id, quest_id, action_id);
 
         let quests_for_npc = QUEST_DB
             .iter()
@@ -61,14 +66,19 @@ impl Map {
 
         let (quest_id, quest) = if quest_id > 0 {
             match quests_for_npc.iter().find(|(id, _)| **id == quest_id) {
-                Some((id, quest)) => (id, quest),
+                Some((id, quest)) => (**id, quest),
                 None => return,
             }
         } else {
-            (&quests_for_npc[0].0, &quests_for_npc[0].1)
+            (*quests_for_npc[0].0, &quests_for_npc[0].1)
         };
 
-        let progress = character.get_quest_progress(**quest_id);
+        let progress = character.get_quest_progress(quest_id);
+
+        // Only show new dialog the first time quest state advances
+        if previous_state >= progress.state {
+            return;
+        }
 
         let dialog_entries = quest.states[progress.state as usize]
             .actions
@@ -135,21 +145,19 @@ impl Map {
             })
             .collect::<Vec<DialogQuestEntry>>();
 
-        character.save_quest_progress(**quest_id, progress.state);
+        character.save_quest_progress(quest_id, progress.state);
 
         let player = match character.player {
             Some(ref player) => player,
             None => return,
         };
 
-        player.set_interact_npc_index(npc_index);
-
         player.send(
             PacketAction::Dialog,
             PacketFamily::Quest,
             &QuestDialogServerPacket {
                 behavior_id: npc_data.behavior_id,
-                quest_id: **quest_id,
+                quest_id,
                 session_id,
                 dialog_id: 0,
                 quest_entries,

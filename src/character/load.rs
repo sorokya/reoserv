@@ -152,7 +152,7 @@ impl Character {
                         }
                     },
                     player_kills: row.take(3).unwrap(),
-                    ..Default::default()
+                    done: row.take(4).unwrap(),
                 },
             )
             .await?;

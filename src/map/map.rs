@@ -419,6 +419,14 @@ impl Map {
                 self.remove_trade_item(player_id, item_id).await
             }
 
+            Command::ReplyToQuestNpc {
+                player_id,
+                npc_index,
+                quest_id,
+                session_id,
+                action_id,
+            } => self.reply_to_quest_npc(player_id, npc_index, quest_id, session_id, action_id),
+
             Command::RequestCitizenship {
                 player_id,
                 session_id,

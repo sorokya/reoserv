@@ -295,6 +295,9 @@ CREATE TABLE `QuestProgress` (
   `character_id` int NOT NULL,
   `quest_id` int NOT NULL,
   `state` int NOT NULL,
+  `npc_kills` json NOT NULL,
+  `player_kills` int NOT NULL,
+  `done` tinyint(1) NOT NULL,
   PRIMARY KEY (`character_id`,`quest_id`),
   CONSTRAINT `quest_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

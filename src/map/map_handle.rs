@@ -450,6 +450,23 @@ impl MapHandle {
             .send(Command::RemoveTradeItem { player_id, item_id });
     }
 
+    pub fn reply_to_quest_npc(
+        &self,
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+        action_id: Option<i32>,
+    ) {
+        let _ = self.tx.send(Command::ReplyToQuestNpc {
+            player_id,
+            npc_index,
+            quest_id,
+            session_id,
+            action_id,
+        });
+    }
+
     pub fn request_citizenship(&self, player_id: i32, session_id: i32, answers: [String; 3]) {
         let _ = self.tx.send(Command::RequestCitizenship {
             player_id,

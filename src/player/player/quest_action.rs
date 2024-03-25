@@ -62,8 +62,6 @@ impl Player {
 
                 map.lose_item(self.id, item_id, amount);
             }
-            "End" => {}
-            "Reset" => {}
             "SetClass" => {}
             "PlayMusic" => {}
             "PlaySound" => {}

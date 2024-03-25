@@ -305,6 +305,7 @@ impl Character {
                         "state" => quest.state,
                         "npc_kills" => npc_kills,
                         "player_kills" => quest.player_kills,
+                        "done" => quest.done,
                     },
                 )
                 .await?;

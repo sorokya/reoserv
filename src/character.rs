@@ -114,6 +114,7 @@ pub struct QuestProgress {
     pub state: i32,
     pub npc_kills: Vec<(i32, i32)>,
     pub player_kills: i32,
+    pub done: bool,
 }
 
 impl QuestProgress {
@@ -324,26 +325,26 @@ impl Character {
         leveled_up
     }
 
-    pub fn talked_to_npc(&mut self, behavior_id: i32) {
-        let mut updated_quests: Vec<i32> = Vec::new();
-        for progress in self.quests.iter_mut() {
+    pub fn talked_to_npc(&mut self, behavior_id: i32, quest_id: i32, action_id: Option<i32>) {
+        let mut progressed = false;
+        if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
             let quest = match QUEST_DB.get(&progress.id) {
                 Some(quest) => quest,
-                None => continue,
+                None => return,
             };
 
             let state = match quest.states.get(progress.state as usize) {
                 Some(state) => state,
-                None => continue,
+                None => return,
             };
 
-            let rule =
-                match state.rules.iter().find(|rule| {
-                    rule.name == "TalkedToNpc" && rule.args[0] == Arg::Int(behavior_id)
-                }) {
-                    Some(rule) => rule,
-                    None => continue,
-                };
+            let rule = match state.rules.iter().find(|rule| match action_id {
+                Some(action_id) => rule.name == "InputNpc" && rule.args[0] == Arg::Int(action_id),
+                None => rule.name == "TalkedToNpc" && rule.args[0] == Arg::Int(behavior_id),
+            }) {
+                Some(rule) => rule,
+                None => return,
+            };
 
             match quest
                 .states
@@ -352,18 +353,18 @@ impl Character {
             {
                 Some(next_state) => {
                     progress.state = next_state as i32;
-                    updated_quests.push(progress.id);
+                    progressed = true;
                 }
-                None => continue,
+                None => return,
             };
         }
 
-        for quest_id in updated_quests {
+        if progressed {
             self.do_quest_actions(quest_id);
         }
     }
 
-    fn do_quest_actions(&self, quest_id: i32) {
+    fn do_quest_actions(&mut self, quest_id: i32) {
         let state = match self.quests.iter().find(|progress| progress.id == quest_id) {
             Some(progress) => progress.state,
             None => return,
@@ -385,6 +386,14 @@ impl Character {
         for action in state.actions.iter() {
             match action.name.as_str() {
                 "AddNpcText" | "AddNpcChat" | "AddNpcInput" => {}
+                "Done" => {
+                    self.quests
+                        .iter_mut()
+                        .find(|q| q.id == quest_id)
+                        .unwrap()
+                        .done = true
+                }
+                "Reset" => self.quests.retain(|q| q.id != quest_id),
                 _ => player.quest_action(action.name.to_owned(), action.args.to_owned()),
             }
         }

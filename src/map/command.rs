@@ -315,6 +315,13 @@ pub enum Command {
         target_player_id: i32,
         request: PartyRequest,
     },
+    ReplyToQuestNpc {
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+        action_id: Option<i32>,
+    },
     RequestToJoinGuild {
         player_id: i32,
         guild_tag: String,

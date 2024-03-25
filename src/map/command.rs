@@ -421,6 +421,12 @@ pub enum Command {
         player_id: i32,
         post_id: i32,
     },
+    ViewQuestHistory {
+        player_id: i32,
+    },
+    ViewQuestProgress {
+        player_id: i32,
+    },
     Walk {
         target_player_id: i32,
         direction: Direction,

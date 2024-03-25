@@ -583,6 +583,10 @@ impl Map {
                 self.view_board_post(player_id, post_id).await
             }
 
+            Command::ViewQuestHistory { player_id } => self.view_quest_history(player_id),
+
+            Command::ViewQuestProgress { player_id } => self.view_quest_progress(player_id),
+
             Command::Walk {
                 target_player_id,
                 direction,

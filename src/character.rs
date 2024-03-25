@@ -364,6 +364,95 @@ impl Character {
         }
     }
 
+    pub fn killed_npc(&mut self, npc_id: i32) {
+        let mut quests_progressed = Vec::new();
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state
+                .rules
+                .iter()
+                .find(|rule| rule.name == "KilledNpcs" && rule.args[0] == Arg::Int(npc_id))
+            {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            let required_kills = match rule.args[1] {
+                Arg::Int(kills) => kills,
+                _ => continue,
+            };
+
+            progress.add_npc_kill(npc_id);
+
+            if progress.get_npc_kills(npc_id) >= required_kills {
+                match quest
+                    .states
+                    .iter()
+                    .position(|state| state.name == rule.goto)
+                {
+                    Some(next_state) => {
+                        progress.state = next_state as i32;
+                        quests_progressed.push(progress.id);
+                    }
+                    None => return,
+                };
+            }
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    pub fn entered_map(&mut self) {
+        let mut quests_progressed = Vec::new();
+        let map_id = self.map_id;
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state.rules.iter().find(|rule| {
+                (rule.name == "EnterMap" && rule.args[0] == Arg::Int(map_id))
+                    || rule.name == "LeaveMap" && rule.args[0] != Arg::Int(map_id)
+            }) {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    quests_progressed.push(progress.id);
+                }
+                None => return,
+            };
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
     fn do_quest_actions(&mut self, quest_id: i32) {
         let state = match self.quests.iter().find(|progress| progress.id == quest_id) {
             Some(progress) => progress.state,

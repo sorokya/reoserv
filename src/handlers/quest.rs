@@ -2,9 +2,10 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
         client::{
-            QuestAcceptClientPacket, QuestAcceptClientPacketReplyTypeData, QuestUseClientPacket,
+            QuestAcceptClientPacket, QuestAcceptClientPacketReplyTypeData, QuestListClientPacket,
+            QuestUseClientPacket,
         },
-        PacketAction,
+        PacketAction, QuestPage,
     },
 };
 
@@ -73,6 +74,22 @@ async fn accept(reader: EoReader, player: PlayerHandle, player_id: i32, map: Map
     map.reply_to_quest_npc(player_id, npc_index, accept.quest_id, session_id, action_id);
 }
 
+pub fn list(reader: EoReader, player: PlayerHandle, player_id: i32, map: MapHandle) {
+    let list = match QuestListClientPacket::deserialize(&reader) {
+        Ok(list) => list,
+        Err(e) => {
+            error!("Error deserializing QuestListClientPacket: {}", e);
+            return;
+        }
+    };
+
+    match list.page {
+        QuestPage::Progress => map.view_quest_progress(player_id),
+        QuestPage::History => map.view_quest_history(player_id),
+        _ => {}
+    }
+}
+
 pub async fn quest(action: PacketAction, reader: EoReader, player: PlayerHandle) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
@@ -93,6 +110,7 @@ pub async fn quest(action: PacketAction, reader: EoReader, player: PlayerHandle)
     match action {
         PacketAction::Use => r#use(reader, player, player_id, map).await,
         PacketAction::Accept => accept(reader, player, player_id, map).await,
+        PacketAction::List => list(reader, player, player_id, map),
         _ => error!("Unhandled packet Quest_{:?}", action),
     }
 }

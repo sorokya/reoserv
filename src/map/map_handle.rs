@@ -737,6 +737,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::ViewBoardPost { player_id, post_id });
     }
 
+    pub fn view_quest_history(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ViewQuestHistory { player_id });
+    }
+
+    pub fn view_quest_progress(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ViewQuestProgress { player_id });
+    }
+
     pub fn walk(
         &self,
         target_player_id: i32,

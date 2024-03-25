@@ -1,7 +1,10 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{server::MessageOpenServerPacket, PacketAction, PacketFamily},
+        net::{
+            server::{MessageOpenServerPacket, MusicPlayerServerPacket},
+            PacketAction, PacketFamily,
+        },
         Coords,
     },
 };
@@ -64,7 +67,29 @@ impl Player {
             }
             "SetClass" => {}
             "PlayMusic" => {}
-            "PlaySound" => {}
+            "PlaySound" => {
+                if let Some(Arg::Int(sound_id)) = args.get(0) {
+                    let packet = MusicPlayerServerPacket {
+                        sound_id: *sound_id,
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Error serializing MusicPlayerServerPacket: {}", e);
+                        return;
+                    }
+
+                    let _ = self
+                        .bus
+                        .send(
+                            PacketAction::Player,
+                            PacketFamily::Music,
+                            writer.to_byte_array(),
+                        )
+                        .await;
+                }
+            }
             "ShowHint" => {
                 let message = match args.get(0) {
                     Some(Arg::Str(message)) => message,
@@ -90,7 +115,11 @@ impl Player {
                     )
                     .await;
             }
-            "GiveExp" => {}
+            "GiveExp" => {
+                if let Some(Arg::Int(amount)) = args.get(0) {
+                    map.award_experience(self.id, *amount);
+                }
+            }
             "RemoveExp" => {}
             "GiveKarma" => {}
             "RemoveKarma" => {}

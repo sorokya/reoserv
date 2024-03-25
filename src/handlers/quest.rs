@@ -74,7 +74,7 @@ async fn accept(reader: EoReader, player: PlayerHandle, player_id: i32, map: Map
     map.reply_to_quest_npc(player_id, npc_index, accept.quest_id, session_id, action_id);
 }
 
-pub fn list(reader: EoReader, player: PlayerHandle, player_id: i32, map: MapHandle) {
+pub fn list(reader: EoReader, player_id: i32, map: MapHandle) {
     let list = match QuestListClientPacket::deserialize(&reader) {
         Ok(list) => list,
         Err(e) => {
@@ -110,7 +110,7 @@ pub async fn quest(action: PacketAction, reader: EoReader, player: PlayerHandle)
     match action {
         PacketAction::Use => r#use(reader, player, player_id, map).await,
         PacketAction::Accept => accept(reader, player, player_id, map).await,
-        PacketAction::List => list(reader, player, player_id, map),
+        PacketAction::List => list(reader, player_id, map),
         _ => error!("Unhandled packet Quest_{:?}", action),
     }
 }

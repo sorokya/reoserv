@@ -154,6 +154,10 @@ pub enum Command {
     GetRidAndSize {
         respond_to: oneshot::Sender<([i32; 2], i32)>,
     },
+    AwardExperience {
+        player_id: i32,
+        amount: i32,
+    },
     GiveItem {
         target_player_id: i32,
         item_id: i32,

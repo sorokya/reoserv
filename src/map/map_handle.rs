@@ -258,6 +258,10 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn award_experience(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::AwardExperience { player_id, amount });
+    }
+
     pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::GiveItem {
             target_player_id,

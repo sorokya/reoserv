@@ -287,6 +287,10 @@ impl Map {
                 self.get_rid_and_size(respond_to);
             }
 
+            Command::AwardExperience { player_id, amount } => {
+                self.award_experience(player_id, amount)
+            }
+
             Command::GiveItem {
                 target_player_id,
                 item_id,

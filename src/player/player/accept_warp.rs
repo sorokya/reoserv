@@ -63,8 +63,6 @@ impl Player {
             }
         };
 
-        if character.map_id != warp_session.map_id {}
-
         character.map_id = warp_session.map_id;
         character.coords = warp_session.coords;
         character.sit_state = SitState::Stand;

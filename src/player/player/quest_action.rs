@@ -21,7 +21,7 @@ impl Player {
 
         match action.as_str() {
             "SetMap" => {
-                let map_id = match args.get(0) {
+                let map_id = match args.first() {
                     Some(Arg::Int(map_id)) => *map_id,
                     _ => return,
                 };
@@ -40,7 +40,7 @@ impl Player {
                     .await;
             }
             "GiveItem" => {
-                let item_id = match args.get(0) {
+                let item_id = match args.first() {
                     Some(Arg::Int(item_id)) => *item_id,
                     _ => return,
                 };
@@ -53,7 +53,7 @@ impl Player {
                 map.give_item(self.id, item_id, amount);
             }
             "RemoveItem" => {
-                let item_id = match args.get(0) {
+                let item_id = match args.first() {
                     Some(Arg::Int(item_id)) => *item_id,
                     _ => return,
                 };
@@ -67,7 +67,7 @@ impl Player {
             }
             "SetClass" => {}
             "PlayMusic" => {
-                if let Some(Arg::Int(sound_id)) = args.get(0) {
+                if let Some(Arg::Int(sound_id)) = args.first() {
                     let packet = MusicPlayerServerPacket {
                         sound_id: *sound_id,
                     };
@@ -90,7 +90,7 @@ impl Player {
                 }
             }
             "PlaySound" => {
-                if let Some(Arg::Int(sound_id)) = args.get(0) {
+                if let Some(Arg::Int(sound_id)) = args.first() {
                     let packet = MusicPlayerServerPacket {
                         sound_id: *sound_id,
                     };
@@ -113,7 +113,7 @@ impl Player {
                 }
             }
             "ShowHint" => {
-                let message = match args.get(0) {
+                let message = match args.first() {
                     Some(Arg::Str(message)) => message,
                     _ => return,
                 };
@@ -124,7 +124,7 @@ impl Player {
 
                 let mut writer = EoWriter::with_capacity(message.len());
 
-                if let Err(_) = packet.serialize(&mut writer) {
+                if packet.serialize(&mut writer).is_err() {
                     return;
                 }
 
@@ -138,7 +138,7 @@ impl Player {
                     .await;
             }
             "GiveExp" => {
-                if let Some(Arg::Int(amount)) = args.get(0) {
+                if let Some(Arg::Int(amount)) = args.first() {
                     map.award_experience(self.id, *amount);
                 }
             }

@@ -26,10 +26,7 @@ impl Map {
             .iter()
             .filter_map(|q| {
                 if q.done {
-                    match QUEST_DB.get(&q.id) {
-                        Some(quest) => Some(quest.name.to_owned()),
-                        None => None,
-                    }
+                    QUEST_DB.get(&q.id).map(|quest| quest.name.to_owned())
                 } else {
                     None
                 }

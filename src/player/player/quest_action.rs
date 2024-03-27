@@ -66,7 +66,29 @@ impl Player {
                 map.lose_item(self.id, item_id, amount);
             }
             "SetClass" => {}
-            "PlayMusic" => {}
+            "PlayMusic" => {
+                if let Some(Arg::Int(sound_id)) = args.get(0) {
+                    let packet = MusicPlayerServerPacket {
+                        sound_id: *sound_id,
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Error serializing MusicPlayerServerPacket: {}", e);
+                        return;
+                    }
+
+                    let _ = self
+                        .bus
+                        .send(
+                            PacketAction::Player,
+                            PacketFamily::Music,
+                            writer.to_byte_array(),
+                        )
+                        .await;
+                }
+            }
             "PlaySound" => {
                 if let Some(Arg::Int(sound_id)) = args.get(0) {
                     let packet = MusicPlayerServerPacket {

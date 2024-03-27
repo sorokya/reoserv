@@ -520,7 +520,7 @@ impl Character {
         for action in state.actions.iter() {
             match action.name.as_str() {
                 "AddNpcText" | "AddNpcChat" | "AddNpcInput" => {}
-                "Done" => {
+                "End" => {
                     self.quests
                         .iter_mut()
                         .find(|q| q.id == quest_id)

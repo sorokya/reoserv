@@ -51,6 +51,7 @@ mod chest;
 mod events;
 #[macro_use]
 mod guild;
+mod effect;
 mod inn;
 mod jukebox;
 mod locker;
@@ -618,6 +619,7 @@ impl Map {
                 npc_indexes,
             } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
             Command::RequestRefresh { player_id } => self.request_refresh(player_id),
+            Command::Quake { magnitude } => self.quake(magnitude),
         }
     }
 }

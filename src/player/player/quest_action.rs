@@ -145,7 +145,15 @@ impl Player {
             "RemoveExp" => {}
             "GiveKarma" => {}
             "RemoveKarma" => {}
-            "Quake" => {}
+            "Quake" => {
+                if let Some(Arg::Int(magnitude)) = args.first() {
+                    if *magnitude == 8 {
+                        self.world.quake(*magnitude);
+                    } else {
+                        map.quake(*magnitude);
+                    }
+                }
+            }
             "EffectOnPlayer" => {}
             "EffectOnCoord" => {}
             _ => {}

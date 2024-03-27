@@ -779,6 +779,10 @@ impl MapHandle {
             timestamp,
         });
     }
+
+    pub fn quake(&self, magnitude: i32) {
+        let _ = self.tx.send(Command::Quake { magnitude });
+    }
 }
 
 async fn run_map(mut map: Map) {

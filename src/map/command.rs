@@ -445,4 +445,7 @@ pub enum Command {
     SpawnItems,
     SpawnNpcs,
     ActNpcs,
+    Quake {
+        magnitude: i32,
+    },
 }

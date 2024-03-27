@@ -168,8 +168,32 @@ impl Player {
                     }
                 }
             }
-            "EffectOnPlayer" => {}
-            "EffectOnCoord" => {}
+            "EffectOnPlayer" => {
+                let effect_id = match args.first() {
+                    Some(Arg::Int(effect_id)) => *effect_id,
+                    _ => return,
+                };
+
+                map.effect_on_player(self.id, effect_id);
+            }
+            "EffectOnCoord" => {
+                let effect_id = match args.first() {
+                    Some(Arg::Int(effect_id)) => *effect_id,
+                    _ => return,
+                };
+
+                let x = match args.get(1) {
+                    Some(Arg::Int(x)) => *x,
+                    _ => return,
+                };
+
+                let y = match args.get(2) {
+                    Some(Arg::Int(y)) => *y,
+                    _ => return,
+                };
+
+                map.effect_on_coord(Coords { x, y }, effect_id);
+            }
             _ => {}
         }
     }

@@ -161,6 +161,17 @@ impl MapHandle {
         });
     }
 
+    pub fn effect_on_player(&self, player_id: i32, effect_id: i32) {
+        let _ = self.tx.send(Command::EffectOnPlayer {
+            player_id,
+            effect_id,
+        });
+    }
+
+    pub fn effect_on_coord(&self, coords: Coords, effect_id: i32) {
+        let _ = self.tx.send(Command::EffectOnCoord { coords, effect_id });
+    }
+
     pub fn emote(&self, target_player_id: i32, emote: Emote) {
         let _ = self.tx.send(Command::Emote {
             target_player_id,

@@ -105,7 +105,7 @@ impl Map {
                         effect_id: item.spec1,
                     },
                 ));
-                self.play_effect(player_id, item.spec1);
+                self.effect_on_player(player_id, item.spec1);
             }
             ItemType::HairDye => {
                 packet.item_type = ItemType::HairDye;

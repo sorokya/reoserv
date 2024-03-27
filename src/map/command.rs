@@ -116,6 +116,14 @@ pub enum Command {
         item_id: i32,
         sub_loc: i32,
     },
+    EffectOnPlayer {
+        player_id: i32,
+        effect_id: i32,
+    },
+    EffectOnCoord {
+        coords: Coords,
+        effect_id: i32,
+    },
     Face {
         target_player_id: i32,
         direction: Direction,

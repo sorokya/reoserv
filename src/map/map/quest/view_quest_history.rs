@@ -25,7 +25,7 @@ impl Map {
             .quests
             .iter()
             .filter_map(|q| {
-                if q.done {
+                if q.done_at.is_some() && q.state != 0 {
                     QUEST_DB.get(&q.id).map(|quest| quest.name.to_owned())
                 } else {
                     None

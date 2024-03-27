@@ -27,7 +27,7 @@ impl Map {
             .quests
             .iter()
             .filter_map(|q| {
-                if q.done {
+                if q.done_at.is_some() && q.state != 0 {
                     return None;
                 }
 

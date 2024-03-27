@@ -293,7 +293,7 @@ impl Character {
                         "state" => quest.state,
                         "npc_kills" => npc_kills,
                         "player_kills" => quest.player_kills,
-                        "done" => quest.done,
+                        "done_at" => quest.done_at.map(|done_at| done_at.naive_utc()),
                     },
                 )
                 .await?;
@@ -306,7 +306,7 @@ impl Character {
                         "state" => quest.state,
                         "npc_kills" => npc_kills,
                         "player_kills" => quest.player_kills,
-                        "done" => quest.done,
+                        "done_at" => quest.done_at.map(|done_at| done_at.naive_utc()),
                     },
                 )
                 .await?;

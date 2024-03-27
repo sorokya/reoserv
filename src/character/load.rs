@@ -1,3 +1,4 @@
+use chrono::{NaiveDateTime, TimeZone, Utc};
 use eolib::protocol::{
     net::{server::SitState, Item, Spell},
     AdminLevel, Direction, Gender,
@@ -152,7 +153,9 @@ impl Character {
                         }
                     },
                     player_kills: row.take(3).unwrap(),
-                    done: row.take(4).unwrap(),
+                    done_at: row
+                        .take::<NaiveDateTime, usize>(4)
+                        .map(|done_at| Utc.from_local_datetime(&done_at).unwrap()),
                 },
             )
             .await?;

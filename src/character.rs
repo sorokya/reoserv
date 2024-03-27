@@ -114,7 +114,7 @@ pub struct QuestProgress {
     pub state: i32,
     pub npc_kills: Vec<(i32, i32)>,
     pub player_kills: i32,
-    pub done: bool,
+    pub done_at: Option<DateTime<Utc>>,
 }
 
 impl QuestProgress {
@@ -339,7 +339,24 @@ impl Character {
             };
 
             let rule = match state.rules.iter().find(|rule| match action_id {
-                Some(action_id) => rule.name == "InputNpc" && rule.args[0] == Arg::Int(action_id),
+                Some(action_id) => {
+                    if rule.name == "DoneDaily" {
+                        let days = match rule.args.first() {
+                            Some(Arg::Int(days)) => *days,
+                            _ => return false,
+                        };
+
+                        let done_at = match progress.done_at {
+                            Some(done_at) => done_at,
+                            None => return false,
+                        };
+
+                        let diff = (Utc::now() - done_at).num_days() as i32;
+                        diff < days
+                    } else {
+                        rule.name == "InputNpc" && rule.args[0] == Arg::Int(action_id)
+                    }
+                }
                 None => rule.name == "TalkedToNpc" && rule.args[0] == Arg::Int(behavior_id),
             }) {
                 Some(rule) => rule,
@@ -525,9 +542,21 @@ impl Character {
                         .iter_mut()
                         .find(|q| q.id == quest_id)
                         .unwrap()
-                        .done = true
+                        .done_at = Some(Utc::now());
                 }
-                "Reset" => self.quests.retain(|q| q.id != quest_id),
+                "ResetDaily" => {
+                    let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
+                    progress.done_at = Some(Utc::now());
+                    progress.state = 0;
+                }
+                "Reset" => {
+                    let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
+                    if progress.done_at.is_none() {
+                        self.quests.retain(|q| q.id != quest_id)
+                    } else {
+                        progress.state = 0;
+                    }
+                }
                 _ => player.quest_action(action.name.to_owned(), action.args.to_owned()),
             }
         }
@@ -542,16 +571,13 @@ impl Character {
             None => return,
         };
 
-        match quest
+        if let Some(next_state) = quest
             .states
             .iter()
             .position(|state| state.name == rule.goto)
         {
-            Some(next_state) => {
-                progress.state = next_state as i32;
-                self.do_quest_actions(quest_id);
-            }
-            None => return,
-        };
+            progress.state = next_state as i32;
+            self.do_quest_actions(quest_id);
+        }
     }
 }

@@ -453,17 +453,62 @@ impl Character {
         }
     }
 
+    pub fn entered_coord(&mut self) {
+        let mut quests_progressed = Vec::new();
+        let map_id = self.map_id;
+        let coords = self.coords;
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state.rules.iter().find(|rule| {
+                rule.name == "EnterCoord"
+                    && rule.args[0] == Arg::Int(map_id)
+                    && rule.args[1] == Arg::Int(coords.x)
+                    && rule.args[2] == Arg::Int(coords.y)
+            }) {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    quests_progressed.push(progress.id);
+                }
+                None => return,
+            };
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
     fn do_quest_actions(&mut self, quest_id: i32) {
         let state = match self.quests.iter().find(|progress| progress.id == quest_id) {
             Some(progress) => progress.state,
             None => return,
         };
 
-        let state = match QUEST_DB.get(&quest_id) {
-            Some(quest) => match quest.states.get(state as usize) {
-                Some(state) => state,
-                None => return,
-            },
+        let quest = match QUEST_DB.get(&quest_id) {
+            Some(quest) => quest,
+            None => return,
+        };
+
+        let state = match quest.states.get(state as usize) {
+            Some(state) => state,
             None => return,
         };
 
@@ -486,5 +531,27 @@ impl Character {
                 _ => player.quest_action(action.name.to_owned(), action.args.to_owned()),
             }
         }
+
+        let rule = match state.rules.iter().find(|rule| rule.name == "Always") {
+            Some(rule) => rule,
+            None => return,
+        };
+
+        let progress = match self.quests.iter_mut().find(|q| q.id == quest_id) {
+            Some(progress) => progress,
+            None => return,
+        };
+
+        match quest
+            .states
+            .iter()
+            .position(|state| state.name == rule.goto)
+        {
+            Some(next_state) => {
+                progress.state = next_state as i32;
+                self.do_quest_actions(quest_id);
+            }
+            None => return,
+        };
     }
 }

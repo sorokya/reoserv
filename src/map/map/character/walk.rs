@@ -47,6 +47,7 @@ impl Map {
             if let Some(character) = self.characters.get_mut(&target_player_id) {
                 character.coords = target_coords;
                 character.direction = direction;
+                character.entered_coord();
             }
 
             // TODO: Ghost timer check

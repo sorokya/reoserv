@@ -361,6 +361,10 @@ pub enum Command {
     Serialize {
         respond_to: oneshot::Sender<Bytes>,
     },
+    SetClass {
+        player_id: i32,
+        class_id: i32,
+    },
     Sit {
         player_id: i32,
     },

@@ -642,6 +642,13 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn set_class(&self, player_id: i32, class_id: i32) {
+        let _ = self.tx.send(Command::SetClass {
+            player_id,
+            class_id,
+        });
+    }
+
     pub fn spawn_items(&self) {
         let _ = self.tx.send(Command::SpawnItems);
     }

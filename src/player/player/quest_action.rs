@@ -65,7 +65,14 @@ impl Player {
 
                 map.lose_item(self.id, item_id, amount);
             }
-            "SetClass" => {}
+            "SetClass" => {
+                let class_id = match args.first() {
+                    Some(Arg::Int(class_id)) => *class_id,
+                    _ => return,
+                };
+
+                map.set_class(self.id, class_id);
+            }
             "PlayMusic" => {
                 if let Some(Arg::Int(sound_id)) = args.first() {
                     let packet = MusicPlayerServerPacket {

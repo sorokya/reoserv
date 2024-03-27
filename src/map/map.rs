@@ -514,6 +514,11 @@ impl Map {
                 self.serialize(respond_to);
             }
 
+            Command::SetClass {
+                player_id,
+                class_id,
+            } => self.set_class(player_id, class_id),
+
             Command::Sit { player_id } => self.sit(player_id),
 
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),

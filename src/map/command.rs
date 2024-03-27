@@ -163,6 +163,14 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    GiveKarma {
+        player_id: i32,
+        amount: i32,
+    },
+    RemoveKarma {
+        player_id: i32,
+        amount: i32,
+    },
     LoseItem {
         player_id: i32,
         item_id: i32,

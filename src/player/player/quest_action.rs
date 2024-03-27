@@ -149,9 +149,16 @@ impl Player {
                     map.award_experience(self.id, *amount);
                 }
             }
-            "RemoveExp" => {}
-            "GiveKarma" => {}
-            "RemoveKarma" => {}
+            "GiveKarma" => {
+                if let Some(Arg::Int(amount)) = args.first() {
+                    map.give_karma(self.id, *amount);
+                }
+            }
+            "RemoveKarma" => {
+                if let Some(Arg::Int(amount)) = args.first() {
+                    map.remove_karma(self.id, *amount);
+                }
+            }
             "Quake" => {
                 if let Some(Arg::Int(magnitude)) = args.first() {
                     if *magnitude == 8 {

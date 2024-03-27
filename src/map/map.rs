@@ -298,6 +298,10 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::GiveKarma { player_id, amount } => self.give_karma(player_id, amount),
+
+            Command::RemoveKarma { player_id, amount } => self.remove_karma(player_id, amount),
+
             Command::LoseItem {
                 player_id,
                 item_id,

@@ -270,6 +270,14 @@ impl MapHandle {
         });
     }
 
+    pub fn give_karma(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::GiveKarma { player_id, amount });
+    }
+
+    pub fn remove_karma(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::RemoveKarma { player_id, amount });
+    }
+
     pub fn lose_item(&self, player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::LoseItem {
             player_id,

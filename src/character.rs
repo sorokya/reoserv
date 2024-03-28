@@ -115,6 +115,7 @@ pub struct QuestProgress {
     pub npc_kills: Vec<(i32, i32)>,
     pub player_kills: i32,
     pub done_at: Option<DateTime<Utc>>,
+    pub completions: i32,
 }
 
 impl QuestProgress {
@@ -341,8 +342,8 @@ impl Character {
             let rule = match state.rules.iter().find(|rule| match action_id {
                 Some(action_id) => {
                     if rule.name == "DoneDaily" {
-                        let days = match rule.args.first() {
-                            Some(Arg::Int(days)) => *days,
+                        let times_per_day = match rule.args.first() {
+                            Some(Arg::Int(times_per_day)) => *times_per_day,
                             _ => return false,
                         };
 
@@ -352,7 +353,13 @@ impl Character {
                         };
 
                         let diff = (Utc::now() - done_at).num_days() as i32;
-                        diff < days
+                        if diff < 1 {
+                            progress.completions >= times_per_day
+                        } else {
+                            progress.completions = 0;
+                            progress.done_at = None;
+                            false
+                        }
                     } else {
                         rule.name == "InputNpc" && rule.args[0] == Arg::Int(action_id)
                     }
@@ -546,7 +553,10 @@ impl Character {
                 }
                 "ResetDaily" => {
                     let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
-                    progress.done_at = Some(Utc::now());
+                    if progress.done_at.is_none() {
+                        progress.done_at = Some(Utc::now());
+                    }
+                    progress.completions += 1;
                     progress.state = 0;
                 }
                 "Reset" => {

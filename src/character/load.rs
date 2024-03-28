@@ -154,8 +154,12 @@ impl Character {
                     },
                     player_kills: row.take(3).unwrap(),
                     done_at: row
-                        .take::<NaiveDateTime, usize>(4)
-                        .map(|done_at| Utc.from_local_datetime(&done_at).unwrap()),
+                        .take::<Option<NaiveDateTime>, usize>(4)
+                        .map(|done_at| {
+                            done_at.map(|done_at| Utc.from_local_datetime(&done_at).unwrap())
+                        })
+                        .unwrap(),
+                    completions: row.take(5).unwrap(),
                 },
             )
             .await?;

@@ -63,7 +63,6 @@ install-updater = false
 
 # Extra files to include in release tarballs
 include = [
-  "./.env.example",
   "./Config.toml",
   "./Arenas.ron",
   "./Commands.ron",
@@ -71,8 +70,15 @@ include = [
   "./PacketRateLimits.ron",
   "./db-init/",
   "./news.txt",
-  "./lang",
-  "./maps",
-  "./pub",
-  "./quests"
+  "./lang/",
+  "./maps/",
+  "./pub/",
+  "./pub/inns/",
+  "./pub/npcs/",
+  "./pub/items/",
+  "./pub/shops/",
+  "./pub/spells/",
+  "./pub/classes/",
+  "./pub/skill_masters/",
+  "./quests/"
 ]

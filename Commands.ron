@@ -238,6 +238,14 @@
             ],
         ),
         (
+            name: "remap",
+            alias: "remap",
+            description: "Reloads a map file",
+            usage: "$remap",
+            admin_level: "GameMaster",
+            args: [],
+        ),
+        (
             name: "spawnitem",
             alias: "si",
             description: "Spawn an item into your inventory",

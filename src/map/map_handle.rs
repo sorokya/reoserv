@@ -289,6 +289,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::RemoveKarma { player_id, amount });
     }
 
+    pub fn reload(&self, file: Box<Emf>, file_size: i32) {
+        let _ = self.tx.send(Command::Reload { file, file_size });
+    }
+
     pub fn lose_item(&self, player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::LoseItem {
             player_id,

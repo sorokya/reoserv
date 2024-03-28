@@ -554,7 +554,11 @@ impl Map {
             } => self.start_spell_chant(player_id, spell_id, timestamp),
 
             Command::StartEvacuate => {
-                self.evacuate_ticks = Some(SETTINGS.evacuate.timer_seconds);
+                if self.evacuate_ticks.is_some() {
+                    self.evacuate_ticks = None;
+                } else {
+                    self.evacuate_ticks = Some(SETTINGS.evacuate.timer_seconds);
+                }
             }
 
             Command::SpawnItems => self.spawn_items().await,

@@ -1,5 +1,6 @@
 use std::cmp;
 
+use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -15,6 +16,7 @@ use eolib::{
 };
 use rand::Rng;
 
+use crate::utils::in_client_range;
 use crate::{
     character::{SpellState, SpellTarget},
     NPC_DB, SETTINGS, SPELL_DB,
@@ -83,14 +85,11 @@ impl Map {
         }
         match target {
             SpellTarget::Player => self.cast_heal_self(player_id, spell_id, spell),
+            SpellTarget::Group => self.cast_heal_group(player_id, spell_id, spell).await,
             SpellTarget::OtherPlayer(target_player_id) => {
                 self.cast_heal_player(player_id, target_player_id, spell_id, spell);
             }
             _ => {}
-        }
-
-        if let SpellTarget::Group = target {
-            self.cast_heal_group(player_id, spell_id, spell).await;
         }
     }
     fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
@@ -174,8 +173,6 @@ impl Map {
             return;
         }
 
-        let character_direction = character.direction;
-
         character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
 
@@ -184,61 +181,59 @@ impl Map {
             None => Vec::new(),
         };
 
+        let mut healed_players: Vec<GroupHealTargetPlayer> =
+            Vec::with_capacity(party_player_ids.len());
+
         for party_member_id in party_player_ids {
-            if let Some(member_character) = self.characters.get_mut(&party_member_id) {
-                let original_hp = member_character.hp;
-                member_character.hp =
-                    cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
-                let hp_percentage = member_character.get_hp_percentage();
+            let member_character = match self.characters.get_mut(&party_member_id) {
+                Some(character) => character,
+                None => continue,
+            };
 
-                if member_character.hp != original_hp {
-                    member_character
-                        .player
-                        .as_ref()
-                        .unwrap()
-                        .update_party_hp(hp_percentage);
-                }
+            let original_hp = member_character.hp;
+            member_character.hp =
+                cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
+            let hp_percentage = member_character.get_hp_percentage();
 
-                let cloned_character = member_character.clone();
+            if member_character.hp != original_hp {
+                member_character
+                    .player
+                    .as_ref()
+                    .unwrap()
+                    .update_party_hp(hp_percentage);
+            }
 
-                let mut packet = SpellTargetOtherServerPacket {
-                    victim_id: party_member_id,
-                    caster_id: player_id,
-                    caster_direction: character_direction,
+            healed_players.push(GroupHealTargetPlayer {
+                player_id: party_member_id,
+                hp_percentage: member_character.get_hp_percentage(),
+                hp: member_character.hp,
+            });
+        }
+
+        for character in self.characters.values() {
+            let in_range_healed_players = healed_players
+                .iter()
+                .filter(|healed| {
+                    let healed_character = match self.characters.get(&healed.player_id) {
+                        Some(character) => character,
+                        None => return false,
+                    };
+                    in_client_range(&character.coords, &healed_character.coords)
+                })
+                .collect::<Vec<_>>();
+
+            if !in_range_healed_players.is_empty() {
+                let packet = SpellTargetGroupServerPacket {
                     spell_id,
+                    caster_id: player_id,
+                    caster_tp: character.tp,
                     spell_heal_hp: spell.hp_heal,
-                    hp_percentage: member_character.get_hp_percentage(),
-                    hp: None,
-                };
-
-                self.send_packet_near_player(
-                    party_member_id,
-                    PacketAction::TargetOther,
-                    PacketFamily::Spell,
-                    &packet,
-                );
-
-                packet.hp = Some(cloned_character.hp);
-
-                cloned_character.player.as_ref().unwrap().send(
-                    PacketAction::TargetOther,
-                    PacketFamily::Spell,
-                    &packet,
-                );
-
-                let character = match self.characters.get(&player_id) {
-                    Some(character) => character,
-                    None => return,
-                };
-
-                let packet = RecoverPlayerServerPacket {
-                    hp: character.hp,
-                    tp: character.tp,
+                    players: in_range_healed_players.into_iter().cloned().collect(),
                 };
 
                 character.player.as_ref().unwrap().send(
-                    PacketAction::Player,
-                    PacketFamily::Recover,
+                    PacketAction::TargetGroup,
+                    PacketFamily::Spell,
                     &packet,
                 );
             }

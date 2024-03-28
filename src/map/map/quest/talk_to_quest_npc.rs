@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use eolib::protocol::{
     net::{
         server::{
@@ -112,7 +114,7 @@ impl Map {
             })
             .collect::<Vec<DialogEntry>>();
 
-        let quest_entries = quests_for_npc
+        let mut quest_entries = quests_for_npc
             .iter()
             .filter_map(|(quest_id, quest)| {
                 let progress = character.get_quest_progress(**quest_id);
@@ -134,6 +136,14 @@ impl Map {
                 }
             })
             .collect::<Vec<DialogQuestEntry>>();
+
+        quest_entries.sort_by(|a, b| {
+            if a.quest_id == **quest_id {
+                Ordering::Less
+            } else {
+                a.quest_id.partial_cmp(&b.quest_id).unwrap()
+            }
+        });
 
         character.save_quest_progress(**quest_id, progress.state);
 

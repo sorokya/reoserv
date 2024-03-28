@@ -42,9 +42,7 @@ impl PlayerHandle {
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let player = Player::new(id, socket, connected_at, rx, world, pool);
-        let _ = tokio::task::Builder::new()
-            .name(&format!("Player {}", id))
-            .spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));
+        tokio::spawn(run_player(player, PlayerHandle::for_tx(tx.clone())));
 
         Self { tx }
     }
@@ -507,13 +505,11 @@ async fn run_player(mut player: Player, player_handle: PlayerHandle) {
 
         if let Some(packet) = player.queue.get_mut().pop_front() {
             player.busy = true;
-            let _ = tokio::task::Builder::new()
-                .name("handle_packet")
-                .spawn(handle_packet(
-                    packet,
-                    player_handle.clone(),
-                    player.world.clone(),
-                ));
+            tokio::spawn(handle_packet(
+                packet,
+                player_handle.clone(),
+                player.world.clone(),
+            ));
         }
 
         tokio::time::sleep(Duration::from_millis(60)).await;

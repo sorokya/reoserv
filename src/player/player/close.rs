@@ -8,16 +8,14 @@ impl Player {
             let character_name = character.name.clone();
             let guild_tag = character.guild_tag.clone();
             let pool = self.pool.clone();
-            let _ = tokio::task::Builder::new()
-                .name("character_save")
-                .spawn(async move {
-                    let mut conn = pool.get_conn().await.unwrap();
-                    if let Some(logged_in_at) = character.logged_in_at {
-                        let now = chrono::Utc::now();
-                        character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
-                    }
-                    character.save(&mut conn).await.unwrap();
-                });
+            tokio::spawn(async move {
+                let mut conn = pool.get_conn().await.unwrap();
+                if let Some(logged_in_at) = character.logged_in_at {
+                    let now = chrono::Utc::now();
+                    character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
+                }
+                character.save(&mut conn).await.unwrap();
+            });
             (character_name, guild_tag)
         } else {
             self.character

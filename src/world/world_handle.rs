@@ -17,9 +17,7 @@ impl WorldHandle {
     pub fn new(pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let world = World::new(rx, pool);
-        let _ = tokio::task::Builder::new()
-            .name("World")
-            .spawn(run_world(world));
+        tokio::spawn(run_world(world));
 
         Self { tx, is_alive: true }
     }

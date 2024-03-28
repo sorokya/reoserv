@@ -31,9 +31,7 @@ impl MapHandle {
     pub fn new(id: i32, file_size: i32, pool: Pool, file: Emf, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         let map = Map::new(id, file_size, file, pool, world, rx);
-        let _ = tokio::task::Builder::new()
-            .name(&format!("Map {}", id))
-            .spawn(run_map(map));
+        tokio::spawn(run_map(map));
 
         Self { tx }
     }

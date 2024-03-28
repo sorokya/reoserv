@@ -43,6 +43,7 @@ mod find_player;
 mod get_character_by_name;
 mod get_next_player_id;
 mod party;
+mod reload_map;
 mod request_player_list;
 mod request_player_name_list;
 mod save;
@@ -278,6 +279,8 @@ impl World {
             } => self.report_player(player_id, reportee_name, message).await,
 
             Command::RequestPartyList { player_id } => self.refresh_party(player_id).await,
+
+            Command::ReloadMap { map_id } => self.reload_map(map_id).await,
 
             Command::Save => self.save().await,
 

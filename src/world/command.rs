@@ -169,6 +169,9 @@ pub enum Command {
         player_id: i32,
         target_player_id: i32,
     },
+    ReloadMap {
+        map_id: i32,
+    },
     Save,
     SendAdminMessage {
         player_id: i32,

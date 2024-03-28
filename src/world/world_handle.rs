@@ -340,6 +340,10 @@ impl WorldHandle {
         let _ = self.tx.send(Command::RequestPlayerList { player_id });
     }
 
+    pub fn reload_map(&self, map_id: i32) {
+        let _ = self.tx.send(Command::ReloadMap { map_id });
+    }
+
     pub fn save(&self) {
         let _ = self.tx.send(Command::Save);
     }

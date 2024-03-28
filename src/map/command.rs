@@ -1,5 +1,6 @@
 use bytes::Bytes;
 use eolib::protocol::{
+    map::Emf,
     net::{
         client::{ByteCoords, StatId},
         server::{NearbyInfo, WarpEffect},
@@ -276,6 +277,10 @@ pub enum Command {
     },
     RecoverNpcs,
     RecoverPlayers,
+    Reload {
+        file: Box<Emf>,
+        file_size: i32,
+    },
     RemoveBoardPost {
         player_id: i32,
         post_id: i32,

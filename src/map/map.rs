@@ -454,6 +454,8 @@ impl Map {
                     .await
             }
 
+            Command::Reload { file, file_size } => self.reload(file, file_size),
+
             Command::RequestDivorce {
                 player_id,
                 npc_index,

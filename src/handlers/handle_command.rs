@@ -262,6 +262,7 @@ pub async fn handle_command(
                         world.unfreeze_player(args[0].to_owned(), character.name.to_owned())
                     }
                     "global" => world.toggle_global(character.name.to_owned()),
+                    "remap" => world.reload_map(character.map_id),
                     _ => {
                         send_error_message(
                             &player,

@@ -1,6 +1,4 @@
 use std::cmp;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 use eolib::{
     data::{EoSerialize, EoWriter},
@@ -16,11 +14,8 @@ use eolib::{
     },
 };
 use rand::Rng;
-use tokio::sync::Mutex;
-use tokio::task;
 
 use crate::{character::{SpellState, SpellTarget}, NPC_DB, SETTINGS, SPELL_DB};
-use crate::character::Character;
 
 use super::super::Map;
 
@@ -80,16 +75,18 @@ impl Map {
         if spell.target_restrict != SkillTargetRestrict::Friendly {
             return;
         }
+        match target {
+            SpellTarget::Player => self.cast_heal_self(player_id, spell_id, spell),
+            SpellTarget::OtherPlayer(target_player_id) => {
+                self.cast_heal_player(player_id, target_player_id, spell_id, spell);
+            }
+            _ => {}
+        }
 
-        if let SpellTarget::Player = target {
-            self.cast_heal_self(player_id, spell_id, spell);
-        } else if let SpellTarget::Group = target {
+        if let SpellTarget::Group = target {
             self.cast_heal_group(player_id, spell_id, spell).await;
-        } else if let SpellTarget::OtherPlayer(target_player_id) = target {
-            self.cast_heal_player(player_id, target_player_id, spell_id, spell);
         }
     }
-
     fn cast_heal_self(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
         if spell.target_type != SkillTargetType::SELF {
             return;
@@ -162,9 +159,8 @@ impl Map {
     }
 
    async fn cast_heal_group(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
-         let mut characters_map: HashMap<i32, Character> =  self.characters.clone();
-         let mut clone_map = characters_map.clone();
-         let character = match  characters_map.get_mut(&player_id){
+
+         let character = match self.characters.get_mut(&player_id){
             Some(character) => character,
             None => return,
         };
@@ -178,16 +174,17 @@ impl Map {
         character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
 
-        let party_player_ids = match self.world.get_player_party(player_id).await{
+        let party_player_ids = match self.world.get_player_party(player_id).await {
             Some(party) => party.members,
             None => Vec::new(),
         };
 
         for party_member_id in party_player_ids {
-            if let Some(member_character) = clone_map.get_mut(&party_member_id) {
+            if let Some(member_character) = self.characters.get_mut(&party_member_id) {
                 let original_hp = member_character.hp;
                 member_character.hp = cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
                 let hp_percentage = member_character.get_hp_percentage();
+
                 if member_character.hp != original_hp  {
                     member_character
                         .player
@@ -196,6 +193,7 @@ impl Map {
                         .update_party_hp(hp_percentage);
                 }
 
+                let cloned_character = member_character.clone();
 
                 let mut packet = SpellTargetOtherServerPacket {
                     victim_id: party_member_id,
@@ -214,18 +212,22 @@ impl Map {
                     &packet,
                 );
 
-                packet.hp = Some(member_character.clone().hp);
+                packet.hp = Some(cloned_character.hp);
 
-                member_character.player.as_ref().unwrap().send(
+                cloned_character.player.as_ref().unwrap().send(
                     PacketAction::TargetOther,
                     PacketFamily::Spell,
                     &packet,
                 );
-                let new_hp = character.hp;
+
+                let character = match self.characters.get(&player_id) {
+                    Some(character) => character,
+                    None => return,
+                };
 
                 let packet = RecoverPlayerServerPacket {
-                    hp: new_hp,
-                    tp: character.clone().tp,
+                    hp: character.hp,
+                    tp: character.tp,
                 };
 
                 character.player.as_ref().unwrap().send(

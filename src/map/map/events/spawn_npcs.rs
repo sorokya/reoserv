@@ -19,7 +19,7 @@ impl Map {
             let mut npc_index: i32 = 0;
 
             let dead_since = if SETTINGS.npcs.instant_spawn {
-                now - Duration::days(1)
+                now - Duration::try_days(1).unwrap()
             } else {
                 now
             };

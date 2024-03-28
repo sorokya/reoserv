@@ -90,7 +90,6 @@ pub struct NPCs {
     pub instant_spawn: bool,
     pub respawn_rate: i32,
     pub freeze_on_empty_map: bool,
-    pub freeze_out_of_range: bool,
     pub chase_distance: i32,
     pub bored_timer: i32,
     pub act_rate: i32,

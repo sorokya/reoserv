@@ -7,12 +7,13 @@ use eolib::protocol::{
     },
     AdminLevel, Coords, Direction, Gender,
 };
+use eoplus::Arg;
 use evalexpr::{context_map, eval_float_with_context};
 use mysql_async::Conn;
 use rand::Rng;
 use std::cmp;
 
-use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, SETTINGS};
+use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS};
 
 mod add_bank_item;
 mod add_item;
@@ -104,6 +105,33 @@ pub struct Character {
     pub spells: Vec<Spell>,
     pub logged_in_at: Option<DateTime<Utc>>,
     pub spell_state: SpellState,
+    pub quests: Vec<QuestProgress>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct QuestProgress {
+    pub id: i32,
+    pub state: i32,
+    pub npc_kills: Vec<(i32, i32)>,
+    pub player_kills: i32,
+    pub done_at: Option<DateTime<Utc>>,
+    pub completions: i32,
+}
+
+impl QuestProgress {
+    pub fn add_npc_kill(&mut self, npc_id: i32) {
+        match self.npc_kills.iter_mut().find(|(id, _)| npc_id == *id) {
+            Some((_, kills)) => *kills += 1,
+            None => self.npc_kills.push((npc_id, 1)),
+        }
+    }
+
+    pub fn get_npc_kills(&self, npc_id: i32) -> i32 {
+        match self.npc_kills.iter().find(|(id, _)| npc_id == *id) {
+            Some((_, kills)) => *kills,
+            None => 0,
+        }
+    }
 }
 
 impl Character {
@@ -248,6 +276,27 @@ impl Character {
         self.guild_rank == Some(1)
     }
 
+    pub fn get_quest_progress(&self, quest_id: i32) -> QuestProgress {
+        match self.quests.iter().find(|q| q.id == quest_id) {
+            Some(progress) => progress.to_owned(),
+            None => QuestProgress {
+                id: quest_id,
+                ..Default::default()
+            },
+        }
+    }
+
+    pub fn save_quest_progress(&mut self, quest_id: i32, state: i32) {
+        match self.quests.iter_mut().find(|q| q.id == quest_id) {
+            Some(progress) => progress.state = state,
+            None => self.quests.push(QuestProgress {
+                id: quest_id,
+                state,
+                ..Default::default()
+            }),
+        }
+    }
+
     pub async fn save(
         &mut self,
         conn: &mut Conn,
@@ -275,5 +324,270 @@ impl Character {
 
         self.calculate_stats();
         leveled_up
+    }
+
+    pub fn talked_to_npc(&mut self, behavior_id: i32, quest_id: i32, action_id: Option<i32>) {
+        let mut progressed = false;
+        if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => return,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => return,
+            };
+
+            let rule = match state.rules.iter().find(|rule| match action_id {
+                Some(action_id) => {
+                    if rule.name == "DoneDaily" {
+                        let times_per_day = match rule.args.first() {
+                            Some(Arg::Int(times_per_day)) => *times_per_day,
+                            _ => return false,
+                        };
+
+                        let done_at = match progress.done_at {
+                            Some(done_at) => done_at,
+                            None => return false,
+                        };
+
+                        let diff = (Utc::now() - done_at).num_days() as i32;
+                        if diff < 1 {
+                            progress.completions >= times_per_day
+                        } else {
+                            progress.completions = 0;
+                            progress.done_at = None;
+                            false
+                        }
+                    } else {
+                        rule.name == "InputNpc" && rule.args[0] == Arg::Int(action_id)
+                    }
+                }
+                None => rule.name == "TalkedToNpc" && rule.args[0] == Arg::Int(behavior_id),
+            }) {
+                Some(rule) => rule,
+                None => return,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    progressed = true;
+                }
+                None => return,
+            };
+        }
+
+        if progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    pub fn killed_npc(&mut self, npc_id: i32) {
+        let mut quests_progressed = Vec::new();
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state
+                .rules
+                .iter()
+                .find(|rule| rule.name == "KilledNpcs" && rule.args[0] == Arg::Int(npc_id))
+            {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            let required_kills = match rule.args[1] {
+                Arg::Int(kills) => kills,
+                _ => continue,
+            };
+
+            progress.add_npc_kill(npc_id);
+
+            if progress.get_npc_kills(npc_id) >= required_kills {
+                match quest
+                    .states
+                    .iter()
+                    .position(|state| state.name == rule.goto)
+                {
+                    Some(next_state) => {
+                        progress.state = next_state as i32;
+                        quests_progressed.push(progress.id);
+                    }
+                    None => return,
+                };
+            }
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    pub fn entered_map(&mut self) {
+        let mut quests_progressed = Vec::new();
+        let map_id = self.map_id;
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state.rules.iter().find(|rule| {
+                (rule.name == "EnterMap" && rule.args[0] == Arg::Int(map_id))
+                    || rule.name == "LeaveMap" && rule.args[0] != Arg::Int(map_id)
+            }) {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    quests_progressed.push(progress.id);
+                }
+                None => return,
+            };
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    pub fn entered_coord(&mut self) {
+        let mut quests_progressed = Vec::new();
+        let map_id = self.map_id;
+        let coords = self.coords;
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state.rules.iter().find(|rule| {
+                rule.name == "EnterCoord"
+                    && rule.args[0] == Arg::Int(map_id)
+                    && rule.args[1] == Arg::Int(coords.x)
+                    && rule.args[2] == Arg::Int(coords.y)
+            }) {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    quests_progressed.push(progress.id);
+                }
+                None => return,
+            };
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
+        }
+    }
+
+    fn do_quest_actions(&mut self, quest_id: i32) {
+        let state = match self.quests.iter().find(|progress| progress.id == quest_id) {
+            Some(progress) => progress.state,
+            None => return,
+        };
+
+        let quest = match QUEST_DB.get(&quest_id) {
+            Some(quest) => quest,
+            None => return,
+        };
+
+        let state = match quest.states.get(state as usize) {
+            Some(state) => state,
+            None => return,
+        };
+
+        let player = match self.player {
+            Some(ref player) => player,
+            None => return,
+        };
+
+        for action in state.actions.iter() {
+            match action.name.as_str() {
+                "AddNpcText" | "AddNpcChat" | "AddNpcInput" => {}
+                "End" => {
+                    self.quests
+                        .iter_mut()
+                        .find(|q| q.id == quest_id)
+                        .unwrap()
+                        .done_at = Some(Utc::now());
+                }
+                "ResetDaily" => {
+                    let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
+                    if progress.done_at.is_none() {
+                        progress.done_at = Some(Utc::now());
+                    }
+                    progress.completions += 1;
+                    progress.state = 0;
+                }
+                "Reset" => {
+                    let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
+                    if progress.done_at.is_none() {
+                        self.quests.retain(|q| q.id != quest_id)
+                    } else {
+                        progress.state = 0;
+                    }
+                }
+                _ => player.quest_action(action.name.to_owned(), action.args.to_owned()),
+            }
+        }
+
+        let rule = match state.rules.iter().find(|rule| rule.name == "Always") {
+            Some(rule) => rule,
+            None => return,
+        };
+
+        let progress = match self.quests.iter_mut().find(|q| q.id == quest_id) {
+            Some(progress) => progress,
+            None => return,
+        };
+
+        if let Some(next_state) = quest
+            .states
+            .iter()
+            .position(|state| state.name == rule.goto)
+        {
+            progress.state = next_state as i32;
+            self.do_quest_actions(quest_id);
+        }
     }
 }

@@ -1,7 +1,7 @@
 use eolib::protocol::net::{Item, Spell};
 use mysql_async::{prelude::*, Conn, Row, TxOpts};
 
-use super::Character;
+use super::{Character, QuestProgress};
 
 impl Character {
     pub async fn update(
@@ -43,6 +43,19 @@ impl Character {
                 |mut row: Row| Spell {
                     id: row.take(0).unwrap(),
                     level: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
+        let old_quests = conn
+            .exec_map(
+                include_str!("../sql/get_character_quest_progress.sql"),
+                params! {
+                    "character_id" => self.id,
+                },
+                |mut row: Row| QuestProgress {
+                    id: row.take(0).unwrap(),
+                    ..Default::default()
                 },
             )
             .await?;
@@ -131,8 +144,6 @@ impl Character {
         )
         .await?;
 
-        // TODO: save bank
-
         for spell in &old_spells {
             if !self.has_spell(spell.id) {
                 tx.exec_drop(
@@ -147,7 +158,7 @@ impl Character {
         }
 
         for spell in &self.spells {
-            if !old_spells.contains(spell) {
+            if !old_spells.iter().any(|s| s.id == spell.id) {
                 tx.exec_drop(
                     include_str!("../sql/create_spell.sql"),
                     params! {
@@ -171,7 +182,7 @@ impl Character {
         }
 
         for item in &old_items {
-            if !self.items.contains(item) {
+            if !self.items.iter().any(|i| i.id == item.id) {
                 tx.exec_drop(
                     include_str!("../sql/delete_inventory_item.sql"),
                     params! {
@@ -184,7 +195,7 @@ impl Character {
         }
 
         for item in &self.items {
-            if !old_items.contains(item) {
+            if !old_items.iter().any(|i| i.id == item.id) {
                 tx.exec_drop(
                     include_str!("../sql/create_inventory_item.sql"),
                     params! {
@@ -208,7 +219,7 @@ impl Character {
         }
 
         for item in &old_bank {
-            if !self.bank.contains(item) {
+            if !self.bank.iter().any(|i| i.id == item.id) {
                 tx.exec_drop(
                     include_str!("../sql/delete_bank_item.sql"),
                     params! {
@@ -221,7 +232,7 @@ impl Character {
         }
 
         for item in &self.bank {
-            if !old_bank.contains(item) {
+            if !old_bank.iter().any(|i| i.id == item.id) {
                 tx.exec_drop(
                     include_str!("../sql/create_bank_item.sql"),
                     params! {
@@ -238,6 +249,66 @@ impl Character {
                         "character_id" => self.id,
                         "item_id" => item.id,
                         "quantity" => item.amount,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for quest in &old_quests {
+            if !self.quests.iter().any(|q| q.id == quest.id) {
+                tx.exec_drop(
+                    include_str!("../sql/delete_quest_progress.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "quest_id" => quest.id,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for quest in &self.quests {
+            let mut npc_kills = String::from('{');
+            for (index, (npc_id, kills)) in quest.npc_kills.iter().enumerate() {
+                npc_kills.push_str(&format!(
+                    "\"{}\":{}{}",
+                    npc_id,
+                    kills,
+                    if index < quest.npc_kills.len() - 1 {
+                        ","
+                    } else {
+                        ""
+                    }
+                ));
+            }
+            npc_kills.push('}');
+
+            if !old_quests.iter().any(|q| q.id == quest.id) {
+                tx.exec_drop(
+                    include_str!("../sql/create_quest_progress.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "quest_id" => quest.id,
+                        "state" => quest.state,
+                        "npc_kills" => npc_kills,
+                        "player_kills" => quest.player_kills,
+                        "done_at" => quest.done_at.map(|done_at| done_at.naive_utc()),
+                        "completions" => quest.completions,
+                    },
+                )
+                .await?;
+            } else {
+                tx.exec_drop(
+                    include_str!("../sql/update_quest_progress.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "quest_id" => quest.id,
+                        "state" => quest.state,
+                        "npc_kills" => npc_kills,
+                        "player_kills" => quest.player_kills,
+                        "done_at" => quest.done_at.map(|done_at| done_at.naive_utc()),
+                        "completions" => quest.completions,
                     },
                 )
                 .await?;

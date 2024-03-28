@@ -11,6 +11,7 @@ use eolib::protocol::{
     r#pub::{EnfRecord, NpcType},
     Coords, Direction,
 };
+use eoplus::Arg;
 use evalexpr::{context_map, eval_float_with_context};
 use rand::{seq::SliceRandom, Rng};
 
@@ -18,7 +19,7 @@ use crate::{
     character::Character,
     map::Npc,
     utils::{get_distance, get_next_coords, in_client_range, in_range},
-    FORMULAS, NPC_DB, SETTINGS, TALK_DB,
+    FORMULAS, NPC_DB, QUEST_DB, SETTINGS, TALK_DB,
 };
 
 use super::super::Map;
@@ -505,13 +506,18 @@ impl Map {
         }
 
         if !position_updates.is_empty() || !attack_updates.is_empty() || !talk_updates.is_empty() {
-            for character in self.characters.values() {
-                // TODO: might also need to check NPCs previous position..
+            let characters = self.characters.keys().copied().collect::<Vec<_>>();
+
+            for player_id in characters {
+                let coords = match self.characters.get(&player_id) {
+                    Some(character) => character.coords,
+                    None => continue,
+                };
 
                 let in_range_npc_indexes: Vec<i32> = self
                     .npcs
                     .iter()
-                    .filter(|(_, n)| in_range(&character.coords, &n.coords))
+                    .filter(|(_, n)| in_range(&coords, &n.coords))
                     .map(|(i, _)| i)
                     .cloned()
                     .collect();
@@ -522,7 +528,7 @@ impl Map {
                     .cloned()
                     .collect();
 
-                let talk_updates_in_range: Vec<NpcUpdateChat> = talk_updates
+                let mut talk_updates_in_range: Vec<NpcUpdateChat> = talk_updates
                     .iter()
                     .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
@@ -533,6 +539,14 @@ impl Map {
                     .filter(|update| in_range_npc_indexes.contains(&update.npc_index))
                     .cloned()
                     .collect();
+
+                let quest_talk_updates_in_rage: Vec<NpcUpdateChat> =
+                    self.get_quest_talk_updates(&player_id, &in_range_npc_indexes);
+
+                for talk_update in &quest_talk_updates_in_rage {
+                    talk_updates_in_range.retain(|u| u.npc_index != talk_update.npc_index);
+                    talk_updates_in_range.push(talk_update.clone());
+                }
 
                 if !position_updates_in_rage.is_empty()
                     || !talk_updates_in_range.is_empty()
@@ -546,25 +560,127 @@ impl Map {
                         tp: None,
                     };
 
-                    character.player.as_ref().unwrap().send(
-                        PacketAction::Player,
-                        PacketFamily::Npc,
-                        &packet,
-                    );
+                    let player = match self.characters.get(&player_id) {
+                        Some(character) => match character.player {
+                            Some(ref player) => player,
+                            None => continue,
+                        },
+                        None => continue,
+                    };
 
-                    if let Some(player_id) = character.player_id {
-                        let player_died = packet.attacks.iter().any(|update| {
-                            update.player_id == player_id
-                                && update.killed == PlayerKilledState::Killed
-                        });
+                    player.send(PacketAction::Player, PacketFamily::Npc, &packet);
 
-                        if player_died {
-                            character.player.as_ref().unwrap().die();
-                        }
+                    let player_died = packet.attacks.iter().any(|update| {
+                        update.player_id == player_id && update.killed == PlayerKilledState::Killed
+                    });
+
+                    if player_died {
+                        player.die();
                     }
                 }
             }
         }
+    }
+
+    fn get_quest_talk_updates(
+        &mut self,
+        player_id: &i32,
+        npc_indexes: &[i32],
+    ) -> Vec<NpcUpdateChat> {
+        let quests_progress = match self.characters.get(player_id) {
+            Some(character) => character.quests.clone(),
+            None => return Vec::new(),
+        };
+
+        npc_indexes
+            .iter()
+            .filter_map(|index| {
+                let npc = match self.npcs.get_mut(index) {
+                    Some(npc) => npc,
+                    None => return None,
+                };
+
+                if npc.talk_ticks < SETTINGS.npcs.talk_rate {
+                    return None;
+                }
+
+                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                    Some(npc_data) => npc_data,
+                    None => return None,
+                };
+
+                if npc_data.r#type != NpcType::Quest {
+                    return None;
+                }
+
+                npc.talk_ticks = 0;
+
+                let mut possible_messages = Vec::new();
+
+                for progress in &quests_progress {
+                    let quest = match QUEST_DB.get(&progress.id) {
+                        Some(quest) => quest,
+                        None => continue,
+                    };
+
+                    let state = match quest.states.get(progress.state as usize) {
+                        Some(state) => state,
+                        None => continue,
+                    };
+
+                    let chat_action = match state.actions.iter().find(|action| {
+                        action.name == "AddNpcChat"
+                            && action.args[0] == Arg::Int(npc_data.behavior_id)
+                    }) {
+                        Some(chat_action) => chat_action,
+                        None => continue,
+                    };
+
+                    let message = match chat_action.args.get(1) {
+                        Some(Arg::Str(message)) => message.to_owned(),
+                        _ => continue,
+                    };
+
+                    if !possible_messages.contains(&message) {
+                        possible_messages.push(message);
+                    }
+                }
+
+                for (_, quest) in QUEST_DB.iter() {
+                    let state = match quest.states.first() {
+                        Some(state) => state,
+                        None => continue,
+                    };
+
+                    let chat_action = match state.actions.iter().find(|action| {
+                        action.name == "AddNpcChat"
+                            && action.args[0] == Arg::Int(npc_data.behavior_id)
+                    }) {
+                        Some(chat_action) => chat_action,
+                        None => continue,
+                    };
+
+                    let message = match chat_action.args.get(1) {
+                        Some(Arg::Str(message)) => message.to_owned(),
+                        _ => continue,
+                    };
+
+                    if !possible_messages.contains(&message) {
+                        possible_messages.push(message);
+                    }
+                }
+
+                if !possible_messages.is_empty() {
+                    let mut rng = rand::thread_rng();
+                    Some(NpcUpdateChat {
+                        npc_index: *index,
+                        message: possible_messages.choose(&mut rng).unwrap().to_string(),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
     }
 }
 

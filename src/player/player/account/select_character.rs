@@ -60,12 +60,9 @@ impl Player {
 
         let mut character = match Character::load(&mut conn, character_id).await {
             Ok(character) => character,
-            Err(_) => {
-                self.close(format!(
-                    "Tried to select character that doesn't exist: {}",
-                    character_id
-                ))
-                .await;
+            Err(e) => {
+                self.close(format!("Failed to load character {}: {}", character_id, e))
+                    .await;
                 return false;
             }
         };

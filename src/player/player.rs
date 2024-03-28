@@ -59,6 +59,7 @@ mod get_welcome_request_data;
 #[macro_use]
 mod guild;
 mod ping;
+mod quest_action;
 mod request_warp;
 mod send_server_message;
 mod take_session_id;
@@ -250,6 +251,7 @@ impl Player {
                     .set_start(self.bus.upcoming_sequence_start);
                 let _ = respond_to.send(());
             }
+            Command::QuestAction { action, args } => self.quest_action(action, args).await,
             Command::RequestAccountCreation { username } => {
                 return self.request_account_creation(username).await
             }

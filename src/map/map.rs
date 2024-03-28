@@ -51,10 +51,12 @@ mod chest;
 mod events;
 #[macro_use]
 mod guild;
+mod effect;
 mod inn;
 mod jukebox;
 mod locker;
 mod marriage;
+mod quest;
 mod shop;
 mod skill_master;
 mod trade;
@@ -210,6 +212,13 @@ impl Map {
                 coords,
             } => self.drop_item(target_player_id, item, coords).await,
 
+            Command::EffectOnCoord { coords, effect_id } => self.effect_on_coord(coords, effect_id),
+
+            Command::EffectOnPlayer {
+                player_id,
+                effect_id,
+            } => self.effect_on_player(player_id, effect_id),
+
             Command::Emote {
                 target_player_id,
                 emote,
@@ -286,11 +295,25 @@ impl Map {
                 self.get_rid_and_size(respond_to);
             }
 
+            Command::AwardExperience { player_id, amount } => {
+                self.award_experience(player_id, amount)
+            }
+
             Command::GiveItem {
                 target_player_id,
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
+
+            Command::GiveKarma { player_id, amount } => self.give_karma(player_id, amount),
+
+            Command::RemoveKarma { player_id, amount } => self.remove_karma(player_id, amount),
+
+            Command::LoseItem {
+                player_id,
+                item_id,
+                amount,
+            } => self.lose_item(player_id, item_id, amount),
 
             Command::JoinGuild {
                 player_id,
@@ -412,6 +435,14 @@ impl Map {
                 self.remove_trade_item(player_id, item_id).await
             }
 
+            Command::ReplyToQuestNpc {
+                player_id,
+                npc_index,
+                quest_id,
+                session_id,
+                action_id,
+            } => self.reply_to_quest_npc(player_id, npc_index, quest_id, session_id, action_id),
+
             Command::RequestCitizenship {
                 player_id,
                 session_id,
@@ -494,6 +525,11 @@ impl Map {
                 self.serialize(respond_to);
             }
 
+            Command::SetClass {
+                player_id,
+                class_id,
+            } => self.set_class(player_id, class_id),
+
             Command::Sit { player_id } => self.sit(player_id),
 
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),
@@ -514,6 +550,13 @@ impl Map {
             Command::SpawnItems => self.spawn_items().await,
 
             Command::SpawnNpcs => self.spawn_npcs().await,
+
+            Command::TalkToQuestNpc {
+                player_id,
+                npc_index,
+                quest_id,
+                session_id,
+            } => self.talk_to_quest_npc(player_id, npc_index, quest_id, session_id),
 
             Command::TakeChestItem { player_id, item_id } => {
                 self.take_chest_item(player_id, item_id).await;
@@ -561,6 +604,10 @@ impl Map {
                 self.view_board_post(player_id, post_id).await
             }
 
+            Command::ViewQuestHistory { player_id } => self.view_quest_history(player_id),
+
+            Command::ViewQuestProgress { player_id } => self.view_quest_progress(player_id),
+
             Command::Walk {
                 target_player_id,
                 direction,
@@ -588,6 +635,7 @@ impl Map {
                 npc_indexes,
             } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
             Command::RequestRefresh { player_id } => self.request_refresh(player_id),
+            Command::Quake { magnitude } => self.quake(magnitude),
         }
     }
 }

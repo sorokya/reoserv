@@ -116,6 +116,14 @@ pub enum Command {
         item_id: i32,
         sub_loc: i32,
     },
+    EffectOnPlayer {
+        player_id: i32,
+        effect_id: i32,
+    },
+    EffectOnCoord {
+        coords: Coords,
+        effect_id: i32,
+    },
     Face {
         target_player_id: i32,
         direction: Direction,
@@ -154,8 +162,25 @@ pub enum Command {
     GetRidAndSize {
         respond_to: oneshot::Sender<([i32; 2], i32)>,
     },
+    AwardExperience {
+        player_id: i32,
+        amount: i32,
+    },
     GiveItem {
         target_player_id: i32,
+        item_id: i32,
+        amount: i32,
+    },
+    GiveKarma {
+        player_id: i32,
+        amount: i32,
+    },
+    RemoveKarma {
+        player_id: i32,
+        amount: i32,
+    },
+    LoseItem {
+        player_id: i32,
         item_id: i32,
         amount: i32,
     },
@@ -310,6 +335,13 @@ pub enum Command {
         target_player_id: i32,
         request: PartyRequest,
     },
+    ReplyToQuestNpc {
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+        action_id: Option<i32>,
+    },
     RequestToJoinGuild {
         player_id: i32,
         guild_tag: String,
@@ -345,6 +377,10 @@ pub enum Command {
     Serialize {
         respond_to: oneshot::Sender<Bytes>,
     },
+    SetClass {
+        player_id: i32,
+        class_id: i32,
+    },
     Sit {
         player_id: i32,
     },
@@ -363,6 +399,12 @@ pub enum Command {
         player_id: i32,
         spell_id: i32,
         timestamp: i32,
+    },
+    TalkToQuestNpc {
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
     },
     TakeChestItem {
         player_id: i32,
@@ -403,6 +445,12 @@ pub enum Command {
         player_id: i32,
         post_id: i32,
     },
+    ViewQuestHistory {
+        player_id: i32,
+    },
+    ViewQuestProgress {
+        player_id: i32,
+    },
     Walk {
         target_player_id: i32,
         direction: Direction,
@@ -417,4 +465,7 @@ pub enum Command {
     SpawnItems,
     SpawnNpcs,
     ActNpcs,
+    Quake {
+        magnitude: i32,
+    },
 }

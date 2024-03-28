@@ -1,10 +1,11 @@
+use chrono::{NaiveDateTime, TimeZone, Utc};
 use eolib::protocol::{
     net::{server::SitState, Item, Spell},
     AdminLevel, Direction, Gender,
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
 
-use super::Character;
+use super::{Character, QuestProgress};
 
 impl Character {
     pub async fn load(
@@ -120,6 +121,45 @@ impl Character {
                 |mut row: Row| Spell {
                     id: row.take(0).unwrap(),
                     level: row.take(1).unwrap(),
+                },
+            )
+            .await?;
+
+        character.quests = conn
+            .exec_map(
+                include_str!("../sql/get_character_quest_progress.sql"),
+                params! {
+                    "character_id" => id,
+                },
+                |mut row: Row| QuestProgress {
+                    id: row.take(0).unwrap(),
+                    state: row.take(1).unwrap(),
+                    npc_kills: {
+                        let json = row.take::<String, usize>(2).unwrap();
+                        match serde_json::from_str::<serde_json::Value>(&json) {
+                            Ok(value) => match value.as_object() {
+                                Some(object) => object
+                                    .iter()
+                                    .map(|(id, amount)| {
+                                        (
+                                            id.parse::<i32>().unwrap(),
+                                            amount.as_i64().unwrap() as i32,
+                                        )
+                                    })
+                                    .collect::<Vec<_>>(),
+                                None => Vec::new(),
+                            },
+                            Err(_) => Vec::new(),
+                        }
+                    },
+                    player_kills: row.take(3).unwrap(),
+                    done_at: row
+                        .take::<Option<NaiveDateTime>, usize>(4)
+                        .map(|done_at| {
+                            done_at.map(|done_at| Utc.from_local_datetime(&done_at).unwrap())
+                        })
+                        .unwrap(),
+                    completions: row.take(5).unwrap(),
                 },
             )
             .await?;

@@ -246,7 +246,11 @@ pub async fn handle_command(
                         character.name.to_owned(),
                         true,
                     ),
-                    "quake" => world.quake(args[0].parse::<i32>().unwrap()),
+                    "quake" => world.quake(if args.is_empty() {
+                        1
+                    } else {
+                        args[0].parse::<i32>().unwrap()
+                    }),
                     "mute" => world.mute_player(args[0].to_owned(), character.name.to_owned()),
                     "player" => {
                         world.request_player_info(character.player_id.unwrap(), args[0].to_owned())

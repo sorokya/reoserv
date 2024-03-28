@@ -5,13 +5,14 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
     server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
     Ecf, Eif, Enf, Esf,
 };
+use eoplus::Quest;
 use lazy_static::lazy_static;
 
 #[macro_use]
@@ -45,7 +46,7 @@ use crate::{
     lang::Lang,
     player::PlayerHandle,
     utils::{
-        load_class_file, load_drop_file, load_inn_file, load_item_file, load_npc_file,
+        load_class_file, load_drop_file, load_inn_file, load_item_file, load_npc_file, load_quests,
         load_shop_file, load_skill_master_file, load_spell_file, load_talk_file,
     },
 };
@@ -68,6 +69,7 @@ lazy_static! {
         load_skill_master_file().expect("Failed to load Skill Master file!");
     static ref SPELL_DB: Esf = load_spell_file().expect("Failed to load ESF file!");
     static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
+    static ref QUEST_DB: HashMap<i32, Quest> = load_quests();
     static ref EXP_TABLE: [i32; 254] = load_exp_table();
 }
 
@@ -132,6 +134,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Items: {}", ITEM_DB.items.len());
     info!("NPCs: {}", NPC_DB.npcs.len());
     info!("Skills: {}", SPELL_DB.skills.len());
+    info!("Quests: {}", QUEST_DB.len());
 
     let world = WorldHandle::new(pool.clone());
     {

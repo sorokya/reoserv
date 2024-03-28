@@ -353,6 +353,12 @@ impl Map {
                 });
             }
         }
+
+        for gain in &exp_gains {
+            if let Some(character) = self.characters.get_mut(&gain.player_id) {
+                character.killed_npc(npc_id);
+            }
+        }
     }
 
     fn attack_npc_killed_level_up(

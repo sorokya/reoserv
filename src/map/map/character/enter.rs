@@ -34,8 +34,12 @@ impl Map {
             );
         }
 
+        let mut character = *new_character;
+
+        character.entered_map();
+
         self.characters
-            .insert(new_character.player_id.unwrap(), *new_character);
+            .insert(character.player_id.unwrap(), character);
 
         let _ = respond_to.send(());
     }

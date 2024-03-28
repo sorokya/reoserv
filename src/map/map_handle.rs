@@ -161,6 +161,17 @@ impl MapHandle {
         });
     }
 
+    pub fn effect_on_player(&self, player_id: i32, effect_id: i32) {
+        let _ = self.tx.send(Command::EffectOnPlayer {
+            player_id,
+            effect_id,
+        });
+    }
+
+    pub fn effect_on_coord(&self, coords: Coords, effect_id: i32) {
+        let _ = self.tx.send(Command::EffectOnCoord { coords, effect_id });
+    }
+
     pub fn emote(&self, target_player_id: i32, emote: Emote) {
         let _ = self.tx.send(Command::Emote {
             target_player_id,
@@ -258,9 +269,29 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn award_experience(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::AwardExperience { player_id, amount });
+    }
+
     pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::GiveItem {
             target_player_id,
+            item_id,
+            amount,
+        });
+    }
+
+    pub fn give_karma(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::GiveKarma { player_id, amount });
+    }
+
+    pub fn remove_karma(&self, player_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::RemoveKarma { player_id, amount });
+    }
+
+    pub fn lose_item(&self, player_id: i32, item_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::LoseItem {
+            player_id,
             item_id,
             amount,
         });
@@ -442,6 +473,23 @@ impl MapHandle {
             .send(Command::RemoveTradeItem { player_id, item_id });
     }
 
+    pub fn reply_to_quest_npc(
+        &self,
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+        action_id: Option<i32>,
+    ) {
+        let _ = self.tx.send(Command::ReplyToQuestNpc {
+            player_id,
+            npc_index,
+            quest_id,
+            session_id,
+            action_id,
+        });
+    }
+
     pub fn request_citizenship(&self, player_id: i32, session_id: i32, answers: [String; 3]) {
         let _ = self.tx.send(Command::RequestCitizenship {
             player_id,
@@ -613,12 +661,34 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub fn set_class(&self, player_id: i32, class_id: i32) {
+        let _ = self.tx.send(Command::SetClass {
+            player_id,
+            class_id,
+        });
+    }
+
     pub fn spawn_items(&self) {
         let _ = self.tx.send(Command::SpawnItems);
     }
 
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
+    }
+
+    pub fn talk_to_quest_npc(
+        &self,
+        player_id: i32,
+        npc_index: i32,
+        quest_id: i32,
+        session_id: i32,
+    ) {
+        let _ = self.tx.send(Command::TalkToQuestNpc {
+            player_id,
+            npc_index,
+            quest_id,
+            session_id,
+        });
     }
 
     pub fn take_chest_item(&self, player_id: i32, item_id: i32) {
@@ -697,6 +767,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::ViewBoardPost { player_id, post_id });
     }
 
+    pub fn view_quest_history(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ViewQuestHistory { player_id });
+    }
+
+    pub fn view_quest_progress(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ViewQuestProgress { player_id });
+    }
+
     pub fn walk(
         &self,
         target_player_id: i32,
@@ -726,6 +804,10 @@ impl MapHandle {
             direction,
             timestamp,
         });
+    }
+
+    pub fn quake(&self, magnitude: i32) {
+        let _ = self.tx.send(Command::Quake { magnitude });
     }
 }
 

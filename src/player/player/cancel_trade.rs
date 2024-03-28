@@ -12,6 +12,10 @@ impl Player {
             None => return,
         };
 
+        if !self.trading {
+            return;
+        }
+
         self.interact_player_id = None;
         self.trading = false;
         self.trade_accepted = false;

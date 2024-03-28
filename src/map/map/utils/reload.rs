@@ -60,6 +60,7 @@ impl Map {
         self.jukebox_ticks = 0;
         self.wedding = None;
         self.wedding_ticks = 0;
+        self.evacuate_ticks = None;
 
         let mut writer = EoWriter::new();
 

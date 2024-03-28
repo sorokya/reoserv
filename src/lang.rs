@@ -20,6 +20,8 @@ pub struct Lang {
     pub wedding_five: String,
     pub wedding_end: String,
     pub wedding_error: String,
+    pub evacuate_warning: String,
+    pub evacuate_last_warning: String,
 }
 
 impl Lang {

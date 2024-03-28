@@ -1,3 +1,3 @@
-mod effect_on_coord;
-mod effect_on_player;
+mod effect_on_coords;
+mod effect_on_players;
 mod quake;

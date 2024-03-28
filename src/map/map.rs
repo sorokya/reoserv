@@ -212,12 +212,14 @@ impl Map {
                 coords,
             } => self.drop_item(target_player_id, item, coords).await,
 
-            Command::EffectOnCoord { coords, effect_id } => self.effect_on_coord(coords, effect_id),
+            Command::EffectOnCoord { coords, effect_id } => {
+                self.effect_on_coords(&[coords], effect_id)
+            }
 
             Command::EffectOnPlayer {
                 player_id,
                 effect_id,
-            } => self.effect_on_player(player_id, effect_id),
+            } => self.effect_on_players(&[player_id], effect_id),
 
             Command::Emote {
                 target_player_id,

@@ -220,6 +220,13 @@ pub struct Marriage {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Evacuate {
+    pub sfx_id: i32,
+    pub timer_seconds: i32,
+    pub timer_step: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -240,6 +247,7 @@ pub struct Settings {
     pub barber: Barber,
     pub guild: Guild,
     pub marriage: Marriage,
+    pub evacuate: Evacuate,
 }
 
 impl Settings {

@@ -7,7 +7,7 @@ use eolib::protocol::{
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, world::WorldHandle};
+use crate::{character::Character, world::WorldHandle, SETTINGS};
 
 use super::{Chest, Command, Door, Item, Npc, Wedding};
 
@@ -35,6 +35,7 @@ pub struct Map {
     has_jukebox: bool,
     wedding: Option<Wedding>,
     wedding_ticks: i32,
+    evacuate_ticks: Option<i32>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -124,6 +125,7 @@ impl Map {
             has_jukebox,
             wedding: None,
             wedding_ticks: 0,
+            evacuate_ticks: None,
         }
     }
 
@@ -551,6 +553,14 @@ impl Map {
                 timestamp,
             } => self.start_spell_chant(player_id, spell_id, timestamp),
 
+            Command::StartEvacuate => {
+                if self.evacuate_ticks.is_some() {
+                    self.evacuate_ticks = None;
+                } else {
+                    self.evacuate_ticks = Some(SETTINGS.evacuate.timer_seconds);
+                }
+            }
+
             Command::SpawnItems => self.spawn_items().await,
 
             Command::SpawnNpcs => self.spawn_npcs().await,
@@ -583,6 +593,8 @@ impl Map {
             Command::TimedWarpSuck => self.timed_warp_suck(),
 
             Command::TimedWedding => self.timed_wedding(),
+
+            Command::TimedEvacuate => self.timed_evacuate(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

@@ -635,6 +635,10 @@ impl MapHandle {
         });
     }
 
+    pub fn start_evacuate(&self) {
+        let _ = self.tx.send(Command::StartEvacuate);
+    }
+
     pub async fn save(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Save { respond_to: tx });
@@ -733,6 +737,10 @@ impl MapHandle {
 
     pub fn timed_wedding(&self) {
         let _ = self.tx.send(Command::TimedWedding);
+    }
+
+    pub fn timed_evacuate(&self) {
+        let _ = self.tx.send(Command::TimedEvacuate);
     }
 
     pub fn toggle_hidden(&self, player_id: i32) {

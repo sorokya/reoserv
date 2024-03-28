@@ -14,5 +14,7 @@
   wedding_four: "Please place these rings on eachothers finger..",
   wedding_five: "{partner} and {name} have consented together in marriage. And are now partners for as long you both shall live.",
   wedding_end: "Congratulations to the couple!",
-  wedding_error: "I'm sorry, something went wrong.."
+  wedding_error: "I'm sorry, something went wrong..",
+  evacuate_warning: "Warning! - please leave this map in {seconds} seconds or be sent to jail.",
+  evacuate_last_warning: "Last warning! - leave this map in {seconds} seconds or be sent to jail.",
 )

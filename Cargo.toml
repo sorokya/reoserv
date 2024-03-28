@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2021"
 description = "The rust powered endless online server emulator"
@@ -60,3 +60,19 @@ targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-
 pr-run-mode = "plan"
 # Whether to install an updater program
 install-updater = false
+
+# Extra files to include in release tarballs
+include = [
+  "./.env.example",
+  "./Config.toml",
+  "./Arenas.ron",
+  "./Commands.ron",
+  "./Formulas.ron",
+  "./PacketRateLimits.ron",
+  "./db-init/",
+  "./news.txt",
+  "./lang",
+  "./maps",
+  "./pub",
+  "./quests"
+]

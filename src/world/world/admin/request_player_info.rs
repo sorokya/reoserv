@@ -1,7 +1,7 @@
 use eolib::protocol::net::{
     server::{
         AdminInteractTellServerPacket, BigCoords, CharacterBaseStats, CharacterElementalStats,
-        CharacterSecondaryStats, CharacterStatsInfoLookup,
+        CharacterSecondaryStatsInfoLookup, CharacterStatsInfoLookup,
     },
     PacketAction, PacketFamily,
 };
@@ -61,11 +61,9 @@ impl World {
                             con: character.adj_constitution,
                             cha: character.adj_charisma,
                         },
-                        // TODO: Use CharacterSecondaryStatsInfoLookup when merged
-                        // https://github.com/Cirras/eo-protocol/pull/22
-                        secondary_stats: CharacterSecondaryStats {
-                            max_damage: character.min_damage,
-                            min_damage: character.max_damage,
+                        secondary_stats: CharacterSecondaryStatsInfoLookup {
+                            min_damage: character.min_damage,
+                            max_damage: character.max_damage,
                             accuracy: character.accuracy,
                             evade: character.evasion,
                             armor: character.armor,

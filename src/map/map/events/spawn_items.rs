@@ -35,7 +35,7 @@ impl Map {
                         .filter(|spawn| {
                             spawn.slot == slot
                                 && now - spawn.last_taken
-                                    >= Duration::minutes(spawn.spawn_time.into())
+                                    >= Duration::try_minutes(spawn.spawn_time.into()).unwrap()
                         })
                         .collect::<Vec<_>>();
                     if possible_spawns.is_empty() {

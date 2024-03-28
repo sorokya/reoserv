@@ -615,15 +615,17 @@ impl Map {
 
                 npc.talk_ticks = 0;
 
+                let mut possible_messages = Vec::new();
+
                 for progress in &quests_progress {
                     let quest = match QUEST_DB.get(&progress.id) {
                         Some(quest) => quest,
-                        None => return None,
+                        None => continue,
                     };
 
                     let state = match quest.states.get(progress.state as usize) {
                         Some(state) => state,
-                        None => return None,
+                        None => continue,
                     };
 
                     let chat_action = match state.actions.iter().find(|action| {
@@ -636,13 +638,12 @@ impl Map {
 
                     let message = match chat_action.args.get(1) {
                         Some(Arg::Str(message)) => message.to_owned(),
-                        _ => return None,
+                        _ => continue,
                     };
 
-                    return Some(NpcUpdateChat {
-                        npc_index: *index,
-                        message,
-                    });
+                    if !possible_messages.contains(&message) {
+                        possible_messages.push(message);
+                    }
                 }
 
                 for (_, quest) in QUEST_DB.iter() {
@@ -661,16 +662,23 @@ impl Map {
 
                     let message = match chat_action.args.get(1) {
                         Some(Arg::Str(message)) => message.to_owned(),
-                        _ => return None,
+                        _ => continue,
                     };
 
-                    return Some(NpcUpdateChat {
-                        npc_index: *index,
-                        message,
-                    });
+                    if !possible_messages.contains(&message) {
+                        possible_messages.push(message);
+                    }
                 }
 
-                None
+                if !possible_messages.is_empty() {
+                    let mut rng = rand::thread_rng();
+                    Some(NpcUpdateChat {
+                        npc_index: *index,
+                        message: possible_messages.choose(&mut rng).unwrap().to_string(),
+                    })
+                } else {
+                    None
+                }
             })
             .collect::<Vec<_>>()
     }

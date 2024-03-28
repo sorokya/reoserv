@@ -173,13 +173,13 @@ impl Map {
             return;
         }
 
-        character.spell_state = SpellState::None;
-        character.tp -= spell.tp_cost;
-
         let party_player_ids = match self.world.get_player_party(player_id).await {
             Some(party) => party.members,
-            None => Vec::new(),
+            None => return,
         };
+
+        character.spell_state = SpellState::None;
+        character.tp -= spell.tp_cost;
 
         let mut healed_players: Vec<GroupHealTargetPlayer> =
             Vec::with_capacity(party_player_ids.len());

@@ -15,7 +15,10 @@ use eolib::{
 };
 use rand::Rng;
 
-use crate::{character::{SpellState, SpellTarget}, NPC_DB, SETTINGS, SPELL_DB};
+use crate::{
+    character::{SpellState, SpellTarget},
+    NPC_DB, SETTINGS, SPELL_DB,
+};
 
 use super::super::Map;
 
@@ -32,7 +35,10 @@ impl Map {
         };
 
         match spell_data.r#type {
-            SkillType::Heal => self.cast_heal_spell(player_id, spell_id, spell_data, target).await,
+            SkillType::Heal => {
+                self.cast_heal_spell(player_id, spell_id, spell_data, target)
+                    .await
+            }
             SkillType::Attack => {
                 self.cast_damage_spell(player_id, spell_id, spell_data, target)
                     .await
@@ -158,9 +164,8 @@ impl Map {
         );
     }
 
-   async fn cast_heal_group(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
-
-         let character = match self.characters.get_mut(&player_id){
+    async fn cast_heal_group(&mut self, player_id: i32, spell_id: i32, spell: &EsfRecord) {
+        let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };
@@ -169,7 +174,7 @@ impl Map {
             return;
         }
 
-         let character_direction = character.direction;
+        let character_direction = character.direction;
 
         character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
@@ -182,10 +187,11 @@ impl Map {
         for party_member_id in party_player_ids {
             if let Some(member_character) = self.characters.get_mut(&party_member_id) {
                 let original_hp = member_character.hp;
-                member_character.hp = cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
+                member_character.hp =
+                    cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
                 let hp_percentage = member_character.get_hp_percentage();
 
-                if member_character.hp != original_hp  {
+                if member_character.hp != original_hp {
                     member_character
                         .player
                         .as_ref()
@@ -235,7 +241,6 @@ impl Map {
                     PacketFamily::Recover,
                     &packet,
                 );
-
             }
         }
     }

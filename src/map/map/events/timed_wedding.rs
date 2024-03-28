@@ -186,26 +186,7 @@ impl Map {
                     WeddingState::Hearts
                 }
                 WeddingState::Hearts => {
-                    // TODO: Use packet struct when merged
-                    // https://github.com/Cirras/eo-protocol/pull/21
-                    let mut writer = EoWriter::new();
-                    let _ = writer.add_short(player_id);
-                    let _ = writer.add_three(1);
-                    let _ = writer.add_short(partner_id);
-                    let _ = writer.add_three(1);
-
-                    let buf = writer.to_byte_array();
-
-                    for (_, character) in self.characters.iter() {
-                        if let Some(player) = character.player.as_ref() {
-                            player.send_buf(
-                                PacketAction::Player,
-                                PacketFamily::Effect,
-                                buf.clone(),
-                            );
-                        }
-                    }
-
+                    self.effect_on_players(&[player_id, partner_id], 1);
                     WeddingState::PriestDialog5AndConfetti
                 }
                 WeddingState::PriestDialog5AndConfetti => {
@@ -218,21 +199,7 @@ impl Map {
                         ),
                     );
 
-                    // TODO: Use packet struct when merged
-                    // https://github.com/Cirras/eo-protocol/pull/21
-                    let mut writer = EoWriter::new();
-                    let _ = partner.coords.serialize(&mut writer);
-                    let _ = writer.add_short(11);
-                    let _ = character.coords.serialize(&mut writer);
-                    let _ = writer.add_short(11);
-
-                    let buf = writer.to_byte_array();
-
-                    for (_, character) in self.characters.iter() {
-                        if let Some(player) = character.player.as_ref() {
-                            player.send_buf(PacketAction::Agree, PacketFamily::Effect, buf.clone());
-                        }
-                    }
+                    self.effect_on_players(&[player_id, partner_id], 11);
 
                     WeddingState::Done
                 }

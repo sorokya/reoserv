@@ -371,3 +371,13 @@ ceremony_start_delay_seconds = 20
 # Effect that plays on the couple after the ceremony
 celebration_effect_id = 1
 
+[evacuate]
+
+# Sound effect to play for each evacuate warning
+sfx_id = 51
+
+# How long the evacuate timer lasts in seconds (should be a multiple of timer_step)
+timer_seconds = 60
+
+# Seconds between each warning
+timer_step = 15

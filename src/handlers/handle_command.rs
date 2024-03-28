@@ -63,6 +63,18 @@ async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle)
     }
 }
 
+async fn evacuate(character: &Character, world: &WorldHandle) {
+    let map = match world.get_map(character.map_id).await {
+        Ok(map) => map,
+        Err(e) => {
+            error!("Failed to get map: {}", e);
+            return;
+        }
+    };
+
+    map.start_evacuate();
+}
+
 async fn spawn_item(args: &[String], character: &Character) {
     let identifier = (*args[0]).to_string();
 
@@ -218,6 +230,7 @@ pub async fn handle_command(
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,
+                    "evacuate" => evacuate(character, &world).await,
                     "jail" => world.jail_player(args[0].to_owned(), character.name.to_owned()),
                     "free" => world.free_player(args[0].to_owned()),
                     "kick" => {

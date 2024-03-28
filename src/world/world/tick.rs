@@ -24,6 +24,7 @@ impl World {
         self.arena_ticks += 1;
         self.door_close_ticks += 1;
         self.wedding_ticks += 1;
+        self.evacuate_ticks += 1;
 
         if self.player_ticks >= ONE_SECOND {
             for player in self.players.values() {
@@ -75,6 +76,10 @@ impl World {
 
             if self.wedding_ticks >= ONE_SECOND {
                 map.timed_wedding();
+            }
+
+            if self.evacuate_ticks >= ONE_SECOND {
+                map.timed_evacuate();
             }
 
             if self.arena_ticks >= ONE_SECOND {
@@ -132,7 +137,14 @@ impl World {
 
         if self.arena_ticks >= ONE_SECOND {
             self.arena_ticks = 0;
+        }
+
+        if self.wedding_ticks >= ONE_SECOND {
             self.wedding_ticks = 0;
+        }
+
+        if self.evacuate_ticks >= ONE_SECOND {
+            self.evacuate_ticks = 0;
         }
     }
 }

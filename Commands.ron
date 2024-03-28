@@ -246,6 +246,14 @@
             args: [],
         ),
         (
+            name: "evacuate",
+            alias: "e",
+            description: "Start evacuate event",
+            usage: "$e",
+            admin_level: "GameMaster",
+            args: [],
+        ),
+        (
             name: "spawnitem",
             alias: "si",
             description: "Spawn an item into your inventory",

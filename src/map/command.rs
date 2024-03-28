@@ -405,6 +405,7 @@ pub enum Command {
         spell_id: i32,
         timestamp: i32,
     },
+    StartEvacuate,
     TalkToQuestNpc {
         player_id: i32,
         npc_index: i32,
@@ -426,6 +427,7 @@ pub enum Command {
     TimedSpikes,
     TimedWarpSuck,
     TimedWedding,
+    TimedEvacuate,
     ToggleHidden {
         player_id: i32,
     },

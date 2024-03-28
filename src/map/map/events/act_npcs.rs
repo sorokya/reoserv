@@ -18,7 +18,7 @@ use rand::{seq::SliceRandom, Rng};
 use crate::{
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords, in_client_range, in_range},
+    utils::{get_distance, get_next_coords, in_range},
     FORMULAS, NPC_DB, QUEST_DB, SETTINGS, TALK_DB,
 };
 
@@ -55,10 +55,21 @@ impl Map {
         }
     }
 
-    fn act_npc_move_chase(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdatePosition> {
+    fn act_npc_move_chase(
+        &mut self,
+        index: i32,
+        npc_id: i32,
+        npc_type: NpcType,
+    ) -> Option<NpcUpdatePosition> {
         let target_coords = match self.npc_get_chase_target_coords(index, npc_id) {
             Some(target_coords) => target_coords,
-            None => return self.act_npc_move_idle(index),
+            None => {
+                if npc_type == NpcType::Passive {
+                    return self.act_npc_move_idle(index);
+                } else {
+                    return None;
+                }
+            }
         };
 
         let npc_coords = match self.npcs.get(&index) {
@@ -308,7 +319,7 @@ impl Map {
         };
 
         if npc_data.r#type == NpcType::Aggressive || has_opponent {
-            self.act_npc_move_chase(index, npc_id)
+            self.act_npc_move_chase(index, npc_id, npc_data.r#type)
         } else if act_ticks >= idle_rate {
             self.act_npc_move_idle(index)
         } else {
@@ -410,16 +421,7 @@ impl Map {
     ) {
         let (npc_id, spawn_index, act_ticks) = match self.npcs.get_mut(&index) {
             Some(npc) => {
-                let out_of_range = if SETTINGS.npcs.freeze_out_of_range {
-                    !self
-                        .characters
-                        .values()
-                        .any(|c| !c.hidden && in_client_range(&c.coords, &npc.coords))
-                } else {
-                    false
-                };
-
-                if !npc.alive || out_of_range {
+                if !npc.alive {
                     return (None, None, None);
                 } else {
                     for opponent in npc.opponents.iter_mut() {

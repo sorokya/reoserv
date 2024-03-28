@@ -193,10 +193,6 @@ respawn_rate = 8
 # if false they will always act even if there are no players
 freeze_on_empty_map = true
 
-# Should NPCs stand still if there are no nearby players?
-# if false they will always act even if there are no nearby players
-freeze_out_of_range = true
-
 # Range in which an aggroed NPC will chase a player
 chase_distance = 10
 

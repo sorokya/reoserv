@@ -205,7 +205,7 @@ impl Map {
 
             healed_players.push(GroupHealTargetPlayer {
                 player_id: party_member_id,
-                hp_percentage: member_character.get_hp_percentage(),
+                hp_percentage,
                 hp: member_character.hp,
             });
         }
@@ -213,12 +213,19 @@ impl Map {
         for character in self.characters.values() {
             let in_range_healed_players = healed_players
                 .iter()
-                .filter(|healed| {
+                .filter_map(|healed| {
                     let healed_character = match self.characters.get(&healed.player_id) {
                         Some(character) => character,
-                        None => return false,
+                        None => return None,
                     };
-                    in_client_range(&character.coords, &healed_character.coords)
+
+                    if player_id == healed.player_id
+                        || in_client_range(&character.coords, &healed_character.coords)
+                    {
+                        Some(healed.to_owned())
+                    } else {
+                        None
+                    }
                 })
                 .collect::<Vec<_>>();
 
@@ -228,7 +235,7 @@ impl Map {
                     caster_id: player_id,
                     caster_tp: character.tp,
                     spell_heal_hp: spell.hp_heal,
-                    players: in_range_healed_players.into_iter().cloned().collect(),
+                    players: in_range_healed_players,
                 };
 
                 character.player.as_ref().unwrap().send(

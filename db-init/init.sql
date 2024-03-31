@@ -313,6 +313,10 @@ CREATE TABLE `QuestProgress` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+
+/* Changing the delimiter to $$ to define stored procedure without encountering syntax errors from semicolon usage */
+DELIMITER $$
+
 CREATE PROCEDURE `GetGuildDetails`(
 	IN `guild_identity` VARCHAR(32)
 )
@@ -347,6 +351,7 @@ INNER JOIN `Character`
 	AND `Character`.`guild_rank` <= 2
 WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`);
 
-END
+END $$
 
--- Dump completed on 2022-02-11  1:06:02
+/* Resetting it back to (;) post stored procedure */
+DELIMITER ;

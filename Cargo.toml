@@ -18,7 +18,7 @@ lto = "thin"
 console = ["console-subscriber"]
 
 [dependencies]
-bytes = "1.0"
+bytes = "1.6"
 config = { version = "0.14", features = ["toml", "ron"] }
 crc = "3.0.1"
 chrono = "0.4"

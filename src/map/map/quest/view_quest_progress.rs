@@ -1,3 +1,5 @@
+use std::{cmp::Ordering, sync::atomic::Ordering};
+
 use eolib::protocol::net::{
     server::{
         QuestListServerPacket, QuestListServerPacketPageData,
@@ -41,16 +43,14 @@ impl Map {
                     None => return None,
                 };
 
-                let rule = match state.rules.iter().find(|rule| {
-                    rule.name == "GotItems"
-                        || rule.name == "KilledNpcs"
-                        || rule.name == "KilledPlayers"
-                        || rule.name == "TalkedToNpc"
-                        || rule.name == "InputNpc"
-                        || rule.name == "EnterCoord"
-                        || rule.name == "EnterMap"
-                        || rule.name == "LeaveMap"
-                }) {
+                let mut rules = state.rules.to_owned();
+                rules.sort_by(|a, _| match a.name.as_str() {
+                    "GotItems" | "KilledNpcs" | "KilledPlayers" | "EnterCoord" | "EnterMap"
+                    | "LeaveMap" => Ordering::Less,
+                    _ => Ordering::Greater,
+                });
+
+                let rule = match rules.first() {
                     Some(rule) => rule,
                     None => return None,
                 };

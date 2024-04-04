@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, sync::atomic::Ordering};
+use std::cmp::Ordering;
 
 use eolib::protocol::net::{
     server::{

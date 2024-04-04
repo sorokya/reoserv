@@ -41,7 +41,16 @@ impl Map {
                     None => return None,
                 };
 
-                let rule = match state.rules.last() {
+                let rule = match state.rules.iter().find(|rule| {
+                    rule.name == "GotItems"
+                        || rule.name == "KilledNpcs"
+                        || rule.name == "KilledPlayers"
+                        || rule.name == "TalkedToNpc"
+                        || rule.name == "InputNpc"
+                        || rule.name == "EnterCoord"
+                        || rule.name == "EnterMap"
+                        || rule.name == "LeaveMap"
+                }) {
                     Some(rule) => rule,
                     None => return None,
                 };

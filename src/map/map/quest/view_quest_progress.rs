@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+
 
 use eolib::protocol::net::{
     server::{
@@ -43,65 +43,74 @@ impl Map {
                     None => return None,
                 };
 
-                let mut rules = state.rules.to_owned();
-                rules.sort_by(|a, _| match a.name.as_str() {
-                    "GotItems" | "KilledNpcs" | "KilledPlayers" | "EnterCoord" | "EnterMap"
-                    | "LeaveMap" => Ordering::Less,
-                    _ => Ordering::Greater,
-                });
-
-                let rule = match rules.first() {
-                    Some(rule) => rule,
-                    None => return None,
-                };
-
-                let (icon, progress, target) = match rule.name.as_str() {
-                    "TalkedToNpc" | "InputNpc" => (QuestRequirementIcon::Talk, 0, 0),
-                    "GotItems" => (
-                        QuestRequirementIcon::Item,
-                        if let Arg::Int(item_id) = rule.args[0] {
+                if let Some(rule) = state.rules.iter().find(|rule| rule.name == "GotItems") {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Item,
+                        progress: if let Arg::Int(item_id) = rule.args[0] {
                             character.get_item_amount(item_id)
                         } else {
                             0
                         },
-                        if let Arg::Int(amount) = rule.args[1] {
+                        target: if let Arg::Int(amount) = rule.args[1] {
                             amount
                         } else {
                             0
                         },
-                    ),
-                    "KilledNpcs" => (
-                        QuestRequirementIcon::Kill,
-                        if let Arg::Int(npc_id) = rule.args[0] {
+                    });
+                }
+
+                if let Some(rule) = state.rules.iter().find(|rule| rule.name == "KilledNpcs") {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Kill,
+                        progress: if let Arg::Int(npc_id) = rule.args[0] {
                             q.get_npc_kills(npc_id)
                         } else {
                             0
                         },
-                        if let Arg::Int(amount) = rule.args[1] {
+                        target: if let Arg::Int(amount) = rule.args[1] {
                             amount
                         } else {
                             0
                         },
-                    ),
-                    "KilledPlayers" => (
-                        QuestRequirementIcon::Kill,
-                        q.player_kills,
-                        if let Arg::Int(amount) = rule.args[0] {
+                    });
+                }
+
+                if let Some(rule) = state.rules.iter().find(|rule| rule.name == "KilledPlayers") {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Kill,
+                        progress: q.player_kills,
+                        target: if let Arg::Int(amount) = rule.args[1] {
                             amount
                         } else {
                             0
                         },
-                    ),
-                    "EnterCoord" | "EnterMap" | "LeaveMap" => (QuestRequirementIcon::Step, 0, 0),
-                    _ => (QuestRequirementIcon::Talk, 0, 0),
-                };
+                    });
+                }
+
+                if state.rules.iter().any(|rule| {
+                    rule.name == "EnterCoord" || rule.name == "EnterMap" || rule.name == "LeaveMap"
+                }) {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Step,
+                        progress: 0,
+                        target: 0,
+                    });
+                }
 
                 Some(QuestProgressEntry {
                     name: quest.name.to_owned(),
                     description: state.description.to_owned(),
-                    icon,
-                    progress,
-                    target,
+                    icon: QuestRequirementIcon::Talk,
+                    progress: 0,
+                    target: 0,
                 })
             })
             .collect::<Vec<_>>();

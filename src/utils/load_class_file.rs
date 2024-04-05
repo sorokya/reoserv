@@ -52,6 +52,8 @@ fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
         ..Default::default()
     });
 
+    ecf_file.total_classes_count = ecf_file.classes.len() as i32;
+
     let mut writer = EoWriter::new();
     ecf_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();

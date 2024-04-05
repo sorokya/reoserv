@@ -78,6 +78,8 @@ fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
         ..Default::default()
     });
 
+    esf_file.total_skills_count = esf_file.skills.len() as i32;
+
     let mut writer = EoWriter::new();
     esf_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();

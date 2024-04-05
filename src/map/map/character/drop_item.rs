@@ -16,7 +16,10 @@ use super::super::Map;
 
 impl Map {
     pub async fn drop_item(&mut self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
-        if item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
+        if item.amount <= 0
+            || item.amount > SETTINGS.limits.max_item
+            || SETTINGS.items.protected_items.contains(&item.id)
+        {
             return;
         }
 

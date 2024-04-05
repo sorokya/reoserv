@@ -227,6 +227,12 @@ pub struct Evacuate {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Items {
+    pub infinite_use_items: Vec<i32>,
+    pub protected_items: Vec<i32>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -248,6 +254,7 @@ pub struct Settings {
     pub guild: Guild,
     pub marriage: Marriage,
     pub evacuate: Evacuate,
+    pub items: Items,
 }
 
 impl Settings {

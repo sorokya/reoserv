@@ -15,7 +15,7 @@ use eolib::protocol::{
     Coords,
 };
 
-use crate::{character::EquipmentSlot, ITEM_DB};
+use crate::{character::EquipmentSlot, INN_DB, ITEM_DB, SETTINGS};
 
 use super::super::Map;
 
@@ -84,13 +84,38 @@ impl Map {
                     return;
                 }
 
+                let (map_id, coords) = {
+                    match item.spec1 {
+                        0 => match INN_DB.inns.iter().find(|inn| inn.name == character.home) {
+                            Some(inn) => (
+                                inn.spawn_map,
+                                Coords {
+                                    x: inn.spawn_x,
+                                    y: inn.spawn_y,
+                                },
+                            ),
+                            None => (
+                                SETTINGS.rescue.map,
+                                Coords {
+                                    x: SETTINGS.rescue.x,
+                                    y: SETTINGS.rescue.y,
+                                },
+                            ),
+                        },
+                        _ => (
+                            item.spec1,
+                            Coords {
+                                x: item.spec2,
+                                y: item.spec3,
+                            },
+                        ),
+                    }
+                };
+
                 player.request_warp(
-                    item.spec1,
-                    Coords {
-                        x: item.spec2,
-                        y: item.spec3,
-                    },
-                    character.map_id == item.spec1,
+                    map_id,
+                    coords,
+                    character.map_id == map_id,
                     Some(WarpEffect::Scroll),
                 );
                 packet.item_type = ItemType::Teleport;
@@ -200,7 +225,10 @@ impl Map {
         }
 
         let character = self.characters.get_mut(&player_id).unwrap();
-        character.remove_item(item_id, 1);
+
+        if !SETTINGS.items.infinite_use_items.contains(&item_id) {
+            character.remove_item(item_id, 1);
+        }
 
         packet.used_item = Item {
             id: item_id,

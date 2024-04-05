@@ -31,15 +31,20 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
 
         let v: Value = serde_json::from_str(&json)?;
 
-        let questions: Vec<InnQuestionRecord> = v["questions"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|v| InnQuestionRecord {
-                question: v["question"].as_str().unwrap_or_default().to_string(),
-                answer: v["answer"].as_str().unwrap_or_default().to_string(),
-            })
-            .collect();
+        let mut questions = Vec::with_capacity(3);
+
+        for i in 1..=3 {
+            questions.push(InnQuestionRecord {
+                question: v[&format!("question{}", i)]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string(),
+                answer: v[&format!("answer{}", i)]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string(),
+            });
+        }
 
         if questions.len() != 3 {
             panic!(

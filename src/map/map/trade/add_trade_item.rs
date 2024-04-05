@@ -8,7 +8,10 @@ const MAX_TRADE_SLOTS: usize = 10;
 
 impl Map {
     pub async fn add_trade_item(&mut self, player_id: i32, item: Item) {
-        if item.amount <= 0 || item.amount > SETTINGS.limits.max_trade {
+        if item.amount <= 0
+            || item.amount > SETTINGS.limits.max_trade
+            || SETTINGS.items.protected_items.contains(&item.id)
+        {
             return;
         }
 

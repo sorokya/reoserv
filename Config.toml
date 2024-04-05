@@ -381,3 +381,11 @@ timer_seconds = 60
 
 # Seconds between each warning
 timer_step = 15
+
+[items]
+
+# Array of item ids that can be used by the player without being consumed
+infinite_use_items = []
+
+# Array of item ids that can never be junked/dropped/traded
+protected_items = []

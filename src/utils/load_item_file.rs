@@ -84,6 +84,8 @@ fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
         ..Default::default()
     });
 
+    eif_file.total_items_count = eif_file.items.len() as i32;
+
     let mut writer = EoWriter::new();
     eif_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();

@@ -64,6 +64,8 @@ fn load_json() -> Result<Enf, Box<dyn std::error::Error>> {
         ..Default::default()
     });
 
+    enf_file.total_npcs_count = enf_file.npcs.len() as i32;
+
     let mut writer = EoWriter::new();
     enf_file.serialize(&mut writer).unwrap();
     let buf = writer.to_byte_array();

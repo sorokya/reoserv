@@ -40,8 +40,8 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
                     .iter()
                     .map(|v| DropRecord {
                         item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                        min_amount: v["minAmount"].as_u64().unwrap_or(0) as i32,
-                        max_amount: v["maxAmount"].as_u64().unwrap_or(0) as i32,
+                        min_amount: v["min"].as_u64().unwrap_or(0) as i32,
+                        max_amount: v["max"].as_u64().unwrap_or(0) as i32,
                         rate: v["rate"].as_u64().unwrap_or(0) as i32,
                     })
                     .collect(),

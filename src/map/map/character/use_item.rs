@@ -225,7 +225,10 @@ impl Map {
         }
 
         let character = self.characters.get_mut(&player_id).unwrap();
-        character.remove_item(item_id, 1);
+
+        if !SETTINGS.items.infinite_use_items.contains(&item_id) {
+            character.remove_item(item_id, 1);
+        }
 
         packet.used_item = Item {
             id: item_id,

@@ -14,7 +14,6 @@ pub struct Server {
     pub max_login_attempts: i32,
     pub ping_rate: i32,
     pub enforce_sequence: bool,
-    pub num_of_maps: i32,
     pub min_version: String,
     pub max_version: String,
     pub save_rate: i32,

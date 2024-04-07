@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2021"
 description = "The rust powered endless online server emulator"
@@ -49,7 +49,7 @@ winres = "0.1"
 # Config for 'cargo dist'
 [workspace.metadata.dist]
 # The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.12.0"
+cargo-dist-version = "0.12.2"
 # CI backends to support
 ci = ["github"]
 # The installers to generate for each app

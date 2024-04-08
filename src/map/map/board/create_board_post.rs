@@ -11,7 +11,12 @@ impl Map {
             None => return,
         };
 
-        let board_id = match character.player.as_ref().unwrap().get_board_id().await {
+        let player = match &character.player {
+            Some(player) => player.clone(),
+            None => return,
+        };
+
+        let board_id = match player.get_board_id().await {
             Some(board_id) => board_id,
             None => return,
         };
@@ -39,14 +44,16 @@ impl Map {
 
         let character_id = character.id;
 
-        let player = match &character.player {
-            Some(player) => player.clone(),
-            None => return,
-        };
-
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut conn = pool.get_conn().await.unwrap();
+            let mut conn = match pool.get_conn().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    error!("Failed to get sql connection: {}", e);
+                    return;
+                }
+            };
+
             let (recent_posts, total_posts) =
                 match get_board_post_counts(&mut conn, board_id, character_id).await {
                     Ok((recent_posts, total_posts)) => (recent_posts, total_posts),

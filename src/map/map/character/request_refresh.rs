@@ -14,7 +14,12 @@ impl Map {
             None => return,
         };
 
-        character.player.as_ref().unwrap().send(
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
+        player.send(
             PacketAction::Reply,
             PacketFamily::Refresh,
             &RefreshReplyServerPacket {

@@ -23,51 +23,55 @@ impl Map {
             None => return,
         };
 
-        if character.player.as_ref().unwrap().is_trading().await {
-            return;
-        }
+        // TODO: Validate in player thread
+        let behavior_id = {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
 
-        let actual_session_id = match character.player.as_ref().unwrap().get_session_id().await {
-            Ok(id) => id,
-            Err(e) => {
-                error!("Failed to get session id {}", e);
+            if player.is_trading().await {
                 return;
             }
+
+            let actual_session_id = match player.get_session_id().await {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("Failed to get session id {}", e);
+                    return;
+                }
+            };
+
+            if actual_session_id != session_id {
+                return;
+            }
+
+            let npc_index = match player.get_interact_npc_index().await {
+                Some(index) => index,
+                None => return,
+            };
+
+            let npc = match self.npcs.get(&npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
+
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
+
+            if npc_data.r#type != NpcType::Shop {
+                return;
+            }
+
+            npc_data.behavior_id
         };
-
-        if actual_session_id != session_id {
-            return;
-        }
-
-        let npc_index = match character
-            .player
-            .as_ref()
-            .unwrap()
-            .get_interact_npc_index()
-            .await
-        {
-            Some(index) => index,
-            None => return,
-        };
-
-        let npc = match self.npcs.get(&npc_index) {
-            Some(npc) => npc,
-            None => return,
-        };
-
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
-
-        if npc_data.r#type != NpcType::Shop {
-            return;
-        }
 
         let shop = match SHOP_DB
             .shops
             .iter()
-            .find(|shop| shop.behavior_id == npc_data.behavior_id)
+            .find(|shop| shop.behavior_id == behavior_id)
         {
             Some(shop) => shop,
             None => return,
@@ -95,17 +99,19 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_item(1, price);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Sell,
-            PacketFamily::Shop,
-            &ShopSellServerPacket {
-                gold_amount: character.get_item_amount(1),
-                sold_item: ShopSoldItem {
-                    id: item.id,
-                    amount: character.get_item_amount(item.id),
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Sell,
+                PacketFamily::Shop,
+                &ShopSellServerPacket {
+                    gold_amount: character.get_item_amount(1),
+                    sold_item: ShopSoldItem {
+                        id: item.id,
+                        amount: character.get_item_amount(item.id),
+                    },
+                    weight: character.get_weight(),
                 },
-                weight: character.get_weight(),
-            },
-        );
+            );
+        }
     }
 }

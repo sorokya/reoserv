@@ -38,20 +38,18 @@ impl Map {
                 }
             }
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Player,
-                PacketFamily::Recover,
-                &RecoverPlayerServerPacket {
-                    hp: character.hp,
-                    tp: character.tp,
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Player,
+                    PacketFamily::Recover,
+                    &RecoverPlayerServerPacket {
+                        hp: character.hp,
+                        tp: character.tp,
+                    },
+                );
 
-            character
-                .player
-                .as_ref()
-                .unwrap()
-                .update_party_hp(character.get_hp_percentage());
+                player.update_party_hp(character.get_hp_percentage());
+            }
         }
     }
 }

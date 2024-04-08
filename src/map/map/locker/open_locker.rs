@@ -13,6 +13,11 @@ impl Map {
             None => return,
         };
 
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
         let adjacent_tiles = [
             self.get_tile(&Coords {
                 x: character.coords.x,
@@ -32,25 +37,27 @@ impl Map {
             }),
         ];
 
-        if adjacent_tiles.iter().any(|tile| match tile {
+        if !adjacent_tiles.iter().any(|tile| match tile {
             Some(tile) => *tile == MapTileSpec::BankVault,
             None => false,
         }) {
-            character.player.as_ref().unwrap().send(
-                PacketAction::Open,
-                PacketFamily::Locker,
-                &LockerOpenServerPacket {
-                    locker_coords: character.coords,
-                    locker_items: character
-                        .bank
-                        .iter()
-                        .map(|item| ThreeItem {
-                            id: item.id,
-                            amount: item.amount,
-                        })
-                        .collect(),
-                },
-            );
+            return;
         }
+
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Locker,
+            &LockerOpenServerPacket {
+                locker_coords: character.coords,
+                locker_items: character
+                    .bank
+                    .iter()
+                    .map(|item| ThreeItem {
+                        id: item.id,
+                        amount: item.amount,
+                    })
+                    .collect(),
+            },
+        );
     }
 }

@@ -12,11 +12,13 @@ impl Map {
         character.guild_rank = Some(rank);
         character.guild_rank_string = Some(rank_str.clone());
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Accept,
-            PacketFamily::Guild,
-            &GuildAcceptServerPacket { rank },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Accept,
+                PacketFamily::Guild,
+                &GuildAcceptServerPacket { rank },
+            );
+        }
 
         let mut character = character.to_owned();
         let pool = self.pool.clone();

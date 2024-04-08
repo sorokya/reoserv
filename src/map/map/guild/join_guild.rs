@@ -23,17 +23,21 @@ impl Map {
 
         self.world.add_guild_member(player_id, guild_tag.clone());
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Agree,
-            PacketFamily::Guild,
-            &GuildAgreeServerPacket {
-                recruiter_id,
-                guild_tag,
-                guild_name,
-                rank_name: guild_rank_string,
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Agree,
+                PacketFamily::Guild,
+                &GuildAgreeServerPacket {
+                    recruiter_id,
+                    guild_tag,
+                    guild_name,
+                    rank_name: guild_rank_string,
+                },
+            );
+        }
 
+        // TODO: This is potentially unsafe if character changes before being saved..
+        // Possible duping hazard?
         let mut character = character.to_owned();
         let pool = self.pool.clone();
 

@@ -38,11 +38,17 @@ impl Map {
                 None => return,
             };
 
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
             if character.map_id == SETTINGS.jail.map {
                 return;
             }
 
-            if character.player.as_ref().unwrap().is_trading().await {
+            // TODO: Validate in player thread
+            if player.is_trading().await {
                 return;
             }
 
@@ -74,34 +80,42 @@ impl Map {
         };
 
         {
-            let character = self.characters.get_mut(&target_player_id).unwrap();
+            let character = match self.characters.get_mut(&target_player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
             character.remove_item(item.id, amount_to_drop);
         }
 
         let item_index = self.get_next_item_index(1);
 
-        let character = self.characters.get(&target_player_id).unwrap();
-        let weight = character.get_weight();
-
-        let reply = ItemDropServerPacket {
-            dropped_item: ThreeItem {
-                id: item.id,
-                amount: amount_to_drop,
-            },
-            item_index,
-            remaining_amount: match character.items.iter().find(|i| i.id == item.id) {
-                Some(item) => item.amount,
-                None => 0,
-            },
-            coords,
-            weight,
+        let character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
         };
 
-        character
-            .player
-            .as_ref()
-            .unwrap()
-            .send(PacketAction::Drop, PacketFamily::Item, &reply);
+        let weight = character.get_weight();
+
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Drop,
+                PacketFamily::Item,
+                &ItemDropServerPacket {
+                    dropped_item: ThreeItem {
+                        id: item.id,
+                        amount: amount_to_drop,
+                    },
+                    item_index,
+                    remaining_amount: match character.items.iter().find(|i| i.id == item.id) {
+                        Some(item) => item.amount,
+                        None => 0,
+                    },
+                    coords,
+                    weight,
+                },
+            );
+        }
 
         self.items.insert(
             item_index,

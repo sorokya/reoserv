@@ -39,13 +39,15 @@ impl Character {
         }
 
         if item_record.class_requirement != 0 && item_record.class_requirement != self.class {
-            self.player.as_ref().unwrap().send(
-                PacketAction::Ping,
-                PacketFamily::Paperdoll,
-                &PaperdollPingServerPacket {
-                    class_id: self.class,
-                },
-            );
+            if let Some(player) = self.player.as_ref() {
+                player.send(
+                    PacketAction::Ping,
+                    PacketFamily::Paperdoll,
+                    &PaperdollPingServerPacket {
+                        class_id: self.class,
+                    },
+                );
+            }
 
             return false;
         }

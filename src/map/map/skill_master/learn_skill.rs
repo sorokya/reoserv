@@ -24,47 +24,51 @@ impl Map {
             None => return,
         };
 
-        let actual_session_id = match character.player.as_ref().unwrap().get_session_id().await {
-            Ok(id) => id,
-            Err(e) => {
-                error!("Failed to get session id {}", e);
+        // TODO: Validate session in player thread
+        let behavior_id = {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            let actual_session_id = match player.get_session_id().await {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("Failed to get session id {}", e);
+                    return;
+                }
+            };
+
+            if actual_session_id != session_id {
                 return;
             }
+
+            let npc_index = match player.get_interact_npc_index().await {
+                Some(index) => index,
+                None => return,
+            };
+
+            let npc = match self.npcs.get(&npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
+
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
+
+            if npc_data.r#type != NpcType::Trainer {
+                return;
+            }
+
+            npc_data.behavior_id
         };
-
-        if actual_session_id != session_id {
-            return;
-        }
-
-        let npc_index = match character
-            .player
-            .as_ref()
-            .unwrap()
-            .get_interact_npc_index()
-            .await
-        {
-            Some(index) => index,
-            None => return,
-        };
-
-        let npc = match self.npcs.get(&npc_index) {
-            Some(npc) => npc,
-            None => return,
-        };
-
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
-
-        if npc_data.r#type != NpcType::Trainer {
-            return;
-        }
 
         let skill_master = match SKILL_MASTER_DB
             .skill_masters
             .iter()
-            .find(|skill_master| skill_master.behavior_id == npc_data.behavior_id)
+            .find(|skill_master| skill_master.behavior_id == behavior_id)
         {
             Some(skill_master) => skill_master,
             None => return,
@@ -95,18 +99,20 @@ impl Map {
         }
 
         if skill.class_requirement > 0 && character.class != skill.class_requirement {
-            character.player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::StatSkill,
-                &StatSkillReplyServerPacket {
-                    reply_code: SkillMasterReply::WrongClass,
-                    reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
-                        StatSkillReplyServerPacketReplyCodeDataWrongClass {
-                            class_id: character.class,
-                        },
-                    )),
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::StatSkill,
+                    &StatSkillReplyServerPacket {
+                        reply_code: SkillMasterReply::WrongClass,
+                        reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
+                            StatSkillReplyServerPacketReplyCodeDataWrongClass {
+                                class_id: character.class,
+                            },
+                        )),
+                    },
+                );
+            }
 
             return;
         }
@@ -114,13 +120,15 @@ impl Map {
         character.remove_item(1, skill.price);
         character.add_spell(skill.skill_id);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Take,
-            PacketFamily::StatSkill,
-            &StatSkillTakeServerPacket {
-                spell_id,
-                gold_amount: character.get_item_amount(1),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Take,
+                PacketFamily::StatSkill,
+                &StatSkillTakeServerPacket {
+                    spell_id,
+                    gold_amount: character.get_item_amount(1),
+                },
+            );
+        }
     }
 }

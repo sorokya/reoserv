@@ -1,10 +1,8 @@
-use eolib::{
-    protocol::{
-        map::MapTileSpec,
-        net::{
-            server::{JukeboxAgreeServerPacket, JukeboxReplyServerPacket, JukeboxUseServerPacket},
-            PacketAction, PacketFamily,
-        },
+use eolib::protocol::{
+    map::MapTileSpec,
+    net::{
+        server::{JukeboxAgreeServerPacket, JukeboxReplyServerPacket, JukeboxUseServerPacket},
+        PacketAction, PacketFamily,
     },
 };
 
@@ -23,18 +21,18 @@ impl Map {
             return;
         }
 
-        debug!("Requesting track: {}", track_id);
-
         if self.jukebox_ticks > 0
             || character.get_item_amount(1) < SETTINGS.jukebox.cost
             || track_id < 1
             || track_id > SETTINGS.jukebox.max_track_id
         {
-            character.player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::Jukebox,
-                &JukeboxReplyServerPacket::new(),
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Jukebox,
+                    &JukeboxReplyServerPacket::new(),
+                );
+            }
 
             return;
         }
@@ -48,13 +46,15 @@ impl Map {
         self.jukebox_player = Some(character.name.clone());
         self.jukebox_ticks = SETTINGS.jukebox.track_timer;
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Agree,
-            PacketFamily::Jukebox,
-            &JukeboxAgreeServerPacket {
-                gold_amount: character.get_item_amount(1),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Agree,
+                PacketFamily::Jukebox,
+                &JukeboxAgreeServerPacket {
+                    gold_amount: character.get_item_amount(1),
+                },
+            );
+        }
 
         self.send_packet_all(
             PacketAction::Use,

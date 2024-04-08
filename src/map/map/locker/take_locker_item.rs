@@ -59,24 +59,26 @@ impl Map {
         character.remove_bank_item(item_id, amount);
         character.add_item(item_id, amount);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Get,
-            PacketFamily::Locker,
-            &LockerGetServerPacket {
-                taken_item: ThreeItem {
-                    id: item_id,
-                    amount: character.get_item_amount(item_id),
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Get,
+                PacketFamily::Locker,
+                &LockerGetServerPacket {
+                    taken_item: ThreeItem {
+                        id: item_id,
+                        amount: character.get_item_amount(item_id),
+                    },
+                    weight: character.get_weight(),
+                    locker_items: character
+                        .bank
+                        .iter()
+                        .map(|i| ThreeItem {
+                            id: i.id,
+                            amount: i.amount,
+                        })
+                        .collect(),
                 },
-                weight: character.get_weight(),
-                locker_items: character
-                    .bank
-                    .iter()
-                    .map(|i| ThreeItem {
-                        id: i.id,
-                        amount: i.amount,
-                    })
-                    .collect(),
-            },
-        );
+            );
+        }
     }
 }

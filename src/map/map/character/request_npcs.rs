@@ -9,22 +9,24 @@ impl Map {
             None => return,
         };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Agree,
-            PacketFamily::Npc,
-            &NpcAgreeServerPacket {
-                npcs: self
-                    .npcs
-                    .iter()
-                    .filter_map(|(index, npc)| {
-                        if npc.alive && npcs_indexes.contains(index) {
-                            Some(npc.to_map_info(index))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Agree,
+                PacketFamily::Npc,
+                &NpcAgreeServerPacket {
+                    npcs: self
+                        .npcs
+                        .iter()
+                        .filter_map(|(index, npc)| {
+                            if npc.alive && npcs_indexes.contains(index) {
+                                Some(npc.to_map_info(index))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                },
+            );
+        }
     }
 }

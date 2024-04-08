@@ -1,16 +1,14 @@
-use eolib::{
-    protocol::{
-        map::MapType,
-        net::{
-            server::{
-                ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket,
-                AvatarReplyServerPacket, RecoverPlayerServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    map::MapType,
+    net::{
+        server::{
+            ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket,
+            AvatarReplyServerPacket, RecoverPlayerServerPacket,
         },
-        r#pub::{ItemSubtype, NpcType},
-        Coords, Direction,
+        PacketAction, PacketFamily,
     },
+    r#pub::{ItemSubtype, NpcType},
+    Coords, Direction,
 };
 use rand::Rng;
 
@@ -291,19 +289,23 @@ impl Map {
 
         let arena_player = arena_player.to_owned();
 
-        target_character.player.as_ref().unwrap().arena_die(Coords {
-            x: self.file.relog_x,
-            y: self.file.relog_y,
-        });
+        if let Some(player) = target_character.player.as_ref() {
+            player.arena_die(Coords {
+                x: self.file.relog_x,
+                y: self.file.relog_y,
+            });
+        }
 
         self.arena_players
             .retain(|p| p.player_id != target_player_id);
 
         if self.arena_players.len() == 1 {
-            character.player.as_ref().unwrap().arena_die(Coords {
-                x: self.file.relog_x,
-                y: self.file.relog_y,
-            });
+            if let Some(player) = character.player.as_ref() {
+                player.arena_die(Coords {
+                    x: self.file.relog_x,
+                    y: self.file.relog_y,
+                });
+            }
 
             return self.arena_end(
                 &arena_player,
@@ -384,24 +386,22 @@ impl Map {
 
         self.send_packet_near(&coords, PacketAction::Reply, PacketFamily::Avatar, packet);
 
-        if target_character.hp == 0 {
-            target_character.player.as_ref().unwrap().die();
+        if let Some(player) = target_character.player.as_ref() {
+            if target_character.hp == 0 {
+                player.die();
+            }
+
+            player.send(
+                PacketAction::Player,
+                PacketFamily::Recover,
+                &RecoverPlayerServerPacket {
+                    hp: target_character.hp,
+                    tp: target_character.tp,
+                },
+            );
+
+            player.update_party_hp(target_character.get_hp_percentage());
         }
-
-        target_character.player.as_ref().unwrap().send(
-            PacketAction::Player,
-            PacketFamily::Recover,
-            &RecoverPlayerServerPacket {
-                hp: target_character.hp,
-                tp: target_character.tp,
-            },
-        );
-
-        target_character
-            .player
-            .as_ref()
-            .unwrap()
-            .update_party_hp(target_character.get_hp_percentage());
     }
 }
 

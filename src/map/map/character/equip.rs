@@ -23,8 +23,16 @@ impl Map {
             }
         };
 
-        if character.player.as_ref().unwrap().is_trading().await {
-            return;
+        // TODO: move this check to player thread
+        {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            if player.is_trading().await {
+                return;
+            }
         }
 
         if !character.items.iter().any(|i| i.id == item_id) {
@@ -50,20 +58,22 @@ impl Map {
             )),
         };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Agree,
-            PacketFamily::Paperdoll,
-            &PaperdollAgreeServerPacket {
-                change: change.clone(),
-                item_id,
-                remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
-                    Some(item) => item.amount,
-                    None => 0,
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Agree,
+                PacketFamily::Paperdoll,
+                &PaperdollAgreeServerPacket {
+                    change: change.clone(),
+                    item_id,
+                    remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
+                        Some(item) => item.amount,
+                        None => 0,
+                    },
+                    sub_loc,
+                    stats: character.get_character_stats_equipment_change(),
                 },
-                sub_loc,
-                stats: character.get_character_stats_equipment_change(),
-            },
-        );
+            );
+        }
 
         if character.hidden {
             return;
@@ -74,7 +84,7 @@ impl Map {
             ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 
-        if is_visible_change && self.characters.len() > 1 {
+        if is_visible_change {
             self.send_packet_near_player(
                 player_id,
                 PacketAction::Agree,

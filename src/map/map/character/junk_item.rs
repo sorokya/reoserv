@@ -2,7 +2,7 @@ use std::cmp;
 
 use eolib::protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem};
 
-use crate::SETTINGS;
+use crate::{SETTINGS};
 
 use super::super::Map;
 
@@ -22,7 +22,13 @@ impl Map {
                 None => return,
             };
 
-            if character.player.as_ref().unwrap().is_trading().await {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            // TODO: Validate in player thread
+            if player.is_trading().await {
                 return;
             }
 
@@ -35,26 +41,35 @@ impl Map {
         };
 
         {
-            let character = self.characters.get_mut(&target_player_id).unwrap();
+            let character = match self.characters.get_mut(&target_player_id) {
+                Some(character) => character,
+                None => return,
+            };
+
             character.remove_item(item_id, amount_to_junk);
         }
 
-        let character = self.characters.get(&target_player_id).unwrap();
+        let character = match self.characters.get(&target_player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Junk,
-            PacketFamily::Item,
-            &ItemJunkServerPacket {
-                junked_item: ThreeItem {
-                    id: item_id,
-                    amount: amount_to_junk,
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Junk,
+                PacketFamily::Item,
+                &ItemJunkServerPacket {
+                    junked_item: ThreeItem {
+                        id: item_id,
+                        amount: amount_to_junk,
+                    },
+                    remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
+                        Some(item) => item.amount,
+                        None => 0,
+                    },
+                    weight: character.get_weight(),
                 },
-                remaining_amount: match character.items.iter().find(|i| i.id == item_id) {
-                    Some(item) => item.amount,
-                    None => 0,
-                },
-                weight: character.get_weight(),
-            },
-        );
+            );
+        }
     }
 }

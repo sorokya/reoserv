@@ -21,11 +21,13 @@ impl Map {
 
         self.world.remove_guild_member(player_id, guild_tag);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Kick,
-            PacketFamily::Guild,
-            &GuildKickServerPacket::default(),
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Kick,
+                PacketFamily::Guild,
+                &GuildKickServerPacket::default(),
+            );
+        }
 
         let mut character = character.to_owned();
         let pool = self.pool.clone();

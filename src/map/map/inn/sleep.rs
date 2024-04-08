@@ -94,21 +94,18 @@ impl Map {
         character.hp = character.max_hp;
         character.tp = character.max_tp;
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Accept,
-            PacketFamily::Citizen,
-            &CitizenAcceptServerPacket {
-                gold_amount: character.get_item_amount(1),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Accept,
+                PacketFamily::Citizen,
+                &CitizenAcceptServerPacket {
+                    gold_amount: character.get_item_amount(1),
+                },
+            );
 
-        character.player.as_ref().unwrap().request_warp(
-            sleep_map,
-            sleep_coords,
-            sleep_map == self.id,
-            None,
-        );
+            player.request_warp(sleep_map, sleep_coords, sleep_map == self.id, None);
 
-        character.player.as_ref().unwrap().update_party_hp(100);
+            player.update_party_hp(100);
+        }
     }
 }

@@ -126,7 +126,12 @@ impl Map {
                     WeddingState::AskPartner
                 }
                 WeddingState::AskPartner => {
-                    partner.player.as_ref().unwrap().send(
+                    let player = match partner.player.as_ref() {
+                        Some(player) => player,
+                        None => return,
+                    };
+
+                    player.send(
                         PacketAction::Reply,
                         PacketFamily::Priest,
                         &PriestReplyServerPacket {
@@ -157,7 +162,12 @@ impl Map {
                     WeddingState::AskPlayer
                 }
                 WeddingState::AskPlayer => {
-                    character.player.as_ref().unwrap().send(
+                    let player = match character.player.as_ref() {
+                        Some(player) => player,
+                        None => return,
+                    };
+
+                    player.send(
                         PacketAction::Reply,
                         PacketFamily::Priest,
                         &PriestReplyServerPacket {

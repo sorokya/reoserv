@@ -26,11 +26,9 @@ impl Map {
                     coords: character.coords,
                 };
 
-                character.player.as_ref().unwrap().send(
-                    PacketAction::Close,
-                    PacketFamily::Sit,
-                    &reply,
-                );
+                if let Some(player) = character.player.as_ref() {
+                    player.send(PacketAction::Close, PacketFamily::Sit, &reply);
+                }
 
                 if !character.hidden {
                     self.send_packet_near_player(
@@ -56,11 +54,9 @@ impl Map {
                     coords: character.coords,
                 };
 
-                character.player.as_ref().unwrap().send(
-                    PacketAction::Close,
-                    PacketFamily::Chair,
-                    &packet,
-                );
+                if let Some(player) = character.player.as_ref() {
+                    player.send(PacketAction::Close, PacketFamily::Chair, &packet);
+                }
 
                 if !character.hidden {
                     self.send_packet_near_player(

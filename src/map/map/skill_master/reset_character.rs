@@ -14,51 +14,54 @@ impl Map {
             None => return,
         };
 
-        let actual_session_id = match character.player.as_ref().unwrap().get_session_id().await {
-            Ok(id) => id,
-            Err(e) => {
-                error!("Failed to get session id {}", e);
+        {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            let actual_session_id = match player.get_session_id().await {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("Failed to get session id {}", e);
+                    return;
+                }
+            };
+
+            if actual_session_id != session_id {
                 return;
             }
-        };
 
-        if actual_session_id != session_id {
-            return;
-        }
+            let npc_index = match player.get_interact_npc_index().await {
+                Some(index) => index,
+                None => return,
+            };
 
-        let npc_index = match character
-            .player
-            .as_ref()
-            .unwrap()
-            .get_interact_npc_index()
-            .await
-        {
-            Some(index) => index,
-            None => return,
-        };
+            let npc = match self.npcs.get(&npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
 
-        let npc = match self.npcs.get(&npc_index) {
-            Some(npc) => npc,
-            None => return,
-        };
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
-
-        if npc_data.r#type != NpcType::Trainer {
-            return;
+            if npc_data.r#type != NpcType::Trainer {
+                return;
+            }
         }
 
         character.reset();
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Junk,
-            PacketFamily::StatSkill,
-            &StatSkillJunkServerPacket {
-                stats: character.get_character_stats_reset(),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Junk,
+                PacketFamily::StatSkill,
+                &StatSkillJunkServerPacket {
+                    stats: character.get_character_stats_reset(),
+                },
+            );
+        }
     }
 }

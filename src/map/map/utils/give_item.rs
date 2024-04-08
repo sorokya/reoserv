@@ -16,18 +16,20 @@ impl Map {
 
             character.add_item(item_id, amount);
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Get,
-                PacketFamily::Item,
-                &ItemGetServerPacket {
-                    taken_item_index: 0,
-                    taken_item: ThreeItem {
-                        id: item_id,
-                        amount,
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Get,
+                    PacketFamily::Item,
+                    &ItemGetServerPacket {
+                        taken_item_index: 0,
+                        taken_item: ThreeItem {
+                            id: item_id,
+                            amount,
+                        },
+                        weight: character.get_weight(),
                     },
-                    weight: character.get_weight(),
-                },
-            );
+                );
+            }
         }
     }
 }

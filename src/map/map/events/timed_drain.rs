@@ -64,15 +64,16 @@ impl Map {
                 None => continue,
             };
 
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
             if damage > 0 {
-                character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .update_party_hp(character.get_hp_percentage());
+                player.update_party_hp(character.get_hp_percentage());
             }
 
-            character.player.as_ref().unwrap().send(
+            player.send(
                 PacketAction::TargetOther,
                 PacketFamily::Effect,
                 &EffectTargetOtherServerPacket {
@@ -130,20 +131,24 @@ impl Map {
 
             character.tp -= damage;
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Spec,
-                PacketFamily::Effect,
-                &EffectSpecServerPacket {
-                    map_damage_type: MapDamageType::TpDrain,
-                    map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::TpDrain(
-                        EffectSpecServerPacketMapDamageTypeDataTpDrain {
-                            tp_damage: damage,
-                            tp: character.tp,
-                            max_tp: character.max_tp,
-                        },
-                    )),
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Spec,
+                    PacketFamily::Effect,
+                    &EffectSpecServerPacket {
+                        map_damage_type: MapDamageType::TpDrain,
+                        map_damage_type_data: Some(
+                            EffectSpecServerPacketMapDamageTypeData::TpDrain(
+                                EffectSpecServerPacketMapDamageTypeDataTpDrain {
+                                    tp_damage: damage,
+                                    tp: character.tp,
+                                    max_tp: character.max_tp,
+                                },
+                            ),
+                        ),
+                    },
+                );
+            }
         }
     }
 }

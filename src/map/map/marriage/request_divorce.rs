@@ -92,14 +92,16 @@ impl Map {
 
         if let Some((_, partner)) = self.characters.iter_mut().find(|(_, c)| c.name == name) {
             partner.partner = None;
-            partner.player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::Marriage,
-                &MarriageReplyServerPacket {
-                    reply_code: MarriageReply::DivorceNotification,
-                    reply_code_data: None,
-                },
-            );
+            if let Some(player) = partner.player.as_ref() {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Marriage,
+                    &MarriageReplyServerPacket {
+                        reply_code: MarriageReply::DivorceNotification,
+                        reply_code_data: None,
+                    },
+                );
+            }
 
             return;
         }

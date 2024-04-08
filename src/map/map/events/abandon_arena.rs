@@ -29,16 +29,14 @@ impl Map {
                 None => continue,
             };
 
-            character.player.as_ref().unwrap().arena_die(Coords {
-                x: self.file.relog_x,
-                y: self.file.relog_y,
-            });
+            if let Some(player) = character.player.as_ref() {
+                player.arena_die(Coords {
+                    x: self.file.relog_x,
+                    y: self.file.relog_y,
+                });
 
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Server,
-                PacketFamily::Talk,
-                buf.clone(),
-            );
+                player.send_buf(PacketAction::Server, PacketFamily::Talk, buf.clone());
+            }
         }
 
         self.arena_players.clear();

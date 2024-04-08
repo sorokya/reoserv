@@ -98,31 +98,31 @@ impl Map {
         character.coords = coords;
         character.sit_state = SitState::Chair;
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Chair,
-            &ChairReplyServerPacket {
-                player_id,
-                coords,
-                direction: character.direction,
-            },
-        );
-
-        if character.hidden {
-            return;
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Chair,
+                &ChairReplyServerPacket {
+                    player_id,
+                    coords,
+                    direction: character.direction,
+                },
+            );
         }
 
-        let direction = character.direction;
+        if !character.hidden {
+            let direction = character.direction;
 
-        self.send_packet_near_player(
-            player_id,
-            PacketAction::Player,
-            PacketFamily::Chair,
-            &ChairPlayerServerPacket {
+            self.send_packet_near_player(
                 player_id,
-                coords,
-                direction,
-            },
-        );
+                PacketAction::Player,
+                PacketFamily::Chair,
+                &ChairPlayerServerPacket {
+                    player_id,
+                    coords,
+                    direction,
+                },
+            );
+        }
     }
 }

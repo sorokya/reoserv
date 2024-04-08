@@ -32,12 +32,8 @@ impl Map {
                 && self.get_tile(&character.coords).unwrap_or_default() == MapTileSpec::TimedSpikes
             {
                 damaged_player_ids.push(character.player_id.unwrap());
-            } else {
-                character.player.as_ref().unwrap().send_buf(
-                    PacketAction::Report,
-                    PacketFamily::Effect,
-                    buf.clone(),
-                );
+            } else if let Some(player) = character.player.as_ref() {
+                player.send_buf(PacketAction::Report, PacketFamily::Effect, buf.clone());
             }
         }
 

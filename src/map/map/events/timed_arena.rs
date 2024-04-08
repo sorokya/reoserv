@@ -1,11 +1,9 @@
-use eolib::{
-    protocol::{
-        net::{
-            server::{ArenaDropServerPacket, ArenaUseServerPacket},
-            PacketAction, PacketFamily,
-        },
-        Coords,
+use eolib::protocol::{
+    net::{
+        server::{ArenaDropServerPacket, ArenaUseServerPacket},
+        PacketAction, PacketFamily,
     },
+    Coords,
 };
 
 use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
@@ -57,6 +55,11 @@ impl Map {
                     None => continue,
                 };
 
+                let player = match character.player.as_ref() {
+                    Some(player) => player,
+                    None => continue,
+                };
+
                 let spawn = match config
                     .spawns
                     .iter()
@@ -66,7 +69,7 @@ impl Map {
                     None => continue,
                 };
 
-                character.player.as_ref().unwrap().request_warp(
+                player.request_warp(
                     self.id,
                     Coords {
                         x: spawn.to.x,

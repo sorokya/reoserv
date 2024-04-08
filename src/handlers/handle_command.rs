@@ -8,7 +8,13 @@ use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 use crate::{COMMANDS, ITEM_DB};
 
 async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => return,
+    };
+
     let map_id = args[0].parse::<i32>().unwrap();
+
     if let Ok(map) = world.get_map(map_id).await {
         let coords = if args.len() >= 3 {
             Coords {
@@ -23,25 +29,23 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
             }
         };
 
-        character.player.as_ref().unwrap().request_warp(
-            map_id,
-            coords,
-            false,
-            Some(WarpEffect::Admin),
-        )
+        player.request_warp(map_id, coords, false, Some(WarpEffect::Admin))
     } else {
-        send_error_message(
-            character.player.as_ref().unwrap(),
-            format!("Map {} does not exist.", map_id),
-        );
+        send_error_message(player, format!("Map {} does not exist.", map_id));
     }
 }
 
 // TODO: warp player to where you're facing
 async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle) {
     let target_name = (*args[0]).to_string();
+
     if let Ok(target) = world.get_character_by_name(target_name).await {
-        target.player.as_ref().unwrap().request_warp(
+        let target = match target.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
+        target.request_warp(
             character.map_id,
             character.coords,
             false,
@@ -52,14 +56,15 @@ async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle)
 
 // TODO: Make light guide and guardian warp near player out of site with scroll warp
 async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => return,
+    };
+
     let target_name = (*args[0]).to_string();
+
     if let Ok(target) = world.get_character_by_name(target_name).await {
-        character.player.as_ref().unwrap().request_warp(
-            target.map_id,
-            target.coords,
-            false,
-            Some(WarpEffect::Admin),
-        );
+        player.request_warp(target.map_id, target.coords, false, Some(WarpEffect::Admin));
     }
 }
 
@@ -76,6 +81,11 @@ async fn evacuate(character: &Character, world: &WorldHandle) {
 }
 
 async fn spawn_item(args: &[String], character: &Character) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => return,
+    };
+
     let identifier = (*args[0]).to_string();
 
     let item_id = match identifier.parse::<u32>() {
@@ -90,7 +100,7 @@ async fn spawn_item(args: &[String], character: &Character) {
                 Some(index) => index as i32 + 1,
                 None => {
                     send_error_message(
-                        character.player.as_ref().unwrap(),
+                        player,
                         format!("No item found with name \"{}\".", identifier),
                     );
                     return;
@@ -105,15 +115,16 @@ async fn spawn_item(args: &[String], character: &Character) {
         1
     };
 
-    if let Ok(map) = character.player.as_ref().unwrap().get_map().await {
-        let target_player_id = character
-            .player
-            .as_ref()
-            .unwrap()
-            .get_player_id()
-            .await
-            .unwrap();
-        map.give_item(target_player_id, item_id, amount);
+    if let Ok(map) = player.get_map().await {
+        let player_id = match player.get_player_id().await {
+            Ok(player_id) => player_id,
+            Err(e) => {
+                error!("Failed to get player id: {}", e);
+                return;
+            }
+        };
+
+        map.give_item(player_id, item_id, amount);
     }
 }
 

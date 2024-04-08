@@ -36,17 +36,19 @@ impl Map {
 
             self.world.add_guild_member(player_id, guild_tag.clone());
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Create,
-                PacketFamily::Guild,
-                &GuildCreateServerPacket {
-                    leader_player_id: player_id,
-                    guild_tag: guild_tag.clone(),
-                    guild_name: guild_name.clone(),
-                    rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
-                    gold_amount: character.get_item_amount(1),
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Create,
+                    PacketFamily::Guild,
+                    &GuildCreateServerPacket {
+                        leader_player_id: player_id,
+                        guild_tag: guild_tag.clone(),
+                        guild_name: guild_name.clone(),
+                        rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
+                        gold_amount: character.get_item_amount(1),
+                    },
+                );
+            }
         }
 
         let packet = GuildAgreeServerPacket {
@@ -84,11 +86,9 @@ impl Map {
 
             self.world.add_guild_member(*player_id, guild_tag.clone());
 
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Agree,
-                PacketFamily::Guild,
-                buf.clone(),
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send_buf(PacketAction::Agree, PacketFamily::Guild, buf.clone());
+            }
         }
 
         let pool = self.pool.clone();

@@ -1,23 +1,20 @@
 use chrono::Utc;
-use eolib::{
-    protocol::{
-        net::{
-            server::{
-                AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
-                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
-                NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
-                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
-                RecoverTargetGroupServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
+            CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
+            NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket, NpcSpecServerPacket,
+            PartyExpShare, RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
         },
-        Coords, Direction,
+        PacketAction, PacketFamily,
     },
+    Coords, Direction,
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{map::Item, player::PlayerHandle, DROP_DB, FORMULAS, NPC_DB};
+use crate::{map::Item, DROP_DB, FORMULAS, NPC_DB};
 
 use super::super::Map;
 
@@ -82,11 +79,9 @@ impl Map {
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::Cast,
-                &packet,
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(PacketAction::Reply, PacketFamily::Cast, &packet);
+            }
 
             packet.kill_steal_protection = None;
 
@@ -116,11 +111,9 @@ impl Map {
                 None => return,
             };
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Reply,
-                PacketFamily::Npc,
-                &packet,
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(PacketAction::Reply, PacketFamily::Npc, &packet);
+            }
 
             packet.kill_steal_protection = None;
 
@@ -248,49 +241,65 @@ impl Map {
 
             if let Some(spell_id) = spell_id {
                 if leveled_up && exp_gains.len() == 1 {
-                    self.attack_npc_killed_with_spell_level_up(
-                        character.player.as_ref().unwrap(),
-                        spell_id,
-                        npc_killed_data.clone(),
-                        caster_tp,
-                        exp_gain.unwrap().total_experience,
-                        LevelUpStats {
-                            level: character.level,
-                            stat_points: character.stat_points,
-                            skill_points: character.skill_points,
-                            max_hp: character.max_hp,
-                            max_tp: character.max_tp,
-                            max_sp: character.max_sp,
+                    if let Some(player) = character.player.as_ref() {
+                        player.send(
+                            PacketAction::Accept,
+                            PacketFamily::Cast,
+                            &CastAcceptServerPacket {
+                                spell_id,
+                                npc_killed_data: npc_killed_data.clone(),
+                                caster_tp,
+                                experience: character.experience,
+                                level_up: LevelUpStats {
+                                    level: character.level,
+                                    stat_points: character.stat_points,
+                                    skill_points: character.skill_points,
+                                    max_hp: character.max_hp,
+                                    max_tp: character.max_tp,
+                                    max_sp: character.max_sp,
+                                },
+                            },
+                        );
+                    }
+                } else if let Some(player) = character.player.as_ref() {
+                    player.send(
+                        PacketAction::Spec,
+                        PacketFamily::Cast,
+                        &CastSpecServerPacket {
+                            spell_id,
+                            npc_killed_data: npc_killed_data.clone(),
+                            caster_tp,
+                            experience: exp_gain.map(|exp_gain| exp_gain.total_experience),
                         },
-                    );
-                } else {
-                    self.attack_npc_killed_with_spell(
-                        character.player.as_ref().unwrap(),
-                        spell_id,
-                        npc_killed_data.clone(),
-                        caster_tp,
-                        exp_gain.map(|exp_gain| exp_gain.total_experience),
                     );
                 }
             } else if leveled_up && exp_gains.len() == 1 {
-                self.attack_npc_killed_level_up(
-                    character.player.as_ref().unwrap(),
-                    npc_killed_data.clone(),
-                    exp_gain.unwrap().total_experience,
-                    LevelUpStats {
-                        level: character.level,
-                        stat_points: character.stat_points,
-                        skill_points: character.skill_points,
-                        max_hp: character.max_hp,
-                        max_tp: character.max_tp,
-                        max_sp: character.max_sp,
+                if let Some(player) = character.player.as_ref() {
+                    player.send(
+                        PacketAction::Accept,
+                        PacketFamily::Npc,
+                        &NpcAcceptServerPacket {
+                            npc_killed_data: npc_killed_data.clone(),
+                            experience: character.experience,
+                            level_up: LevelUpStats {
+                                level: character.level,
+                                stat_points: character.stat_points,
+                                skill_points: character.skill_points,
+                                max_hp: character.max_hp,
+                                max_tp: character.max_tp,
+                                max_sp: character.max_sp,
+                            },
+                        },
+                    );
+                }
+            } else if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Spec,
+                    PacketFamily::Npc,
+                    &NpcSpecServerPacket {
+                        npc_killed_data: npc_killed_data.clone(),
+                        experience: Some(character.experience),
                     },
-                );
-            } else {
-                self.attack_npc_killed(
-                    character.player.as_ref().unwrap(),
-                    npc_killed_data.clone(),
-                    exp_gain.map(|exp_gain| exp_gain.total_experience),
                 );
             }
         }
@@ -347,82 +356,6 @@ impl Map {
         }
     }
 
-    fn attack_npc_killed_level_up(
-        &self,
-        player: &PlayerHandle,
-        npc_killed_data: NpcKilledData,
-        experience: i32,
-        level_up: LevelUpStats,
-    ) {
-        player.send(
-            PacketAction::Accept,
-            PacketFamily::Npc,
-            &NpcAcceptServerPacket {
-                npc_killed_data,
-                experience,
-                level_up,
-            },
-        );
-    }
-
-    fn attack_npc_killed(
-        &self,
-        player: &PlayerHandle,
-        npc_killed_data: NpcKilledData,
-        experience: Option<i32>,
-    ) {
-        player.send(
-            PacketAction::Spec,
-            PacketFamily::Npc,
-            &NpcSpecServerPacket {
-                npc_killed_data,
-                experience,
-            },
-        );
-    }
-
-    fn attack_npc_killed_with_spell_level_up(
-        &self,
-        player: &PlayerHandle,
-        spell_id: i32,
-        npc_killed_data: NpcKilledData,
-        caster_tp: i32,
-        experience: i32,
-        level_up: LevelUpStats,
-    ) {
-        player.send(
-            PacketAction::Accept,
-            PacketFamily::Cast,
-            &CastAcceptServerPacket {
-                spell_id,
-                npc_killed_data,
-                caster_tp,
-                experience,
-                level_up,
-            },
-        );
-    }
-
-    fn attack_npc_killed_with_spell(
-        &self,
-        player: &PlayerHandle,
-        spell_id: i32,
-        npc_killed_data: NpcKilledData,
-        caster_tp: i32,
-        experience: Option<i32>,
-    ) {
-        player.send(
-            PacketAction::Spec,
-            PacketFamily::Cast,
-            &CastSpecServerPacket {
-                spell_id,
-                npc_killed_data,
-                caster_tp,
-                experience,
-            },
-        );
-    }
-
     fn attack_npc_killed_leveled_up_party_reply(&self, exp_gains: &Vec<ExpGain>) {
         for exp_gain in exp_gains {
             if exp_gain.leveled_up {
@@ -431,7 +364,12 @@ impl Map {
                     None => continue,
                 };
 
-                character.player.as_ref().unwrap().send(
+                let player = match character.player.as_ref() {
+                    Some(player) => player,
+                    None => continue,
+                };
+
+                player.send(
                     PacketAction::TargetGroup,
                     PacketFamily::Recover,
                     &RecoverTargetGroupServerPacket {
@@ -443,7 +381,7 @@ impl Map {
                     },
                 );
 
-                character.player.as_ref().unwrap().send(
+                player.send(
                     PacketAction::Reply,
                     PacketFamily::Recover,
                     &RecoverReplyServerPacket {

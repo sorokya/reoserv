@@ -73,18 +73,20 @@ impl Map {
 
         character.add_item(item.item_id, item.amount);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Get,
-            PacketFamily::Chest,
-            &ChestGetServerPacket {
-                taken_item: ThreeItem {
-                    id: item.item_id,
-                    amount: item.amount,
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Get,
+                PacketFamily::Chest,
+                &ChestGetServerPacket {
+                    taken_item: ThreeItem {
+                        id: item.item_id,
+                        amount: item.amount,
+                    },
+                    weight: character.get_weight(),
+                    items: remaining_items.clone(),
                 },
-                weight: character.get_weight(),
-                items: remaining_items.clone(),
-            },
-        );
+            );
+        }
 
         let packet = ChestAgreeServerPacket {
             items: remaining_items,
@@ -119,11 +121,7 @@ impl Map {
                 continue;
             }
 
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Agree,
-                PacketFamily::Chest,
-                buf.clone(),
-            );
+            player.send_buf(PacketAction::Agree, PacketFamily::Chest, buf.clone());
         }
     }
 }

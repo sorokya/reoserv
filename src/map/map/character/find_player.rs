@@ -9,12 +9,17 @@ impl Map {
             None => return,
         };
 
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
         if self
             .characters
             .iter()
             .any(|(_, character)| character.name == name)
         {
-            character.player.as_ref().unwrap().send(
+            player.send(
                 PacketAction::Pong,
                 PacketFamily::Players,
                 &PlayersPongServerPacket { name },

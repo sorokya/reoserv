@@ -43,13 +43,15 @@ impl Map {
 
         character.calculate_stats();
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Player,
-            PacketFamily::StatSkill,
-            &StatSkillPlayerServerPacket {
-                stat_points: character.stat_points,
-                stats: character.get_character_stats_update(),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Player,
+                PacketFamily::StatSkill,
+                &StatSkillPlayerServerPacket {
+                    stat_points: character.stat_points,
+                    stats: character.get_character_stats_update(),
+                },
+            );
+        }
     }
 }

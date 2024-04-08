@@ -8,11 +8,11 @@ use super::super::Map;
 impl Map {
     pub async fn request_paperdoll(&self, player_id: i32, target_player_id: i32) {
         let player = match self.characters.get(&player_id) {
-            Some(character) => character.player.as_ref().unwrap(),
-            None => {
-                error!("Failed to get player");
-                return;
-            }
+            Some(character) => match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            },
+            None => return,
         };
 
         let target = match self.characters.get(&target_player_id) {

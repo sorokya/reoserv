@@ -15,24 +15,27 @@ impl Map {
             None => return,
         };
 
-        if character.guild_tag.is_none() {
-            return;
-        }
+        let tag = match character.guild_tag.as_ref() {
+            Some(tag) => tag.to_owned(),
+            None => return,
+        };
 
         let amount = cmp::min(amount, character.get_item_amount(1));
 
         character.remove_item(1, amount);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Buy,
-            PacketFamily::Guild,
-            &GuildBuyServerPacket {
-                gold_amount: character.get_item_amount(1),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Buy,
+                PacketFamily::Guild,
+                &GuildBuyServerPacket {
+                    gold_amount: character.get_item_amount(1),
+                },
+            );
+        }
 
         let pool = self.pool.clone();
-        let tag = character.guild_tag.as_ref().unwrap().to_owned();
+
         tokio::spawn(async move {
             let mut conn = match pool.get_conn().await {
                 Ok(conn) => conn,

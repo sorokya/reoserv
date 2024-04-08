@@ -9,13 +9,13 @@ use super::super::World;
 
 impl World {
     pub async fn send_private_message(&self, from: &PlayerHandle, to: &str, message: &str) {
-        if let Ok(fromacter) = from.get_character().await {
+        if let Ok(from_character) = from.get_character().await {
             match self.get_character_by_name(to).await {
-                Ok(character) => send_private_message(
-                    &fromacter.name,
-                    character.player.as_ref().unwrap(),
-                    message,
-                ),
+                Ok(character) => {
+                    if let Some(player) = character.player.as_ref() {
+                        send_private_message(&from_character.name, player, message);
+                    }
+                }
                 Err(_) => send_player_not_found(from, to),
             }
         }

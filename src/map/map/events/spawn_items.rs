@@ -99,11 +99,12 @@ impl Map {
                             continue;
                         }
 
-                        character.player.as_ref().unwrap().send_buf(
-                            PacketAction::Agree,
-                            PacketFamily::Chest,
-                            buf.clone(),
-                        );
+                        let player = match character.player.as_ref() {
+                            Some(player) => player,
+                            None => continue,
+                        };
+
+                        player.send_buf(PacketAction::Agree, PacketFamily::Chest, buf.clone());
                     }
                 }
             }

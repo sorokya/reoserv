@@ -33,6 +33,11 @@ impl Map {
             return;
         }
 
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
         // Check if player already in a party
         if let Some(party) = self.world.get_player_party(target_player_id).await {
             let reply_code = match request {
@@ -54,7 +59,7 @@ impl Map {
             };
 
             if let Some(reply_code) = reply_code {
-                character.player.as_ref().unwrap().send(
+                player.send(
                     PacketAction::Reply,
                     PacketFamily::Party,
                     &PartyReplyServerPacket {
@@ -99,11 +104,7 @@ impl Map {
                     reply_code_data: None,
                 };
 
-                character.player.as_ref().unwrap().send(
-                    PacketAction::Reply,
-                    PacketFamily::Party,
-                    &packet,
-                );
+                player.send(PacketAction::Reply, PacketFamily::Party, &packet);
 
                 return;
             }

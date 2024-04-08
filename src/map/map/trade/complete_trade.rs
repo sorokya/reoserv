@@ -8,7 +8,7 @@ use eolib::protocol::{
     Emote,
 };
 
-use crate::SETTINGS;
+use crate::{SETTINGS};
 
 use super::super::Map;
 
@@ -28,13 +28,21 @@ impl Map {
 
         let partner_trade_items = partner_character.trade_items.clone();
 
-        let character = self.characters.get_mut(&player_id).unwrap();
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
         character.trade_items.clear();
         for item in &trade_items {
             character.remove_item(item.id, item.amount);
         }
 
-        let character = self.characters.get_mut(&partner_id).unwrap();
+        let character = match self.characters.get_mut(&partner_id) {
+            Some(character) => character,
+            None => return,
+        };
+
         for item in &trade_items {
             let amount = cmp::min(
                 SETTINGS.limits.max_item - character.get_item_amount(item.id),
@@ -43,13 +51,21 @@ impl Map {
             character.add_item(item.id, amount);
         }
 
-        let character = self.characters.get_mut(&partner_id).unwrap();
+        let character = match self.characters.get_mut(&partner_id) {
+            Some(character) => character,
+            None => return,
+        };
+
         character.trade_items.clear();
         for item in &partner_trade_items {
             character.remove_item(item.id, item.amount);
         }
 
-        let character = self.characters.get_mut(&player_id).unwrap();
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
         for item in &partner_trade_items {
             let amount = cmp::min(
                 SETTINGS.limits.max_item - character.get_item_amount(item.id),
@@ -58,42 +74,51 @@ impl Map {
             character.add_item(item.id, amount);
         }
 
-        let character = self.characters.get(&player_id).unwrap();
-        let partner_character = self.characters.get(&partner_id).unwrap();
-        let player = character.player.as_ref().unwrap();
-        let partner = partner_character.player.as_ref().unwrap();
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
-        player.set_trading(false);
-        player.set_trade_accepted(false);
+        let partner_character = match self.characters.get(&partner_id) {
+            Some(character) => character,
+            None => return,
+        };
 
-        player.send(
-            PacketAction::Use,
-            PacketFamily::Trade,
-            &TradeUseServerPacket {
-                trade_data: TradeItemData {
-                    partner_player_id: partner_id,
-                    partner_items: partner_trade_items.clone(),
-                    your_player_id: player_id,
-                    your_items: trade_items.clone(),
+        if let Some(player) = character.player.as_ref() {
+            player.set_trading(false);
+            player.set_trade_accepted(false);
+
+            player.send(
+                PacketAction::Use,
+                PacketFamily::Trade,
+                &TradeUseServerPacket {
+                    trade_data: TradeItemData {
+                        partner_player_id: partner_id,
+                        partner_items: partner_trade_items.clone(),
+                        your_player_id: player_id,
+                        your_items: trade_items.clone(),
+                    },
                 },
-            },
-        );
+            );
+        }
 
-        partner.set_trading(false);
-        partner.set_trade_accepted(false);
+        if let Some(partner) = partner_character.player.as_ref() {
+            partner.set_trading(false);
+            partner.set_trade_accepted(false);
 
-        partner.send(
-            PacketAction::Use,
-            PacketFamily::Trade,
-            &TradeUseServerPacket {
-                trade_data: TradeItemData {
-                    partner_player_id: player_id,
-                    partner_items: trade_items.clone(),
-                    your_player_id: partner_id,
-                    your_items: partner_trade_items.clone(),
+            partner.send(
+                PacketAction::Use,
+                PacketFamily::Trade,
+                &TradeUseServerPacket {
+                    trade_data: TradeItemData {
+                        partner_player_id: player_id,
+                        partner_items: trade_items.clone(),
+                        your_player_id: partner_id,
+                        your_items: partner_trade_items.clone(),
+                    },
                 },
-            },
-        );
+            );
+        }
 
         self.emote(player_id, Emote::Trade);
         self.emote(partner_id, Emote::Trade);

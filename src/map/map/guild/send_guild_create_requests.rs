@@ -21,16 +21,14 @@ impl Map {
 
         let buf = writer.to_byte_array();
 
-        for (player_id, character) in self.characters.iter() {
-            if *player_id == leader_player_id || character.guild_tag.is_some() {
-                continue;
+        for player in self.characters.iter().filter_map(|(player_id, character)| {
+            if *player_id != leader_player_id && character.guild_tag.is_none() {
+                character.player.as_ref()
+            } else {
+                None
             }
-
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Request,
-                PacketFamily::Guild,
-                buf.clone(),
-            );
+        }) {
+            player.send_buf(PacketAction::Request, PacketFamily::Guild, buf.clone());
         }
     }
 }

@@ -31,21 +31,6 @@ impl Map {
             None => return,
         };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Spec,
-            PacketFamily::Effect,
-            &EffectSpecServerPacket {
-                map_damage_type: MapDamageType::Spikes,
-                map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::Spikes(
-                    EffectSpecServerPacketMapDamageTypeDataSpikes {
-                        hp_damage: damage,
-                        hp: character.hp,
-                        max_hp: character.max_hp,
-                    },
-                )),
-            },
-        );
-
         self.send_packet_near_player(
             player_id,
             PacketAction::Admin,
@@ -58,14 +43,27 @@ impl Map {
             },
         );
 
-        character
-            .player
-            .as_ref()
-            .unwrap()
-            .update_party_hp(character.get_hp_percentage());
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Spec,
+                PacketFamily::Effect,
+                &EffectSpecServerPacket {
+                    map_damage_type: MapDamageType::Spikes,
+                    map_damage_type_data: Some(EffectSpecServerPacketMapDamageTypeData::Spikes(
+                        EffectSpecServerPacketMapDamageTypeDataSpikes {
+                            hp_damage: damage,
+                            hp: character.hp,
+                            max_hp: character.max_hp,
+                        },
+                    )),
+                },
+            );
 
-        if character.hp == 0 {
-            character.player.as_ref().unwrap().die();
+            player.update_party_hp(character.get_hp_percentage());
+
+            if character.hp == 0 {
+                player.die();
+            }
         }
     }
 }

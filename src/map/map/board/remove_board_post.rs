@@ -11,7 +11,13 @@ impl Map {
             None => return,
         };
 
-        let board_id = match character.player.as_ref().unwrap().get_board_id().await {
+        let player = match &character.player {
+            Some(player) => player.clone(),
+            None => return,
+        };
+
+        // TODO: Send board id from player thread
+        let board_id = match player.get_board_id().await {
             Some(board_id) => board_id,
             None => return,
         };
@@ -28,11 +34,6 @@ impl Map {
         if !self.player_in_range_of_tile(player_id, board_tile_spec) {
             return;
         }
-
-        let player = match &character.player {
-            Some(player) => player.clone(),
-            None => return,
-        };
 
         let pool = self.pool.clone();
         tokio::spawn(async move {

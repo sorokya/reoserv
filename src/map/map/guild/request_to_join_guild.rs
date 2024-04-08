@@ -21,58 +21,51 @@ impl Map {
             return;
         }
 
+        let player = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
         let recruiter = match self.characters.values().find(|c| c.name == recruiter_name) {
             Some(character) => character,
             None => {
-                send_reply!(
-                    character.player.as_ref().unwrap(),
-                    GuildReply::RecruiterNotHere
-                );
+                send_reply!(player, GuildReply::RecruiterNotHere);
                 return;
             }
         };
 
         if recruiter.guild_tag.is_none() {
-            send_reply!(
-                character.player.as_ref().unwrap(),
-                GuildReply::RecruiterWrongGuild
-            );
+            send_reply!(player, GuildReply::RecruiterWrongGuild);
             return;
         }
 
         if let Some(tag) = &recruiter.guild_tag {
             if *tag != guild_tag {
-                send_reply!(
-                    character.player.as_ref().unwrap(),
-                    GuildReply::RecruiterWrongGuild
-                );
+                send_reply!(player, GuildReply::RecruiterWrongGuild);
                 return;
             }
         }
 
-        if recruiter.guild_rank.unwrap() > 1 {
-            send_reply!(character.player.as_ref().unwrap(), GuildReply::NotRecruiter);
+        if recruiter.guild_rank.unwrap_or(9) > 1 {
+            send_reply!(player, GuildReply::NotRecruiter);
             return;
         }
 
-        recruiter
-            .player
-            .as_ref()
-            .unwrap()
-            .set_interact_player_id(Some(player_id));
-
-        recruiter.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Guild,
-            &GuildReplyServerPacket {
-                reply_code: GuildReply::JoinRequest,
-                reply_code_data: Some(GuildReplyServerPacketReplyCodeData::JoinRequest(
-                    GuildReplyServerPacketReplyCodeDataJoinRequest {
-                        player_id,
-                        name: capitalize(&character.name),
-                    },
-                )),
-            },
-        );
+        if let Some(player) = recruiter.player.as_ref() {
+            player.set_interact_player_id(Some(player_id));
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Guild,
+                &GuildReplyServerPacket {
+                    reply_code: GuildReply::JoinRequest,
+                    reply_code_data: Some(GuildReplyServerPacketReplyCodeData::JoinRequest(
+                        GuildReplyServerPacketReplyCodeDataJoinRequest {
+                            player_id,
+                            name: capitalize(&character.name),
+                        },
+                    )),
+                },
+            );
+        }
     }
 }

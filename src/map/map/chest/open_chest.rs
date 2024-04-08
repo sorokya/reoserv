@@ -50,7 +50,7 @@ impl Map {
 
         player.set_chest_index(chest_index);
 
-        character.player.as_ref().unwrap().send(
+        player.send(
             PacketAction::Open,
             PacketFamily::Chest,
             &ChestOpenServerPacket {

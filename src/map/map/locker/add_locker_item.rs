@@ -24,19 +24,29 @@ impl Map {
             None => return,
         };
 
-        if character.player.as_ref().unwrap().is_trading().await {
-            return;
+        // TODO: move this check to player thread
+        {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            if player.is_trading().await {
+                return;
+            }
         }
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as i32 >= bank_size {
-            character.player.as_ref().unwrap().send(
-                PacketAction::Spec,
-                PacketFamily::Locker,
-                &LockerSpecServerPacket {
-                    locker_max_items: bank_size,
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Spec,
+                    PacketFamily::Locker,
+                    &LockerSpecServerPacket {
+                        locker_max_items: bank_size,
+                    },
+                );
+            }
             return;
         }
 
@@ -84,24 +94,26 @@ impl Map {
         character.remove_item(item.id, amount);
         character.add_bank_item(item.id, amount);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Locker,
-            &LockerReplyServerPacket {
-                deposited_item: Item {
-                    id: item.id,
-                    amount: character.get_item_amount(item.id),
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Locker,
+                &LockerReplyServerPacket {
+                    deposited_item: Item {
+                        id: item.id,
+                        amount: character.get_item_amount(item.id),
+                    },
+                    weight: character.get_weight(),
+                    locker_items: character
+                        .bank
+                        .iter()
+                        .map(|i| ThreeItem {
+                            id: i.id,
+                            amount: i.amount,
+                        })
+                        .collect(),
                 },
-                weight: character.get_weight(),
-                locker_items: character
-                    .bank
-                    .iter()
-                    .map(|i| ThreeItem {
-                        id: i.id,
-                        amount: i.amount,
-                    })
-                    .collect(),
-            },
-        );
+            );
+        }
     }
 }

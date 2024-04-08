@@ -15,7 +15,7 @@ use super::super::Map;
 
 impl Map {
     pub fn unequip(&mut self, player_id: i32, item_id: i32, sub_loc: i32) {
-        let target = match self.characters.get_mut(&player_id) {
+        let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
                 error!("Failed to get character");
@@ -23,7 +23,7 @@ impl Map {
             }
         };
 
-        if !target.unequip(item_id, sub_loc) {
+        if !character.unequip(item_id, sub_loc) {
             return;
         }
 
@@ -33,23 +33,25 @@ impl Map {
             sound: false,
             change_type_data: Some(AvatarChangeChangeTypeData::Equipment(
                 AvatarChangeChangeTypeDataEquipment {
-                    equipment: target.get_equipment_change(),
+                    equipment: character.get_equipment_change(),
                 },
             )),
         };
 
-        target.player.as_ref().unwrap().send(
-            PacketAction::Remove,
-            PacketFamily::Paperdoll,
-            &PaperdollRemoveServerPacket {
-                change: change.clone(),
-                item_id,
-                sub_loc,
-                stats: target.get_character_stats_equipment_change(),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Remove,
+                PacketFamily::Paperdoll,
+                &PaperdollRemoveServerPacket {
+                    change: change.clone(),
+                    item_id,
+                    sub_loc,
+                    stats: character.get_character_stats_equipment_change(),
+                },
+            );
+        }
 
-        if target.hidden {
+        if character.hidden {
             return;
         }
 
@@ -58,7 +60,7 @@ impl Map {
             ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 
-        if is_visible_change && self.characters.len() > 1 {
+        if is_visible_change {
             self.send_packet_near_player(
                 player_id,
                 PacketAction::Agree,

@@ -52,12 +52,17 @@ impl Map {
 
             // TODO: Ghost timer check
             if let Some(warp) = self.get_warp(&target_coords) {
-                let target = match self.characters.get(&target_player_id) {
+                let character = match self.characters.get(&target_player_id) {
                     Some(character) => character,
                     None => return,
                 };
 
-                if warp.level_required > target.level {
+                let player = match character.player.as_ref() {
+                    Some(player) => player,
+                    None => return,
+                };
+
+                if warp.level_required > character.level {
                     return;
                 }
 
@@ -74,10 +79,10 @@ impl Map {
                     }
                 }
 
-                target.player.as_ref().unwrap().request_warp(
+                player.request_warp(
                     warp.destination_map,
                     warp.destination_coords,
-                    target.map_id == warp.destination_map,
+                    character.map_id == warp.destination_map,
                     None,
                 );
 

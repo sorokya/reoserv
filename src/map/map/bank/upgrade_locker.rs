@@ -30,13 +30,15 @@ impl Map {
         character.remove_item(1, cost);
         character.bank_level += 1;
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Buy,
-            PacketFamily::Locker,
-            &LockerBuyServerPacket {
-                gold_amount: character.get_item_amount(1),
-                locker_upgrades: character.bank_level,
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Buy,
+                PacketFamily::Locker,
+                &LockerBuyServerPacket {
+                    gold_amount: character.get_item_amount(1),
+                    locker_upgrades: character.bank_level,
+                },
+            );
+        }
     }
 }

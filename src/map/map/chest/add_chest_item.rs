@@ -118,16 +118,18 @@ impl Map {
             })
             .collect();
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Chest,
-            &ChestReplyServerPacket {
-                added_item_id: item.id,
-                remaining_amount: character.get_item_amount(item.id),
-                weight: character.get_weight(),
-                items: items.clone(),
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Chest,
+                &ChestReplyServerPacket {
+                    added_item_id: item.id,
+                    remaining_amount: character.get_item_amount(item.id),
+                    weight: character.get_weight(),
+                    items: items.clone(),
+                },
+            );
+        }
 
         let packet = ChestAgreeServerPacket { items };
 
@@ -160,11 +162,7 @@ impl Map {
                 continue;
             }
 
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Agree,
-                PacketFamily::Chest,
-                buf.clone(),
-            );
+            player.send_buf(PacketAction::Agree, PacketFamily::Chest, buf.clone());
         }
     }
 }

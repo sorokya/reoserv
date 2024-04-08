@@ -1,17 +1,15 @@
 use std::cmp;
 
 use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
-use eolib::{
-    protocol::{
-        net::{
-            server::{
-                AvatarAdminServerPacket, RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
-                SpellTargetSelfServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AvatarAdminServerPacket, RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
+            SpellTargetSelfServerPacket,
         },
-        r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
+        PacketAction, PacketFamily,
     },
+    r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
 };
 use rand::Rng;
 
@@ -117,12 +115,23 @@ impl Map {
 
         let hp_percentage = character.get_hp_percentage();
 
-        if character.hp != original_hp {
-            character
-                .player
-                .as_ref()
-                .unwrap()
-                .update_party_hp(hp_percentage);
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::TargetSelf,
+                PacketFamily::Spell,
+                &SpellTargetSelfServerPacket {
+                    player_id,
+                    spell_id,
+                    spell_heal_hp: spell.hp_heal,
+                    hp_percentage,
+                    hp: Some(character.hp),
+                    tp: Some(character.tp),
+                },
+            );
+
+            if character.hp != original_hp {
+                player.update_party_hp(hp_percentage);
+            }
         }
 
         self.send_packet_near_player(
@@ -136,19 +145,6 @@ impl Map {
                 hp_percentage,
                 hp: None,
                 tp: None,
-            },
-        );
-
-        character.player.as_ref().unwrap().send(
-            PacketAction::TargetSelf,
-            PacketFamily::Spell,
-            &SpellTargetSelfServerPacket {
-                player_id,
-                spell_id,
-                spell_heal_hp: spell.hp_heal,
-                hp_percentage,
-                hp: Some(character.hp),
-                tp: Some(character.tp),
             },
         );
     }
@@ -186,11 +182,9 @@ impl Map {
             let hp_percentage = member_character.get_hp_percentage();
 
             if member_character.hp != original_hp {
-                member_character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .update_party_hp(hp_percentage);
+                if let Some(player) = member_character.player.as_ref() {
+                    player.update_party_hp(hp_percentage);
+                }
             }
 
             healed_players.push(GroupHealTargetPlayer {
@@ -201,6 +195,11 @@ impl Map {
         }
 
         for character in self.characters.values() {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => continue,
+            };
+
             let in_range_healed_players = healed_players
                 .iter()
                 .filter_map(|healed| {
@@ -220,18 +219,16 @@ impl Map {
                 .collect::<Vec<_>>();
 
             if !in_range_healed_players.is_empty() {
-                let packet = SpellTargetGroupServerPacket {
-                    spell_id,
-                    caster_id: player_id,
-                    caster_tp: character.tp,
-                    spell_heal_hp: spell.hp_heal,
-                    players: in_range_healed_players,
-                };
-
-                character.player.as_ref().unwrap().send(
+                player.send(
                     PacketAction::TargetGroup,
                     PacketFamily::Spell,
-                    &packet,
+                    &SpellTargetGroupServerPacket {
+                        spell_id,
+                        caster_id: player_id,
+                        caster_tp: character.tp,
+                        spell_heal_hp: spell.hp_heal,
+                        players: in_range_healed_players,
+                    },
                 );
             }
         }
@@ -308,24 +305,20 @@ impl Map {
             &packet,
         );
 
-        packet.hp = Some(target.hp);
+        if let Some(player) = target.player.as_ref() {
+            packet.hp = Some(target.hp);
 
-        target.player.as_ref().unwrap().send(
-            PacketAction::TargetOther,
-            PacketFamily::Spell,
-            &packet,
-        );
+            player.send(PacketAction::TargetOther, PacketFamily::Spell, &packet);
+        }
 
-        let packet = RecoverPlayerServerPacket {
-            hp: character.hp,
-            tp: character.tp,
-        };
+        if let Some(player) = character.player.as_ref() {
+            let packet = RecoverPlayerServerPacket {
+                hp: character.hp,
+                tp: character.tp,
+            };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Player,
-            PacketFamily::Recover,
-            &packet,
-        );
+            player.send(PacketAction::Player, PacketFamily::Recover, &packet);
+        }
     }
 
     async fn cast_damage_spell(
@@ -418,14 +411,16 @@ impl Map {
             npc.damage(player_id, amount, character.accuracy, critical)
         };
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Player,
-            PacketFamily::Recover,
-            &RecoverPlayerServerPacket {
-                hp: character.hp,
-                tp: character.tp,
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Player,
+                PacketFamily::Recover,
+                &RecoverPlayerServerPacket {
+                    hp: character.hp,
+                    tp: character.tp,
+                },
+            );
+        }
 
         if npc.alive {
             self.attack_npc_reply(
@@ -490,14 +485,16 @@ impl Map {
             character.spell_state = SpellState::None;
             character.tp -= spell_data.tp_cost;
 
-            character.player.as_ref().unwrap().send(
-                PacketAction::Player,
-                PacketFamily::Recover,
-                &RecoverPlayerServerPacket {
-                    hp: character.hp,
-                    tp: character.tp,
-                },
-            );
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Player,
+                    PacketFamily::Recover,
+                    &RecoverPlayerServerPacket {
+                        hp: character.hp,
+                        tp: character.tp,
+                    },
+                );
+            }
         }
 
         let target_character = match self.characters.get(&target_player_id) {
@@ -522,23 +519,21 @@ impl Map {
             packet,
         );
 
-        if target_character.hp == 0 {
-            target_character.player.as_ref().unwrap().die();
+        if let Some(player) = target_character.player.as_ref() {
+            if target_character.hp == 0 {
+                player.die();
+            }
+
+            player.send(
+                PacketAction::Player,
+                PacketFamily::Recover,
+                &RecoverPlayerServerPacket {
+                    hp: target_character.hp,
+                    tp: target_character.tp,
+                },
+            );
+
+            player.update_party_hp(target_character.get_hp_percentage());
         }
-
-        target_character.player.as_ref().unwrap().send(
-            PacketAction::Player,
-            PacketFamily::Recover,
-            &RecoverPlayerServerPacket {
-                hp: target_character.hp,
-                tp: target_character.tp,
-            },
-        );
-
-        target_character
-            .player
-            .as_ref()
-            .unwrap()
-            .update_party_hp(target_character.get_hp_percentage());
     }
 }

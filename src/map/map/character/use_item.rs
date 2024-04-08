@@ -28,8 +28,15 @@ impl Map {
             }
         };
 
-        if character.player.as_ref().unwrap().is_trading().await {
-            return;
+        // TODO: Validate in player thread
+        {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+            if player.is_trading().await {
+                return;
+            }
         }
 
         if !character.items.iter().any(|item| item.id == item_id) {
@@ -44,7 +51,6 @@ impl Map {
         };
 
         let mut packet = ItemReplyServerPacket::default();
-        let player = character.player.as_ref().unwrap().clone();
 
         match item.r#type {
             ItemType::Heal => {
@@ -69,7 +75,9 @@ impl Map {
                         hp_percentage: character.get_hp_percentage(),
                     };
 
-                    player.update_party_hp(character.get_hp_percentage());
+                    if let Some(player) = character.player.as_ref() {
+                        player.update_party_hp(character.get_hp_percentage());
+                    }
 
                     self.send_packet_near_player(
                         player_id,
@@ -112,12 +120,14 @@ impl Map {
                     }
                 };
 
-                player.request_warp(
-                    map_id,
-                    coords,
-                    character.map_id == map_id,
-                    Some(WarpEffect::Scroll),
-                );
+                if let Some(player) = character.player.as_ref() {
+                    player.request_warp(
+                        map_id,
+                        coords,
+                        character.map_id == map_id,
+                        Some(WarpEffect::Scroll),
+                    );
+                }
                 packet.item_type = ItemType::Teleport;
             }
             ItemType::Alcohol => {
@@ -224,22 +234,27 @@ impl Map {
             }
         }
 
-        let character = self.characters.get_mut(&player_id).unwrap();
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
         if !SETTINGS.items.infinite_use_items.contains(&item_id) {
             character.remove_item(item_id, 1);
         }
 
-        packet.used_item = Item {
-            id: item_id,
-            amount: match character.items.iter().find(|i| i.id == item_id) {
-                Some(item) => item.amount,
-                None => 0,
-            },
-        };
+        if let Some(player) = character.player.as_ref() {
+            packet.used_item = Item {
+                id: item_id,
+                amount: match character.items.iter().find(|i| i.id == item_id) {
+                    Some(item) => item.amount,
+                    None => 0,
+                },
+            };
 
-        packet.weight = character.get_weight();
+            packet.weight = character.get_weight();
 
-        player.send(PacketAction::Reply, PacketFamily::Item, &packet);
+            player.send(PacketAction::Reply, PacketFamily::Item, &packet);
+        }
     }
 }

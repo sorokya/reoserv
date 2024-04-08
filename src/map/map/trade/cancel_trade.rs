@@ -21,8 +21,11 @@ impl Map {
             Some(partner) => partner,
             None => return,
         };
+
         partner.trade_items.clear();
 
-        partner.player.as_ref().unwrap().cancel_trade();
+        if let Some(player) = partner.player.as_ref() {
+            player.cancel_trade();
+        }
     }
 }

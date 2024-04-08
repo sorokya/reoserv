@@ -22,49 +22,53 @@ impl Map {
             return;
         }
 
-        let actual_session_id = match character.player.as_ref().unwrap().get_session_id().await {
-            Ok(id) => id,
-            Err(e) => {
-                error!("Failed to get session id {}", e);
+        // TODO: validate session in player thread
+        {
+            let player = match character.player.as_ref() {
+                Some(player) => player,
+                None => return,
+            };
+
+            let actual_session_id = match player.get_session_id().await {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("Failed to get session id {}", e);
+                    return;
+                }
+            };
+
+            if actual_session_id != session_id {
                 return;
             }
-        };
 
-        if actual_session_id != session_id {
-            return;
-        }
+            let npc_index = match player.get_interact_npc_index().await {
+                Some(index) => index,
+                None => return,
+            };
 
-        let npc_index = match character
-            .player
-            .as_ref()
-            .unwrap()
-            .get_interact_npc_index()
-            .await
-        {
-            Some(index) => index,
-            None => return,
-        };
+            let npc = match self.npcs.get(&npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
 
-        let npc = match self.npcs.get(&npc_index) {
-            Some(npc) => npc,
-            None => return,
-        };
+            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
-
-        if npc_data.r#type != NpcType::Trainer {
-            return;
+            if npc_data.r#type != NpcType::Trainer {
+                return;
+            }
         }
 
         character.remove_spell(skill_id);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Remove,
-            PacketFamily::StatSkill,
-            &StatSkillRemoveServerPacket { spell_id: skill_id },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Remove,
+                PacketFamily::StatSkill,
+                &StatSkillRemoveServerPacket { spell_id: skill_id },
+            );
+        }
     }
 }

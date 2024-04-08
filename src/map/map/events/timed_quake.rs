@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         map::MapTimedEffect,
         net::{
@@ -59,29 +58,16 @@ impl Map {
 
         self.quake_ticks += 1;
         if self.quake_ticks >= rate {
-            let packet = EffectUseServerPacket {
-                effect: MapEffect::Quake,
-                effect_data: Some(EffectUseServerPacketEffectData::Quake(
-                    EffectUseServerPacketEffectDataQuake { quake_strength },
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize EffectUseServerPacket: {}", e);
-                return;
-            }
-
-            let buf = writer.to_byte_array();
-
-            for character in self.characters.values() {
-                character.player.as_ref().unwrap().send_buf(
-                    PacketAction::Use,
-                    PacketFamily::Effect,
-                    buf.clone(),
-                );
-            }
+            self.send_packet_all(
+                PacketAction::Use,
+                PacketFamily::Effect,
+                EffectUseServerPacket {
+                    effect: MapEffect::Quake,
+                    effect_data: Some(EffectUseServerPacketEffectData::Quake(
+                        EffectUseServerPacketEffectDataQuake { quake_strength },
+                    )),
+                },
+            );
 
             self.quake_rate = None;
             self.quake_strength = None;

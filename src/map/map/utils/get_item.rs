@@ -31,18 +31,20 @@ impl Map {
 
         character.add_item(item_id, amount_picked_up);
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Get,
-            PacketFamily::Item,
-            &ItemGetServerPacket {
-                taken_item_index: item_index,
-                taken_item: ThreeItem {
-                    id: item_id,
-                    amount: amount_picked_up,
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Get,
+                PacketFamily::Item,
+                &ItemGetServerPacket {
+                    taken_item_index: item_index,
+                    taken_item: ThreeItem {
+                        id: item_id,
+                        amount: amount_picked_up,
+                    },
+                    weight: character.get_weight(),
                 },
-                weight: character.get_weight(),
-            },
-        );
+            );
+        }
 
         if amount_picked_up == item_amount {
             self.items.remove(&item_index);

@@ -58,13 +58,15 @@ impl Map {
         character.remove_item(1, amount);
         character.gold_bank += amount;
 
-        character.player.as_ref().unwrap().send(
-            PacketAction::Reply,
-            PacketFamily::Bank,
-            &BankReplyServerPacket {
-                gold_inventory: character.get_item_amount(1),
-                gold_bank: character.gold_bank,
-            },
-        );
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Bank,
+                &BankReplyServerPacket {
+                    gold_inventory: character.get_item_amount(1),
+                    gold_bank: character.gold_bank,
+                },
+            );
+        }
     }
 }

@@ -62,4 +62,4 @@ pr-run-mode = "plan"
 # Whether to install an updater program
 install-updater = false
 # Extra static files to include in each App (path relative to this Cargo.toml's dir)
-include = ["./Config.toml", "./Arenas.ron", "./Commands.ron", "./Formulas.ron", "./PacketRateLimits.ron", "./db-init/", "./news.txt", "./lang/", "./maps/", "./pub/", "./pub/inns/", "./pub/npcs/", "./pub/items/", "./pub/shops/", "./pub/spells/", "./pub/classes/", "./pub/skill_masters/", "./quests/"]
+include = ["./config", "./data", "./db-init"]

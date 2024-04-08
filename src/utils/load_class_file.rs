@@ -26,7 +26,7 @@ pub fn load_class_file() -> Result<Ecf, Box<dyn std::error::Error>> {
 fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
     let mut ecf_file = Ecf::default();
 
-    for entry in glob("pub/classes/*.json")? {
+    for entry in glob("data/pub/classes/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -70,13 +70,13 @@ fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
         decode_number(&encoded[2..=3]) as i32,
     ];
 
-    save_pub_file(&ecf_file, "pub/dat001.ecf")?;
+    save_pub_file(&ecf_file, "data/pub/dat001.ecf")?;
 
     Ok(ecf_file)
 }
 
 fn load_pub() -> Result<Ecf, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dat001.ecf")?;
+    let mut file = File::open("data/pub/dat001.ecf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

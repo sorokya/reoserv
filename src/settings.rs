@@ -259,8 +259,8 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
-            .add_source(File::with_name("Config.toml"))
-            .add_source(File::with_name("Config.local.toml").required(false))
+            .add_source(File::with_name("config/Config.toml"))
+            .add_source(File::with_name("config/Config.local.toml").required(false))
             .build()?;
 
         s.try_deserialize()

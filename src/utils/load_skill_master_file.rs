@@ -23,7 +23,7 @@ pub fn load_skill_master_file() -> Result<SkillMasterFile, Box<dyn std::error::E
 fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
     let mut skill_master_file = SkillMasterFile::default();
 
-    for entry in glob("pub/skill_masters/*.json")? {
+    for entry in glob("data/pub/skill_masters/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -72,13 +72,13 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
         });
     }
 
-    save_pub_file(&skill_master_file, "pub/dsm001.emf")?;
+    save_pub_file(&skill_master_file, "data/pub/dsm001.emf")?;
 
     Ok(skill_master_file)
 }
 
 fn load_pub() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dsm001.emf")?;
+    let mut file = File::open("data/pub/dsm001.emf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

@@ -24,7 +24,7 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
     let mut talk_file = TalkFile::default();
 
     let mut npc_id = 1;
-    for entry in glob("pub/npcs/*.json")? {
+    for entry in glob("data/pub/npcs/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -49,13 +49,13 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
         npc_id += 1;
     }
 
-    save_pub_file(&talk_file, "pub/ttd001.etf")?;
+    save_pub_file(&talk_file, "data/pub/ttd001.etf")?;
 
     Ok(talk_file)
 }
 
 fn load_pub() -> Result<TalkFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/ttd001.etf")?;
+    let mut file = File::open("data/pub/ttd001.etf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

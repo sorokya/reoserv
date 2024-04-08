@@ -10,20 +10,20 @@ target/
 *.pdb
 
 # EO Data files
-/pub/*.ecf
-/pub/*.eif
-/pub/*.ebf
-/pub/*.eid
-/pub/*.esf
-/pub/*.emf
-/pub/*.edf
-/pub/*.enf
-/pub/*.evf
-/pub/*.etf
-/pub/**/*.json
-/maps/*.emf
-/quests/*.txt*
-/quests/*.eqf
+data/pub/*.ecf
+data/pub/*.eif
+data/pub/*.ebf
+data/pub/*.eid
+data/pub/*.esf
+data/pub/*.emf
+data/pub/*.edf
+data/pub/*.enf
+data/pub/*.evf
+data/pub/*.etf
+data/pub/**/*.json
+data/maps/*.emf
+data/quests/*.txt*
+data/quests/*.eqf
 
 # Stupid mac thing
 .DS_Store

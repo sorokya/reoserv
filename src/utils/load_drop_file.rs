@@ -24,7 +24,7 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut drop_file = DropFile::default();
 
     let mut npc_id = 1;
-    for entry in glob("pub/npcs/*.json")? {
+    for entry in glob("data/pub/npcs/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -50,13 +50,13 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
         npc_id += 1;
     }
 
-    save_pub_file(&drop_file, "pub/dtd001.edf")?;
+    save_pub_file(&drop_file, "data/pub/dtd001.edf")?;
 
     Ok(drop_file)
 }
 
 fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dtd001.edf")?;
+    let mut file = File::open("data/pub/dtd001.edf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

@@ -99,7 +99,7 @@ impl Player {
 }
 
 async fn get_news() -> [String; 9] {
-    match tokio::fs::File::open(Path::new("news.txt")).await {
+    match tokio::fs::File::open(Path::new("data/news.txt")).await {
         Ok(mut file) => {
             let mut buf: Vec<u8> = Vec::new();
             file.read_to_end(&mut buf).await.unwrap();
@@ -124,7 +124,7 @@ async fn get_news() -> [String; 9] {
             news
         }
         Err(e) => {
-            error!("Failed to open news.txt: {}", e);
+            error!("Failed to open data/news.txt: {}", e);
             [
                 String::default(),
                 String::default(),

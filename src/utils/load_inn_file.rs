@@ -23,7 +23,7 @@ pub fn load_inn_file() -> Result<InnFile, Box<dyn std::error::Error>> {
 fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
     let mut inn_file = InnFile::default();
 
-    for entry in glob("pub/inns/*.json")? {
+    for entry in glob("data/pub/inns/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -75,13 +75,13 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
         });
     }
 
-    save_pub_file(&inn_file, "pub/din001.eid")?;
+    save_pub_file(&inn_file, "data/pub/din001.eid")?;
 
     Ok(inn_file)
 }
 
 fn load_pub() -> Result<InnFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/din001.eid")?;
+    let mut file = File::open("data/pub/din001.eid")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

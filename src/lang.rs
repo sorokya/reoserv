@@ -28,7 +28,7 @@ impl Lang {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
             .add_source(File::with_name(&format!(
-                "lang/{}.ron",
+                "data/lang/{}.ron",
                 SETTINGS.server.lang
             )))
             .build()?;

@@ -26,7 +26,7 @@ pub fn load_npc_file() -> Result<Enf, Box<dyn std::error::Error>> {
 fn load_json() -> Result<Enf, Box<dyn std::error::Error>> {
     let mut enf_file = Enf::default();
 
-    for entry in glob("pub/npcs/*.json")? {
+    for entry in glob("data/pub/npcs/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -82,13 +82,13 @@ fn load_json() -> Result<Enf, Box<dyn std::error::Error>> {
         decode_number(&encoded[2..=3]) as i32,
     ];
 
-    save_pub_file(&enf_file, "pub/dtn001.enf")?;
+    save_pub_file(&enf_file, "data/pub/dtn001.enf")?;
 
     Ok(enf_file)
 }
 
 fn load_pub() -> Result<Enf, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dtn001.enf")?;
+    let mut file = File::open("data/pub/dtn001.enf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

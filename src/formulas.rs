@@ -23,8 +23,8 @@ pub struct Formulas {
 impl Formulas {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
-            .add_source(File::with_name("Formulas.ron"))
-            .add_source(File::with_name("Formulas.local.ron").required(false))
+            .add_source(File::with_name("config/Formulas.ron"))
+            .add_source(File::with_name("config/Formulas.local.ron").required(false))
             .build()?;
 
         s.try_deserialize()

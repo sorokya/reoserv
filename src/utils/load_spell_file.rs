@@ -29,7 +29,7 @@ pub fn load_spell_file() -> Result<Esf, Box<dyn std::error::Error>> {
 fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
     let mut esf_file = Esf::default();
 
-    for entry in glob("pub/spells/*.json")? {
+    for entry in glob("data/pub/spells/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -96,13 +96,13 @@ fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
         decode_number(&encoded[2..=3]) as i32,
     ];
 
-    save_pub_file(&esf_file, "pub/dsl001.esf")?;
+    save_pub_file(&esf_file, "data/pub/dsl001.esf")?;
 
     Ok(esf_file)
 }
 
 fn load_pub() -> Result<Esf, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dsl001.esf")?;
+    let mut file = File::open("data/pub/dsl001.esf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

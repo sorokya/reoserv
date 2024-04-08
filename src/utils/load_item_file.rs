@@ -27,7 +27,7 @@ pub fn load_item_file() -> Result<Eif, Box<dyn std::error::Error>> {
 fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
     let mut eif_file = Eif::default();
 
-    for entry in glob("pub/items/*.json")? {
+    for entry in glob("data/pub/items/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -102,13 +102,13 @@ fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
         decode_number(&encoded[2..=3]) as i32,
     ];
 
-    save_pub_file(&eif_file, "pub/dat001.eif")?;
+    save_pub_file(&eif_file, "data/pub/dat001.eif")?;
 
     Ok(eif_file)
 }
 
 fn load_pub() -> Result<Eif, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dat001.eif")?;
+    let mut file = File::open("data/pub/dat001.eif")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

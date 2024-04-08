@@ -6,7 +6,7 @@ use glob::glob;
 pub fn load_quests() -> HashMap<i32, Quest> {
     let mut quests = HashMap::new();
 
-    for entry in glob("quests/*.eqf").unwrap() {
+    for entry in glob("data/quests/*.eqf").unwrap() {
         match entry {
             Ok(path) => match load_quest(path) {
                 Some((id, quest)) => {

@@ -16,8 +16,8 @@ pub struct PacketRateLimits {
 impl PacketRateLimits {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
-            .add_source(File::with_name("PacketRateLimits.ron"))
-            .add_source(File::with_name("PacketRateLimits.local.ron").required(false))
+            .add_source(File::with_name("config/PacketRateLimits.ron"))
+            .add_source(File::with_name("config/PacketRateLimits.local.ron").required(false))
             .build()?;
 
         s.try_deserialize()

@@ -25,7 +25,7 @@ pub fn load_shop_file() -> Result<ShopFile, Box<dyn std::error::Error>> {
 fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
     let mut shop_file = ShopFile::default();
 
-    for entry in glob("pub/shops/*.json")? {
+    for entry in glob("data/pub/shops/*.json")? {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -86,13 +86,13 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
         });
     }
 
-    save_pub_file(&shop_file, "pub/dts001.esf")?;
+    save_pub_file(&shop_file, "data/pub/dts001.esf")?;
 
     Ok(shop_file)
 }
 
 fn load_pub() -> Result<ShopFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("pub/dts001.esf")?;
+    let mut file = File::open("data/pub/dts001.esf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
 

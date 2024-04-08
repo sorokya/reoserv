@@ -36,8 +36,8 @@ pub struct Commands {
 impl Commands {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
-            .add_source(File::with_name("Commands.ron"))
-            .add_source(File::with_name("Commands.local.ron").required(false))
+            .add_source(File::with_name("config/Commands.ron"))
+            .add_source(File::with_name("config/Commands.local.ron").required(false))
             .build()?;
 
         s.try_deserialize()

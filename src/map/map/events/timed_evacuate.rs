@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{MusicPlayerServerPacket, TalkServerServerPacket},
@@ -69,45 +68,20 @@ impl Map {
     }
 
     fn send_evac_warning(&self, template: &str, seconds: i32) {
-        let packet = TalkServerServerPacket {
-            message: get_lang_string!(template, seconds = seconds),
-        };
+        self.send_packet_all(
+            PacketAction::Server,
+            PacketFamily::Talk,
+            TalkServerServerPacket {
+                message: get_lang_string!(template, seconds = seconds),
+            },
+        );
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TalkServerServerPacket: {}", e);
-            return;
-        }
-
-        let message_buf = writer.to_byte_array();
-
-        let packet = MusicPlayerServerPacket {
-            sound_id: SETTINGS.evacuate.sfx_id,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize MusicPlayerServerPacket: {}", e);
-            return;
-        }
-
-        let sound_buf = writer.to_byte_array();
-
-        for character in self.characters.values() {
-            let player = match character.player {
-                Some(ref player) => player,
-                None => continue,
-            };
-
-            player.send_buf(PacketAction::Player, PacketFamily::Music, sound_buf.clone());
-
-            player.send_buf(
-                PacketAction::Server,
-                PacketFamily::Talk,
-                message_buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Player,
+            PacketFamily::Music,
+            MusicPlayerServerPacket {
+                sound_id: SETTINGS.evacuate.sfx_id,
+            },
+        );
     }
 }

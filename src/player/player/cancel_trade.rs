@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{server::TradeCloseServerPacket, PacketAction, PacketFamily},
 };
 
@@ -20,23 +19,14 @@ impl Player {
         self.trading = false;
         self.trade_accepted = false;
 
-        let packet = TradeCloseServerPacket {
-            partner_player_id: interact_player_id,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TradeCloseServerPacket: {}", e);
-            return;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Close,
                 PacketFamily::Trade,
-                writer.to_byte_array(),
+                TradeCloseServerPacket {
+                    partner_player_id: interact_player_id,
+                },
             )
             .await;
     }

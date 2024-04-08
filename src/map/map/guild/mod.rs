@@ -1,7 +1,5 @@
 macro_rules! send_reply {
     ($player:expr, $reply:expr) => {{
-        let _writer = eolib::data::EoWriter::new();
-
         $player.send(
             eolib::protocol::net::PacketAction::Reply,
             eolib::protocol::net::PacketFamily::Guild,

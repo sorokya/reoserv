@@ -2,7 +2,6 @@ use std::cmp;
 
 use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{
@@ -126,27 +125,18 @@ impl Map {
                 .update_party_hp(hp_percentage);
         }
 
-        let packet = SpellTargetSelfServerPacket {
-            player_id,
-            spell_id,
-            spell_heal_hp: spell.hp_heal,
-            hp_percentage,
-            hp: None,
-            tp: None,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize SpellTargetSelfServerPacket: {}", e);
-            return;
-        }
-
-        self.send_buf_near_player(
+        self.send_packet_near_player(
             player_id,
             PacketAction::TargetSelf,
             PacketFamily::Spell,
-            writer.to_byte_array(),
+            &SpellTargetSelfServerPacket {
+                player_id,
+                spell_id,
+                spell_heal_hp: spell.hp_heal,
+                hp_percentage,
+                hp: None,
+                tp: None,
+            },
         );
 
         character.player.as_ref().unwrap().send(

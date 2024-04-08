@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             client::GuildInfoType,
@@ -68,75 +67,54 @@ impl Player {
             }
         };
 
-        let mut writer = EoWriter::new();
-
         match info_type {
             GuildInfoType::Description => {
                 let description =
                     get_guild_description(&mut conn, character.guild_tag.as_ref().unwrap()).await;
-                let packet = GuildTakeServerPacket { description };
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Error serializing GuildTakeServerPacket: {}", e);
-                    return;
-                }
 
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Take,
                         PacketFamily::Guild,
-                        writer.to_byte_array(),
+                        GuildTakeServerPacket { description },
                     )
                     .await;
             }
             GuildInfoType::Ranks => {
                 let ranks = get_guild_ranks(&mut conn, character.guild_tag.as_ref().unwrap()).await;
 
-                let packet = GuildRankServerPacket {
-                    ranks: [
-                        ranks[0].to_owned(),
-                        ranks[1].to_owned(),
-                        ranks[2].to_owned(),
-                        ranks[3].to_owned(),
-                        ranks[4].to_owned(),
-                        ranks[5].to_owned(),
-                        ranks[6].to_owned(),
-                        ranks[7].to_owned(),
-                        ranks[8].to_owned(),
-                    ],
-                };
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Error serializing GuildRankServerPacket: {}", e);
-                    return;
-                }
-
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Rank,
                         PacketFamily::Guild,
-                        writer.to_byte_array(),
+                        GuildRankServerPacket {
+                            ranks: [
+                                ranks[0].to_owned(),
+                                ranks[1].to_owned(),
+                                ranks[2].to_owned(),
+                                ranks[3].to_owned(),
+                                ranks[4].to_owned(),
+                                ranks[5].to_owned(),
+                                ranks[6].to_owned(),
+                                ranks[7].to_owned(),
+                                ranks[8].to_owned(),
+                            ],
+                        },
                     )
                     .await;
             }
             GuildInfoType::Bank => {
                 let gold_amount =
                     get_guild_bank(&mut conn, character.guild_tag.as_ref().unwrap()).await;
-                let packet = GuildSellServerPacket { gold_amount };
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Error serializing GuildSellServerPacket: {}", e);
-                    return;
-                }
 
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Sell,
                         PacketFamily::Guild,
-                        writer.to_byte_array(),
+                        GuildSellServerPacket { gold_amount },
                     )
                     .await;
             }

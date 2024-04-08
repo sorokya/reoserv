@@ -1,7 +1,8 @@
+use anyhow::anyhow;
 use bytes::{BufMut, Bytes, BytesMut};
 use chrono::Utc;
 use eolib::{
-    data::{decode_number, encode_number},
+    data::{decode_number, encode_number, EoSerialize, EoWriter},
     encrypt::{decrypt_packet, encrypt_packet, generate_swap_multiple},
     packet::{generate_sequence_start, Sequencer},
     protocol::net::{PacketAction, PacketFamily},
@@ -36,12 +37,28 @@ impl PacketBus {
         }
     }
 
-    pub async fn send(
+    pub async fn send<T>(
+        &mut self,
+        action: PacketAction,
+        family: PacketFamily,
+        packet: T,
+    ) -> anyhow::Result<()>
+    where
+        T: EoSerialize,
+    {
+        let mut writer = EoWriter::new();
+
+        packet.serialize(&mut writer)?;
+
+        self.send_buf(action, family, writer.to_byte_array()).await
+    }
+
+    pub async fn send_buf(
         &mut self,
         action: PacketAction,
         family: PacketFamily,
         data: Bytes,
-    ) -> std::io::Result<()> {
+    ) -> anyhow::Result<()> {
         let packet_size = 2 + data.len();
         let length_bytes = match encode_number(packet_size as i32) {
             Ok(bytes) => bytes,
@@ -66,14 +83,15 @@ impl PacketBus {
         match self.socket.try_write(&buf) {
             Ok(num_of_bytes_written) => {
                 if num_of_bytes_written != packet_size + 2 {
-                    error!(
-                        "Written bytes ({}) doesn't match packet size ({})",
-                        num_of_bytes_written, packet_size
-                    );
+                    return Err(anyhow!(
+                        "Written bytes {} do not match packet size {}",
+                        num_of_bytes_written,
+                        packet_size
+                    ));
                 }
             }
-            _ => {
-                error!("Error writing to socket");
+            Err(e) => {
+                return Err(e.into());
             }
         }
 

@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::server::{
     WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
 };
@@ -24,25 +24,15 @@ impl Player {
 
         let player_count = self.world.get_player_count().await;
         if player_count >= SETTINGS.server.max_players {
-            let packet = WelcomeReplyServerPacket {
-                welcome_code: WelcomeCode::ServerBusy,
-                welcome_code_data: None,
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Error serializing WelcomeReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Welcome,
-                    writer.to_byte_array(),
+                    WelcomeReplyServerPacket {
+                        welcome_code: WelcomeCode::ServerBusy,
+                        welcome_code_data: None,
+                    },
                 )
                 .await;
 
@@ -114,26 +104,17 @@ impl Player {
         self.character = Some(character);
         self.state = ClientState::EnteringGame;
 
-        let reply = WelcomeReplyServerPacket {
-            welcome_code: WelcomeCode::SelectCharacter,
-            welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::SelectCharacter(
-                select_character,
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize WelcomeReplyServerPacket: {}", e);
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Welcome,
-                writer.to_byte_array(),
+                WelcomeReplyServerPacket {
+                    welcome_code: WelcomeCode::SelectCharacter,
+                    welcome_code_data: Some(
+                        WelcomeReplyServerPacketWelcomeCodeData::SelectCharacter(select_character),
+                    ),
+                },
             )
             .await;
 

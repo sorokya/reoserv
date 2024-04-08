@@ -293,7 +293,7 @@ impl Player {
                 character_id,
             } => return self.select_character(player_handle, character_id).await,
             Command::Send(action, family, data) => {
-                let _ = self.bus.send(action, family, data).await;
+                let _ = self.bus.send_buf(action, family, data).await;
             }
             Command::SetBoardId(board_id) => {
                 self.board_id = Some(board_id);

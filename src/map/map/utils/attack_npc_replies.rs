@@ -1,6 +1,5 @@
 use chrono::Utc;
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{
@@ -331,26 +330,13 @@ impl Map {
                 });
 
             if let Some((_, child_npc)) = self.npcs.iter().find(|(_, n)| n.child) {
-                let packet = NpcJunkServerPacket {
-                    npc_id: child_npc.id,
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    error!("Failed to serialize NpcJunkServerPacket packet: {}", e);
-                    return;
-                }
-
-                let buf = writer.to_byte_array();
-
-                self.characters.iter().for_each(|(_, character)| {
-                    character.player.as_ref().unwrap().send_buf(
-                        PacketAction::Junk,
-                        PacketFamily::Npc,
-                        buf.clone(),
-                    );
-                });
+                self.send_packet_all(
+                    PacketAction::Junk,
+                    PacketFamily::Npc,
+                    NpcJunkServerPacket {
+                        npc_id: child_npc.id,
+                    },
+                );
             }
         }
 

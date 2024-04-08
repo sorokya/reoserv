@@ -1,5 +1,5 @@
 use super::super::Player;
-use eolib::{data::EoSerialize, protocol::net::server::GuildReply};
+use eolib::{protocol::net::server::GuildReply};
 
 impl Player {
     pub async fn kick_guild_member(&mut self, session_id: i32, member_name: String) {

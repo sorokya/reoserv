@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::server::{
     CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
     CharacterReplyServerPacketReplyCodeDataDefault, CharacterReplyServerPacketReplyCodeDataFull,
@@ -37,29 +37,17 @@ impl Player {
 
         // TODO: configurable max number of characters?
         if num_of_characters >= 3 {
-            let reply = CharacterReplyServerPacket {
-                reply_code: CharacterReply::Full,
-                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Full(
-                    CharacterReplyServerPacketReplyCodeDataFull::new(),
-                )),
-            };
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                self.close(format!(
-                    "Error serializing CharacterReplyServerPacket: {}",
-                    e
-                ))
-                .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Character,
-                    writer.to_byte_array(),
+                    CharacterReplyServerPacket {
+                        reply_code: CharacterReply::Full,
+                        reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Full(
+                            CharacterReplyServerPacketReplyCodeDataFull::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -67,30 +55,17 @@ impl Player {
 
         let session_id = self.generate_session_id();
 
-        let reply = CharacterReplyServerPacket {
-            reply_code: CharacterReply::Unrecognized(session_id),
-            reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Default(
-                CharacterReplyServerPacketReplyCodeDataDefault::new(),
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!(
-                "Error serializing CharacterReplyServerPacket: {}",
-                e
-            ))
-            .await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Character,
-                writer.to_byte_array(),
+                CharacterReplyServerPacket {
+                    reply_code: CharacterReply::Unrecognized(session_id),
+                    reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Default(
+                        CharacterReplyServerPacketReplyCodeDataDefault::new(),
+                    )),
+                },
             )
             .await;
 

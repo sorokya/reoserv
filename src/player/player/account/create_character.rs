@@ -1,7 +1,7 @@
 use crate::player::ClientState;
 use crate::SETTINGS;
 use crate::{character::Character, errors::WrongSessionIdError};
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::client::CharacterCreateClientPacket;
 use eolib::protocol::net::server::{
     CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
@@ -69,30 +69,17 @@ impl Player {
         };
 
         if exists {
-            let reply = CharacterReplyServerPacket {
-                reply_code: CharacterReply::Exists,
-                reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Exists(
-                    CharacterReplyServerPacketReplyCodeDataExists::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                self.close(format!(
-                    "Failed to serialize CharacterReplyServerPacket: {}",
-                    e
-                ))
-                .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Character,
-                    writer.to_byte_array(),
+                    CharacterReplyServerPacket {
+                        reply_code: CharacterReply::Exists,
+                        reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Exists(
+                            CharacterReplyServerPacketReplyCodeDataExists::new(),
+                        )),
+                    },
                 )
                 .await;
 
@@ -120,30 +107,17 @@ impl Player {
             }
         };
 
-        let reply = CharacterReplyServerPacket {
-            reply_code: CharacterReply::OK,
-            reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::OK(
-                CharacterReplyServerPacketReplyCodeDataOk { characters },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!(
-                "Failed to serialize CharacterReplyServerPacket: {}",
-                e
-            ))
-            .await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Character,
-                writer.to_byte_array(),
+                CharacterReplyServerPacket {
+                    reply_code: CharacterReply::OK,
+                    reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::OK(
+                        CharacterReplyServerPacketReplyCodeDataOk { characters },
+                    )),
+                },
             )
             .await;
 

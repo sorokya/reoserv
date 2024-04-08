@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     encrypt::{generate_swap_multiple, server_verification_hash},
     packet::{generate_sequence_start, get_init_sequence_bytes},
     protocol::net::{
@@ -27,43 +26,33 @@ impl Player {
         _version: Version,
     ) -> bool {
         if let Some(duration) = self.get_ban_duration().await {
-            let mut writer = EoWriter::new();
-            let mut reply = InitInitServerPacket {
-                reply_code: InitReply::Banned,
-                reply_code_data: Some(InitInitServerPacketReplyCodeData::Banned(
-                    InitInitServerPacketReplyCodeDataBanned {
-                        ban_type: InitBanType::Permanent,
-                        ban_type_data: None,
-                    },
-                )),
-            };
-
-            if duration > 0 {
-                reply.reply_code_data = Some(InitInitServerPacketReplyCodeData::Banned(
-                    InitInitServerPacketReplyCodeDataBanned {
-                        ban_type: InitBanType::Temporary,
-                        ban_type_data: Some(
-                            InitInitServerPacketReplyCodeDataBannedBanTypeData::Temporary(
-                                InitInitServerPacketReplyCodeDataBannedBanTypeDataTemporary {
-                                    minutes_remaining: duration as u8,
-                                },
-                            ),
-                        ),
-                    },
-                ));
-            }
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                error!("Failed to serialize InitInitServerPacket: {}", e);
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Init,
                     PacketFamily::Init,
-                    writer.to_byte_array(),
+                    InitInitServerPacket {
+                        reply_code: InitReply::Banned,
+                        reply_code_data: Some(InitInitServerPacketReplyCodeData::Banned(
+                            if duration > 0 {
+                                InitInitServerPacketReplyCodeDataBanned {
+                                    ban_type: InitBanType::Temporary,
+                                    ban_type_data: Some(
+                                        InitInitServerPacketReplyCodeDataBannedBanTypeData::Temporary(
+                                            InitInitServerPacketReplyCodeDataBannedBanTypeDataTemporary {
+                                                minutes_remaining: duration as u8,
+                                            },
+                                        ),
+                                    ),
+                                }
+                            } else {
+                                InitInitServerPacketReplyCodeDataBanned {
+                                    ban_type: InitBanType::Permanent,
+                                    ban_type_data: None,
+                                }
+                            },
+                        )),
+                    },
                 )
                 .await;
 
@@ -79,36 +68,26 @@ impl Player {
 
         self.bus.client_enryption_multiple = generate_swap_multiple();
         self.bus.server_enryption_multiple = generate_swap_multiple();
-
-        let reply = InitInitServerPacket {
-            reply_code: InitReply::OK,
-            reply_code_data: Some(InitInitServerPacketReplyCodeData::OK(
-                InitInitServerPacketReplyCodeDataOk {
-                    seq1: sequence_bytes[0] as u8,
-                    seq2: sequence_bytes[1] as u8,
-                    server_encryption_multiple: self.bus.server_enryption_multiple,
-                    client_encryption_multiple: self.bus.client_enryption_multiple,
-                    challenge_response,
-                    player_id: self.id,
-                },
-            )),
-        };
-
         self.state = ClientState::Initialized;
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize InitInitServerPacket: {}", e);
-            return false;
-        }
 
         let _ = self
             .bus
             .send(
                 PacketAction::Init,
                 PacketFamily::Init,
-                writer.to_byte_array(),
+                InitInitServerPacket {
+                    reply_code: InitReply::OK,
+                    reply_code_data: Some(InitInitServerPacketReplyCodeData::OK(
+                        InitInitServerPacketReplyCodeDataOk {
+                            seq1: sequence_bytes[0] as u8,
+                            seq2: sequence_bytes[1] as u8,
+                            server_encryption_multiple: self.bus.server_enryption_multiple,
+                            client_encryption_multiple: self.bus.client_enryption_multiple,
+                            challenge_response,
+                            player_id: self.id,
+                        },
+                    )),
+                },
             )
             .await;
 

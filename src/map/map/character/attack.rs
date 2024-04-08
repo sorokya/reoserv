@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         map::MapType,
         net::{
@@ -313,58 +312,32 @@ impl Map {
             );
         }
 
-        let packet = ArenaSpecServerPacket {
-            player_id,
-            direction,
-            kills_count: arena_player.kills,
-            killer_name: character.name.to_owned(),
-            victim_name: target_character.name.to_owned(),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize ArenaSpecServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-
-        for character in self.characters.values() {
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Spec,
-                PacketFamily::Arena,
-                buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Spec,
+            PacketFamily::Arena,
+            ArenaSpecServerPacket {
+                player_id,
+                direction,
+                kills_count: arena_player.kills,
+                killer_name: character.name.to_owned(),
+                victim_name: target_character.name.to_owned(),
+            },
+        );
     }
 
     fn arena_end(&mut self, arena_player: &ArenaPlayer, winner_name: String, target_name: String) {
         self.arena_players.clear();
 
-        let packet = ArenaAcceptServerPacket {
-            winner_name: winner_name.to_owned(),
-            kills_count: arena_player.kills,
-            killer_name: winner_name,
-            victim_name: target_name,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize ArenaAcceptServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-
-        for character in self.characters.values() {
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Accept,
-                PacketFamily::Arena,
-                buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Accept,
+            PacketFamily::Arena,
+            ArenaAcceptServerPacket {
+                winner_name: winner_name.to_owned(),
+                kills_count: arena_player.kills,
+                killer_name: winner_name,
+                victim_name: target_name,
+            },
+        );
     }
 
     fn attack_player_pk(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {

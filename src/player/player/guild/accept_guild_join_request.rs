@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{
         server::{GuildReply, GuildReplyServerPacket},
         PacketAction, PacketFamily,
@@ -54,24 +53,15 @@ impl Player {
 
         let guild_bank = get_guild_bank(&mut conn, character.guild_tag.as_ref().unwrap()).await;
         if guild_bank < SETTINGS.guild.recruit_cost {
-            let packet = GuildReplyServerPacket {
-                reply_code: GuildReply::AccountLow,
-                reply_code_data: None,
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing GuildReplyServerPacket: {}", e);
-                return;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Guild,
-                    writer.to_byte_array(),
+                    GuildReplyServerPacket {
+                        reply_code: GuildReply::AccountLow,
+                        reply_code_data: None,
+                    },
                 )
                 .await;
             return;

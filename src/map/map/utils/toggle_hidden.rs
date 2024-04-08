@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{
@@ -33,41 +32,23 @@ impl Map {
                 None => return,
             };
 
-            let packet = PlayersAgreeServerPacket {
-                nearby: NearbyInfo {
-                    characters: vec![character.to_map_info()],
-                    ..Default::default()
-                },
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing PlayersAgreeServerPacket: {}", e);
-                return;
-            }
-
-            self.send_buf_near(
+            self.send_packet_near(
                 &character.coords,
                 PacketAction::Agree,
                 PacketFamily::Players,
-                writer.to_byte_array(),
+                PlayersAgreeServerPacket {
+                    nearby: NearbyInfo {
+                        characters: vec![character.to_map_info()],
+                        ..Default::default()
+                    },
+                },
             );
 
-            let packet = AdminInteractAgreeServerPacket { player_id };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing AdminInteractAgreeServerPacket: {}", e);
-                return;
-            }
-
-            self.send_buf_near(
+            self.send_packet_near(
                 &character.coords,
                 PacketAction::Agree,
                 PacketFamily::AdminInteract,
-                writer.to_byte_array(),
+                AdminInteractAgreeServerPacket { player_id },
             );
         } else {
             character.hidden = true;
@@ -77,20 +58,11 @@ impl Map {
                 None => return,
             };
 
-            let packet = AdminInteractRemoveServerPacket { player_id };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing AdminInteractRemoveServerPacket: {}", e);
-                return;
-            }
-
-            self.send_buf_near(
+            self.send_packet_near(
                 &character.coords,
                 PacketAction::Remove,
                 PacketFamily::AdminInteract,
-                writer.to_byte_array(),
+                AdminInteractRemoveServerPacket { player_id },
             );
         }
     }

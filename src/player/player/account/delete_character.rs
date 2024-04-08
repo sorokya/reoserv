@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::server::{
     CharacterReply, CharacterReplyServerPacket, CharacterReplyServerPacketReplyCodeData,
     CharacterReplyServerPacketReplyCodeDataDeleted,
@@ -81,30 +81,17 @@ impl Player {
             }
         };
 
-        let reply = CharacterReplyServerPacket {
-            reply_code: CharacterReply::Deleted,
-            reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(
-                CharacterReplyServerPacketReplyCodeDataDeleted { characters },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!(
-                "Failed to serialize CharacterReplyServerPacket: {}",
-                e
-            ))
-            .await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Character,
-                writer.to_byte_array(),
+                CharacterReplyServerPacket {
+                    reply_code: CharacterReply::Deleted,
+                    reply_code_data: Some(CharacterReplyServerPacketReplyCodeData::Deleted(
+                        CharacterReplyServerPacketReplyCodeDataDeleted { characters },
+                    )),
+                },
             )
             .await;
 

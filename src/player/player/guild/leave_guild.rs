@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{
         server::{GuildAcceptServerPacket, GuildAgreeServerPacket},
         PacketAction, PacketFamily,
@@ -69,44 +68,26 @@ impl Player {
                 .await;
 
             // This is dumb but it tricks the v28 client into keeping you in your guild
-            let packet = GuildAgreeServerPacket {
-                recruiter_id: self.id,
-                guild_tag: guild_tag.to_owned(),
-                guild_name: character.guild_name.unwrap().clone(),
-                rank_name: character.guild_rank_string.unwrap().clone(),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing GuildAgreeServerPacket: {}", e);
-                return;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Agree,
                     PacketFamily::Guild,
-                    writer.to_byte_array(),
+                    GuildAgreeServerPacket {
+                        recruiter_id: self.id,
+                        guild_tag: guild_tag.to_owned(),
+                        guild_name: character.guild_name.unwrap().clone(),
+                        rank_name: character.guild_rank_string.unwrap().clone(),
+                    },
                 )
                 .await;
-
-            let packet = GuildAcceptServerPacket { rank: 1 };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing GuildAcceptServerPacket: {}", e);
-                return;
-            }
 
             let _ = self
                 .bus
                 .send(
                     PacketAction::Accept,
                     PacketFamily::Guild,
-                    writer.to_byte_array(),
+                    GuildAcceptServerPacket { rank: 1 },
                 )
                 .await;
 

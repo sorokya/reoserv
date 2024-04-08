@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::client::AccountCreateClientPacket;
 use eolib::protocol::net::server::{
     AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
@@ -60,30 +60,17 @@ impl Player {
         };
 
         if exists {
-            let reply = AccountReplyServerPacket {
-                reply_code: AccountReply::Exists,
-                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
-                    AccountReplyServerPacketReplyCodeDataExists::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                self.close(format!(
-                    "Failed to serialize AccountReplyServerPacket: {}",
-                    e
-                ))
-                .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Account,
-                    writer.to_byte_array(),
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::Exists,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                            AccountReplyServerPacketReplyCodeDataExists::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -109,30 +96,18 @@ impl Player {
         {
             Ok(_) => {
                 info!("New account: {}", packet.username);
-                let reply = AccountReplyServerPacket {
-                    reply_code: AccountReply::Created,
-                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Created(
-                        AccountReplyServerPacketReplyCodeDataCreated::new(),
-                    )),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = reply.serialize(&mut writer) {
-                    self.close(format!(
-                        "Failed to serialize AccountReplyServerPacket: {}",
-                        e
-                    ))
-                    .await;
-                    return false;
-                }
 
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Reply,
                         PacketFamily::Account,
-                        writer.to_byte_array(),
+                        AccountReplyServerPacket {
+                            reply_code: AccountReply::Created,
+                            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Created(
+                                AccountReplyServerPacketReplyCodeDataCreated::new(),
+                            )),
+                        },
                     )
                     .await;
                 true

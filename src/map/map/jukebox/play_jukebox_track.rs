@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         map::MapTileSpec,
         net::{
@@ -57,22 +56,10 @@ impl Map {
             },
         );
 
-        let packet = JukeboxUseServerPacket { track_id };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize JukeboxUseServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-        for character in self.characters.values() {
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Use,
-                PacketFamily::Jukebox,
-                buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Use,
+            PacketFamily::Jukebox,
+            JukeboxUseServerPacket { track_id },
+        );
     }
 }

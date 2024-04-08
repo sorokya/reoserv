@@ -174,20 +174,9 @@ impl Player {
             _ => return false,
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize InitInitServerPacket: {}", e);
-            return false;
-        }
-
         let _ = self
             .bus
-            .send(
-                PacketAction::Init,
-                PacketFamily::Init,
-                writer.to_byte_array(),
-            )
+            .send(PacketAction::Init, PacketFamily::Init, reply)
             .await;
 
         true

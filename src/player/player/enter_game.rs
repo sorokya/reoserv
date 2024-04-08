@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{
         server::{
             WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
@@ -66,32 +65,23 @@ impl Player {
 
         let nearby_info = map.get_nearby_info(self.id).await;
 
-        let reply = WelcomeReplyServerPacket {
-            welcome_code: WelcomeCode::EnterGame,
-            welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(
-                WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
-                    news: get_news().await,
-                    weight,
-                    items,
-                    spells,
-                    nearby: nearby_info,
-                },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            error!("Failed to serialize WelcomeReplyServerPacket: {}", e);
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Welcome,
-                writer.to_byte_array(),
+                WelcomeReplyServerPacket {
+                    welcome_code: WelcomeCode::EnterGame,
+                    welcome_code_data: Some(WelcomeReplyServerPacketWelcomeCodeData::EnterGame(
+                        WelcomeReplyServerPacketWelcomeCodeDataEnterGame {
+                            news: get_news().await,
+                            weight,
+                            items,
+                            spells,
+                            nearby: nearby_info,
+                        },
+                    )),
+                },
             )
             .await;
         true

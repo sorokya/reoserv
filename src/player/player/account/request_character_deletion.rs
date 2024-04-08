@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{server::CharacterPlayerServerPacket, PacketAction, PacketFamily},
 };
 
@@ -44,28 +43,16 @@ impl Player {
         }
 
         let session_id = self.generate_session_id();
-        let reply = CharacterPlayerServerPacket {
-            session_id,
-            character_id,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!(
-                "Error serializing CharacterPlayerServerPacket: {}",
-                e
-            ))
-            .await;
-            return false;
-        }
 
         let _ = self
             .bus
             .send(
                 PacketAction::Player,
                 PacketFamily::Character,
-                writer.to_byte_array(),
+                CharacterPlayerServerPacket {
+                    session_id,
+                    character_id,
+                },
             )
             .await;
 

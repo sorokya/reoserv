@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{ArenaDropServerPacket, ArenaUseServerPacket},
@@ -83,45 +82,20 @@ impl Map {
     }
 
     fn send_arena_full(&self) {
-        let packet = ArenaDropServerPacket::new();
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize ArenaDropServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-
-        for character in self.characters.values() {
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Drop,
-                PacketFamily::Arena,
-                buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Drop,
+            PacketFamily::Arena,
+            ArenaDropServerPacket::default(),
+        );
     }
 
     fn send_arena_launch(&mut self, player_count: usize) {
-        let packet = ArenaUseServerPacket {
-            players_count: player_count as i32,
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize ArenaUseServerPacket: {}", e);
-            return;
-        }
-
-        let buf = writer.to_byte_array();
-        for character in self.characters.values() {
-            character.player.as_ref().unwrap().send_buf(
-                PacketAction::Use,
-                PacketFamily::Arena,
-                buf.clone(),
-            );
-        }
+        self.send_packet_all(
+            PacketAction::Use,
+            PacketFamily::Arena,
+            ArenaUseServerPacket {
+                players_count: player_count as i32,
+            },
+        );
     }
 }

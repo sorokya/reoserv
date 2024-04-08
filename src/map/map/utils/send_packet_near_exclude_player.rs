@@ -41,14 +41,14 @@ impl Map {
         family: PacketFamily,
         buf: Bytes,
     ) {
-        for (player_id, character) in self.characters.iter() {
-            if *player_id != exclude_player_id && in_range(coords, &character.coords) {
-                character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .send_buf(action, family, buf.clone());
+        for player in self.characters.iter().filter_map(|(id, c)| {
+            if *id != exclude_player_id && in_range(&c.coords, coords) {
+                c.player.as_ref()
+            } else {
+                None
             }
+        }) {
+            player.send_buf(action, family, buf.clone());
         }
     }
 }

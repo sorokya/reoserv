@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::server::{
     LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
     LoginReplyServerPacketReplyCodeDataBanned, LoginReplyServerPacketReplyCodeDataBusy,
@@ -27,27 +27,17 @@ impl Player {
 
         let player_count = self.world.get_player_count().await;
         if player_count >= SETTINGS.server.max_players {
-            let packet = LoginReplyServerPacket {
-                reply_code: LoginReply::Busy,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Busy(
-                    LoginReplyServerPacketReplyCodeDataBusy::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Error serializing LoginReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Login,
-                    writer.to_byte_array(),
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::Busy,
+                        reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Busy(
+                            LoginReplyServerPacketReplyCodeDataBusy::new(),
+                        )),
+                    },
                 )
                 .await;
 
@@ -76,27 +66,17 @@ impl Player {
         };
 
         if !exists {
-            let packet = LoginReplyServerPacket {
-                reply_code: LoginReply::WrongUser,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUser(
-                    LoginReplyServerPacketReplyCodeDataWrongUser::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Login,
-                    writer.to_byte_array(),
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::WrongUser,
+                        reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUser(
+                            LoginReplyServerPacketReplyCodeDataWrongUser::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -112,27 +92,17 @@ impl Player {
         };
 
         if banned {
-            let packet = LoginReplyServerPacket {
-                reply_code: LoginReply::Banned,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Banned(
-                    LoginReplyServerPacketReplyCodeDataBanned::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Login,
-                    writer.to_byte_array(),
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::Banned,
+                        reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Banned(
+                            LoginReplyServerPacketReplyCodeDataBanned::new(),
+                        )),
+                    },
                 )
                 .await;
             self.close("Account is banned".to_string()).await;
@@ -152,27 +122,19 @@ impl Player {
             Err(e) => {
                 error!("Error getting password hash: {}", e);
 
-                let packet = LoginReplyServerPacket {
-                    reply_code: LoginReply::WrongUserPassword,
-                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUserPassword(
-                        LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
-                    )),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                        .await;
-                    return false;
-                }
-
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Reply,
                         PacketFamily::Login,
-                        writer.to_byte_array(),
+                        LoginReplyServerPacket {
+                            reply_code: LoginReply::WrongUserPassword,
+                            reply_code_data: Some(
+                                LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                    LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                                ),
+                            ),
+                        },
                     )
                     .await;
                 return true;
@@ -182,27 +144,19 @@ impl Player {
 
         let password_hash: String = row.get("password_hash").unwrap();
         if !validate_password(&username, &password, &password_hash) {
-            let packet = LoginReplyServerPacket {
-                reply_code: LoginReply::WrongUserPassword,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::WrongUserPassword(
-                    LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Login,
-                    writer.to_byte_array(),
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::WrongUserPassword,
+                        reply_code_data: Some(
+                            LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                            ),
+                        ),
+                    },
                 )
                 .await;
             return true;
@@ -210,27 +164,17 @@ impl Player {
 
         let account_id: i32 = row.get("id").unwrap();
         if self.world.is_logged_in(account_id).await {
-            let packet = LoginReplyServerPacket {
-                reply_code: LoginReply::LoggedIn,
-                reply_code_data: Some(LoginReplyServerPacketReplyCodeData::LoggedIn(
-                    LoginReplyServerPacketReplyCodeDataLoggedIn::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                    .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Login,
-                    writer.to_byte_array(),
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::LoggedIn,
+                        reply_code_data: Some(LoginReplyServerPacketReplyCodeData::LoggedIn(
+                            LoginReplyServerPacketReplyCodeDataLoggedIn::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -255,26 +199,17 @@ impl Player {
         self.account_id = account_id;
         self.state = ClientState::LoggedIn;
 
-        let reply = LoginReplyServerPacket {
-            reply_code: LoginReply::OK,
-            reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
-                LoginReplyServerPacketReplyCodeDataOk { characters },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
-                .await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Login,
-                writer.to_byte_array(),
+                LoginReplyServerPacket {
+                    reply_code: LoginReply::OK,
+                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
+                        LoginReplyServerPacketReplyCodeDataOk { characters },
+                    )),
+                },
             )
             .await;
 

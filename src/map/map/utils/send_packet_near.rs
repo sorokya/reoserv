@@ -38,14 +38,14 @@ impl Map {
         family: PacketFamily,
         buf: Bytes,
     ) {
-        for character in self.characters.values() {
-            if in_range(coords, &character.coords) {
-                character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .send_buf(action, family, buf.clone());
+        for player in self.characters.values().filter_map(|c| {
+            if in_range(&c.coords, coords) {
+                c.player.as_ref()
+            } else {
+                None
             }
+        }) {
+            player.send_buf(action, family, buf.clone());
         }
     }
 }

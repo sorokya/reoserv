@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{MessageOpenServerPacket, MusicPlayerServerPacket},
@@ -75,46 +74,28 @@ impl Player {
             }
             "PlayMusic" => {
                 if let Some(Arg::Int(sound_id)) = args.first() {
-                    let packet = MusicPlayerServerPacket {
-                        sound_id: *sound_id,
-                    };
-
-                    let mut writer = EoWriter::new();
-
-                    if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Error serializing MusicPlayerServerPacket: {}", e);
-                        return;
-                    }
-
                     let _ = self
                         .bus
                         .send(
                             PacketAction::Player,
                             PacketFamily::Music,
-                            writer.to_byte_array(),
+                            MusicPlayerServerPacket {
+                                sound_id: *sound_id,
+                            },
                         )
                         .await;
                 }
             }
             "PlaySound" => {
                 if let Some(Arg::Int(sound_id)) = args.first() {
-                    let packet = MusicPlayerServerPacket {
-                        sound_id: *sound_id,
-                    };
-
-                    let mut writer = EoWriter::new();
-
-                    if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Error serializing MusicPlayerServerPacket: {}", e);
-                        return;
-                    }
-
                     let _ = self
                         .bus
                         .send(
                             PacketAction::Player,
                             PacketFamily::Music,
-                            writer.to_byte_array(),
+                            MusicPlayerServerPacket {
+                                sound_id: *sound_id,
+                            },
                         )
                         .await;
                 }
@@ -125,22 +106,14 @@ impl Player {
                     _ => return,
                 };
 
-                let packet = MessageOpenServerPacket {
-                    message: message.to_owned(),
-                };
-
-                let mut writer = EoWriter::with_capacity(message.len());
-
-                if packet.serialize(&mut writer).is_err() {
-                    return;
-                }
-
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Open,
                         PacketFamily::Message,
-                        writer.to_byte_array(),
+                        MessageOpenServerPacket {
+                            message: message.to_owned(),
+                        },
                     )
                     .await;
             }

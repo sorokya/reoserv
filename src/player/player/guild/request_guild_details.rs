@@ -1,6 +1,5 @@
 use chrono::NaiveDateTime;
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{GuildReply, GuildReportServerPacket, GuildStaff},
@@ -183,20 +182,9 @@ impl Player {
             }
         }
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildReportServerPacket: {}", e);
-            return;
-        }
-
         let _ = self
             .bus
-            .send(
-                PacketAction::Report,
-                PacketFamily::Guild,
-                writer.to_byte_array(),
-            )
+            .send(PacketAction::Report, PacketFamily::Guild, packet)
             .await;
     }
 }

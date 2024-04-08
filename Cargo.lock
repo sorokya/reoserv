@@ -2047,6 +2047,7 @@ dependencies = [
 name = "reoserv"
 version = "1.0.3"
 dependencies = [
+ "anyhow",
  "argon2",
  "bytes",
  "chrono",

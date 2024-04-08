@@ -1,5 +1,3 @@
-
-
 use eolib::protocol::net::{
     server::{
         QuestListServerPacket, QuestListServerPacketPageData,

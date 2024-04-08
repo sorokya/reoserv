@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{GuildMember, GuildReply, GuildTellServerPacket},
@@ -84,21 +83,12 @@ impl Player {
             return;
         }
 
-        let packet = GuildTellServerPacket { members };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing GuildTellServerPacket: {}", e);
-            return;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Tell,
                 PacketFamily::Guild,
-                writer.to_byte_array(),
+                GuildTellServerPacket { members },
             )
             .await;
     }

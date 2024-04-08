@@ -1,4 +1,4 @@
-use eolib::{data::EoSerialize, protocol::net::server::GuildReply};
+use eolib::{protocol::net::server::GuildReply};
 use mysql_async::{prelude::Queryable, Conn};
 use mysql_common::params;
 

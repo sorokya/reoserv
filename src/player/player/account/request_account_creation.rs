@@ -1,4 +1,4 @@
-use eolib::data::{EoSerialize, EoWriter};
+
 use eolib::protocol::net::server::{
     AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
     AccountReplyServerPacketReplyCodeDataDefault, AccountReplyServerPacketReplyCodeDataExists,
@@ -38,25 +38,17 @@ impl Player {
         };
 
         if exists {
-            let reply = AccountReplyServerPacket {
-                reply_code: AccountReply::Exists,
-                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
-                    AccountReplyServerPacketReplyCodeDataExists::new(),
-                )),
-            };
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = reply.serialize(&mut writer) {
-                self.close(format!("Error serializing reply: {}", e)).await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Account,
-                    writer.to_byte_array(),
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::Exists,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                            AccountReplyServerPacketReplyCodeDataExists::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -65,26 +57,17 @@ impl Player {
         let session_id = self.generate_session_id();
         let sequence_start = self.bus.sequencer.get_start();
 
-        let reply = AccountReplyServerPacket {
-            reply_code: AccountReply::Unrecognized(session_id),
-            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Default(
-                AccountReplyServerPacketReplyCodeDataDefault { sequence_start },
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = reply.serialize(&mut writer) {
-            self.close(format!("Error serializing reply: {}", e)).await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Account,
-                writer.to_byte_array(),
+                AccountReplyServerPacket {
+                    reply_code: AccountReply::Unrecognized(session_id),
+                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Default(
+                        AccountReplyServerPacketReplyCodeDataDefault { sequence_start },
+                    )),
+                },
             )
             .await;
 

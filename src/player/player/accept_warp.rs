@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::{
         net::{
             server::{
@@ -135,20 +134,9 @@ impl Player {
             }
         };
 
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = agree.serialize(&mut writer) {
-            error!("Failed to serialize WarpAgreeServerPacket: {}", e);
-            return;
-        }
-
         let _ = self
             .bus
-            .send(
-                PacketAction::Agree,
-                PacketFamily::Warp,
-                writer.to_byte_array(),
-            )
+            .send(PacketAction::Agree, PacketFamily::Warp, agree)
             .await;
     }
 }

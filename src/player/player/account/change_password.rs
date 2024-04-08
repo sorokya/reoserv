@@ -1,5 +1,4 @@
 use eolib::{
-    data::{EoSerialize, EoWriter},
     protocol::net::{
         server::{
             AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
@@ -52,30 +51,17 @@ impl Player {
         };
 
         if !exists {
-            let packet = AccountReplyServerPacket {
-                reply_code: AccountReply::Exists,
-                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
-                    AccountReplyServerPacketReplyCodeDataExists::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                self.close(format!(
-                    "Failed to serialize AccountReplyServerPacket: {}",
-                    e
-                ))
-                .await;
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Account,
-                    writer.to_byte_array(),
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::Exists,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Exists(
+                            AccountReplyServerPacketReplyCodeDataExists::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -94,30 +80,19 @@ impl Player {
             Err(e) => {
                 error!("Error getting password hash: {}", e);
 
-                let packet = AccountReplyServerPacket {
-                    reply_code: AccountReply::ChangeFailed,
-                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::ChangeFailed(
-                        AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
-                    )),
-                };
-
-                let mut writer = EoWriter::new();
-
-                if let Err(e) = packet.serialize(&mut writer) {
-                    self.close(format!(
-                        "Failed to serialize AccountReplyServerPacket: {}",
-                        e
-                    ))
-                    .await;
-                    return false;
-                }
-
                 let _ = self
                     .bus
                     .send(
                         PacketAction::Reply,
                         PacketFamily::Account,
-                        writer.to_byte_array(),
+                        AccountReplyServerPacket {
+                            reply_code: AccountReply::ChangeFailed,
+                            reply_code_data: Some(
+                                AccountReplyServerPacketReplyCodeData::ChangeFailed(
+                                    AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
+                                ),
+                            ),
+                        },
                     )
                     .await;
                 return true;
@@ -127,26 +102,17 @@ impl Player {
 
         let password_hash: String = row.get("password_hash").unwrap();
         if !validate_password(&username, &current_password, &password_hash) {
-            let packet = AccountReplyServerPacket {
-                reply_code: AccountReply::ChangeFailed,
-                reply_code_data: Some(AccountReplyServerPacketReplyCodeData::ChangeFailed(
-                    AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
-                )),
-            };
-
-            let mut writer = EoWriter::new();
-
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize AccountReplyServerPacket: {}", e);
-                return false;
-            }
-
             let _ = self
                 .bus
                 .send(
                     PacketAction::Reply,
                     PacketFamily::Account,
-                    writer.to_byte_array(),
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::ChangeFailed,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::ChangeFailed(
+                            AccountReplyServerPacketReplyCodeDataChangeFailed::new(),
+                        )),
+                    },
                 )
                 .await;
             return true;
@@ -170,30 +136,17 @@ impl Player {
             return false;
         }
 
-        let packet = AccountReplyServerPacket {
-            reply_code: AccountReply::Changed,
-            reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Changed(
-                AccountReplyServerPacketReplyCodeDataChanged::new(),
-            )),
-        };
-
-        let mut writer = EoWriter::new();
-
-        if let Err(e) = packet.serialize(&mut writer) {
-            self.close(format!(
-                "Failed to serialize AccountReplyServerPacket: {}",
-                e
-            ))
-            .await;
-            return false;
-        }
-
         let _ = self
             .bus
             .send(
                 PacketAction::Reply,
                 PacketFamily::Account,
-                writer.to_byte_array(),
+                AccountReplyServerPacket {
+                    reply_code: AccountReply::Changed,
+                    reply_code_data: Some(AccountReplyServerPacketReplyCodeData::Changed(
+                        AccountReplyServerPacketReplyCodeDataChanged::new(),
+                    )),
+                },
             )
             .await;
 

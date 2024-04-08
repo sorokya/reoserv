@@ -1,5 +1,4 @@
 use eolib::{
-    data::EoSerialize,
     protocol::{
         net::{client::GuildAgreeClientPacketInfoTypeData, server::GuildReply},
         r#pub::NpcType,

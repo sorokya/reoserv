@@ -23,6 +23,7 @@ mod recover_npcs;
 mod recover_players;
 mod reload;
 mod save;
+mod send_packet_all;
 mod send_packet_near;
 mod send_packet_near_exclude_player;
 mod send_packet_near_player;

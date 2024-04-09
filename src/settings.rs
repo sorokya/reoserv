@@ -10,7 +10,6 @@ pub struct Server {
     pub ip_reconnect_limit: i32,
     pub max_uninitialized_connections: i32,
     pub hangup_delay: i32,
-    pub password_salt: String,
     pub max_login_attempts: i32,
     pub ping_rate: i32,
     pub enforce_sequence: bool,

@@ -29,11 +29,6 @@ max_players = 200
 # ping before the next one is sent.
 ping_rate = 60
 
-# The salt value used when hashing account passwords
-# This should be changed to a random value to prevent
-# rainbow table attacks
-password_salt = "ChangeMe"
-
 # Number of failed login attempts before connection is closed
 max_login_attempts = 3
 

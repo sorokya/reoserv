@@ -154,9 +154,9 @@ impl Map {
 
             Command::BuyItem {
                 player_id,
+                npc_index,
                 item,
-                session_id,
-            } => self.buy_item(player_id, item, session_id).await,
+            } => self.buy_item(player_id, npc_index, item),
 
             Command::BuyHaircut {
                 player_id,
@@ -177,9 +177,9 @@ impl Map {
 
             Command::CraftItem {
                 player_id,
+                npc_index,
                 item_id,
-                session_id,
-            } => self.craft_item(player_id, item_id, session_id).await,
+            } => self.craft_item(player_id, npc_index, item_id),
 
             Command::CreateBoardPost {
                 player_id,
@@ -413,7 +413,8 @@ impl Map {
             Command::OpenShop {
                 player_id,
                 npc_index,
-            } => self.open_shop(player_id, npc_index).await,
+                session_id,
+            } => self.open_shop(player_id, npc_index, session_id),
 
             Command::OpenSkillMaster {
                 player_id,
@@ -513,9 +514,9 @@ impl Map {
 
             Command::SellItem {
                 player_id,
+                npc_index,
                 item,
-                session_id,
-            } => self.sell_item(player_id, item, session_id).await,
+            } => self.sell_item(player_id, npc_index, item),
 
             Command::SendChatMessage {
                 target_player_id,

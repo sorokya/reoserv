@@ -50,8 +50,8 @@ pub enum Command {
     },
     BuyItem {
         player_id: i32,
+        npc_index: i32,
         item: Item,
-        session_id: i32,
     },
     BuyHaircut {
         player_id: i32,
@@ -69,8 +69,8 @@ pub enum Command {
     },
     CraftItem {
         player_id: i32,
+        npc_index: i32,
         item_id: i32,
-        session_id: i32,
     },
     CreateBoardPost {
         player_id: i32,
@@ -266,6 +266,7 @@ pub enum Command {
     OpenShop {
         player_id: i32,
         npc_index: i32,
+        session_id: i32,
     },
     OpenSkillMaster {
         player_id: i32,
@@ -368,8 +369,8 @@ pub enum Command {
     },
     SellItem {
         player_id: i32,
+        npc_index: i32,
         item: Item,
-        session_id: i32,
     },
     SendChatMessage {
         target_player_id: i32,

@@ -13,7 +13,7 @@ use crate::{NPC_DB, SETTINGS, SHOP_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn sell_item(&mut self, player_id: i32, item: Item, session_id: i32) {
+    pub fn sell_item(&mut self, player_id: i32, npc_index: i32, item: Item) {
         if item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
             return;
         }
@@ -23,55 +23,24 @@ impl Map {
             None => return,
         };
 
-        // TODO: Validate in player thread
-        let behavior_id = {
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => return,
-            };
-
-            if player.is_trading().await {
-                return;
-            }
-
-            let actual_session_id = match player.get_session_id().await {
-                Ok(id) => id,
-                Err(e) => {
-                    error!("Failed to get session id {}", e);
-                    return;
-                }
-            };
-
-            if actual_session_id != session_id {
-                return;
-            }
-
-            let npc_index = match player.get_interact_npc_index().await {
-                Some(index) => index,
-                None => return,
-            };
-
-            let npc = match self.npcs.get(&npc_index) {
-                Some(npc) => npc,
-                None => return,
-            };
-
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-                Some(npc_data) => npc_data,
-                None => return,
-            };
-
-            if npc_data.r#type != NpcType::Shop {
-                return;
-            }
-
-            npc_data.behavior_id
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
         };
+
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        if npc_data.r#type != NpcType::Shop {
+            return;
+        }
 
         let shop = match SHOP_DB
             .shops
             .iter()
-            .find(|shop| shop.behavior_id == behavior_id)
+            .find(|shop| shop.behavior_id == npc_data.behavior_id)
         {
             Some(shop) => shop,
             None => return,

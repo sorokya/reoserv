@@ -10,7 +10,7 @@ use eolib::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn buy(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn buy(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let buy = match ShopBuyClientPacket::deserialize(&reader) {
         Ok(buy) => buy,
         Err(e) => {
@@ -19,10 +19,24 @@ fn buy(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.buy_item(player_id, buy.buy_item, buy.session_id);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != buy.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.buy_item(player_id, npc_index, buy.buy_item);
 }
 
-fn create(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn create(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let create = match ShopCreateClientPacket::deserialize(&reader) {
         Ok(create) => create,
         Err(e) => {
@@ -31,10 +45,24 @@ fn create(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.craft_item(player_id, create.craft_item_id, create.session_id);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != create.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.craft_item(player_id, npc_index, create.craft_item_id);
 }
 
-fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn open(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let open = match ShopOpenClientPacket::deserialize(&reader) {
         Ok(open) => open,
         Err(e) => {
@@ -43,10 +71,18 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.open_shop(player_id, open.npc_index);
+    let session_id = match player.generate_session_id().await {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            error!("Failed to generate session id: {}", e);
+            return;
+        }
+    };
+
+    map.open_shop(player_id, open.npc_index, session_id);
 }
 
-fn sell(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn sell(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let sell = match ShopSellClientPacket::deserialize(&reader) {
         Ok(sell) => sell,
         Err(e) => {
@@ -55,7 +91,21 @@ fn sell(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.sell_item(player_id, sell.sell_item, sell.session_id);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != sell.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.sell_item(player_id, npc_index, sell.sell_item);
 }
 
 pub async fn shop(action: PacketAction, reader: EoReader, player: PlayerHandle) {
@@ -75,11 +125,16 @@ pub async fn shop(action: PacketAction, reader: EoReader, player: PlayerHandle) 
         }
     };
 
+    // Prevent interacting with shop when trading
+    if player.is_trading().await {
+        return;
+    }
+
     match action {
-        PacketAction::Buy => buy(reader, player_id, map),
-        PacketAction::Create => create(reader, player_id, map),
-        PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Sell => sell(reader, player_id, map),
+        PacketAction::Buy => buy(reader, player_id, player, map).await,
+        PacketAction::Create => create(reader, player_id, player, map).await,
+        PacketAction::Open => open(reader, player_id, player, map).await,
+        PacketAction::Sell => sell(reader, player_id, player, map).await,
         _ => error!("Unhandled packet Shop_{:?}", action),
     }
 }

@@ -70,11 +70,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::AgreeTrade { player_id });
     }
 
-    pub fn buy_item(&self, player_id: i32, item: Item, session_id: i32) {
+    pub fn buy_item(&self, player_id: i32, npc_index: i32, item: Item) {
         let _ = self.tx.send(Command::BuyItem {
             player_id,
+            npc_index,
             item,
-            session_id,
         });
     }
 
@@ -98,11 +98,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::CastSpell { player_id, target });
     }
 
-    pub fn craft_item(&self, player_id: i32, item_id: i32, session_id: i32) {
+    pub fn craft_item(&self, player_id: i32, npc_index: i32, item_id: i32) {
         let _ = self.tx.send(Command::CraftItem {
             player_id,
+            npc_index,
             item_id,
-            session_id,
         });
     }
 
@@ -430,10 +430,11 @@ impl MapHandle {
         });
     }
 
-    pub fn open_shop(&self, player_id: i32, npc_index: i32) {
+    pub fn open_shop(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenShop {
             player_id,
             npc_index,
+            session_id,
         });
     }
 
@@ -598,11 +599,11 @@ impl MapHandle {
         });
     }
 
-    pub fn sell_item(&self, player_id: i32, item: Item, session_id: i32) {
+    pub fn sell_item(&self, player_id: i32, npc_index: i32, item: Item) {
         let _ = self.tx.send(Command::SellItem {
             player_id,
+            npc_index,
             item,
-            session_id,
         });
     }
 

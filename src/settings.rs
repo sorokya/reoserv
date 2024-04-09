@@ -63,7 +63,6 @@ pub struct Rescue {
 
 #[derive(Debug, Deserialize)]
 pub struct World {
-    pub see_distance: i32,
     pub drop_distance: i32,
     pub recover_rate: i32,
     pub npc_recover_rate: i32,

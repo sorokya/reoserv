@@ -90,8 +90,6 @@ x = 24
 y = 24
 
 [world]
-# Size of the characters view port
-see_distance = 11
 
 # Max distance a player can drop/pick up an item
 drop_distance = 2

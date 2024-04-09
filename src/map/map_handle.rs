@@ -206,11 +206,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::FindPlayer { player_id, name });
     }
 
-    pub fn forget_skill(&self, player_id: i32, skill_id: i32, session_id: i32) {
+    pub fn forget_skill(&self, player_id: i32, npc_index: i32, skill_id: i32) {
         let _ = self.tx.send(Command::ForgetSkill {
             player_id,
+            npc_index,
             skill_id,
-            session_id,
         });
     }
 
@@ -328,11 +328,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::KickFromGuild { player_id });
     }
 
-    pub fn learn_skill(&self, player_id: i32, spell_id: i32, session_id: i32) {
+    pub fn learn_skill(&self, player_id: i32, npc_index: i32, spell_id: i32) {
         let _ = self.tx.send(Command::LearnSkill {
             player_id,
+            npc_index,
             spell_id,
-            session_id,
         });
     }
 
@@ -440,10 +440,11 @@ impl MapHandle {
         });
     }
 
-    pub fn open_skill_master(&self, player_id: i32, npc_index: i32) {
+    pub fn open_skill_master(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenSkillMaster {
             player_id,
             npc_index,
+            session_id,
         });
     }
 
@@ -594,10 +595,10 @@ impl MapHandle {
         });
     }
 
-    pub fn reset_character(&self, player_id: i32, session_id: i32) {
+    pub fn reset_character(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::ResetCharacter {
             player_id,
-            session_id,
+            npc_index,
         });
     }
 

@@ -11,7 +11,7 @@ use crate::{NPC_DB, SKILL_MASTER_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn open_skill_master(&mut self, player_id: i32, npc_index: i32) {
+    pub fn open_skill_master(&mut self, player_id: i32, npc_index: i32, session_id: i32) {
         let npc = match self.npcs.get(&npc_index) {
             Some(npc) => npc,
             None => return,
@@ -43,14 +43,6 @@ impl Map {
         let player = match character.player.as_ref() {
             Some(player) => player,
             None => return,
-        };
-
-        let session_id = match player.generate_session_id().await {
-            Ok(id) => id,
-            Err(e) => {
-                error!("Failed to generate session id {}", e);
-                return;
-            }
         };
 
         player.set_interact_npc_index(npc_index);

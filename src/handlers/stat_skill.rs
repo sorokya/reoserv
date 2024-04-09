@@ -32,7 +32,7 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
     }
 }
 
-fn junk(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn junk(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let junk = match StatSkillJunkClientPacket::deserialize(&reader) {
         Ok(junk) => junk,
         Err(e) => {
@@ -41,10 +41,24 @@ fn junk(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.reset_character(player_id, junk.session_id);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != junk.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.reset_character(player_id, npc_index);
 }
 
-fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn open(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let open = match StatSkillOpenClientPacket::deserialize(&reader) {
         Ok(open) => open,
         Err(e) => {
@@ -53,10 +67,18 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.open_skill_master(player_id, open.npc_index);
+    let session_id = match player.generate_session_id().await {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            error!("Failed to generate session id: {}", e);
+            return;
+        }
+    };
+
+    map.open_skill_master(player_id, open.npc_index, session_id);
 }
 
-fn remove(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn remove(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let remove = match StatSkillRemoveClientPacket::deserialize(&reader) {
         Ok(remove) => remove,
         Err(e) => {
@@ -65,10 +87,24 @@ fn remove(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.forget_skill(player_id, remove.spell_id, remove.session_id);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != remove.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.forget_skill(player_id, npc_index, remove.spell_id);
 }
 
-fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn take(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let take = match StatSkillTakeClientPacket::deserialize(&reader) {
         Ok(take) => take,
         Err(e) => {
@@ -77,7 +113,26 @@ fn take(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.learn_skill(player_id, take.spell_id, take.session_id);
+    // Prevent learning new skills while trading
+    if player.is_trading().await {
+        return;
+    }
+
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != take.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.learn_skill(player_id, npc_index, take.spell_id);
 }
 
 pub async fn stat_skill(action: PacketAction, reader: EoReader, player: PlayerHandle) {
@@ -99,10 +154,10 @@ pub async fn stat_skill(action: PacketAction, reader: EoReader, player: PlayerHa
 
     match action {
         PacketAction::Add => add(reader, player_id, map),
-        PacketAction::Junk => junk(reader, player_id, map),
-        PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Remove => remove(reader, player_id, map),
-        PacketAction::Take => take(reader, player_id, map),
+        PacketAction::Junk => junk(reader, player_id, player, map).await,
+        PacketAction::Open => open(reader, player_id, player, map).await,
+        PacketAction::Remove => remove(reader, player_id, player, map).await,
+        PacketAction::Take => take(reader, player_id, player, map).await,
         _ => error!("Unhandled packet StatSkill_{:?}", action),
     }
 }

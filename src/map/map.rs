@@ -244,9 +244,9 @@ impl Map {
 
             Command::ForgetSkill {
                 player_id,
+                npc_index,
                 skill_id,
-                session_id,
-            } => self.forget_skill(player_id, skill_id, session_id).await,
+            } => self.forget_skill(player_id, npc_index, skill_id),
 
             Command::GetCharacter {
                 player_id,
@@ -342,9 +342,9 @@ impl Map {
 
             Command::LearnSkill {
                 player_id,
+                npc_index,
                 spell_id,
-                session_id,
-            } => self.learn_skill(player_id, spell_id, session_id).await,
+            } => self.learn_skill(player_id, npc_index, spell_id),
 
             Command::Leave {
                 player_id,
@@ -418,7 +418,8 @@ impl Map {
             Command::OpenSkillMaster {
                 player_id,
                 npc_index,
-            } => self.open_skill_master(player_id, npc_index).await,
+                session_id,
+            } => self.open_skill_master(player_id, npc_index, session_id),
 
             Command::PlayJukeboxTrack {
                 player_id,
@@ -504,8 +505,8 @@ impl Map {
 
             Command::ResetCharacter {
                 player_id,
-                session_id,
-            } => self.reset_character(player_id, session_id).await,
+                npc_index,
+            } => self.reset_character(player_id, npc_index),
 
             Command::Save { respond_to } => self.save(respond_to).await,
 

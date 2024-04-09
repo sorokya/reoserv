@@ -14,7 +14,7 @@ use crate::{NPC_DB, SKILL_MASTER_DB};
 use super::super::Map;
 
 impl Map {
-    pub async fn learn_skill(&mut self, player_id: i32, spell_id: i32, session_id: i32) {
+    pub fn learn_skill(&mut self, player_id: i32, npc_index: i32, spell_id: i32) {
         if spell_id <= 0 {
             return;
         }
@@ -24,51 +24,24 @@ impl Map {
             None => return,
         };
 
-        // TODO: Validate session in player thread
-        let behavior_id = {
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => return,
-            };
-
-            let actual_session_id = match player.get_session_id().await {
-                Ok(id) => id,
-                Err(e) => {
-                    error!("Failed to get session id {}", e);
-                    return;
-                }
-            };
-
-            if actual_session_id != session_id {
-                return;
-            }
-
-            let npc_index = match player.get_interact_npc_index().await {
-                Some(index) => index,
-                None => return,
-            };
-
-            let npc = match self.npcs.get(&npc_index) {
-                Some(npc) => npc,
-                None => return,
-            };
-
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-                Some(npc_data) => npc_data,
-                None => return,
-            };
-
-            if npc_data.r#type != NpcType::Trainer {
-                return;
-            }
-
-            npc_data.behavior_id
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
         };
+
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        if npc_data.r#type != NpcType::Trainer {
+            return;
+        }
 
         let skill_master = match SKILL_MASTER_DB
             .skill_masters
             .iter()
-            .find(|skill_master| skill_master.behavior_id == behavior_id)
+            .find(|skill_master| skill_master.behavior_id == npc_data.behavior_id)
         {
             Some(skill_master) => skill_master,
             None => return,

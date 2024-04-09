@@ -135,8 +135,8 @@ pub enum Command {
     },
     ForgetSkill {
         player_id: i32,
+        npc_index: i32,
         skill_id: i32,
-        session_id: i32,
     },
     GetCharacter {
         player_id: i32,
@@ -203,8 +203,8 @@ pub enum Command {
     },
     LearnSkill {
         player_id: i32,
+        npc_index: i32,
         spell_id: i32,
-        session_id: i32,
     },
     Leave {
         player_id: i32,
@@ -273,6 +273,7 @@ pub enum Command {
     OpenSkillMaster {
         player_id: i32,
         npc_index: i32,
+        session_id: i32,
     },
     PlayJukeboxTrack {
         player_id: i32,
@@ -361,7 +362,7 @@ pub enum Command {
     },
     ResetCharacter {
         player_id: i32,
-        session_id: i32,
+        npc_index: i32,
     },
     Save {
         respond_to: oneshot::Sender<()>,

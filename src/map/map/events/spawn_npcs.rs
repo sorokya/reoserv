@@ -1,7 +1,7 @@
 use std::cmp;
 
 use chrono::Duration;
-use eolib::protocol::{Coords, Direction};
+use eolib::protocol::{r#pub::NpcType, Coords, Direction};
 use rand::Rng;
 
 use crate::{map::NPCBuilder, NPC_DB, SETTINGS};
@@ -60,10 +60,14 @@ impl Map {
         let mut rng = rand::thread_rng();
         let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
         for index in indexes {
-            let (child, alive, spawn_time, dead_since, spawn_coords, spawn_type) = {
+            let (child, alive, spawn_time, dead_since, spawn_coords, spawn_type, npc_type) = {
                 match self.npcs.get(&index) {
                     Some(npc) => {
                         let spawn = &self.file.npcs[npc.spawn_index];
+                        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                            Some(npc_data) => npc_data,
+                            None => continue,
+                        };
                         (
                             npc.child,
                             npc.alive,
@@ -71,6 +75,7 @@ impl Map {
                             npc.dead_since,
                             spawn.coords,
                             spawn.spawn_type,
+                            npc_data.r#type,
                         )
                     }
                     None => continue,
@@ -89,8 +94,11 @@ impl Map {
                 continue;
             }
 
+            let variable_coords =
+                spawn_type != 7 && matches!(npc_type, NpcType::Passive | NpcType::Aggressive);
+
             let file_spawn_coords = spawn_coords;
-            let mut spawn_coords = if spawn_type == 7 {
+            let mut spawn_coords = if !variable_coords {
                 spawn_coords
             } else {
                 Coords {

@@ -1,3 +1,5 @@
+use eolib::protocol::net::{server::RecoverListServerPacket, PacketAction, PacketFamily};
+
 use super::super::Map;
 
 impl Map {
@@ -9,5 +11,16 @@ impl Map {
 
         character.class = class_id;
         character.calculate_stats();
+
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::List,
+                PacketFamily::Recover,
+                &RecoverListServerPacket {
+                    class_id,
+                    stats: character.get_character_stats_update(),
+                },
+            );
+        }
     }
 }

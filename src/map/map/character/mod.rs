@@ -9,6 +9,7 @@ mod find_player;
 mod give_karma;
 mod junk_item;
 mod leave;
+mod level_skill;
 mod level_stat;
 mod lose_item;
 mod open_door;

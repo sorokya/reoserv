@@ -359,6 +359,11 @@ impl Map {
 
             Command::LevelStat { player_id, stat_id } => self.level_stat(player_id, stat_id),
 
+            Command::LevelSkill {
+                player_id,
+                skill_id,
+            } => self.level_skill(player_id, skill_id),
+
             Command::OpenBank {
                 player_id,
                 npc_index,

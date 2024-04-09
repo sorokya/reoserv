@@ -26,7 +26,7 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
             map.level_stat(player_id, stat.stat_id)
         }
         Some(StatSkillAddClientPacketActionTypeData::Skill(skill)) => {
-            error!("Unhandled packet StatSkill_Add_Skill {:?}", skill);
+            map.level_skill(player_id, skill.spell_id)
         }
         _ => {}
     }

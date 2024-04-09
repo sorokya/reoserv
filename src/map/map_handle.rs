@@ -360,6 +360,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
+    pub fn level_skill(&self, player_id: i32, skill_id: i32) {
+        let _ = self.tx.send(Command::LevelSkill {
+            player_id,
+            skill_id,
+        });
+    }
+
     pub fn open_bank(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenBank {
             player_id,

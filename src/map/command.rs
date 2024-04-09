@@ -219,6 +219,10 @@ pub enum Command {
         player_id: i32,
         stat_id: StatId,
     },
+    LevelSkill {
+        player_id: i32,
+        skill_id: i32,
+    },
     OpenBank {
         player_id: i32,
         npc_index: i32,

@@ -7,13 +7,14 @@ use eolib::{
             InitInitServerPacketReplyCodeDataBanned,
             InitInitServerPacketReplyCodeDataBannedBanTypeData,
             InitInitServerPacketReplyCodeDataBannedBanTypeDataTemporary,
-            InitInitServerPacketReplyCodeDataOk, InitReply,
+            InitInitServerPacketReplyCodeDataOk, InitInitServerPacketReplyCodeDataOutOfDate,
+            InitReply,
         },
         PacketAction, PacketFamily, Version,
     },
 };
 
-use crate::player::ClientState;
+use crate::{player::ClientState, SETTINGS};
 
 use super::Player;
 
@@ -23,7 +24,7 @@ impl Player {
         &mut self,
         challenge: i32,
         _hdid: String,
-        _version: Version,
+        version: Version,
     ) -> bool {
         if let Some(duration) = self.get_ban_duration().await {
             let _ = self
@@ -57,6 +58,78 @@ impl Player {
                 .await;
 
             self.close("IP Banned".to_string()).await;
+            return false;
+        }
+
+        if let Ok(version_compare::Cmp::Gt) = version_compare::compare(
+            &format!("{}.{}.{}", version.major, version.minor, version.patch),
+            &SETTINGS.server.max_version,
+        ) {
+            let versions = SETTINGS
+                .server
+                .max_version
+                .split('.')
+                .map(|c| c.parse::<i32>().unwrap_or_default())
+                .collect::<Vec<i32>>();
+
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Init,
+                    PacketFamily::Init,
+                    InitInitServerPacket {
+                        reply_code: InitReply::OutOfDate,
+                        reply_code_data: Some(InitInitServerPacketReplyCodeData::OutOfDate(
+                            InitInitServerPacketReplyCodeDataOutOfDate {
+                                version: Version {
+                                    major: versions[0],
+                                    minor: versions[1],
+                                    patch: versions[2],
+                                },
+                            },
+                        )),
+                    },
+                )
+                .await;
+
+            self.close("Client to new".to_string()).await;
+
+            return false;
+        }
+
+        if let Ok(version_compare::Cmp::Lt) = version_compare::compare(
+            &format!("{}.{}.{}", version.major, version.minor, version.patch),
+            &SETTINGS.server.min_version,
+        ) {
+            let versions = SETTINGS
+                .server
+                .min_version
+                .split('.')
+                .map(|c| c.parse::<i32>().unwrap_or_default())
+                .collect::<Vec<i32>>();
+
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Init,
+                    PacketFamily::Init,
+                    InitInitServerPacket {
+                        reply_code: InitReply::OutOfDate,
+                        reply_code_data: Some(InitInitServerPacketReplyCodeData::OutOfDate(
+                            InitInitServerPacketReplyCodeDataOutOfDate {
+                                version: Version {
+                                    major: versions[0],
+                                    minor: versions[1],
+                                    patch: versions[2],
+                                },
+                            },
+                        )),
+                    },
+                )
+                .await;
+
+            self.close("Client to old".to_string()).await;
+
             return false;
         }
 

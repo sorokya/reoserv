@@ -48,28 +48,21 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                     item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
                     buy_price: v["buyPrice"].as_u64().unwrap_or(0) as i32,
                     sell_price: v["sellPrice"].as_u64().unwrap_or(0) as i32,
-                    max_amount: v["maxBuyAmount"].as_u64().unwrap_or(0) as i32,
+                    max_amount: v["maxAmount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
             crafts: crafts
                 .iter()
                 .map(|v| {
-                    let ingredients: Vec<ShopCraftIngredientRecord> = v["ingredients"]
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|v| ShopCraftIngredientRecord {
-                            item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                            amount: v["amount"].as_u64().unwrap_or(0) as i32,
-                        })
-                        .collect();
+                    let mut ingredients: Vec<ShopCraftIngredientRecord> = Vec::with_capacity(4);
 
-                    if ingredients.len() != 4 {
-                        panic!(
-                            "Craft {} has {} ingredients, but should have 4",
-                            v["itemId"].as_u64().unwrap_or(0),
-                            ingredients.len()
-                        );
+                    for i in 1..=4 {
+                        ingredients.push(ShopCraftIngredientRecord {
+                            item_id: v[&format!("ingredient{}ItemId", i)].as_u64().unwrap_or(0)
+                                as i32,
+                            amount: v[&format!("ingredient{}Amount", i)].as_u64().unwrap_or(0)
+                                as i32,
+                        })
                     }
 
                     ShopCraftRecord {

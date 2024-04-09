@@ -231,6 +231,15 @@ impl WorldHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_player(&self, player_id: i32) -> Option<PlayerHandle> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPlayer {
+            player_id,
+            respond_to: tx,
+        });
+        rx.await.unwrap()
+    }
+
     pub async fn get_player_count(&self) -> i32 {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerCount { respond_to: tx });
@@ -352,10 +361,12 @@ impl WorldHandle {
             .send(Command::SendAdminMessage { player_id, message });
     }
 
-    pub fn send_private_message(&self, from: PlayerHandle, to: String, message: String) {
-        let _ = self
-            .tx
-            .send(Command::SendPrivateMessage { from, to, message });
+    pub fn send_private_message(&self, player_id: i32, to: String, message: String) {
+        let _ = self.tx.send(Command::SendPrivateMessage {
+            player_id,
+            to,
+            message,
+        });
     }
 
     pub async fn shutdown(&self) {

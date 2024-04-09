@@ -26,7 +26,6 @@ mod connection_log;
 mod formulas;
 use formulas::Formulas;
 mod errors;
-mod handlers;
 mod lang;
 mod map;
 mod player;

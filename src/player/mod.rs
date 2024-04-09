@@ -8,6 +8,7 @@ mod packet_log;
 pub use packet_log::PacketLog;
 #[allow(clippy::module_inception)]
 mod player;
+pub use player::Player;
 mod player_handle;
 pub use player_handle::PlayerHandle;
 mod warp_session;

@@ -221,6 +221,13 @@ impl World {
                 let _ = respond_to.send(self.get_next_player_id(300));
             }
 
+            Command::GetPlayer {
+                player_id,
+                respond_to,
+            } => {
+                let _ = respond_to.send(self.players.get(&player_id).cloned());
+            }
+
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.characters.len() as i32);
             }
@@ -290,9 +297,11 @@ impl World {
                 self.send_admin_message(player_id, message).await
             }
 
-            Command::SendPrivateMessage { from, to, message } => {
-                self.send_private_message(&from, &to, &message).await
-            }
+            Command::SendPrivateMessage {
+                player_id,
+                to,
+                message,
+            } => self.send_private_message(player_id, &to, &message).await,
 
             Command::Shutdown { respond_to } => self.shutdown(respond_to).await,
 

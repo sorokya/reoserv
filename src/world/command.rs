@@ -108,6 +108,10 @@ pub enum Command {
     GetNextPlayerId {
         respond_to: oneshot::Sender<i32>,
     },
+    GetPlayer {
+        player_id: i32,
+        respond_to: oneshot::Sender<Option<PlayerHandle>>,
+    },
     GetPlayerCount {
         respond_to: oneshot::Sender<i32>,
     },
@@ -178,7 +182,7 @@ pub enum Command {
         message: String,
     },
     SendPrivateMessage {
-        from: PlayerHandle,
+        player_id: i32,
         to: String,
         message: String,
     },

@@ -1,111 +1,102 @@
-use crate::{
-    handlers,
-    player::{ClientState, PlayerHandle},
-};
 use bytes::Bytes;
 use eolib::{
     data::EoReader,
     protocol::net::{PacketAction, PacketFamily},
 };
 
-use crate::{world::WorldHandle, SETTINGS};
+use crate::SETTINGS;
 
-pub async fn handle_packet(
-    packet: Bytes,
-    player: PlayerHandle,
-    world: WorldHandle,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let reader = EoReader::new(packet);
-    let action = PacketAction::from(reader.get_byte()?);
-    if let PacketAction::Unrecognized(id) = action {
-        if id != 0xfe {
-            player.close("invalid packet action".to_string());
-            return Ok(());
-        }
-    }
+use super::{ClientState, Player};
 
-    let family = PacketFamily::from(reader.get_byte()?);
-    if let PacketFamily::Unrecognized(id) = family {
-        if id != 0xfe {
-            player.close("invalid packet family".to_string());
-            return Ok(());
-        }
-    }
-
-    if player.get_state().await? != ClientState::Uninitialized {
-        if family != PacketFamily::Init {
-            if family == PacketFamily::Connection && action == PacketAction::Ping {
-                player.pong_new_sequence().await;
+impl Player {
+    pub async fn handle_packet(&mut self, packet: Bytes) {
+        let reader = EoReader::new(packet);
+        let action = PacketAction::from(reader.get_byte().unwrap_or(0xfe));
+        if let PacketAction::Unrecognized(id) = action {
+            if id != 0xfe {
+                self.close("invalid packet action".to_string()).await;
+                return;
             }
+        }
 
-            let server_sequence = player.gen_sequence().await?;
-            let client_sequence = reader.get_char()?;
-
-            if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
-                player.close(format!(
-                    "sending invalid sequence: Got {}, expected {}.",
-                    client_sequence, server_sequence
-                ));
+        let family = PacketFamily::from(reader.get_byte().unwrap_or(0xfe));
+        if let PacketFamily::Unrecognized(id) = family {
+            if id != 0xfe {
+                self.close("invalid packet family".to_string()).await;
+                return;
             }
-        } else {
-            info!("{:?}_{:?}", family, action);
-            player.gen_sequence().await?;
+        }
+
+        if self.state != ClientState::Uninitialized {
+            if family != PacketFamily::Init {
+                if family == PacketFamily::Connection && action == PacketAction::Ping {
+                    self.bus
+                        .sequencer
+                        .set_start(self.bus.upcoming_sequence_start);
+                }
+
+                let server_sequence = self.bus.sequencer.next_sequence();
+                let client_sequence = reader.get_char().unwrap_or_default();
+
+                if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
+                    self.close(format!(
+                        "sending invalid sequence: Got {}, expected {}.",
+                        client_sequence, server_sequence
+                    ))
+                    .await;
+                    return;
+                }
+            } else {
+                self.bus.sequencer.next_sequence();
+            }
+        }
+
+        match family {
+            PacketFamily::Account => self.handle_account(action, reader).await,
+            PacketFamily::AdminInteract => self.handle_admin_interact(action, reader),
+            PacketFamily::Attack => self.handle_attack(action, reader),
+            PacketFamily::Bank => self.handle_bank(action, reader),
+            PacketFamily::Barber => self.handle_barber(action, reader),
+            PacketFamily::Board => self.handle_board(action, reader),
+            PacketFamily::Chair => self.handle_chair(action, reader),
+            PacketFamily::Character => self.handle_character(action, reader).await,
+            PacketFamily::Chest => self.handle_chest(action, reader),
+            PacketFamily::Citizen => self.handle_citizen(action, reader),
+            PacketFamily::Connection => self.handle_connection(action, reader).await,
+            PacketFamily::Door => self.handle_door(action, reader),
+            PacketFamily::Emote => self.handle_emote(action, reader),
+            PacketFamily::Face => self.handle_face(action, reader),
+            PacketFamily::Global => {} // no-op
+            PacketFamily::Guild => self.handle_guild(action, reader),
+            PacketFamily::Init => self.handle_init(action, reader).await,
+            PacketFamily::Item => self.handle_item(action, reader),
+            PacketFamily::Jukebox => self.handle_jukebox(action, reader),
+            PacketFamily::Locker => self.handle_locker(action, reader),
+            PacketFamily::Login => self.handle_login(action, reader).await,
+            PacketFamily::Marriage => self.handle_marriage(action, reader),
+            PacketFamily::Message => self.handle_message(action).await,
+            PacketFamily::NpcRange => self.handle_npc_range(action, reader),
+            PacketFamily::Paperdoll => self.handle_paperdoll(action, reader),
+            PacketFamily::Party => self.handle_party(action, reader),
+            PacketFamily::PlayerRange => self.handle_player_range(action, reader),
+            PacketFamily::Players => self.handle_players(action, reader),
+            PacketFamily::Priest => self.handle_priest(action, reader),
+            PacketFamily::Quest => self.handle_quest(action, reader),
+            PacketFamily::Range => self.handle_range(action, reader),
+            PacketFamily::Refresh => self.handle_refresh(action),
+            PacketFamily::Shop => self.handle_shop(action, reader),
+            PacketFamily::Sit => self.handle_sit(action, reader),
+            PacketFamily::Spell => self.handle_spell(action, reader),
+            PacketFamily::StatSkill => self.handle_stat_skill(action, reader),
+            PacketFamily::Talk => self.handle_talk(action, reader),
+            PacketFamily::Trade => self.handle_trade(action, reader),
+            PacketFamily::Walk => self.handle_walk(reader),
+            PacketFamily::Warp => self.handle_warp(action, reader).await,
+            PacketFamily::Unrecognized(0xfe) => {} // ignored packet
+            PacketFamily::Welcome => self.handle_welcome(action, reader).await,
+            _ => {
+                error!("Unhandled packet {:?}_{:?}", action, family);
+            }
         }
     }
-
-    match family {
-        PacketFamily::Account => handlers::account(action, reader, player.clone()).await,
-        PacketFamily::AdminInteract => {
-            handlers::admin_interact(action, reader, player.clone(), world.clone()).await
-        }
-        PacketFamily::Attack => handlers::attack(action, reader, player.clone()).await,
-        PacketFamily::Bank => handlers::bank(action, reader, player.clone()).await,
-        PacketFamily::Barber => handlers::barber(action, reader, player.clone()).await,
-        PacketFamily::Board => handlers::board(action, reader, player.clone()).await,
-        PacketFamily::Chair => handlers::chair(action, reader, player.clone()).await,
-        PacketFamily::Character => handlers::character(action, reader, player.clone()).await,
-        PacketFamily::Chest => handlers::chest(action, reader, player.clone()).await,
-        PacketFamily::Citizen => handlers::citizen(action, reader, player.clone()).await,
-        PacketFamily::Connection => handlers::connection(action, reader, player.clone()).await,
-        PacketFamily::Door => handlers::door(action, reader, player.clone()).await,
-        PacketFamily::Emote => handlers::emote(action, reader, player.clone()).await,
-        PacketFamily::Face => handlers::face(action, reader, player.clone()).await,
-        PacketFamily::Global => handlers::global(action, reader, player.clone()),
-        PacketFamily::Guild => handlers::guild(action, reader, player.clone()).await,
-        PacketFamily::Init => handlers::init(action, reader, player.clone()).await,
-        PacketFamily::Item => handlers::item(action, reader, player.clone()).await,
-        PacketFamily::Jukebox => handlers::jukebox(action, reader, player.clone()).await,
-        PacketFamily::Locker => handlers::locker(action, reader, player.clone()).await,
-        PacketFamily::Login => handlers::login(action, reader, player.clone()).await,
-        PacketFamily::Marriage => handlers::marriage(action, reader, player.clone()).await,
-        PacketFamily::Message => handlers::message(action, reader, player.clone()),
-        PacketFamily::NpcRange => handlers::npc_range(action, reader, player.clone()).await,
-        PacketFamily::Paperdoll => handlers::paperdoll(action, reader, player.clone()).await,
-        PacketFamily::Party => handlers::party(action, reader, player.clone(), world.clone()).await,
-        PacketFamily::PlayerRange => handlers::player_range(action, reader, player.clone()).await,
-        PacketFamily::Players => {
-            handlers::players(action, reader, player.clone(), world.clone()).await
-        }
-        PacketFamily::Priest => handlers::priest(action, reader, player.clone()).await,
-        PacketFamily::Quest => handlers::quest(action, reader, player.clone()).await,
-        PacketFamily::Range => handlers::range(action, reader, player.clone()).await,
-        PacketFamily::Refresh => handlers::refresh(action, player.clone()).await,
-        PacketFamily::Shop => handlers::shop(action, reader, player.clone()).await,
-        PacketFamily::Sit => handlers::sit(action, reader, player.clone()).await,
-        PacketFamily::Spell => handlers::spell(action, reader, player.clone()).await,
-        PacketFamily::StatSkill => handlers::stat_skill(action, reader, player.clone()).await,
-        PacketFamily::Talk => handlers::talk(action, reader, player.clone(), world.clone()).await,
-        PacketFamily::Trade => handlers::trade(action, reader, player.clone()).await,
-        PacketFamily::Walk => handlers::walk(reader, player.clone()).await,
-        PacketFamily::Warp => handlers::warp(action, reader, player.clone()).await,
-        PacketFamily::Unrecognized(0xfe) => {} // ignored packet
-        PacketFamily::Welcome => handlers::welcome(action, reader, player.clone()).await,
-        _ => {
-            error!("Unhandled packet {:?}_{:?}", action, family);
-        }
-    }
-
-    player.set_busy(false);
-
-    Ok(())
 }

@@ -1,4 +1,3 @@
-
 use eolib::protocol::net::server::{
     WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
 };
@@ -7,20 +6,21 @@ use eolib::protocol::Coords;
 
 use crate::character::Character;
 use crate::errors::DataNotFoundError;
-use crate::player::{ClientState, PlayerHandle};
+use crate::player::{ClientState};
 use crate::SETTINGS;
 
 use super::super::Player;
 
 impl Player {
-    pub async fn select_character(
-        &mut self,
-        player_handle: PlayerHandle,
-        character_id: i32,
-    ) -> bool {
+    pub async fn select_character(&mut self, character_id: i32) -> bool {
         if self.state != ClientState::LoggedIn {
             return true;
         }
+
+        let player = match self.world.get_player(self.id).await {
+            Some(player) => player,
+            None => return false,
+        };
 
         let player_count = self.world.get_player_count().await;
         if player_count >= SETTINGS.server.max_players {
@@ -67,7 +67,7 @@ impl Player {
         }
 
         character.player_id = Some(self.id);
-        character.player = Some(player_handle);
+        character.player = Some(player);
         character.logged_in_at = Some(chrono::Utc::now());
 
         character.calculate_stats();

@@ -160,13 +160,10 @@ impl Map {
 
             Command::BuyHaircut {
                 player_id,
-                session_id,
+                npc_index,
                 hair_style,
                 hair_color,
-            } => {
-                self.buy_haircut(player_id, session_id, hair_style, hair_color)
-                    .await
-            }
+            } => self.buy_haircut(player_id, npc_index, hair_style, hair_color),
 
             Command::CancelTrade {
                 player_id,
@@ -370,7 +367,8 @@ impl Map {
             Command::OpenBarber {
                 player_id,
                 npc_index,
-            } => self.open_barber(player_id, npc_index),
+                session_id,
+            } => self.open_barber(player_id, npc_index, session_id),
 
             Command::OpenBoard {
                 player_id,

@@ -55,7 +55,7 @@ pub enum Command {
     },
     BuyHaircut {
         player_id: i32,
-        session_id: i32,
+        npc_index: i32,
         hair_style: i32,
         hair_color: i32,
     },
@@ -226,6 +226,7 @@ pub enum Command {
     OpenBarber {
         player_id: i32,
         npc_index: i32,
+        session_id: i32,
     },
     OpenBoard {
         player_id: i32,

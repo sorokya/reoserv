@@ -8,7 +8,7 @@ use crate::{utils::in_client_range, NPC_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_barber(&self, player_id: i32, npc_index: i32) {
+    pub fn open_barber(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -33,26 +33,16 @@ impl Map {
         }
 
         let player = match character.player {
-            Some(ref player) => player.clone(),
+            Some(ref player) => player,
             None => return,
         };
 
-        tokio::spawn(async move {
-            let session_id = match player.generate_session_id().await {
-                Ok(session_id) => session_id,
-                Err(e) => {
-                    error!("Error generating session id {}", e);
-                    return;
-                }
-            };
+        player.set_interact_npc_index(npc_index);
 
-            player.set_interact_npc_index(npc_index);
-
-            player.send(
-                PacketAction::Open,
-                PacketFamily::Barber,
-                &BarberOpenServerPacket { session_id },
-            );
-        });
+        player.send(
+            PacketAction::Open,
+            PacketFamily::Barber,
+            &BarberOpenServerPacket { session_id },
+        );
     }
 }

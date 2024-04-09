@@ -8,7 +8,7 @@ use eolib::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn open(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let open = match BarberOpenClientPacket::deserialize(&reader) {
         Ok(open) => open,
         Err(e) => {
@@ -17,10 +17,18 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.open_barber(player_id, open.npc_index);
+    let session_id = match player.generate_session_id().await {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            error!("Failed to generate session id: {}", e);
+            return;
+        }
+    };
+
+    map.open_barber(player_id, open.npc_index, session_id);
 }
 
-fn buy(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn buy(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let buy = match BarberBuyClientPacket::deserialize(&reader) {
         Ok(buy) => buy,
         Err(e) => {
@@ -29,7 +37,21 @@ fn buy(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.buy_haircut(player_id, buy.session_id, buy.hair_style, buy.hair_color);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != buy.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.buy_haircut(player_id, npc_index, buy.hair_style, buy.hair_color);
 }
 
 pub async fn barber(action: PacketAction, reader: EoReader, player: PlayerHandle) {
@@ -49,9 +71,14 @@ pub async fn barber(action: PacketAction, reader: EoReader, player: PlayerHandle
         }
     };
 
+    // Prevent interacting with barber when trading
+    if player.is_trading().await {
+        return;
+    }
+
     match action {
-        PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Buy => buy(reader, player_id, map),
+        PacketAction::Open => open(reader, player_id, player, map).await,
+        PacketAction::Buy => buy(reader, player_id, player, map).await,
         _ => error!("Unhandled packet Barber_{:?}", action),
     }
 }

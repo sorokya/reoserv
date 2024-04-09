@@ -1,4 +1,3 @@
-
 use eolib::protocol::net::server::{
     LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
     LoginReplyServerPacketReplyCodeDataBanned, LoginReplyServerPacketReplyCodeDataBusy,
@@ -65,7 +64,14 @@ impl Player {
             }
         };
 
+        self.login_attempts += 1;
+
         if !exists {
+            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+                self.close("Too many login attempts".to_string()).await;
+                return false;
+            }
+
             let _ = self
                 .bus
                 .send(
@@ -120,30 +126,20 @@ impl Player {
         {
             Ok(row) => row,
             Err(e) => {
-                error!("Error getting password hash: {}", e);
-
-                let _ = self
-                    .bus
-                    .send(
-                        PacketAction::Reply,
-                        PacketFamily::Login,
-                        LoginReplyServerPacket {
-                            reply_code: LoginReply::WrongUserPassword,
-                            reply_code_data: Some(
-                                LoginReplyServerPacketReplyCodeData::WrongUserPassword(
-                                    LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
-                                ),
-                            ),
-                        },
-                    )
+                self.close(format!("Error getting password hash: {}", e))
                     .await;
-                return true;
+                return false;
             }
         }
         .unwrap();
 
         let password_hash: String = row.get("password_hash").unwrap();
         if !validate_password(&username, &password, &password_hash) {
+            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+                self.close("Too many login attempts".to_string()).await;
+                return false;
+            }
+
             let _ = self
                 .bus
                 .send(
@@ -164,6 +160,11 @@ impl Player {
 
         let account_id: i32 = row.get("id").unwrap();
         if self.world.is_logged_in(account_id).await {
+            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+                self.close("Too many login attempts".to_string()).await;
+                return false;
+            }
+
             let _ = self
                 .bus
                 .send(

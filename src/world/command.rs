@@ -49,7 +49,7 @@ pub enum Command {
         message: String,
     },
     BroadcastGlobalMessage {
-        target_player_id: i32,
+        player_id: i32,
         name: String,
         message: String,
     },

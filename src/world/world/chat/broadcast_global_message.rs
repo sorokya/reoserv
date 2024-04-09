@@ -9,8 +9,8 @@ use super::super::World;
 
 impl World {
     // TODO: make this sync
-    pub async fn broadcast_global_message(&self, target_player_id: i32, name: &str, message: &str) {
-        let player = match self.players.get(&target_player_id) {
+    pub async fn broadcast_global_message(&self, player_id: i32, name: &str, message: &str) {
+        let player = match self.players.get(&player_id) {
             Some(player) => player,
             None => return,
         };
@@ -41,23 +41,23 @@ impl World {
 
         let buf = writer.to_byte_array();
         for player in self.players.values() {
-            let state = player.get_state().await;
+            let state = match player.get_state().await {
+                Ok(state) => state,
+                Err(e) => {
+                    error!("Failed to get state: {}", e);
+                    continue;
+                }
+            };
 
-            if state.is_err() {
-                continue;
-            }
+            let other_player_id = match player.get_player_id().await {
+                Ok(id) => id,
+                Err(e) => {
+                    error!("Failed to get player_id: {}", e);
+                    continue;
+                }
+            };
 
-            let state = state.unwrap();
-
-            let player_id = player.get_player_id().await;
-
-            if player_id.is_err() {
-                continue;
-            }
-
-            let player_id = player_id.unwrap();
-
-            if state == ClientState::InGame && player_id != target_player_id {
+            if state == ClientState::InGame && player_id != other_player_id {
                 player.send_buf(PacketAction::Msg, PacketFamily::Talk, buf.clone());
             }
         }

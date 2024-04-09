@@ -146,7 +146,7 @@ impl World {
             }
 
             Command::BroadcastGlobalMessage {
-                target_player_id,
+                player_id: target_player_id,
                 name,
                 message,
             } => {

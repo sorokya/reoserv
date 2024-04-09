@@ -8,13 +8,13 @@ use crate::{utils::get_distance, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub fn get_item(&mut self, target_player_id: i32, item_index: i32) {
+    pub fn get_item(&mut self, player_id: i32, item_index: i32) {
         let (item_id, item_amount, item_coords) = match self.items.get(&item_index) {
             Some(item) => (item.id, item.amount, item.coords),
             None => return,
         };
 
-        let character = match self.characters.get_mut(&target_player_id) {
+        let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };

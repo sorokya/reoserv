@@ -44,7 +44,7 @@ pub enum Command {
         player_id: i32,
     },
     Attack {
-        target_player_id: i32,
+        player_id: i32,
         direction: Direction,
         timestamp: i32,
     },
@@ -99,12 +99,12 @@ pub enum Command {
         player_id: i32,
     },
     DropItem {
-        target_player_id: i32,
+        player_id: i32,
         item: ThreeItem,
         coords: ByteCoords,
     },
     Emote {
-        target_player_id: i32,
+        player_id: i32,
         emote: Emote,
     },
     Enter {
@@ -126,7 +126,7 @@ pub enum Command {
         effect_id: i32,
     },
     Face {
-        target_player_id: i32,
+        player_id: i32,
         direction: Direction,
     },
     FindPlayer {
@@ -146,11 +146,11 @@ pub enum Command {
         respond_to: oneshot::Sender<(i32, i32)>,
     },
     GetItem {
-        target_player_id: i32,
+        player_id: i32,
         item_index: i32,
     },
     GetNearbyInfo {
-        target_player_id: i32,
+        player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
     },
     GetNpcIdForIndex {
@@ -168,7 +168,7 @@ pub enum Command {
         amount: i32,
     },
     GiveItem {
-        target_player_id: i32,
+        player_id: i32,
         item_id: i32,
         amount: i32,
     },
@@ -194,7 +194,7 @@ pub enum Command {
     },
     JukeboxTimer,
     JunkItem {
-        target_player_id: i32,
+        player_id: i32,
         item_id: i32,
         amount: i32,
     },
@@ -242,8 +242,8 @@ pub enum Command {
         coords: Coords,
     },
     OpenDoor {
-        target_player_id: i32, // TODO: rename to player_id
-        door_coords: Coords,   // TODO: rename to coords
+        player_id: i32,
+        coords: Coords,
     },
     OpenGuildMaster {
         player_id: i32,
@@ -382,7 +382,7 @@ pub enum Command {
         item: Item,
     },
     SendChatMessage {
-        target_player_id: i32,
+        player_id: i32,
         message: String,
     },
     SendGuildCreateRequests {
@@ -471,7 +471,7 @@ pub enum Command {
         player_id: i32,
     },
     Walk {
-        target_player_id: i32,
+        player_id: i32,
         direction: Direction,
         coords: Coords,
         timestamp: i32,

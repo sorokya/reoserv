@@ -6,8 +6,8 @@ use crate::utils::in_client_range;
 use super::super::Map;
 
 impl Map {
-    pub fn get_nearby_info(&self, target_player_id: i32, respond_to: oneshot::Sender<NearbyInfo>) {
-        let target = self.characters.get(&target_player_id).unwrap();
+    pub fn get_nearby_info(&self, player_id: i32, respond_to: oneshot::Sender<NearbyInfo>) {
+        let target = self.characters.get(&player_id).unwrap();
         let mut nearby_items = Vec::new();
         let mut nearby_npcs = Vec::new();
         let mut nearby_characters = Vec::new();
@@ -22,7 +22,7 @@ impl Map {
             }
         }
         for character in self.characters.values() {
-            if target_player_id == character.player_id.unwrap()
+            if player_id == character.player_id.unwrap()
                 || (!character.hidden && in_client_range(&target.coords, &character.coords))
             {
                 nearby_characters.push(character.to_map_info());

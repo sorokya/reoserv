@@ -151,9 +151,9 @@ impl MapHandle {
         let _ = self.tx.send(Command::DivorcePartner { player_id });
     }
 
-    pub fn drop_item(&self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
+    pub fn drop_item(&self, player_id: i32, item: ThreeItem, coords: ByteCoords) {
         let _ = self.tx.send(Command::DropItem {
-            target_player_id,
+            player_id,
             item,
             coords,
         });
@@ -170,11 +170,8 @@ impl MapHandle {
         let _ = self.tx.send(Command::EffectOnCoord { coords, effect_id });
     }
 
-    pub fn emote(&self, target_player_id: i32, emote: Emote) {
-        let _ = self.tx.send(Command::Emote {
-            target_player_id,
-            emote,
-        });
+    pub fn emote(&self, player_id: i32, emote: Emote) {
+        let _ = self.tx.send(Command::Emote { player_id, emote });
     }
 
     pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpEffect>) {
@@ -195,9 +192,9 @@ impl MapHandle {
         });
     }
 
-    pub fn face(&self, target_player_id: i32, direction: Direction) {
+    pub fn face(&self, player_id: i32, direction: Direction) {
         let _ = self.tx.send(Command::Face {
-            target_player_id,
+            player_id,
             direction,
         });
     }
@@ -230,17 +227,17 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    pub fn get_item(&self, target_player_id: i32, item_index: i32) {
+    pub fn get_item(&self, player_id: i32, item_index: i32) {
         let _ = self.tx.send(Command::GetItem {
             item_index,
-            target_player_id,
+            player_id,
         });
     }
 
-    pub async fn get_nearby_info(&self, target_player_id: i32) -> NearbyInfo {
+    pub async fn get_nearby_info(&self, player_id: i32) -> NearbyInfo {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNearbyInfo {
-            target_player_id,
+            player_id,
             respond_to: tx,
         });
         rx.await.unwrap()
@@ -271,9 +268,9 @@ impl MapHandle {
         let _ = self.tx.send(Command::AwardExperience { player_id, amount });
     }
 
-    pub fn give_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
+    pub fn give_item(&self, player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::GiveItem {
-            target_player_id,
+            player_id,
             item_id,
             amount,
         });
@@ -316,9 +313,9 @@ impl MapHandle {
         });
     }
 
-    pub fn junk_item(&self, target_player_id: i32, item_id: i32, amount: i32) {
+    pub fn junk_item(&self, player_id: i32, item_id: i32, amount: i32) {
         let _ = self.tx.send(Command::JunkItem {
-            target_player_id,
+            player_id,
             item_id,
             amount,
         });
@@ -394,11 +391,8 @@ impl MapHandle {
         let _ = self.tx.send(Command::OpenChest { player_id, coords });
     }
 
-    pub fn open_door(&self, target_player_id: i32, door_coords: Coords) {
-        let _ = self.tx.send(Command::OpenDoor {
-            target_player_id,
-            door_coords,
-        });
+    pub fn open_door(&self, player_id: i32, coords: Coords) {
+        let _ = self.tx.send(Command::OpenDoor { player_id, coords });
     }
 
     pub fn open_guild_master(&self, player_id: i32, npc_index: i32) {
@@ -663,11 +657,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::SayIDo { player_id });
     }
 
-    pub fn send_chat_message(&self, target_player_id: i32, message: String) {
-        let _ = self.tx.send(Command::SendChatMessage {
-            target_player_id,
-            message,
-        });
+    pub fn send_chat_message(&self, player_id: i32, message: String) {
+        let _ = self
+            .tx
+            .send(Command::SendChatMessage { player_id, message });
     }
 
     pub fn send_guild_create_requests(&self, leader_player_id: i32, guild_identity: String) {
@@ -804,15 +797,9 @@ impl MapHandle {
         let _ = self.tx.send(Command::ViewQuestProgress { player_id });
     }
 
-    pub fn walk(
-        &self,
-        target_player_id: i32,
-        direction: Direction,
-        coords: Coords,
-        timestamp: i32,
-    ) {
+    pub fn walk(&self, player_id: i32, direction: Direction, coords: Coords, timestamp: i32) {
         let _ = self.tx.send(Command::Walk {
-            target_player_id,
+            player_id,
             direction,
             coords,
             timestamp,
@@ -827,9 +814,9 @@ impl MapHandle {
         });
     }
 
-    pub fn attack(&self, target_player_id: i32, direction: Direction, timestamp: i32) {
+    pub fn attack(&self, player_id: i32, direction: Direction, timestamp: i32) {
         let _ = self.tx.send(Command::Attack {
-            target_player_id,
+            player_id,
             direction,
             timestamp,
         });

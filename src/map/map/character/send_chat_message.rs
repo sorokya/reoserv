@@ -3,8 +3,8 @@ use eolib::protocol::net::{server::TalkPlayerServerPacket, PacketAction, PacketF
 use super::super::Map;
 
 impl Map {
-    pub fn send_chat_message(&self, target_player_id: i32, message: String) {
-        let character = match self.characters.get(&target_player_id) {
+    pub fn send_chat_message(&self, player_id: i32, message: String) {
+        let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
@@ -14,13 +14,10 @@ impl Map {
         }
 
         self.send_packet_near_player(
-            target_player_id,
+            player_id,
             PacketAction::Player,
             PacketFamily::Talk,
-            &TalkPlayerServerPacket {
-                player_id: target_player_id,
-                message,
-            },
+            &TalkPlayerServerPacket { player_id, message },
         );
     }
 }

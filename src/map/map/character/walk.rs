@@ -15,16 +15,9 @@ use super::super::Map;
 // TODO: force refresh if client out of sync
 // TODO: enforce timestamp
 impl Map {
-    pub fn walk(
-        &mut self,
-        target_player_id: i32,
-        direction: Direction,
-        _coords: Coords,
-        _timestamp: i32,
-    ) {
-        if let Some((target_previous_coords, target_coords, target_player, target_hidden)) = {
-            let (coords, admin_level, player, hidden) = match self.characters.get(&target_player_id)
-            {
+    pub fn walk(&mut self, player_id: i32, direction: Direction, _coords: Coords, _timestamp: i32) {
+        if let Some((previous_coords, coords, player, hidden)) = {
+            let (coords, admin_level, player, hidden) = match self.characters.get(&player_id) {
                 Some(character) => (
                     character.coords,
                     character.admin_level,
@@ -44,15 +37,15 @@ impl Map {
 
             Some((previous_coords, coords, player, hidden))
         } {
-            if let Some(character) = self.characters.get_mut(&target_player_id) {
-                character.coords = target_coords;
+            if let Some(character) = self.characters.get_mut(&player_id) {
+                character.coords = coords;
                 character.direction = direction;
                 character.entered_coord();
             }
 
             // TODO: Ghost timer check
-            if let Some(warp) = self.get_warp(&target_coords) {
-                let character = match self.characters.get(&target_player_id) {
+            if let Some(warp) = self.get_warp(&coords) {
+                let character = match self.characters.get(&player_id) {
                     Some(character) => character,
                     None => return,
                 };
@@ -69,7 +62,7 @@ impl Map {
                 // TODO: Maybe don't do this.. player can get out of sync if door was open out of
                 // range
                 if warp.door > 0 {
-                    let door = match self.doors.iter().find(|door| door.coords == target_coords) {
+                    let door = match self.doors.iter().find(|door| door.coords == coords) {
                         Some(door) => door,
                         None => return,
                     };
@@ -92,26 +85,26 @@ impl Map {
             let packet = {
                 let mut packet = WalkReplyServerPacket::default();
 
-                for (player_id, character) in self.characters.iter() {
-                    if *player_id != target_player_id
+                for (other_id, character) in self.characters.iter() {
+                    if *other_id != player_id
                         && !character.hidden
-                        && in_client_range(&target_coords, &character.coords)
-                        && !in_client_range(&target_previous_coords, &character.coords)
+                        && in_client_range(&coords, &character.coords)
+                        && !in_client_range(&previous_coords, &character.coords)
                     {
-                        packet.player_ids.push(*player_id);
+                        packet.player_ids.push(*other_id);
                     }
                 }
                 for (index, item) in self.items.iter() {
-                    if in_client_range(&target_coords, &item.coords)
-                        && !in_client_range(&target_previous_coords, &item.coords)
+                    if in_client_range(&coords, &item.coords)
+                        && !in_client_range(&previous_coords, &item.coords)
                     {
                         packet.items.push(item.to_map_info(index));
                     }
                 }
                 for (index, npc) in self.npcs.iter() {
                     if npc.alive
-                        && in_client_range(&target_coords, &npc.coords)
-                        && !in_client_range(&target_previous_coords, &npc.coords)
+                        && in_client_range(&coords, &npc.coords)
+                        && !in_client_range(&previous_coords, &npc.coords)
                     {
                         packet.npc_indexes.push(*index);
                     }
@@ -119,28 +112,28 @@ impl Map {
                 packet
             };
 
-            target_player
+            player
                 .as_ref()
                 .unwrap()
                 .send(PacketAction::Reply, PacketFamily::Walk, &packet);
 
-            if !target_hidden {
+            if !hidden {
                 let walk_packet = WalkPlayerServerPacket {
-                    player_id: target_player_id,
+                    player_id,
                     direction,
-                    coords: target_coords,
+                    coords,
                 };
 
                 self.send_packet_near_player(
-                    target_player_id,
+                    player_id,
                     PacketAction::Player,
                     PacketFamily::Walk,
                     &walk_packet,
                 );
 
-                if let Some(tile) = self.get_tile(&target_coords) {
+                if let Some(tile) = self.get_tile(&coords) {
                     if matches!(tile, MapTileSpec::Spikes | MapTileSpec::HiddenSpikes) {
-                        self.spike_damage(target_player_id)
+                        self.spike_damage(player_id)
                     }
                 }
             }

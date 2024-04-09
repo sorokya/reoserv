@@ -6,8 +6,8 @@ use eolib::protocol::{
 use super::super::Map;
 
 impl Map {
-    pub fn emote(&self, target_player_id: i32, emote: Emote) {
-        let character = match self.characters.get(&target_player_id) {
+    pub fn emote(&self, player_id: i32, emote: Emote) {
+        let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
@@ -17,13 +17,10 @@ impl Map {
         }
 
         self.send_packet_near_player(
-            target_player_id,
+            player_id,
             PacketAction::Player,
             PacketFamily::Emote,
-            &EmotePlayerServerPacket {
-                player_id: target_player_id,
-                emote,
-            },
+            &EmotePlayerServerPacket { player_id, emote },
         );
     }
 }

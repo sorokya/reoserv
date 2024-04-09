@@ -105,9 +105,9 @@ impl WorldHandle {
             .send(Command::BroadcastAnnouncement { name, message });
     }
 
-    pub fn broadcast_global_message(&self, target_player_id: i32, name: String, message: String) {
+    pub fn broadcast_global_message(&self, player_id: i32, name: String, message: String) {
         let _ = self.tx.send(Command::BroadcastGlobalMessage {
-            target_player_id,
+            player_id,
             name,
             message,
         });

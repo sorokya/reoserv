@@ -7,8 +7,8 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub fn give_item(&mut self, target_player_id: i32, item_id: i32, amount: i32) {
-        if let Some(character) = self.characters.get_mut(&target_player_id) {
+    pub fn give_item(&mut self, player_id: i32, item_id: i32, amount: i32) {
+        if let Some(character) = self.characters.get_mut(&player_id) {
             let amount = cmp::min(
                 SETTINGS.limits.max_item - character.get_item_amount(item_id),
                 amount,

@@ -2,12 +2,12 @@ use std::cmp;
 
 use eolib::protocol::net::{server::ItemJunkServerPacket, PacketAction, PacketFamily, ThreeItem};
 
-use crate::{SETTINGS};
+use crate::SETTINGS;
 
 use super::super::Map;
 
 impl Map {
-    pub async fn junk_item(&mut self, target_player_id: i32, item_id: i32, amount: i32) {
+    pub async fn junk_item(&mut self, player_id: i32, item_id: i32, amount: i32) {
         if item_id < 1
             || amount <= 0
             || amount > SETTINGS.limits.max_item
@@ -17,7 +17,7 @@ impl Map {
         }
 
         let amount_to_junk = {
-            let character = match self.characters.get(&target_player_id) {
+            let character = match self.characters.get(&player_id) {
                 Some(character) => character,
                 None => return,
             };
@@ -41,7 +41,7 @@ impl Map {
         };
 
         {
-            let character = match self.characters.get_mut(&target_player_id) {
+            let character = match self.characters.get_mut(&player_id) {
                 Some(character) => character,
                 None => return,
             };
@@ -49,7 +49,7 @@ impl Map {
             character.remove_item(item_id, amount_to_junk);
         }
 
-        let character = match self.characters.get(&target_player_id) {
+        let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };

@@ -147,7 +147,7 @@ impl Map {
             Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
             Command::AgreeTrade { player_id } => self.accept_trade(player_id).await,
             Command::Attack {
-                target_player_id,
+                player_id: target_player_id,
                 direction,
                 timestamp,
             } => self.attack(target_player_id, direction, timestamp).await,
@@ -206,7 +206,7 @@ impl Map {
             Command::DivorcePartner { player_id } => self.divorce_partner(player_id),
 
             Command::DropItem {
-                target_player_id,
+                player_id: target_player_id,
                 item,
                 coords,
             } => self.drop_item(target_player_id, item, coords).await,
@@ -221,7 +221,7 @@ impl Map {
             } => self.effect_on_players(&[player_id], effect_id),
 
             Command::Emote {
-                target_player_id,
+                player_id: target_player_id,
                 emote,
             } => self.emote(target_player_id, emote),
 
@@ -238,7 +238,7 @@ impl Map {
             } => self.equip(player_id, item_id, sub_loc).await,
 
             Command::Face {
-                target_player_id,
+                player_id: target_player_id,
                 direction,
             } => self.face(target_player_id, direction),
 
@@ -258,14 +258,14 @@ impl Map {
             }
 
             Command::GetItem {
-                target_player_id,
+                player_id: target_player_id,
                 item_index,
             } => {
                 self.get_item(target_player_id, item_index);
             }
 
             Command::GetNearbyInfo {
-                target_player_id,
+                player_id: target_player_id,
                 respond_to,
             } => self.get_nearby_info(target_player_id, respond_to),
 
@@ -301,7 +301,7 @@ impl Map {
             }
 
             Command::GiveItem {
-                target_player_id,
+                player_id: target_player_id,
                 item_id,
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
@@ -333,7 +333,7 @@ impl Map {
             Command::JukeboxTimer => self.jukebox_timer(),
 
             Command::JunkItem {
-                target_player_id,
+                player_id: target_player_id,
                 item_id,
                 amount,
             } => self.junk_item(target_player_id, item_id, amount).await,
@@ -384,8 +384,8 @@ impl Map {
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 
             Command::OpenDoor {
-                target_player_id,
-                door_coords,
+                player_id: target_player_id,
+                coords: door_coords,
             } => self.open_door(target_player_id, door_coords),
 
             Command::OpenGuildMaster {
@@ -527,7 +527,7 @@ impl Map {
             } => self.sell_item(player_id, npc_index, item),
 
             Command::SendChatMessage {
-                target_player_id,
+                player_id: target_player_id,
                 message,
             } => self.send_chat_message(target_player_id, message),
 
@@ -638,7 +638,7 @@ impl Map {
             Command::ViewQuestProgress { player_id } => self.view_quest_progress(player_id),
 
             Command::Walk {
-                target_player_id,
+                player_id: target_player_id,
                 direction,
                 coords,
                 timestamp,

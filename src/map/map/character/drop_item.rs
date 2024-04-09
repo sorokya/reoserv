@@ -15,7 +15,7 @@ use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn drop_item(&mut self, target_player_id: i32, item: ThreeItem, coords: ByteCoords) {
+    pub async fn drop_item(&mut self, player_id: i32, item: ThreeItem, coords: ByteCoords) {
         if item.amount <= 0
             || item.amount > SETTINGS.limits.max_item
             || SETTINGS.items.protected_items.contains(&item.id)
@@ -33,7 +33,7 @@ impl Map {
         }
 
         let (amount_to_drop, coords) = {
-            let character = match self.characters.get(&target_player_id) {
+            let character = match self.characters.get(&player_id) {
                 Some(character) => character,
                 None => return,
             };
@@ -80,7 +80,7 @@ impl Map {
         };
 
         {
-            let character = match self.characters.get_mut(&target_player_id) {
+            let character = match self.characters.get_mut(&player_id) {
                 Some(character) => character,
                 None => return,
             };
@@ -90,7 +90,7 @@ impl Map {
 
         let item_index = self.get_next_item_index(1);
 
-        let character = match self.characters.get(&target_player_id) {
+        let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
@@ -123,13 +123,13 @@ impl Map {
                 id: item.id,
                 amount: amount_to_drop,
                 coords,
-                owner: target_player_id,
+                owner: player_id,
             },
         );
 
         self.send_packet_near_exclude_player(
             &coords,
-            target_player_id,
+            player_id,
             PacketAction::Add,
             PacketFamily::Item,
             &ItemAddServerPacket {

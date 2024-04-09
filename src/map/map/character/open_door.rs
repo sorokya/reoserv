@@ -9,22 +9,18 @@ use crate::{utils::in_client_range, ITEM_DB};
 use super::super::Map;
 
 impl Map {
-    pub fn open_door(&mut self, player_id: i32, door_coords: Coords) {
+    pub fn open_door(&mut self, player_id: i32, coords: Coords) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
 
-        let door = match self
-            .doors
-            .iter_mut()
-            .find(|door| door.coords == door_coords)
-        {
+        let door = match self.doors.iter_mut().find(|door| door.coords == coords) {
             Some(door) => door,
             None => return,
         };
 
-        if door.open || !in_client_range(&character.coords, &door_coords) {
+        if door.open || !in_client_range(&character.coords, &coords) {
             return;
         }
 
@@ -44,10 +40,11 @@ impl Map {
 
         door.open = true;
 
-        let packet = DoorOpenServerPacket {
-            coords: door_coords,
-        };
-
-        self.send_packet_near(&door_coords, PacketAction::Open, PacketFamily::Door, packet);
+        self.send_packet_near(
+            &coords,
+            PacketAction::Open,
+            PacketFamily::Door,
+            DoorOpenServerPacket { coords },
+        );
     }
 }

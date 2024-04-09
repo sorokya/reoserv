@@ -11,7 +11,7 @@ use crate::{INN_DB, NPC_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn remove_citizenship(&mut self, player_id: i32) {
+    pub fn remove_citizenship(&mut self, player_id: i32, npc_index: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
@@ -19,11 +19,6 @@ impl Map {
 
         let player = match character.player.as_ref() {
             Some(player) => player,
-            None => return,
-        };
-
-        let npc_index = match player.get_interact_npc_index().await {
-            Some(npc_index) => npc_index,
             None => return,
         };
 

@@ -408,10 +408,11 @@ impl MapHandle {
         });
     }
 
-    pub fn open_inn(&self, player_id: i32, npc_index: i32) {
+    pub fn open_inn(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenInn {
             player_id,
             npc_index,
+            session_id,
         });
     }
 
@@ -476,8 +477,11 @@ impl MapHandle {
             .send(Command::RemoveBoardPost { player_id, post_id });
     }
 
-    pub fn remove_citizenship(&self, player_id: i32) {
-        let _ = self.tx.send(Command::RemoveCitizenship { player_id });
+    pub fn remove_citizenship(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::RemoveCitizenship {
+            player_id,
+            npc_index,
+        });
     }
 
     pub fn remove_trade_item(&self, player_id: i32, item_id: i32) {
@@ -503,10 +507,10 @@ impl MapHandle {
         });
     }
 
-    pub fn request_citizenship(&self, player_id: i32, session_id: i32, answers: [String; 3]) {
+    pub fn request_citizenship(&self, player_id: i32, npc_index: i32, answers: [String; 3]) {
         let _ = self.tx.send(Command::RequestCitizenship {
             player_id,
-            session_id,
+            npc_index,
             answers,
         });
     }
@@ -573,10 +577,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::RequestRefresh { player_id });
     }
 
-    pub fn request_sleep(&self, player_id: i32, session_id: i32) {
+    pub fn request_sleep(&self, player_id: i32, npc_index: i32) {
         let _ = self.tx.send(Command::RequestSleep {
             player_id,
-            session_id,
+            npc_index,
         });
     }
 
@@ -625,10 +629,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::SitChair { player_id, coords });
     }
 
-    pub fn sleep(&self, player_id: i32, session_id: i32) {
+    pub fn sleep(&self, player_id: i32, npc_index: i32, cost: i32) {
         let _ = self.tx.send(Command::Sleep {
             player_id,
-            session_id,
+            npc_index,
+            cost,
         });
     }
 

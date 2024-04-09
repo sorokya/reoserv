@@ -396,7 +396,8 @@ impl Map {
             Command::OpenInn {
                 player_id,
                 npc_index,
-            } => self.open_inn(player_id, npc_index).await,
+                session_id,
+            } => self.open_inn(player_id, npc_index, session_id),
 
             Command::OpenJukebox { player_id } => self.open_jukebox(player_id),
 
@@ -439,7 +440,10 @@ impl Map {
                 self.remove_board_post(player_id, post_id).await
             }
 
-            Command::RemoveCitizenship { player_id } => self.remove_citizenship(player_id).await,
+            Command::RemoveCitizenship {
+                player_id,
+                npc_index,
+            } => self.remove_citizenship(player_id, npc_index),
 
             Command::RemoveTradeItem { player_id, item_id } => {
                 self.remove_trade_item(player_id, item_id).await
@@ -455,11 +459,10 @@ impl Map {
 
             Command::RequestCitizenship {
                 player_id,
-                session_id,
+                npc_index,
                 answers,
             } => {
-                self.request_citizenship(player_id, session_id, answers)
-                    .await
+                self.request_citizenship(player_id, npc_index, answers);
             }
 
             Command::Reload { file, file_size } => self.reload(file, file_size),
@@ -489,8 +492,8 @@ impl Map {
 
             Command::RequestSleep {
                 player_id,
-                session_id,
-            } => self.request_sleep(player_id, session_id).await,
+                npc_index,
+            } => self.request_sleep(player_id, npc_index),
 
             Command::PartyRequest {
                 target_player_id,
@@ -548,8 +551,9 @@ impl Map {
 
             Command::Sleep {
                 player_id,
-                session_id,
-            } => self.sleep(player_id, session_id).await,
+                npc_index,
+                cost,
+            } => self.sleep(player_id, npc_index, cost),
 
             Command::Stand { player_id } => self.stand(player_id),
 

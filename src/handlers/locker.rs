@@ -26,8 +26,13 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
     );
 }
 
-fn buy(player_id: i32, map: MapHandle) {
-    map.upgrade_locker(player_id);
+async fn buy(player_id: i32, player: PlayerHandle, map: MapHandle) {
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.upgrade_locker(player_id, npc_index);
 }
 
 fn open(player_id: i32, map: MapHandle) {
@@ -63,9 +68,14 @@ pub async fn locker(action: PacketAction, reader: EoReader, player: PlayerHandle
         }
     };
 
+    // Prevent interacting with locker while trading
+    if player.is_trading().await {
+        return;
+    }
+
     match action {
         PacketAction::Add => add(reader, player_id, map),
-        PacketAction::Buy => buy(player_id, map),
+        PacketAction::Buy => buy(player_id, player, map).await,
         PacketAction::Open => open(player_id, map),
         PacketAction::Take => take(reader, player_id, map),
         _ => error!("Unhandled packet Locker_{:?}", action),

@@ -193,9 +193,9 @@ impl Map {
 
             Command::DepositGold {
                 player_id,
-                session_id,
+                npc_index,
                 amount,
-            } => self.deposit_gold(player_id, session_id, amount).await,
+            } => self.deposit_gold(player_id, npc_index, amount),
 
             Command::DepositGuildGold { player_id, amount } => {
                 self.deposit_guild_gold(player_id, amount)
@@ -362,7 +362,8 @@ impl Map {
             Command::OpenBank {
                 player_id,
                 npc_index,
-            } => self.open_bank(player_id, npc_index).await,
+                session_id,
+            } => self.open_bank(player_id, npc_index, session_id),
 
             Command::OpenBarber {
                 player_id,
@@ -611,7 +612,10 @@ impl Map {
                 rank_str,
             } => self.update_guild_rank(player_id, rank, rank_str),
 
-            Command::UpgradeLocker { player_id } => self.upgrade_locker(player_id),
+            Command::UpgradeLocker {
+                player_id,
+                npc_index,
+            } => self.upgrade_locker(player_id, npc_index),
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,
 
@@ -632,9 +636,9 @@ impl Map {
 
             Command::WithdrawGold {
                 player_id,
-                session_id,
+                npc_index,
                 amount,
-            } => self.withdraw_gold(player_id, session_id, amount).await,
+            } => self.withdraw_gold(player_id, npc_index, amount),
             Command::FindPlayer { player_id, name } => self.find_player(player_id, name),
             Command::RequestNpcs {
                 player_id,

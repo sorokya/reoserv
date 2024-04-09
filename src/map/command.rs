@@ -88,7 +88,7 @@ pub enum Command {
     },
     DepositGold {
         player_id: i32,
-        session_id: i32,
+        npc_index: i32,
         amount: i32,
     },
     DepositGuildGold {
@@ -222,6 +222,7 @@ pub enum Command {
     OpenBank {
         player_id: i32,
         npc_index: i32,
+        session_id: i32,
     },
     OpenBarber {
         player_id: i32,
@@ -445,6 +446,7 @@ pub enum Command {
     },
     UpgradeLocker {
         player_id: i32,
+        npc_index: i32,
     },
     UseItem {
         player_id: i32,
@@ -468,7 +470,7 @@ pub enum Command {
     },
     WithdrawGold {
         player_id: i32,
-        session_id: i32,
+        npc_index: i32,
         amount: i32,
     },
     SpawnItems,

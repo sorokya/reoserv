@@ -8,7 +8,7 @@ use eolib::{
 
 use crate::{map::MapHandle, player::PlayerHandle};
 
-fn add(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn add(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let add = match BankAddClientPacket::deserialize(&reader) {
         Ok(add) => add,
         Err(e) => {
@@ -17,10 +17,24 @@ fn add(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.deposit_gold(player_id, add.session_id, add.amount);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != add.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.deposit_gold(player_id, npc_index, add.amount);
 }
 
-fn open(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn open(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let open = match BankOpenClientPacket::deserialize(&reader) {
         Ok(open) => open,
         Err(e) => {
@@ -29,10 +43,18 @@ fn open(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.open_bank(player_id, open.npc_index);
+    let session_id = match player.generate_session_id().await {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            error!("Failed to generate session id: {}", e);
+            return;
+        }
+    };
+
+    map.open_bank(player_id, open.npc_index, session_id);
 }
 
-fn take(reader: EoReader, player_id: i32, map: MapHandle) {
+async fn take(reader: EoReader, player_id: i32, player: PlayerHandle, map: MapHandle) {
     let take = match BankTakeClientPacket::deserialize(&reader) {
         Ok(take) => take,
         Err(e) => {
@@ -41,7 +63,21 @@ fn take(reader: EoReader, player_id: i32, map: MapHandle) {
         }
     };
 
-    map.withdraw_gold(player_id, take.session_id, take.amount);
+    match player.get_session_id().await {
+        Ok(session_id) => {
+            if session_id != take.session_id {
+                return;
+            }
+        }
+        Err(_) => return,
+    }
+
+    let npc_index = match player.get_interact_npc_index().await {
+        Some(npc_index) => npc_index,
+        None => return,
+    };
+
+    map.withdraw_gold(player_id, npc_index, take.amount);
 }
 
 pub async fn bank(action: PacketAction, reader: EoReader, player: PlayerHandle) {
@@ -61,10 +97,15 @@ pub async fn bank(action: PacketAction, reader: EoReader, player: PlayerHandle) 
         }
     };
 
+    // Prevent interacting with bank when trading
+    if player.is_trading().await {
+        return;
+    }
+
     match action {
-        PacketAction::Add => add(reader, player_id, map),
-        PacketAction::Open => open(reader, player_id, map),
-        PacketAction::Take => take(reader, player_id, map),
+        PacketAction::Add => add(reader, player_id, player, map).await,
+        PacketAction::Open => open(reader, player_id, player, map).await,
+        PacketAction::Take => take(reader, player_id, player, map).await,
         _ => error!("Unhandled packet Bank_{:?}", action),
     }
 }

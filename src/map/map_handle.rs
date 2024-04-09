@@ -129,10 +129,10 @@ impl MapHandle {
         });
     }
 
-    pub fn deposit_gold(&self, player_id: i32, session_id: i32, amount: i32) {
+    pub fn deposit_gold(&self, player_id: i32, npc_index: i32, amount: i32) {
         let _ = self.tx.send(Command::DepositGold {
             player_id,
-            session_id,
+            npc_index,
             amount,
         });
     }
@@ -360,10 +360,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::LevelStat { player_id, stat_id });
     }
 
-    pub fn open_bank(&self, player_id: i32, npc_index: i32) {
+    pub fn open_bank(&self, player_id: i32, npc_index: i32, session_id: i32) {
         let _ = self.tx.send(Command::OpenBank {
             player_id,
             npc_index,
+            session_id,
         });
     }
 
@@ -767,8 +768,11 @@ impl MapHandle {
         });
     }
 
-    pub fn upgrade_locker(&self, player_id: i32) {
-        let _ = self.tx.send(Command::UpgradeLocker { player_id });
+    pub fn upgrade_locker(&self, player_id: i32, npc_index: i32) {
+        let _ = self.tx.send(Command::UpgradeLocker {
+            player_id,
+            npc_index,
+        });
     }
 
     pub fn use_item(&self, player_id: i32, item_id: i32) {
@@ -802,10 +806,10 @@ impl MapHandle {
         });
     }
 
-    pub fn withdraw_gold(&self, player_id: i32, session_id: i32, amount: i32) {
+    pub fn withdraw_gold(&self, player_id: i32, npc_index: i32, amount: i32) {
         let _ = self.tx.send(Command::WithdrawGold {
             player_id,
-            session_id,
+            npc_index,
             amount,
         });
     }

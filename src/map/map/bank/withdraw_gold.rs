@@ -1,29 +1,20 @@
 use std::cmp;
 
-use eolib::protocol::net::{server::BankReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::{
+    net::{server::BankReplyServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
+};
+
+use crate::NPC_DB;
 
 use super::super::Map;
 
 impl Map {
-    pub async fn withdraw_gold(&mut self, player_id: i32, session_id: i32, amount: i32) {
+    pub fn withdraw_gold(&mut self, player_id: i32, npc_index: i32, amount: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
-
-        let player = match character.player.as_ref() {
-            Some(player) => player,
-            None => return,
-        };
-
-        let actual_session_id = match player.get_session_id().await {
-            Ok(session_id) => session_id,
-            Err(_) => return,
-        };
-
-        if session_id != actual_session_id {
-            return;
-        }
 
         let amount = cmp::min(character.gold_bank, amount);
         if amount == 0 {
@@ -35,12 +26,17 @@ impl Map {
             return;
         }
 
-        let interact_npc_index = match player.get_interact_npc_index().await {
-            Some(index) => index,
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
             None => return,
         };
 
-        if !self.npcs.contains_key(&interact_npc_index) {
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        if npc_data.r#type != NpcType::Bank {
             return;
         }
 

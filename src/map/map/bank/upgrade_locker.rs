@@ -1,11 +1,14 @@
-use eolib::protocol::net::{server::LockerBuyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::{
+    net::{server::LockerBuyServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
+};
 
-use crate::SETTINGS;
+use crate::{NPC_DB, SETTINGS};
 
 use super::super::Map;
 
 impl Map {
-    pub fn upgrade_locker(&mut self, player_id: i32) {
+    pub fn upgrade_locker(&mut self, player_id: i32, npc_index: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -19,6 +22,20 @@ impl Map {
             + SETTINGS.bank.upgrade_cost_step * character.bank_level;
 
         if character.get_item_amount(1) < cost {
+            return;
+        }
+
+        let npc = match self.npcs.get(&npc_index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
+        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc_data) => npc_data,
+            None => return,
+        };
+
+        if npc_data.r#type != NpcType::Bank {
             return;
         }
 

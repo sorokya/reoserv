@@ -142,7 +142,7 @@ impl Character {
             hair_style: create.hair_style,
             hair_color: create.hair_color,
             skin: create.skin,
-            name: create.name.clone(),
+            name: create.name.to_lowercase(),
             ..Default::default()
         }
     }

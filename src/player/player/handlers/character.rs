@@ -61,12 +61,9 @@ impl Player {
             }
         };
 
-        let session_id = match self.take_session_id() {
-            Ok(session_id) => session_id,
-            Err(e) => {
-                self.close(format!("Error getting session id: {}", e)).await;
-                return;
-            }
+        let session_id = match self.session_id {
+            Some(session_id) => session_id,
+            None => return,
         };
 
         if session_id != create.session_id {
@@ -382,7 +379,7 @@ pub async fn character_exists(
         .exec_first::<Row, &str, Params>(
             r"SELECT id FROM `Character` WHERE `name` = :name",
             params! {
-                "name" => name,
+                "name" => name.to_lowercase(),
             },
         )
         .await?

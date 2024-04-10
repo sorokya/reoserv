@@ -33,8 +33,8 @@
     (family: "Shop", action: "Open", limit: 1000),
     (family: "Sit", action: "Request", limit: 120),
     (family: "Trade", action: "Request", limit: 1000),
-    (family: "Walk", action: "Admin", limit: 400),
-    (family: "Walk", action: "Player", limit: 400),
-    (family: "Walk", action: "Spec", limit: 400),
+    (family: "Walk", action: "Admin", limit: 300),
+    (family: "Walk", action: "Player", limit: 300),
+    (family: "Walk", action: "Spec", limit: 300),
   ]
 )

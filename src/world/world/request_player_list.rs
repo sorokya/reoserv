@@ -26,8 +26,7 @@ impl World {
             for (online_player_id, online_player) in online_players {
                 let character = match online_player.get_character().await {
                     Ok(character) => character,
-                    Err(e) => {
-                        error!("Error getting character: {}", e);
+                    Err(_) => {
                         continue;
                     }
                 };

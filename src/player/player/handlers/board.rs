@@ -22,7 +22,12 @@ impl Player {
                 }
             };
 
-            map.create_board_post(self.id, create.post_subject, create.post_body);
+            let board_id = match self.board_id {
+                Some(board_id) => board_id,
+                None => return,
+            };
+
+            map.create_board_post(self.id, board_id, create.post_subject, create.post_body);
         }
     }
 
@@ -48,7 +53,13 @@ impl Player {
                     return;
                 }
             };
-            map.remove_board_post(self.id, remove.post_id);
+
+            let board_id = match self.board_id {
+                Some(board_id) => board_id,
+                None => return,
+            };
+
+            map.remove_board_post(self.id, board_id, remove.post_id);
         }
     }
 
@@ -61,7 +72,13 @@ impl Player {
                     return;
                 }
             };
-            map.view_board_post(self.id, take.post_id);
+
+            let board_id = match self.board_id {
+                Some(board_id) => board_id,
+                None => return,
+            };
+
+            map.view_board_post(self.id, board_id, take.post_id);
         }
     }
 

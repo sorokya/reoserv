@@ -106,9 +106,10 @@ impl MapHandle {
         });
     }
 
-    pub fn create_board_post(&self, player_id: i32, subject: String, body: String) {
+    pub fn create_board_post(&self, player_id: i32, board_id: i32, subject: String, body: String) {
         let _ = self.tx.send(Command::CreateBoardPost {
             player_id,
+            board_id,
             subject,
             body,
         });
@@ -465,10 +466,12 @@ impl MapHandle {
         let _ = self.tx.send(Command::RecoverPlayers);
     }
 
-    pub fn remove_board_post(&self, player_id: i32, post_id: i32) {
-        let _ = self
-            .tx
-            .send(Command::RemoveBoardPost { player_id, post_id });
+    pub fn remove_board_post(&self, player_id: i32, board_id: i32, post_id: i32) {
+        let _ = self.tx.send(Command::RemoveBoardPost {
+            player_id,
+            board_id,
+            post_id,
+        });
     }
 
     pub fn remove_citizenship(&self, player_id: i32, npc_index: i32) {
@@ -792,8 +795,12 @@ impl MapHandle {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
     }
 
-    pub fn view_board_post(&self, player_id: i32, post_id: i32) {
-        let _ = self.tx.send(Command::ViewBoardPost { player_id, post_id });
+    pub fn view_board_post(&self, player_id: i32, board_id: i32, post_id: i32) {
+        let _ = self.tx.send(Command::ViewBoardPost {
+            player_id,
+            board_id,
+            post_id,
+        });
     }
 
     pub fn view_quest_history(&self, player_id: i32) {

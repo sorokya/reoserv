@@ -180,9 +180,10 @@ impl Map {
 
             Command::CreateBoardPost {
                 player_id,
+                board_id,
                 subject,
                 body,
-            } => self.create_board_post(player_id, subject, body).await,
+            } => self.create_board_post(player_id, board_id, subject, body),
 
             Command::FinishGuildCreation {
                 player_id,
@@ -436,9 +437,11 @@ impl Map {
 
             Command::RecoverPlayers => self.recover_players().await,
 
-            Command::RemoveBoardPost { player_id, post_id } => {
-                self.remove_board_post(player_id, post_id).await
-            }
+            Command::RemoveBoardPost {
+                player_id,
+                board_id,
+                post_id,
+            } => self.remove_board_post(player_id, board_id, post_id),
 
             Command::RemoveCitizenship {
                 player_id,
@@ -634,9 +637,11 @@ impl Map {
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,
 
-            Command::ViewBoardPost { player_id, post_id } => {
-                self.view_board_post(player_id, post_id).await
-            }
+            Command::ViewBoardPost {
+                player_id,
+                board_id,
+                post_id,
+            } => self.view_board_post(player_id, board_id, post_id),
 
             Command::ViewQuestHistory { player_id } => self.view_quest_history(player_id),
 

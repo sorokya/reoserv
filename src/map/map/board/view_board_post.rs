@@ -6,21 +6,14 @@ use crate::utils::get_board_tile_spec;
 use super::super::Map;
 
 impl Map {
-    pub async fn view_board_post(&self, player_id: i32, post_id: i32) {
+    pub fn view_board_post(&self, player_id: i32, board_id: i32, post_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
 
-        // TODO: Send board id from player thread
-
         let player = match character.player.as_ref() {
             Some(player) => player.clone(),
-            None => return,
-        };
-
-        let board_id = match player.get_board_id().await {
-            Some(board_id) => board_id,
             None => return,
         };
 

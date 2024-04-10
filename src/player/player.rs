@@ -115,9 +115,6 @@ impl Player {
             Command::GenerateSessionId { respond_to } => {
                 let _ = respond_to.send(self.generate_session_id());
             }
-            Command::GetBoardId { respond_to } => {
-                let _ = respond_to.send(self.board_id);
-            }
             Command::GetCharacter { respond_to } => {
                 if let Some(character) = self.character.as_ref() {
                     let _ = respond_to.send(Ok(Box::new(character.to_owned())));

@@ -5,7 +5,13 @@ use crate::{errors::DataNotFoundError, utils::get_board_tile_spec, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn create_board_post(&mut self, player_id: i32, subject: String, body: String) {
+    pub fn create_board_post(
+        &mut self,
+        player_id: i32,
+        board_id: i32,
+        subject: String,
+        body: String,
+    ) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -13,11 +19,6 @@ impl Map {
 
         let player = match &character.player {
             Some(player) => player.clone(),
-            None => return,
-        };
-
-        let board_id = match player.get_board_id().await {
-            Some(board_id) => board_id,
             None => return,
         };
 

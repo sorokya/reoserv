@@ -74,6 +74,7 @@ pub enum Command {
     },
     CreateBoardPost {
         player_id: i32,
+        board_id: i32,
         subject: String,
         body: String,
     },
@@ -292,6 +293,7 @@ pub enum Command {
     },
     RemoveBoardPost {
         player_id: i32,
+        board_id: i32,
         post_id: i32,
     },
     RemoveCitizenship {
@@ -466,6 +468,7 @@ pub enum Command {
     },
     ViewBoardPost {
         player_id: i32,
+        board_id: i32,
         post_id: i32,
     },
     ViewQuestHistory {

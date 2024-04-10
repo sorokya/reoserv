@@ -28,9 +28,6 @@ pub enum Command {
     GenerateSessionId {
         respond_to: oneshot::Sender<i32>,
     },
-    GetBoardId {
-        respond_to: oneshot::Sender<Option<i32>>,
-    },
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },

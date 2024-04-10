@@ -76,15 +76,6 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_board_id(&self) -> Option<i32> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetBoardId { respond_to: tx });
-        match rx.await {
-            Ok(board_id) => board_id,
-            Err(_) => None,
-        }
-    }
-
     pub async fn get_character(
         &self,
     ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {

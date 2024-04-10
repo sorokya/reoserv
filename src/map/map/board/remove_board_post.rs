@@ -5,7 +5,7 @@ use crate::utils::get_board_tile_spec;
 use super::super::Map;
 
 impl Map {
-    pub async fn remove_board_post(&mut self, player_id: i32, post_id: i32) {
+    pub fn remove_board_post(&mut self, player_id: i32, board_id: i32, post_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -13,12 +13,6 @@ impl Map {
 
         let player = match &character.player {
             Some(player) => player.clone(),
-            None => return,
-        };
-
-        // TODO: Send board id from player thread
-        let board_id = match player.get_board_id().await {
-            Some(board_id) => board_id,
             None => return,
         };
 

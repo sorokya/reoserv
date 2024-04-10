@@ -3,7 +3,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use chrono::Utc;
 use eolib::{
     data::{decode_number, encode_number, EoSerialize, EoWriter},
-    encrypt::{decrypt_packet, encrypt_packet, generate_swap_multiple},
+    encrypt::{decrypt_packet, encrypt_packet},
     packet::{generate_sequence_start, Sequencer},
     protocol::net::{PacketAction, PacketFamily},
 };
@@ -32,8 +32,8 @@ impl PacketBus {
             need_pong: false,
             sequencer,
             upcoming_sequence_start: 0,
-            server_enryption_multiple: generate_swap_multiple(),
-            client_enryption_multiple: generate_swap_multiple(),
+            server_enryption_multiple: 0,
+            client_enryption_multiple: 0,
         }
     }
 

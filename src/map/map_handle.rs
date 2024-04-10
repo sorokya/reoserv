@@ -501,6 +501,13 @@ impl MapHandle {
         });
     }
 
+    pub fn request_book(&self, player_id: i32, target_player_id: i32) {
+        let _ = self.tx.send(Command::RequestBook {
+            player_id,
+            target_player_id,
+        });
+    }
+
     pub fn request_citizenship(&self, player_id: i32, npc_index: i32, answers: [String; 3]) {
         let _ = self.tx.send(Command::RequestCitizenship {
             player_id,

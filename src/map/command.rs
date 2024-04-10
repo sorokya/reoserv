@@ -302,6 +302,10 @@ pub enum Command {
         player_id: i32,
         item_id: i32,
     },
+    RequestBook {
+        player_id: i32,
+        target_player_id: i32,
+    },
     RequestCitizenship {
         player_id: i32,
         npc_index: i32,

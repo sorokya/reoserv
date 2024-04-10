@@ -15,6 +15,7 @@ mod lose_item;
 mod open_door;
 mod party_request;
 mod remove_karma;
+mod request_book;
 mod request_npcs;
 mod request_paperdoll;
 mod request_players;

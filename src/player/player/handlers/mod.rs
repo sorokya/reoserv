@@ -4,6 +4,7 @@ mod attack;
 mod bank;
 mod barber;
 mod board;
+mod book;
 mod chair;
 mod character;
 mod chest;

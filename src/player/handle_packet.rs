@@ -58,6 +58,7 @@ impl Player {
             PacketFamily::Bank => self.handle_bank(action, reader),
             PacketFamily::Barber => self.handle_barber(action, reader),
             PacketFamily::Board => self.handle_board(action, reader),
+            PacketFamily::Book => self.handle_book(action, reader),
             PacketFamily::Chair => self.handle_chair(action, reader),
             PacketFamily::Character => self.handle_character(action, reader).await,
             PacketFamily::Chest => self.handle_chest(action, reader),

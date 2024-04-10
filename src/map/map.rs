@@ -457,6 +457,11 @@ impl Map {
                 action_id,
             } => self.reply_to_quest_npc(player_id, npc_index, quest_id, session_id, action_id),
 
+            Command::RequestBook {
+                player_id,
+                target_player_id,
+            } => self.request_book(player_id, target_player_id),
+
             Command::RequestCitizenship {
                 player_id,
                 npc_index,

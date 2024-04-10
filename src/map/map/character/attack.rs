@@ -406,6 +406,10 @@ impl Map {
 }
 
 fn can_attack(character: &Character) -> bool {
+    if SETTINGS.combat.enforce_weight && character.weight > character.max_weight {
+        return false;
+    }
+
     let weapon = character.equipment.weapon;
     let shield = character.equipment.shield;
 

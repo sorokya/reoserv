@@ -139,6 +139,7 @@ pub struct Limits {
 #[derive(Debug, Deserialize)]
 pub struct Combat {
     pub weapon_ranges: Vec<WeaponRange>,
+    pub enforce_weight: bool,
 }
 
 #[derive(Debug, Deserialize)]

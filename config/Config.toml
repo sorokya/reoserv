@@ -159,6 +159,9 @@ weapon_ranges = [
   { weapon = 365, range = 10, arrows = false },
 ]
 
+# If true players won't be able to attack while overweight
+enforce_weight = true
+
 [map]
 
 # Control the different type of quake map effects

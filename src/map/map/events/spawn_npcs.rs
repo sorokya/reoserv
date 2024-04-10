@@ -10,6 +10,8 @@ use super::super::Map;
 
 impl Map {
     pub async fn spawn_npcs(&mut self) {
+        self.npcs.retain(|_, n| n.spawn_index.is_some() || n.alive);
+
         if self.file.npcs.is_empty() {
             return;
         }
@@ -44,6 +46,7 @@ impl Map {
                             .coords(Coords::default())
                             .direction(Direction::Down)
                             .spawn_index(spawn_index)
+                            .spawn_type(spawn.spawn_type)
                             .alive(false)
                             .dead_since(dead_since)
                             .hp(data_record.hp)
@@ -59,11 +62,17 @@ impl Map {
 
         let mut rng = rand::thread_rng();
         let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
+
         for index in indexes {
             let (child, alive, spawn_time, dead_since, spawn_coords, spawn_type, npc_type) = {
                 match self.npcs.get(&index) {
                     Some(npc) => {
-                        let spawn = &self.file.npcs[npc.spawn_index];
+                        let spawn_index = match npc.spawn_index {
+                            Some(index) => index,
+                            None => continue,
+                        };
+
+                        let spawn = &self.file.npcs[spawn_index];
                         let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
                             Some(npc_data) => npc_data,
                             None => continue,

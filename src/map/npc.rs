@@ -12,7 +12,8 @@ pub struct Npc {
     pub id: i32,
     pub coords: Coords,
     pub direction: Direction,
-    pub spawn_index: usize,
+    pub spawn_type: i32,
+    pub spawn_index: Option<usize>,
     pub alive: bool,
     pub dead_since: DateTime<Utc>,
     pub act_ticks: i32,
@@ -124,7 +125,8 @@ pub struct NPCBuilder {
     id: i32,
     coords: Coords,
     direction: Direction,
-    spawn_index: usize,
+    spawn_index: Option<usize>,
+    spawn_type: i32,
     alive: bool,
     dead_since: DateTime<Utc>,
     act_ticks: i32,
@@ -146,6 +148,11 @@ impl NPCBuilder {
         self
     }
 
+    pub fn spawn_type(mut self, spawn_type: i32) -> Self {
+        self.spawn_type = spawn_type;
+        self
+    }
+
     pub fn coords(mut self, coords: Coords) -> Self {
         self.coords = coords;
         self
@@ -157,7 +164,7 @@ impl NPCBuilder {
     }
 
     pub fn spawn_index(mut self, spawn_index: usize) -> Self {
-        self.spawn_index = spawn_index;
+        self.spawn_index = Some(spawn_index);
         self
     }
 
@@ -196,6 +203,7 @@ impl NPCBuilder {
             id: self.id,
             coords: self.coords,
             direction: self.direction,
+            spawn_type: self.spawn_type,
             spawn_index: self.spawn_index,
             alive: self.alive,
             dead_since: self.dead_since,

@@ -494,6 +494,12 @@ pub enum Command {
         amount: i32,
     },
     SpawnItems,
+    SpawnNpc {
+        player_id: i32,
+        npc_id: i32,
+        amount: i32,
+        speed: i32,
+    },
     SpawnNpcs,
     ActNpcs,
     Quake {

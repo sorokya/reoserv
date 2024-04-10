@@ -279,6 +279,30 @@
             usage: "$x",
             admin_level: "Guardian",
             args: []
+        ),
+        (
+            name: "spawnnpc",
+            alias: "sn",
+            description: "Spawn an npc at your position",
+            usage: "$sn goat",
+            admin_level: "GameMaster",
+            args: [
+                (
+                    name: "npc",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "amount",
+                    type: "UInt",
+                    required: false,
+                ),
+                (
+                    name: "speed",
+                    type: "UInt",
+                    required: false,
+                )
+            ]
         )
     ]
 )

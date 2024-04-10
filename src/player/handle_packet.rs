@@ -14,7 +14,7 @@ impl Player {
         let action = PacketAction::from(reader.get_byte().unwrap_or(0xfe));
         if let PacketAction::Unrecognized(id) = action {
             if id != 0xfe {
-                self.close("invalid packet action".to_string()).await;
+                // self.close("invalid packet action".to_string()).await;
                 return;
             }
         }
@@ -22,7 +22,7 @@ impl Player {
         let family = PacketFamily::from(reader.get_byte().unwrap_or(0xfe));
         if let PacketFamily::Unrecognized(id) = family {
             if id != 0xfe {
-                self.close("invalid packet family".to_string()).await;
+                // self.close("invalid packet family".to_string()).await;
                 return;
             }
         }

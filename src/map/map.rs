@@ -587,6 +587,13 @@ impl Map {
 
             Command::SpawnItems => self.spawn_items().await,
 
+            Command::SpawnNpc {
+                player_id,
+                npc_id,
+                amount,
+                speed,
+            } => self.spawn_npc(player_id, npc_id, amount, speed),
+
             Command::SpawnNpcs => self.spawn_npcs().await,
 
             Command::TalkToQuestNpc {

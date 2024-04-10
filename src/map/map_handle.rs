@@ -705,6 +705,15 @@ impl MapHandle {
         let _ = self.tx.send(Command::SpawnItems);
     }
 
+    pub fn spawn_npc(&self, player_id: i32, npc_id: i32, amount: i32, speed: i32) {
+        let _ = self.tx.send(Command::SpawnNpc {
+            player_id,
+            npc_id,
+            amount,
+            speed,
+        });
+    }
+
     pub fn spawn_npcs(&self) {
         let _ = self.tx.send(Command::SpawnNpcs);
     }

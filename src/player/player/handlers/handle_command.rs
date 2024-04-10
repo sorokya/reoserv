@@ -5,7 +5,7 @@ use eolib::protocol::Coords;
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};
 
-use crate::{COMMANDS, ITEM_DB};
+use crate::{COMMANDS, ITEM_DB, NPC_DB};
 
 async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
     let player = match character.player.as_ref() {
@@ -128,6 +128,60 @@ async fn spawn_item(args: &[String], character: &Character) {
     }
 }
 
+async fn spawn_npc(args: &[String], character: &Character) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => return,
+    };
+
+    let identifier = (*args[0]).to_string();
+
+    let npc_id = match identifier.parse::<u32>() {
+        Ok(id) => id as i32,
+        Err(_) => {
+            // find matches from item db where name starts with identifier
+            match NPC_DB
+                .npcs
+                .iter()
+                .position(|npc| npc.name.to_lowercase() == identifier.to_lowercase())
+            {
+                Some(index) => index as i32 + 1,
+                None => {
+                    send_error_message(
+                        player,
+                        format!("No npc found with name \"{}\".", identifier),
+                    );
+                    return;
+                }
+            }
+        }
+    };
+
+    let amount = if args.len() >= 2 {
+        args[1].parse::<i32>().unwrap()
+    } else {
+        1
+    };
+
+    let speed = if args.len() >= 3 {
+        args[2].parse::<i32>().unwrap()
+    } else {
+        3
+    };
+
+    if let Ok(map) = player.get_map().await {
+        let player_id = match player.get_player_id().await {
+            Ok(player_id) => player_id,
+            Err(e) => {
+                error!("Failed to get player id: {}", e);
+                return;
+            }
+        };
+
+        map.spawn_npc(player_id, npc_id, amount, speed);
+    }
+}
+
 async fn hide(character: &Character) {
     let player = match character.player.as_ref() {
         Some(player) => player,
@@ -238,6 +292,7 @@ pub async fn handle_command(
                 match command.name.as_str() {
                     "hide" => hide(character).await,
                     "spawnitem" => spawn_item(&args, character).await,
+                    "spawnnpc" => spawn_npc(&args, character).await,
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,
                     "warpmeto" => warp_me_to(&args, character, &world).await,

@@ -419,7 +419,7 @@ impl Map {
         Option<NpcUpdateChat>,
         Option<NpcUpdateAttack>,
     ) {
-        let (npc_id, spawn_index, act_ticks) = match self.npcs.get_mut(&index) {
+        let (npc_id, spawn_type, act_ticks) = match self.npcs.get_mut(&index) {
             Some(npc) => {
                 if !npc.alive {
                     return (None, None, None);
@@ -430,14 +430,13 @@ impl Map {
 
                     npc.act_ticks += SETTINGS.npcs.act_rate;
                     npc.talk_ticks += SETTINGS.npcs.act_rate;
-                    (npc.id, npc.spawn_index, npc.act_ticks)
+                    (npc.id, npc.spawn_type, npc.act_ticks)
                 }
             }
             None => return (None, None, None),
         };
 
-        let spawn = &self.file.npcs[spawn_index];
-        let act_rate = match spawn.spawn_type {
+        let act_rate = match spawn_type {
             0 => SETTINGS.npcs.speed_0,
             1 => SETTINGS.npcs.speed_1,
             2 => SETTINGS.npcs.speed_2,
@@ -446,7 +445,7 @@ impl Map {
             5 => SETTINGS.npcs.speed_5,
             6 => SETTINGS.npcs.speed_6,
             7 => 0,
-            _ => unreachable!("Invalid spawn type {} for NPC {}", spawn.spawn_type, npc_id),
+            _ => unreachable!("Invalid act rate {} for NPC {}", spawn_type, npc_id),
         };
 
         let talk_update = self.act_npc_talk(index, npc_id);
@@ -475,7 +474,9 @@ impl Map {
                 let npcs = {
                     self.npcs
                         .iter()
-                        .filter(|(_, npc)| npc.spawn_index == spawn_index && npc.id == spawn.id)
+                        .filter(|(_, npc)| {
+                            npc.spawn_index == Some(spawn_index) && npc.id == spawn.id
+                        })
                         .map(|(index, _)| *index)
                         .collect::<Vec<i32>>()
                         .clone()

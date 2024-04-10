@@ -28,5 +28,6 @@ mod send_packet_near;
 mod send_packet_near_exclude_player;
 mod send_packet_near_player;
 mod serialize;
+mod spawn_npc;
 mod spike_damage;
 mod toggle_hidden;

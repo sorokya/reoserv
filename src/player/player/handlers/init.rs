@@ -100,7 +100,7 @@ impl Player {
                 )
                 .await;
 
-            self.close("Client to new".to_string()).await;
+            self.close("Client too new".to_string()).await;
 
             return;
         }
@@ -139,7 +139,7 @@ impl Player {
                 )
                 .await;
 
-            self.close("Client to old".to_string()).await;
+            self.close("Client too old".to_string()).await;
 
             return;
         }

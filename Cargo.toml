@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.0.4"
+version = "1.1.0"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2021"
 description = "The rust powered endless online server emulator"
@@ -63,4 +63,4 @@ pr-run-mode = "plan"
 # Whether to install an updater program
 install-updater = false
 # Extra static files to include in each App (path relative to this Cargo.toml's dir)
-include = ["./config", "./data", "./db-init"]
+include = ["config", "data", "db-init"]

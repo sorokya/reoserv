@@ -27,8 +27,10 @@ impl Map {
                     characters: self
                         .characters
                         .iter()
-                        .filter_map(|(_, other)| {
-                            if !other.hidden && in_client_range(&character.coords, &other.coords) {
+                        .filter_map(|(id, other)| {
+                            if (!other.hidden || *id == player_id)
+                                && in_client_range(&character.coords, &other.coords)
+                            {
                                 Some(other.to_map_info())
                             } else {
                                 None

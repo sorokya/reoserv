@@ -77,7 +77,9 @@ impl PacketBus {
         trace!("Send: {:?}", &buf[..]);
 
         let mut data_buf = buf.split_off(2);
-        encrypt_packet(&mut data_buf, self.server_enryption_multiple);
+        if self.server_enryption_multiple != 0 {
+            encrypt_packet(&mut data_buf, self.server_enryption_multiple);
+        }
         buf.unsplit(data_buf);
 
         match self.socket.try_write(&buf) {
@@ -108,7 +110,9 @@ impl PacketBus {
                     match read.await {
                         Some(Ok(buf)) => {
                             let mut data_buf = buf;
-                            decrypt_packet(&mut data_buf, self.client_enryption_multiple);
+                            if self.client_enryption_multiple != 0 {
+                                decrypt_packet(&mut data_buf, self.client_enryption_multiple);
+                            }
 
                             let data_buf = Bytes::from(data_buf);
 

@@ -83,6 +83,12 @@ pub struct World {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Bard {
+    pub instrument_items: Vec<i32>,
+    pub max_note_id: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct NPCs {
     pub instant_spawn: bool,
     pub respawn_rate: i32,
@@ -252,6 +258,7 @@ pub struct Settings {
     pub marriage: Marriage,
     pub evacuate: Evacuate,
     pub items: Items,
+    pub bard: Bard,
 }
 
 impl Settings {

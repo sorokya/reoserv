@@ -451,6 +451,14 @@ impl MapHandle {
         });
     }
 
+    pub fn play_instrument(&self, player_id: i32, instrument_id: i32, note_id: i32) {
+        let _ = self.tx.send(Command::PlayInstrument {
+            player_id,
+            instrument_id,
+            note_id,
+        });
+    }
+
     pub fn play_jukebox_track(&self, player_id: i32, track_id: i32) {
         let _ = self.tx.send(Command::PlayJukeboxTrack {
             player_id,

@@ -140,6 +140,14 @@ spike_rate = 12
 # Percentage of max HP that spikes will damage
 spike_damage = 0.2
 
+[bard]
+
+# Graphic IDs of weapons that are valid instruments
+instrument_items = [49, 50]
+
+# Highest note id allowed to be played
+max_note_id = 36
+
 [combat]
 
 # Range of weapons, default is 1 if not specified

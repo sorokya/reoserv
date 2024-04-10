@@ -428,6 +428,12 @@ impl Map {
                 session_id,
             } => self.open_skill_master(player_id, npc_index, session_id),
 
+            Command::PlayInstrument {
+                player_id,
+                instrument_id,
+                note_id,
+            } => self.play_instrument(player_id, instrument_id, note_id),
+
             Command::PlayJukeboxTrack {
                 player_id,
                 track_id,

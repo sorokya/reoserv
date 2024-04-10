@@ -281,6 +281,11 @@ pub enum Command {
         npc_index: i32,
         session_id: i32,
     },
+    PlayInstrument {
+        player_id: i32,
+        instrument_id: i32,
+        note_id: i32,
+    },
     PlayJukeboxTrack {
         player_id: i32,
         track_id: i32,

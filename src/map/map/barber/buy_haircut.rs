@@ -50,7 +50,8 @@ impl Map {
             return;
         }
 
-        let cost = cmp::max(1, character.level) * SETTINGS.barber.cost_per_level;
+        let cost = SETTINGS.barber.base_cost
+            + cmp::max(1, character.level) * SETTINGS.barber.cost_per_level;
 
         if character.get_item_amount(1) < cost {
             return;

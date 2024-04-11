@@ -152,6 +152,9 @@ impl Player {
             Command::GetState { respond_to } => {
                 let _ = respond_to.send(self.state);
             }
+            Command::GetVersion { respond_to } => {
+                let _ = respond_to.send(self.version.clone());
+            }
             Command::IsTradeAccepted { respond_to } => {
                 let _ = respond_to.send(self.trade_accepted);
             }

@@ -2,7 +2,7 @@ use bytes::Bytes;
 use eolib::protocol::{
     net::{
         server::{GuildReply, WarpEffect},
-        PacketAction, PacketFamily,
+        PacketAction, PacketFamily, Version,
     },
     Coords,
 };
@@ -48,6 +48,9 @@ pub enum Command {
     },
     GetState {
         respond_to: oneshot::Sender<ClientState>,
+    },
+    GetVersion {
+        respond_to: oneshot::Sender<Version>,
     },
     IsTradeAccepted {
         respond_to: oneshot::Sender<bool>,

@@ -190,6 +190,7 @@ pub struct Jukebox {
 
 #[derive(Debug, Deserialize)]
 pub struct Barber {
+    pub base_cost: i32,
     pub cost_per_level: i32,
 }
 

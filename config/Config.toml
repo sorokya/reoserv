@@ -304,6 +304,8 @@ track_timer = 90
 
 [barber]
 
+base_cost = 0
+
 cost_per_level = 200
 
 [guild]

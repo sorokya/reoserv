@@ -14,6 +14,8 @@ mod get_board_tile_spec;
 pub use get_board_tile_spec::get_board_tile_spec;
 mod get_next_coords;
 pub use get_next_coords::get_next_coords;
+mod is_deep;
+pub use is_deep::is_deep;
 mod load_class_file;
 pub use load_class_file::load_class_file;
 mod load_drop_file;

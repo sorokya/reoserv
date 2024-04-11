@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily, Version};
 use mysql_async::Pool;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
@@ -38,6 +38,7 @@ pub struct Player {
     party_request: PartyRequest,
     ping_ticks: i32,
     guild_create_members: Vec<i32>,
+    version: Version,
 }
 
 mod account;
@@ -97,6 +98,7 @@ impl Player {
             party_request: PartyRequest::None,
             ping_ticks: 0,
             guild_create_members: Vec::new(),
+            version: Version::default(),
         }
     }
 

@@ -24,8 +24,8 @@ impl EoSerialize for PaperdollSwapServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::new();
         packet.player_id = reader.get_short()?;
-        reader.get_char();
-        reader.get_char();
+        reader.get_char()?;
+        reader.get_char()?;
         packet.equipment = EoSerialize::deserialize(reader)?;
         packet.equiped_item_id = reader.get_short()?;
         packet.equiped_item_amount = reader.get_three()?;

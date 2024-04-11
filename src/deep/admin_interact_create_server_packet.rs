@@ -37,7 +37,7 @@ impl EoSerialize for AdminInteractCreateServerPacket {
         writer.add_string(&self.title);
         writer.add_byte(0xff);
 
-        for line in self.lines {
+        for line in &self.lines {
             line.serialize(writer)?;
         }
 

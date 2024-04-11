@@ -12,7 +12,7 @@ impl LoginTakeClientPacket {
 impl EoSerialize for LoginTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let packet = Self::new();
-        reader.get_byte();
+        reader.get_byte()?;
         Ok(packet)
     }
 

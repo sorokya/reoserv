@@ -30,7 +30,7 @@ impl EoSerialize for AdminInteractAddServerPacket {
     }
 
     fn serialize(&self, writer: &mut EoWriter) -> Result<(), EoSerializeError> {
-        for line in self.lines {
+        for line in &self.lines {
             line.serialize(writer)?;
         }
 

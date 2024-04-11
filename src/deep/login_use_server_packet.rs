@@ -20,7 +20,7 @@ impl EoSerialize for LoginUseServerPacket {
         reader.set_chunked_reading_mode(true);
         let mut packet = Self::new();
         packet.reply_code = AccountRecoverReply::from(reader.get_short()?);
-        reader.next_chunk();
+        reader.next_chunk()?;
         if reader.remaining()? > 0 {
             packet.email_address = Some(reader.get_string()?);
         }

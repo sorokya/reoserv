@@ -3,18 +3,18 @@ use eolib::data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWrit
 use super::AccountRecoverReply;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
-pub struct LoginUseServerPacket {
+pub struct LoginCreateServerPacket {
     pub reply_code: AccountRecoverReply,
     pub email_address: Option<String>,
 }
 
-impl LoginUseServerPacket {
+impl LoginCreateServerPacket {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl EoSerialize for LoginUseServerPacket {
+impl EoSerialize for LoginCreateServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);

@@ -15,14 +15,21 @@ use eolib::{
 use mysql_async::{params, prelude::Queryable, Params, Row};
 
 use crate::{
+    deep::{
+        AccountRecoverPinReply, AccountRecoverReply, AccountRecoverUpdateReply,
+        LoginAcceptClientPacket, LoginAcceptServerPacket, LoginAgreeClientPacket,
+        LoginAgreeServerPacket, LoginCreateClientPacket, LoginCreateServerPacket,
+        LoginTakeClientPacket, LoginTakeServerPacket,
+    },
     player::{
         player::account::{
-            account_banned, account_exists, get_character_list, update_last_login_ip,
-            validate_password,
+            account_banned, account_exists, generate_password_hash, get_character_list,
+            update_last_login_ip, validate_password,
         },
         ClientState,
     },
-    SETTINGS,
+    utils::{mask_email, send_email},
+    EMAILS, SETTINGS,
 };
 
 use super::super::Player;
@@ -234,9 +241,232 @@ impl Player {
             .await;
     }
 
+    async fn login_take(&mut self, reader: EoReader) {
+        if let Err(e) = LoginTakeClientPacket::deserialize(&reader) {
+            error!("Failed to deserialize LoginTakeClientPacket: {}", e);
+            return;
+        }
+
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Take,
+                PacketFamily::Login,
+                LoginTakeServerPacket {
+                    reply_code: if SETTINGS.account.recovery {
+                        AccountRecoverReply::RequestAccepted
+                    } else {
+                        AccountRecoverReply::RecoveryDisabled
+                    },
+                },
+            )
+            .await;
+    }
+
+    async fn login_create(&mut self, reader: EoReader) {
+        let create = match LoginCreateClientPacket::deserialize(&reader) {
+            Ok(create) => create,
+            Err(e) => {
+                error!("Failed to deserialize LoginCreateClientPacket: {}", e);
+                return;
+            }
+        };
+
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!("Failed to get SQL connection: {}", e);
+                return;
+            }
+        };
+
+        let mut row: Row = match conn
+            .exec_first(
+                include_str!("../../../sql/get_account_email.sql"),
+                params! {
+                    "name" => &create.account_name,
+                },
+            )
+            .await
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => {
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Create,
+                        PacketFamily::Login,
+                        LoginCreateServerPacket {
+                            reply_code: AccountRecoverReply::AccountNotFound,
+                            email_address: None,
+                        },
+                    )
+                    .await;
+                return;
+            }
+            Err(e) => {
+                error!("Failed to get account email: {}", e);
+                return;
+            }
+        };
+
+        self.account_id = match row.take(0) {
+            Some(id) => id,
+            None => return,
+        };
+
+        let email: String = match row.take(1) {
+            Some(email) => email,
+            None => return,
+        };
+
+        let code = self.generate_email_pin();
+
+        if let Err(e) = send_email(
+            &email,
+            &create.account_name,
+            &get_lang_string!(&EMAILS.recovery.subject, name = create.account_name),
+            &get_lang_string!(
+                &EMAILS.recovery.body,
+                name = create.account_name,
+                code = code
+            ),
+        )
+        .await
+        {
+            self.close(format!("Failed to send recovery email: {}", e))
+                .await;
+            return;
+        }
+
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Create,
+                PacketFamily::Login,
+                LoginCreateServerPacket {
+                    reply_code: if SETTINGS.account.recovery_show_email {
+                        AccountRecoverReply::RequestAcceptedShowEmail
+                    } else {
+                        AccountRecoverReply::RequestAccepted
+                    },
+                    email_address: if SETTINGS.account.recovery_show_email {
+                        Some(if SETTINGS.account.recovery_mask_email {
+                            mask_email(&email)
+                        } else {
+                            email
+                        })
+                    } else {
+                        None
+                    },
+                },
+            )
+            .await;
+    }
+
+    async fn login_accept(&mut self, reader: EoReader) {
+        let accept = match LoginAcceptClientPacket::deserialize(&reader) {
+            Ok(accept) => accept,
+            Err(e) => {
+                error!("Failed to deserialize LoginAcceptClientPacket: {}", e);
+                return;
+            }
+        };
+
+        let pin = match &self.email_pin {
+            Some(pin) => pin,
+            None => return,
+        };
+
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Accept,
+                PacketFamily::Login,
+                LoginAcceptServerPacket {
+                    reply_code: if *pin != accept.pin {
+                        AccountRecoverPinReply::WrongPin
+                    } else {
+                        AccountRecoverPinReply::OK
+                    },
+                },
+            )
+            .await;
+    }
+
+    async fn login_agree(&mut self, reader: EoReader) {
+        let agree = match LoginAgreeClientPacket::deserialize(&reader) {
+            Ok(agree) => agree,
+            Err(e) => {
+                error!("Failed to deserialize LoginAgreeClientPacket: {}", e);
+                self.send_login_agree_error().await;
+                return;
+            }
+        };
+
+        if self.account_id == 0 {
+            self.send_login_agree_error().await;
+            return;
+        }
+
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!("Failed to get SQL connection: {}", e);
+                self.send_login_agree_error().await;
+                return;
+            }
+        };
+
+        let password_hash = generate_password_hash(&agree.account_name, &agree.password);
+
+        if let Err(e) = conn
+            .exec_drop(
+                include_str!("../../../sql/update_password_hash.sql"),
+                params! {
+                    "id" => self.account_id,
+                    "password_hash" => &password_hash,
+                },
+            )
+            .await
+        {
+            error!("Error updating password hash: {}", e);
+            self.send_login_agree_error().await;
+            return;
+        }
+
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Agree,
+                PacketFamily::Login,
+                LoginAgreeServerPacket {
+                    reply_code: AccountRecoverUpdateReply::OK,
+                },
+            )
+            .await;
+    }
+
+    async fn send_login_agree_error(&mut self) {
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Agree,
+                PacketFamily::Login,
+                LoginAgreeServerPacket {
+                    reply_code: AccountRecoverUpdateReply::Error,
+                },
+            )
+            .await;
+    }
+
     pub async fn handle_login(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.login_request(reader).await,
+            PacketAction::Take => self.login_take(reader).await,
+            PacketAction::Create => self.login_create(reader).await,
+            PacketAction::Accept => self.login_accept(reader).await,
+            PacketAction::Agree => self.login_agree(reader).await,
             _ => error!("Unhandled packet Login_{:?}", action),
         }
     }

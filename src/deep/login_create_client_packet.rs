@@ -1,17 +1,17 @@
 use eolib::data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWriter};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
-pub struct LoginUseClientPacket {
+pub struct LoginCreateClientPacket {
     pub account_name: String,
 }
 
-impl LoginUseClientPacket {
+impl LoginCreateClientPacket {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl EoSerialize for LoginUseClientPacket {
+impl EoSerialize for LoginCreateClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::new();
         packet.account_name = reader.get_string()?;

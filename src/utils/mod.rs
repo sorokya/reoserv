@@ -44,3 +44,5 @@ mod validate_character_name;
 pub use validate_character_name::validate_character_name;
 mod send_email;
 pub use send_email::send_email;
+mod mask_email;
+pub use mask_email::mask_email;

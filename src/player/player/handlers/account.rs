@@ -41,9 +41,9 @@ impl Player {
             }
         };
 
-        if let Some(email_code) = &self.email_code {
+        if let Some(email_pin) = &self.email_pin {
             reader.set_chunked_reading_mode(true);
-            let code = match reader.get_string() {
+            let pin = match reader.get_string() {
                 Ok(code) => code,
                 Err(e) => {
                     self.close(format!("Failed to get email code: {}", e)).await;
@@ -51,7 +51,7 @@ impl Player {
                 }
             };
 
-            if code != *email_code {
+            if pin != *email_pin {
                 let _ = self
                     .bus
                     .send(
@@ -392,7 +392,7 @@ impl Player {
             }
         };
 
-        let code = self.generate_email_code();
+        let code = self.generate_email_pin();
 
         if let Err(e) = send_email(
             &accept.email_address,

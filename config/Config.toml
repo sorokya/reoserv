@@ -79,6 +79,17 @@ delay_time = 10
 # SMTP settings below must be properly configured
 email_validation = true
 
+# Allow account recovery via email
+# Only works in 0.3.x clients
+# SMTP settings below must be properly configured
+recovery = true
+
+# Show email address to the player when recoverying account
+recovery_show_email = true
+
+# Mask the email address shows to the player (e.g r*******k@gmail.com)
+recovery_mask_email = true
+
 [smtp]
 
 from_name = ""

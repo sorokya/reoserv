@@ -258,7 +258,7 @@ async fn run_player(mut player: Player) {
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    trace!("Recv: {:?}", &packet[..4]);
+                    trace!("Recv: {:?}", &packet[4..]);
                     player.queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {

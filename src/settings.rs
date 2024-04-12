@@ -198,6 +198,9 @@ pub struct Barber {
 pub struct Account {
     pub delay_time: i32,
     pub email_validation: bool,
+    pub recovery: bool,
+    pub recovery_show_email: bool,
+    pub recovery_mask_email: bool,
 }
 
 #[derive(Debug, Deserialize)]

@@ -40,7 +40,7 @@ pub struct Player {
     ping_ticks: i32,
     guild_create_members: Vec<i32>,
     version: Version,
-    email_code: Option<String>,
+    email_pin: Option<String>,
 }
 
 mod account;
@@ -56,7 +56,7 @@ mod get_welcome_request_data;
 mod handlers;
 #[macro_use]
 mod guild;
-mod generate_email_code;
+mod generate_email_pin;
 mod ping;
 mod quest_action;
 mod request_warp;
@@ -103,7 +103,7 @@ impl Player {
             ping_ticks: 0,
             guild_create_members: Vec::new(),
             version: Version::default(),
-            email_code: None,
+            email_pin: None,
         }
     }
 

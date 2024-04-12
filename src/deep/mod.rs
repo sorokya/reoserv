@@ -57,11 +57,11 @@ pub use login_take_client_packet::LoginTakeClientPacket;
 mod login_take_server_packet;
 pub use login_take_server_packet::LoginTakeServerPacket;
 
-mod login_use_client_packet;
-pub use login_use_client_packet::LoginUseClientPacket;
+mod login_create_client_packet;
+pub use login_create_client_packet::LoginCreateClientPacket;
 
-mod login_use_server_packet;
-pub use login_use_server_packet::LoginUseServerPacket;
+mod login_create_server_packet;
+pub use login_create_server_packet::LoginCreateServerPacket;
 
 mod login_accept_client_packet;
 pub use login_accept_client_packet::LoginAcceptClientPacket;

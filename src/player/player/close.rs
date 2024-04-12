@@ -36,6 +36,9 @@ impl Player {
             )
             .await
             .unwrap();
+
+        self.closed = true;
+
         info!("player {} connection closed: {:?}", self.id, reason);
     }
 }

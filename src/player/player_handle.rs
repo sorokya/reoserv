@@ -251,6 +251,10 @@ impl PlayerHandle {
 
 async fn run_player(mut player: Player) {
     loop {
+        if player.closed {
+            break;
+        }
+
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {

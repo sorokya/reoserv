@@ -16,11 +16,17 @@ use eolib::{
 use mysql_async::{params, prelude::Queryable, Params, Row};
 
 use crate::{
+    deep::{
+        AccountAcceptClientPacket, AccountAcceptServerPacket, AccountConfigServerPacket,
+        ACCOUNT_REPLY_WRONG_PIN, ACTION_CONFIG,
+    },
     errors::WrongSessionIdError,
     player::{
         player::account::{account_exists, generate_password_hash, validate_password},
         ClientState,
     },
+    utils::{is_deep, send_email},
+    EMAILS, SETTINGS,
 };
 
 use super::super::Player;
@@ -34,6 +40,32 @@ impl Player {
                 return;
             }
         };
+
+        if let Some(email_code) = &self.email_code {
+            reader.set_chunked_reading_mode(true);
+            let code = match reader.get_string() {
+                Ok(code) => code,
+                Err(e) => {
+                    self.close(format!("Failed to get email code: {}", e)).await;
+                    return;
+                }
+            };
+
+            if code != *email_code {
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Reply,
+                        PacketFamily::Account,
+                        AccountReplyServerPacket {
+                            reply_code: AccountReply::Unrecognized(ACCOUNT_REPLY_WRONG_PIN),
+                            reply_code_data: None,
+                        },
+                    )
+                    .await;
+                return;
+            }
+        }
 
         if self.state != ClientState::Accepted {
             return;
@@ -184,6 +216,20 @@ impl Player {
                 )
                 .await;
             return;
+        }
+
+        if is_deep(&self.version) {
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Unrecognized(ACTION_CONFIG),
+                    PacketFamily::Account,
+                    AccountConfigServerPacket {
+                        delay_time: SETTINGS.account.delay_time,
+                        email_validation: SETTINGS.account.email_validation,
+                    },
+                )
+                .await;
         }
 
         let session_id = self.generate_session_id();
@@ -337,8 +383,48 @@ impl Player {
             .await;
     }
 
+    async fn account_accept(&mut self, reader: EoReader) {
+        let accept = match AccountAcceptClientPacket::deserialize(&reader) {
+            Ok(accept) => accept,
+            Err(e) => {
+                error!("Faled to deserialize AccountAcceptClientPacket: {}", e);
+                return;
+            }
+        };
+
+        let code = self.generate_email_code();
+
+        if let Err(e) = send_email(
+            &accept.email_address,
+            &accept.account_name,
+            &get_lang_string!(&EMAILS.validation.subject, name = accept.account_name),
+            &get_lang_string!(
+                &EMAILS.validation.body,
+                name = accept.account_name,
+                code = code
+            ),
+        )
+        .await
+        {
+            self.close(format!("Failed to send email: {}", e)).await;
+            return;
+        }
+
+        let _ = self
+            .bus
+            .send(
+                PacketAction::Accept,
+                PacketFamily::Account,
+                AccountAcceptServerPacket {
+                    reply_code: crate::deep::AccountValidationReply::OK,
+                },
+            )
+            .await;
+    }
+
     pub async fn handle_account(&mut self, action: PacketAction, reader: EoReader) {
         match action {
+            PacketAction::Accept => self.account_accept(reader).await,
             PacketAction::Create => self.account_create(reader).await,
             PacketAction::Request => self.account_request(reader).await,
             PacketAction::Agree => self.account_agree(reader).await,

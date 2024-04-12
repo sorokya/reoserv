@@ -42,3 +42,5 @@ mod pad_string;
 pub use pad_string::pad_string;
 mod validate_character_name;
 pub use validate_character_name::validate_character_name;
+mod send_email;
+pub use send_email::send_email;

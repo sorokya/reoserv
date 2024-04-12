@@ -67,6 +67,32 @@ server_name = "Untitled Server"
 rate = 5
 zone = ""
 
+[account]
+
+# Number of seconds player must wait before account is created
+# Only works in 0.3.x clients
+# Accepted values: 10 - 600
+delay_time = 10
+
+# Require email validation for account creation
+# Only works in 0.3.x clients
+# SMTP settings below must be properly configured
+email_validation = true
+
+[smtp]
+
+from_name = ""
+
+from_address = ""
+
+host = ""
+
+port = 587
+
+username = ""
+
+password = ""
+
 # Initial location and home for new characters
 [new_character]
 spawn_map = 192

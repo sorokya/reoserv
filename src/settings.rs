@@ -195,6 +195,12 @@ pub struct Barber {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Account {
+    pub delay_time: i32,
+    pub email_validation: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Guild {
     pub min_players: usize,
     pub create_cost: i32,
@@ -238,9 +244,20 @@ pub struct Items {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Smtp {
+    pub from_name: String,
+    pub from_address: String,
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
+    pub account: Account,
     pub new_character: NewCharacter,
     pub jail: Jail,
     pub rescue: Rescue,
@@ -261,6 +278,7 @@ pub struct Settings {
     pub evacuate: Evacuate,
     pub items: Items,
     pub bard: Bard,
+    pub smtp: Smtp,
 }
 
 impl Settings {

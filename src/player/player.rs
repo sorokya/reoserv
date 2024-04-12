@@ -24,6 +24,7 @@ pub struct Player {
     pub state: ClientState,
     ip: String,
     pub connected_at: DateTime<Utc>,
+    pub closed: bool,
     login_attempts: i32,
     character: Option<Character>,
     session_id: Option<i32>,
@@ -39,6 +40,7 @@ pub struct Player {
     ping_ticks: i32,
     guild_create_members: Vec<i32>,
     version: Version,
+    email_code: Option<String>,
 }
 
 mod account;
@@ -54,6 +56,7 @@ mod get_welcome_request_data;
 mod handlers;
 #[macro_use]
 mod guild;
+mod generate_email_code;
 mod ping;
 mod quest_action;
 mod request_warp;
@@ -81,6 +84,7 @@ impl Player {
             queue: RefCell::new(VecDeque::new()),
             map: None,
             busy: false,
+            closed: false,
             account_id: 0,
             state: ClientState::Uninitialized,
             login_attempts: 0,
@@ -99,6 +103,7 @@ impl Player {
             ping_ticks: 0,
             guild_create_members: Vec::new(),
             version: Version::default(),
+            email_code: None,
         }
     }
 

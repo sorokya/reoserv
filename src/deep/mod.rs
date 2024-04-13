@@ -1,7 +1,7 @@
 pub const ACTION_CONFIG: u8 = 220;
 pub const ACTION_SWAP: u8 = 35;
 pub const FAMILY_BOSS: u8 = 52;
-pub const FAMILY_CAPTCHA: u8 = 249;
+// pub const FAMILY_CAPTCHA: u8 = 249;
 pub const ACCOUNT_REPLY_WRONG_PIN: i32 = 8;
 pub const AVATAR_CHANGE_TYPE_SKIN: i32 = 4;
 pub const AVATAR_CHANGE_TYPE_GENDER: i32 = 5;

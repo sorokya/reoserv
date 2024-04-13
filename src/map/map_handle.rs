@@ -185,9 +185,10 @@ impl MapHandle {
         rx.await.unwrap();
     }
 
-    pub fn equip(&self, player_id: i32, item_id: i32, sub_loc: i32) {
+    pub fn equip(&self, player_id: i32, is_deep: bool, item_id: i32, sub_loc: i32) {
         let _ = self.tx.send(Command::Equip {
             player_id,
+            is_deep,
             item_id,
             sub_loc,
         });

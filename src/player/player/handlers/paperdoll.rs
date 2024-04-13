@@ -8,10 +8,16 @@ use eolib::{
     },
 };
 
+use crate::utils::is_deep;
+
 use super::super::Player;
 
 impl Player {
     fn paperdoll_add(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let add = match PaperdollAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
@@ -21,11 +27,15 @@ impl Player {
                 }
             };
 
-            map.equip(self.id, add.item_id, add.sub_loc);
+            map.equip(self.id, is_deep(&self.version), add.item_id, add.sub_loc);
         }
     }
 
     fn paperdoll_remove(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let remove = match PaperdollRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,

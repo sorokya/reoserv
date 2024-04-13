@@ -234,9 +234,10 @@ impl Map {
 
             Command::Equip {
                 player_id,
+                is_deep,
                 item_id,
                 sub_loc,
-            } => self.equip(player_id, item_id, sub_loc).await,
+            } => self.equip(player_id, is_deep, item_id, sub_loc),
 
             Command::Face {
                 player_id: target_player_id,

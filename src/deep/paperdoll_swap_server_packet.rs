@@ -1,50 +1,41 @@
 use eolib::{
     data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWriter},
-    protocol::net::server::{CharacterStatsEquipmentChange, EquipmentChange},
+    protocol::net::server::{AvatarChange, CharacterStatsEquipmentChange, EquipmentChange},
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct PaperdollSwapServerPacket {
-    pub player_id: i32,
-    pub equipment: EquipmentChange,
-    pub equiped_item_id: i32,
-    pub equiped_item_amount: i32,
+    pub change: AvatarChange,
+    pub item_id: i32,
+    pub remaining_amount: i32,
     pub removed_item_id: i32,
     pub removed_item_amount: i32,
     pub stats: CharacterStatsEquipmentChange,
 }
 
-impl PaperdollSwapServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for PaperdollSwapServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
-        packet.player_id = reader.get_short()?;
+        let current_chunked_reading_mode = reader.get_chunked_reading_mode();
+        let mut data = Self::default();
+        data.change = EoSerialize::deserialize(reader)?;
+        data.item_id = reader.get_short()?;
+        data.remaining_amount = reader.get_three()?;
         reader.get_char()?;
-        reader.get_char()?;
-        packet.equipment = EoSerialize::deserialize(reader)?;
-        packet.equiped_item_id = reader.get_short()?;
-        packet.equiped_item_amount = reader.get_three()?;
-        packet.removed_item_id = reader.get_short()?;
-        packet.removed_item_amount = reader.get_three()?;
-        packet.stats = EoSerialize::deserialize(reader)?;
-        Ok(packet)
+        data.removed_item_id = reader.get_short()?;
+        data.removed_item_amount = reader.get_three()?;
+        data.stats = EoSerialize::deserialize(reader)?;
+        reader.set_chunked_reading_mode(current_chunked_reading_mode);
+        Ok(data)
     }
 
     fn serialize(&self, writer: &mut EoWriter) -> Result<(), EoSerializeError> {
-        writer.add_short(self.player_id)?;
-        writer.add_char(1)?;
+        EoSerialize::serialize(&self.change, writer)?;
+        writer.add_short(self.item_id)?;
+        writer.add_three(self.remaining_amount)?;
         writer.add_char(0)?;
-        self.equipment.serialize(writer)?;
-        writer.add_short(self.equiped_item_id)?;
-        writer.add_three(self.equiped_item_amount)?;
         writer.add_short(self.removed_item_id)?;
         writer.add_three(self.removed_item_amount)?;
-        self.stats.serialize(writer)?;
+        EoSerialize::serialize(&self.stats, writer)?;
         Ok(())
     }
 }

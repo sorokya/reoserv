@@ -36,6 +36,8 @@ mod spell_state;
 pub use spell_state::SpellState;
 mod spell_target;
 pub use spell_target::SpellTarget;
+mod equip_result;
+pub use equip_result::EquipResult;
 mod to_map_info;
 mod unequip;
 mod update;

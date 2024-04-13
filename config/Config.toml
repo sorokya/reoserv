@@ -177,6 +177,9 @@ spike_rate = 12
 # Percentage of max HP that spikes will damage
 spike_damage = 0.2
 
+# Show drops to deep client players when using #item and #npc command
+info_reveals_drops = true
+
 [bard]
 
 # Graphic IDs of weapons that are valid instruments

@@ -82,6 +82,7 @@ pub struct World {
     pub drain_hp_damage: f32,
     pub drain_tp_damage: f32,
     pub warp_suck_rate: i32,
+    pub info_reveals_drops: bool,
 }
 
 #[derive(Debug, Deserialize)]

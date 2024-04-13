@@ -3,12 +3,12 @@ use eolib::data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWrit
 use super::LookupType;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
-pub struct AdminInteractGetClientPacket {
+pub struct AdminInteractTakeClientPacket {
     pub lookup_type: LookupType,
     pub id: i32,
 }
 
-impl EoSerialize for AdminInteractGetClientPacket {
+impl EoSerialize for AdminInteractTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
         packet.lookup_type = LookupType::from(reader.get_char()?);

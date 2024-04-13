@@ -77,8 +77,8 @@ pub use login_agree_client_packet::LoginAgreeClientPacket;
 mod login_agree_server_packet;
 pub use login_agree_server_packet::LoginAgreeServerPacket;
 
-mod admin_interact_get_client_packet;
-pub use admin_interact_get_client_packet::AdminInteractGetClientPacket;
+mod admin_interact_take_client_packet;
+pub use admin_interact_take_client_packet::AdminInteractTakeClientPacket;
 
 mod admin_interact_create_server_packet;
 pub use admin_interact_create_server_packet::AdminInteractCreateServerPacket;

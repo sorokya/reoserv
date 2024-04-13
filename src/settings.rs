@@ -40,6 +40,8 @@ pub struct NewCharacter {
 
 #[derive(Debug, Deserialize)]
 pub struct Character {
+    pub max_name_length: usize,
+    pub max_skin: i32,
     pub max_hair_color: i32,
     pub max_hair_style: i32,
 }

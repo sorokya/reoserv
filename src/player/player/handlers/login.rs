@@ -18,8 +18,8 @@ use crate::{
     deep::{
         AccountRecoverPinReply, AccountRecoverReply, AccountRecoverUpdateReply,
         LoginAcceptClientPacket, LoginAcceptServerPacket, LoginAgreeClientPacket,
-        LoginAgreeServerPacket, LoginCreateClientPacket, LoginCreateServerPacket,
-        LoginTakeClientPacket, LoginTakeServerPacket,
+        LoginAgreeServerPacket, LoginConfigServerPacket, LoginCreateClientPacket,
+        LoginCreateServerPacket, LoginTakeClientPacket, LoginTakeServerPacket, ACTION_CONFIG,
     },
     player::{
         player::account::{
@@ -28,7 +28,7 @@ use crate::{
         },
         ClientState,
     },
-    utils::{mask_email, send_email},
+    utils::{is_deep, mask_email, send_email},
     EMAILS, SETTINGS,
 };
 
@@ -225,6 +225,21 @@ impl Player {
         self.world.add_logged_in_account(account_id);
         self.account_id = account_id;
         self.state = ClientState::LoggedIn;
+
+        if is_deep(&self.version) {
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Unrecognized(ACTION_CONFIG),
+                    PacketFamily::Login,
+                    LoginConfigServerPacket {
+                        max_skins: SETTINGS.character.max_skin + 1,
+                        max_hair_modals: SETTINGS.character.max_hair_style,
+                        max_character_name: SETTINGS.character.max_name_length as i32,
+                    },
+                )
+                .await;
+        }
 
         let _ = self
             .bus

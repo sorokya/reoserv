@@ -216,7 +216,17 @@ door_close_rate = 3
 
 [character]
 
+# Should be between 12 and 14
+max_name_length = 12
+
+# Should leave at 6 if you want to support the v28 client
+#
+# Setting this will allow deep client players to create characters up to
+# and including the max skin.
+max_skin = 11
+
 max_hair_style = 20
+
 max_hair_color = 9
 
 [npcs]

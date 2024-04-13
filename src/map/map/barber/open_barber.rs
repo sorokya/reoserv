@@ -6,10 +6,7 @@ use eolib::{
     },
 };
 
-use crate::{
-    utils::{in_client_range, is_deep},
-    NPC_DB, SETTINGS,
-};
+use crate::{utils::in_client_range, NPC_DB, SETTINGS};
 
 use super::super::Map;
 
@@ -39,7 +36,7 @@ impl Map {
         }
 
         let player = match &character.player {
-            Some(player) => player.to_owned(),
+            Some(player) => player,
             None => return,
         };
 
@@ -47,33 +44,23 @@ impl Map {
 
         let packet = BarberOpenServerPacket { session_id };
 
-        tokio::spawn(async move {
-            let version = match player.get_version().await {
-                Ok(version) => version,
-                Err(e) => {
-                    error!("Error getting player client version: {}", e);
-                    return;
-                }
-            };
+        let mut writer = EoWriter::new();
 
-            let mut writer = EoWriter::new();
+        if let Err(e) = packet.serialize(&mut writer) {
+            error!("Error serializing BarberOpenServerPacket: {}", e);
+            return;
+        }
 
-            if let Err(e) = packet.serialize(&mut writer) {
-                error!("Error serializing BarberOpenServerPacket: {}", e);
-                return;
-            }
+        if character.is_deep {
+            writer.add_short(SETTINGS.character.max_hair_style).unwrap();
+            writer.add_short(SETTINGS.barber.base_cost).unwrap();
+            writer.add_short(SETTINGS.barber.cost_per_level).unwrap();
+        }
 
-            if is_deep(&version) {
-                writer.add_short(SETTINGS.character.max_hair_style).unwrap();
-                writer.add_short(SETTINGS.barber.base_cost).unwrap();
-                writer.add_short(SETTINGS.barber.cost_per_level).unwrap();
-            }
-
-            player.send_buf(
-                PacketAction::Open,
-                PacketFamily::Barber,
-                writer.to_byte_array(),
-            );
-        });
+        player.send_buf(
+            PacketAction::Open,
+            PacketFamily::Barber,
+            writer.to_byte_array(),
+        );
     }
 }

@@ -115,7 +115,6 @@ pub enum Command {
     },
     Equip {
         player_id: i32,
-        is_deep: bool,
         item_id: i32,
         sub_loc: i32,
     },

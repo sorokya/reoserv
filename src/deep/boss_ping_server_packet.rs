@@ -9,15 +9,9 @@ pub struct BossPingServerPacket {
     pub killed: bool,
 }
 
-impl BossPingServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for BossPingServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.npc_index = reader.get_short()?;
         packet.npc_id = reader.get_short()?;
         packet.hp = reader.get_three()?;

@@ -127,6 +127,7 @@ impl Player {
             };
 
             map.enter(Box::new(character), warp_session.animation).await;
+
             let nearby_info = map.get_nearby_info(self.id).await;
             self.map = Some(map);
 

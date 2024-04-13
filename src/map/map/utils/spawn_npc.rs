@@ -38,6 +38,8 @@ impl Map {
                     alive: true,
                     hp: npc_data.hp,
                     max_hp: npc_data.hp,
+                    boss: npc_data.boss,
+                    child: npc_data.child,
                     ..Default::default()
                 },
             );

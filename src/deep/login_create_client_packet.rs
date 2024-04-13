@@ -5,15 +5,9 @@ pub struct LoginCreateClientPacket {
     pub account_name: String,
 }
 
-impl LoginCreateClientPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for LoginCreateClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.account_name = reader.get_string()?;
         Ok(packet)
     }

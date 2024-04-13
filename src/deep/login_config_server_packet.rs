@@ -7,15 +7,9 @@ pub struct LoginConfigServerPacket {
     pub max_character_name: i32,
 }
 
-impl LoginConfigServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for LoginConfigServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.max_skins = reader.get_short()?;
         packet.max_hair_modals = reader.get_short()?;
         packet.max_character_name = reader.get_char()?;

@@ -8,7 +8,7 @@ use crate::ITEM_DB;
 use super::{Character, EquipResult};
 
 impl Character {
-    pub fn equip(&mut self, is_deep: bool, item_id: i32, sub_loc: i32) -> EquipResult {
+    pub fn equip(&mut self, item_id: i32, sub_loc: i32) -> EquipResult {
         if sub_loc > 1 {
             return EquipResult::Failed;
         }
@@ -73,7 +73,7 @@ impl Character {
             };
 
             if *equipment_slot != 0 {
-                if is_deep {
+                if self.is_deep {
                     result = EquipResult::Swapped(*equipment_slot);
                     *equipment_slot = item_id;
                 } else {

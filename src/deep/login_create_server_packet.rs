@@ -8,17 +8,11 @@ pub struct LoginCreateServerPacket {
     pub email_address: Option<String>,
 }
 
-impl LoginCreateServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for LoginCreateServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.reply_code = AccountRecoverReply::from(reader.get_short()?);
         reader.next_chunk()?;
         if reader.remaining()? > 0 {

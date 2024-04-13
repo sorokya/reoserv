@@ -7,17 +7,11 @@ pub struct AccountAcceptClientPacket {
     pub email_address: String,
 }
 
-impl AccountAcceptClientPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for AccountAcceptClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.sequence_number = reader.get_short()?;
         reader.next_chunk()?;
         packet.account_name = reader.get_string()?;

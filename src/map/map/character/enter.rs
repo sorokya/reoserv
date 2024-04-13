@@ -4,7 +4,12 @@ use eolib::protocol::net::{
 };
 use tokio::sync::oneshot;
 
-use crate::character::Character;
+use crate::{
+    character::Character,
+    deep::{BossPingServerPacket, FAMILY_BOSS},
+    utils::in_client_range,
+    NPC_DB,
+};
 
 use super::super::Map;
 
@@ -37,6 +42,31 @@ impl Map {
         let mut character = *new_character;
 
         character.entered_map();
+
+        if character.is_deep {
+            if let Some(player) = &character.player {
+                for (npc_index, npc) in self.npcs.iter().filter(|(_, npc)| {
+                    let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                        Some(npc) => npc,
+                        None => return false,
+                    };
+
+                    npc.alive && npc_data.boss && in_client_range(&character.coords, &npc.coords)
+                }) {
+                    player.send(
+                        PacketAction::Ping,
+                        PacketFamily::Unrecognized(FAMILY_BOSS),
+                        &BossPingServerPacket {
+                            npc_index: *npc_index,
+                            npc_id: npc.id,
+                            hp: npc.hp,
+                            hp_percentage: npc.get_hp_percentage(),
+                            killed: false,
+                        },
+                    );
+                }
+            }
+        }
 
         self.characters
             .insert(character.player_id.unwrap(), character);

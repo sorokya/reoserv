@@ -6,20 +6,15 @@ pub struct ItemReportClientPacket {
     pub title: String,
 }
 
-impl ItemReportClientPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for ItemReportClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.item_id = reader.get_short()?;
         reader.next_chunk()?;
         packet.title = reader.get_string()?;
+        reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)
     }
 

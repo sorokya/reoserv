@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWriter},
-    protocol::net::server::{AvatarChange, CharacterStatsEquipmentChange, EquipmentChange},
+    protocol::net::server::{AvatarChange, CharacterStatsEquipmentChange},
 };
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]

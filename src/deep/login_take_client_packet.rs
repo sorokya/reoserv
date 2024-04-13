@@ -3,17 +3,10 @@ use eolib::data::{EoReader, EoReaderError, EoSerialize, EoSerializeError, EoWrit
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct LoginTakeClientPacket;
 
-impl LoginTakeClientPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for LoginTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let packet = Self::new();
         reader.get_byte()?;
-        Ok(packet)
+        Ok(Self::default())
     }
 
     fn serialize(&self, writer: &mut EoWriter) -> Result<(), EoSerializeError> {

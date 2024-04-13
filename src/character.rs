@@ -46,6 +46,7 @@ mod update;
 pub struct Character {
     pub player_id: Option<i32>,
     pub player: Option<PlayerHandle>,
+    pub is_deep: bool,
     pub id: i32,
     pub account_id: i32,
     pub name: String,

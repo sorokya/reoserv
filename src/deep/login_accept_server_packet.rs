@@ -7,15 +7,9 @@ pub struct LoginAcceptServerPacket {
     pub reply_code: AccountRecoverPinReply,
 }
 
-impl LoginAcceptServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for LoginAcceptServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.reply_code = AccountRecoverPinReply::from(reader.get_short()?);
         Ok(packet)
     }

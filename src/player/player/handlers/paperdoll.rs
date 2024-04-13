@@ -8,8 +8,6 @@ use eolib::{
     },
 };
 
-use crate::utils::is_deep;
-
 use super::super::Player;
 
 impl Player {
@@ -27,7 +25,7 @@ impl Player {
                 }
             };
 
-            map.equip(self.id, is_deep(&self.version), add.item_id, add.sub_loc);
+            map.equip(self.id, add.item_id, add.sub_loc);
         }
     }
 

@@ -3,6 +3,8 @@ use eolib::protocol::net::{
     PacketAction, PacketFamily,
 };
 
+use crate::deep::{BossPingServerPacket, FAMILY_BOSS};
+
 use super::super::Map;
 
 impl Map {
@@ -53,5 +55,25 @@ impl Map {
                 },
             },
         );
+
+        if character.is_deep {
+            for (npc_index, npc) in self
+                .npcs
+                .iter()
+                .filter(|(index, npc)| npc.alive && npc.boss && npc_indexes.contains(index))
+            {
+                player.send(
+                    PacketAction::Ping,
+                    PacketFamily::Unrecognized(FAMILY_BOSS),
+                    &BossPingServerPacket {
+                        npc_index: *npc_index,
+                        npc_id: npc.id,
+                        hp: npc.hp,
+                        hp_percentage: npc.get_hp_percentage(),
+                        killed: false,
+                    },
+                );
+            }
+        }
     }
 }

@@ -7,15 +7,9 @@ pub struct AccountAcceptServerPacket {
     pub reply_code: AccountValidationReply,
 }
 
-impl AccountAcceptServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for AccountAcceptServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.reply_code = AccountValidationReply::from(reader.get_short()?);
         Ok(packet)
     }

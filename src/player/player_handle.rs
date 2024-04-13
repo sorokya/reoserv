@@ -7,7 +7,7 @@ use eolib::{
     protocol::{
         net::{
             server::{GuildReply, WarpEffect},
-            PacketAction, PacketFamily, Version,
+            PacketAction, PacketFamily,
         },
         Coords,
     },
@@ -138,15 +138,6 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::GetState { respond_to: tx });
         match rx.await {
             Ok(state) => Ok(state),
-            Err(_) => Err("Player disconnected".into()),
-        }
-    }
-
-    pub async fn get_version(&self) -> Result<Version, Box<dyn std::error::Error + Send + Sync>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetVersion { respond_to: tx });
-        match rx.await {
-            Ok(version) => Ok(version),
             Err(_) => Err("Player disconnected".into()),
         }
     }

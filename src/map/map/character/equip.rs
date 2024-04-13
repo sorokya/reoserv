@@ -18,7 +18,7 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    pub fn equip(&mut self, player_id: i32, is_deep: bool, item_id: i32, sub_loc: i32) {
+    pub fn equip(&mut self, player_id: i32, item_id: i32, sub_loc: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
@@ -28,7 +28,7 @@ impl Map {
             return;
         }
 
-        let result = character.equip(is_deep, item_id, sub_loc);
+        let result = character.equip(item_id, sub_loc);
 
         if result == EquipResult::Failed {
             return;

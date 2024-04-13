@@ -6,15 +6,9 @@ pub struct CaptchaAgreeServerPacket {
     pub captcha: String,
 }
 
-impl CaptchaAgreeServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for CaptchaAgreeServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.id = reader.get_short()?;
         packet.captcha = reader.get_string()?;
         Ok(packet)

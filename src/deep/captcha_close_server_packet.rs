@@ -5,15 +5,9 @@ pub struct CaptchaCloseServerPacket {
     pub experience: i32,
 }
 
-impl CaptchaCloseServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for CaptchaCloseServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         packet.experience = reader.get_int()?;
         Ok(packet)
     }

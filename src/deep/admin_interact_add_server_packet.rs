@@ -7,17 +7,11 @@ pub struct AdminInteractAddServerPacket {
     pub lines: Vec<DialogLine>,
 }
 
-impl AdminInteractAddServerPacket {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl EoSerialize for AdminInteractAddServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
 
-        let mut packet = Self::new();
+        let mut packet = Self::default();
         reader.set_chunked_reading_mode(true);
 
         while reader.remaining()? > 0 {

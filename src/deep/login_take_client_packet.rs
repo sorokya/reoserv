@@ -6,7 +6,7 @@ pub struct LoginTakeClientPacket;
 impl EoSerialize for LoginTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         reader.get_byte()?;
-        Ok(Self::default())
+        Ok(Self)
     }
 
     fn serialize(&self, writer: &mut EoWriter) -> Result<(), EoSerializeError> {

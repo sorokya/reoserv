@@ -79,6 +79,8 @@ impl Character {
                 } else {
                     return EquipResult::Failed;
                 }
+            } else {
+                *equipment_slot = item_id;
             }
         }
 

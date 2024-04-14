@@ -657,6 +657,12 @@ impl Map {
 
             Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
 
+            Command::UseTitleItem {
+                player_id,
+                item_id,
+                title,
+            } => self.use_title_item(player_id, item_id, title),
+
             Command::ViewBoardPost {
                 player_id,
                 board_id,

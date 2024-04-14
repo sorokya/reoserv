@@ -823,6 +823,14 @@ impl MapHandle {
         let _ = self.tx.send(Command::UseItem { player_id, item_id });
     }
 
+    pub fn use_title_item(&self, player_id: i32, item_id: i32, title: String) {
+        let _ = self.tx.send(Command::UseTitleItem {
+            player_id,
+            item_id,
+            title,
+        });
+    }
+
     pub fn view_board_post(&self, player_id: i32, board_id: i32, post_id: i32) {
         let _ = self.tx.send(Command::ViewBoardPost {
             player_id,

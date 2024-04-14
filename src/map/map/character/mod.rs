@@ -31,4 +31,5 @@ mod stand;
 mod start_spell_chant;
 mod unequip;
 mod use_item;
+mod use_title_item;
 mod walk;

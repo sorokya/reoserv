@@ -478,6 +478,11 @@ pub enum Command {
         player_id: i32,
         item_id: i32,
     },
+    UseTitleItem {
+        player_id: i32,
+        item_id: i32,
+        title: String,
+    },
     ViewBoardPost {
         player_id: i32,
         board_id: i32,

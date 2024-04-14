@@ -358,6 +358,10 @@ impl Map {
             None => return,
         };
 
+        if target_character.hidden || target_character.captcha_open {
+            return;
+        }
+
         let amount = {
             let mut rng = rand::thread_rng();
             rng.gen_range(min_damage..=max_damage)

@@ -1,3 +1,5 @@
+mod captcha;
+pub use captcha::Captcha;
 mod client_state;
 pub use client_state::ClientState;
 mod command;

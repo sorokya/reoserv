@@ -67,6 +67,10 @@ pub enum Command {
         player_id: i32,
         target: SpellTarget,
     },
+    CloseCaptcha {
+        player_id: i32,
+        experience: i32,
+    },
     CraftItem {
         player_id: i32,
         npc_index: i32,
@@ -237,6 +241,9 @@ pub enum Command {
     OpenBoard {
         player_id: i32,
         board_id: i32,
+    },
+    OpenCaptcha {
+        player_id: i32,
     },
     OpenChest {
         player_id: i32,

@@ -471,6 +471,10 @@ impl Map {
                 None => return,
             };
 
+            if target_character.hidden || target_character.captcha_open {
+                return;
+            }
+
             let critical = target_character.hp == target_character.max_hp;
 
             target_character.damage(amount, accuracy, critical)

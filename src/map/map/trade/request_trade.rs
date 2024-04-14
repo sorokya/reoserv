@@ -12,34 +12,26 @@ impl Map {
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
-            None => {
-                error!("Failed to get character");
-                return;
-            }
+            None => return,
         };
 
         let player = match character.player.as_ref() {
             Some(player) => player,
-            None => {
-                error!("Failed to get player");
-                return;
-            }
+            None => return,
         };
 
         let target = match self.characters.get(&target_player_id) {
             Some(character) => character,
-            None => {
-                error!("Failed to get target");
-                return;
-            }
+            None => return,
         };
+
+        if target.hidden || target.captcha_open {
+            return;
+        }
 
         let target_player = match target.player.as_ref() {
             Some(player) => player,
-            None => {
-                error!("Failed to get target player");
-                return;
-            }
+            None => return,
         };
 
         if in_client_range(&character.coords, &target.coords) {

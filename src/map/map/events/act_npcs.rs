@@ -179,6 +179,7 @@ impl Map {
                 };
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
+                    && !character.captcha_open
                     && distance <= SETTINGS.npcs.chase_distance
                     && opponent.bored_ticks < SETTINGS.npcs.bored_timer
             });
@@ -193,7 +194,9 @@ impl Map {
                 .iter()
                 .filter(|(_, character)| {
                     let distance = get_distance(&npc.coords, &character.coords);
-                    !character.hidden && distance <= SETTINGS.npcs.chase_distance
+                    !character.hidden
+                        && !character.captcha_open
+                        && distance <= SETTINGS.npcs.chase_distance
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -218,9 +221,9 @@ impl Map {
             .characters
             .iter()
             .filter(|(_, character)| {
-                adjacent_tiles
-                    .iter()
-                    .any(|coords| coords == &character.coords && !character.hidden)
+                adjacent_tiles.iter().any(|coords| {
+                    coords == &character.coords && !character.hidden && !character.captcha_open
+                })
             })
             .map(|(player_id, _)| *player_id)
             .collect::<Vec<_>>();

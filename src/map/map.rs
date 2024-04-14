@@ -172,6 +172,11 @@ impl Map {
 
             Command::CastSpell { player_id, target } => self.cast_spell(player_id, target).await,
 
+            Command::CloseCaptcha {
+                player_id,
+                experience,
+            } => self.close_captcha(player_id, experience),
+
             Command::CraftItem {
                 player_id,
                 npc_index,
@@ -381,6 +386,8 @@ impl Map {
                 player_id,
                 board_id,
             } => self.open_board(player_id, board_id),
+
+            Command::OpenCaptcha { player_id } => self.open_captcha(player_id),
 
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 

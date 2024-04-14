@@ -98,6 +98,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::CastSpell { player_id, target });
     }
 
+    pub fn close_captcha(&self, player_id: i32, experience: i32) {
+        let _ = self.tx.send(Command::CloseCaptcha {
+            player_id,
+            experience,
+        });
+    }
+
     pub fn craft_item(&self, player_id: i32, npc_index: i32, item_id: i32) {
         let _ = self.tx.send(Command::CraftItem {
             player_id,
@@ -386,6 +393,10 @@ impl MapHandle {
             player_id,
             board_id,
         });
+    }
+
+    pub fn open_captcha(&self, player_id: i32) {
+        let _ = self.tx.send(Command::OpenCaptcha { player_id });
     }
 
     pub fn open_chest(&self, player_id: i32, coords: Coords) {

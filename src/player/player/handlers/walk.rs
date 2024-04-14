@@ -7,6 +7,10 @@ use super::super::Player;
 
 impl Player {
     pub fn handle_walk(&mut self, reader: EoReader) {
+        if self.captcha.is_some() {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let packet = match WalkPlayerClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,

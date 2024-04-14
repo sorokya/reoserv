@@ -231,6 +231,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetTrading(trading));
     }
 
+    pub fn show_captcha(&self, experience: i32) {
+        let _ = self.tx.send(Command::ShowCaptcha { experience });
+    }
+
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
     }

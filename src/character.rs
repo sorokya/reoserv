@@ -109,6 +109,7 @@ pub struct Character {
     pub logged_in_at: Option<DateTime<Utc>>,
     pub spell_state: SpellState,
     pub quests: Vec<QuestProgress>,
+    pub captcha_open: bool,
 }
 
 #[derive(Clone, Debug, Default)]

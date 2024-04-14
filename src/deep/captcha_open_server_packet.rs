@@ -9,12 +9,15 @@ pub struct CaptchaOpenServerPacket {
 
 impl EoSerialize for CaptchaOpenServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
+        let current_chunked_reading_mode = reader.get_chunked_reading_mode();
+        reader.set_chunked_reading_mode(true);
         let mut packet = Self::default();
         packet.id = reader.get_short()?;
         packet.reward_exp = reader.get_three()?;
-        if reader.remaining()? > 0 {
+        if reader.next_chunk().is_ok() {
             packet.captcha = Some(reader.get_string()?);
         }
+        reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)
     }
 
@@ -22,6 +25,7 @@ impl EoSerialize for CaptchaOpenServerPacket {
         writer.add_short(self.id)?;
         writer.add_three(self.reward_exp)?;
         if let Some(captcha) = &self.captcha {
+            writer.add_byte(0xff);
             writer.add_string(captcha);
         }
         Ok(())

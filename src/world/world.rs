@@ -303,6 +303,11 @@ impl World {
                 message,
             } => self.send_private_message(player_id, &to, &message).await,
 
+            Command::ShowCaptcha {
+                victim_name,
+                experience,
+            } => self.show_captcha(victim_name, experience),
+
             Command::Shutdown { respond_to } => self.shutdown(respond_to).await,
 
             Command::Tick => {

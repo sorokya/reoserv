@@ -342,6 +342,9 @@ pub async fn handle_command(
                     }
                     "global" => world.toggle_global(character.name.to_owned()),
                     "remap" => world.reload_map(character.map_id),
+                    "captcha" => {
+                        world.show_captcha(args[0].to_owned(), args[1].parse::<i32>().unwrap())
+                    }
                     _ => {
                         send_error_message(
                             &player,

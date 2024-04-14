@@ -5,6 +5,7 @@ mod bank;
 mod barber;
 mod board;
 mod book;
+mod captcha;
 mod chair;
 mod character;
 mod chest;

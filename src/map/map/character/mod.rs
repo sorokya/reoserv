@@ -1,5 +1,6 @@
 mod attack;
 mod cast_spell;
+mod close_captcha;
 mod drop_item;
 mod emote;
 mod enter;
@@ -12,6 +13,7 @@ mod leave;
 mod level_skill;
 mod level_stat;
 mod lose_item;
+mod open_captcha;
 mod open_door;
 mod party_request;
 mod remove_karma;

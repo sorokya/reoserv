@@ -655,7 +655,7 @@ impl Map {
                 npc_index,
             } => self.upgrade_locker(player_id, npc_index),
 
-            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,
+            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
 
             Command::ViewBoardPost {
                 player_id,

@@ -320,10 +320,7 @@ impl Map {
 
                     for (is_deep, player) in self.characters.iter().filter_map(|(id, c)| {
                         if *id != player_id || in_client_range(&c.coords, &character_coords) {
-                            match &c.player {
-                                Some(player) => Some((c.is_deep, player)),
-                                None => None,
-                            }
+                            c.player.as_ref().map(|player| (c.is_deep, player))
                         } else {
                             None
                         }
@@ -381,10 +378,10 @@ impl Map {
                 return;
             }
 
-            if item.r#type == ItemType::Reserved5 || item.r#type == ItemType::Reserved7 {
-                if writer.add_char(item.spec1).is_err() {
-                    return;
-                }
+            if (item.r#type == ItemType::Reserved5 || item.r#type == ItemType::Reserved7)
+                && writer.add_char(item.spec1).is_err()
+            {
+                return;
             }
 
             player.send_buf(

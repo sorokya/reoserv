@@ -178,11 +178,10 @@ impl Map {
 
             let protected = npc_data.behavior_id == 0
                 && !npc.opponents.is_empty()
-                && !npc.opponents.iter().any(|o| {
-                    o.player_id == player_id
-                        || party_player_ids.contains(&o.player_id)
-                        || o.bored_ticks >= SETTINGS.npcs.bored_timer
-                });
+                && !npc
+                    .opponents
+                    .iter()
+                    .any(|o| o.player_id == player_id || party_player_ids.contains(&o.player_id));
 
             let damage_dealt = if protected {
                 0

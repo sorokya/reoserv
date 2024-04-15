@@ -1,5 +1,5 @@
 # Builder
-FROM rust:1.73.0-bookworm as builder
+FROM rust:1.77.2-bookworm as builder
 
 WORKDIR /usr/src
 
@@ -13,7 +13,7 @@ COPY Cargo.toml Cargo.lock /usr/src/reoserv/
 WORKDIR /usr/src/reoserv
 
 # Install target platform (Cross-Compilation) --> Needed for Alpine
-RUN apt update && apt install -y musl-tools musl-dev nodejs npm && \
+RUN apt update && apt install -y musl-tools musl-dev && \
     update-ca-certificates && \
     rustup target add x86_64-unknown-linux-musl && \
     rustup component add rustfmt

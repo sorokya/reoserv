@@ -12,6 +12,10 @@ use super::super::Player;
 
 impl Player {
     fn paperdoll_add(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let add = match PaperdollAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
@@ -26,6 +30,10 @@ impl Player {
     }
 
     fn paperdoll_remove(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let remove = match PaperdollRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,

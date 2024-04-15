@@ -369,6 +369,13 @@ impl WorldHandle {
         });
     }
 
+    pub fn show_captcha(&self, victim_name: String, experience: i32) {
+        let _ = self.tx.send(Command::ShowCaptcha {
+            victim_name,
+            experience,
+        });
+    }
+
     pub async fn shutdown(&self) {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Shutdown { respond_to: tx });

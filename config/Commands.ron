@@ -303,6 +303,25 @@
                     required: false,
                 )
             ]
+        ),
+        (
+            name: "captcha",
+            alias: "c",
+            description: "Show a captcha to a player",
+            usage: "$c noob 1000",
+            admin_level: "Guardian",
+            args: [
+                (
+                    name: "player",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "experience",
+                    type: "UInt",
+                    required: true,
+                )
+            ]
         )
     ]
 )

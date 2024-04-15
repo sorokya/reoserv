@@ -179,8 +179,8 @@ impl Map {
                 };
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
+                    && !character.captcha_open
                     && distance <= SETTINGS.npcs.chase_distance
-                    && opponent.bored_ticks < SETTINGS.npcs.bored_timer
             });
 
             // get opponent with max damage dealt
@@ -193,7 +193,9 @@ impl Map {
                 .iter()
                 .filter(|(_, character)| {
                     let distance = get_distance(&npc.coords, &character.coords);
-                    !character.hidden && distance <= SETTINGS.npcs.chase_distance
+                    !character.hidden
+                        && !character.captcha_open
+                        && distance <= SETTINGS.npcs.chase_distance
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -218,9 +220,9 @@ impl Map {
             .characters
             .iter()
             .filter(|(_, character)| {
-                adjacent_tiles
-                    .iter()
-                    .any(|coords| coords == &character.coords && !character.hidden)
+                adjacent_tiles.iter().any(|coords| {
+                    coords == &character.coords && !character.hidden && !character.captcha_open
+                })
             })
             .map(|(player_id, _)| *player_id)
             .collect::<Vec<_>>();
@@ -228,10 +230,7 @@ impl Map {
         let adjacent_opponent = npc
             .opponents
             .iter()
-            .filter(|opponent| {
-                adjacent_player_ids.contains(&opponent.player_id)
-                    && opponent.bored_ticks < SETTINGS.npcs.bored_timer
-            })
+            .filter(|opponent| adjacent_player_ids.contains(&opponent.player_id))
             .max_by_key(|opponent| opponent.damage_dealt);
 
         if let Some(opponent) = adjacent_opponent {
@@ -453,6 +452,7 @@ impl Map {
         if act_rate == 0 || act_ticks == 0 || act_ticks < act_rate {
             (None, talk_update, None)
         } else {
+            self.drop_opponents(index);
             let attack_update = self.act_npc_attack(index, npc_id);
             let pos_update = if attack_update.is_some() {
                 None
@@ -461,6 +461,16 @@ impl Map {
             };
             (pos_update, talk_update, attack_update)
         }
+    }
+
+    fn drop_opponents(&mut self, index: i32) {
+        let npc = match self.npcs.get_mut(&index) {
+            Some(npc) => npc,
+            None => return,
+        };
+
+        npc.opponents
+            .retain(|o| o.bored_ticks < SETTINGS.npcs.bored_timer);
     }
 
     pub fn act_npcs(&mut self) {

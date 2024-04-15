@@ -144,6 +144,8 @@ impl Player {
             return;
         }
 
+        self.version = request.version;
+
         let sequence_start = generate_sequence_start();
         let sequence_bytes = get_init_sequence_bytes(sequence_start);
         self.bus.sequencer.set_start(sequence_start);

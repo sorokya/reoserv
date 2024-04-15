@@ -2,13 +2,13 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily, Version};
 use mysql_async::Pool;
 use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
 
 use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
 
-use super::{packet_bus::PacketBus, ClientState, Command, PartyRequest, WarpSession};
+use super::{packet_bus::PacketBus, Captcha, ClientState, Command, PartyRequest, WarpSession};
 
 pub struct Player {
     pub id: i32,
@@ -24,6 +24,7 @@ pub struct Player {
     pub state: ClientState,
     ip: String,
     pub connected_at: DateTime<Utc>,
+    pub closed: bool,
     login_attempts: i32,
     character: Option<Character>,
     session_id: Option<i32>,
@@ -38,6 +39,9 @@ pub struct Player {
     party_request: PartyRequest,
     ping_ticks: i32,
     guild_create_members: Vec<i32>,
+    version: Version,
+    email_pin: Option<String>,
+    captcha: Option<Captcha>,
 }
 
 mod account;
@@ -53,12 +57,15 @@ mod get_welcome_request_data;
 mod handlers;
 #[macro_use]
 mod guild;
+mod generate_email_pin;
 mod ping;
 mod quest_action;
 mod request_warp;
 mod send_server_message;
+mod show_captcha;
 mod take_session_id;
 mod tick;
+mod update_captcha;
 
 impl Player {
     pub fn new(
@@ -80,6 +87,7 @@ impl Player {
             queue: RefCell::new(VecDeque::new()),
             map: None,
             busy: false,
+            closed: false,
             account_id: 0,
             state: ClientState::Uninitialized,
             login_attempts: 0,
@@ -97,6 +105,9 @@ impl Player {
             party_request: PartyRequest::None,
             ping_ticks: 0,
             guild_create_members: Vec::new(),
+            version: Version::default(),
+            email_pin: None,
+            captcha: None,
         }
     }
 
@@ -204,6 +215,7 @@ impl Player {
             Command::SetTrading(trading) => {
                 self.trading = trading;
             }
+            Command::ShowCaptcha { experience } => self.show_captcha(experience).await,
             Command::Tick => return self.tick().await,
             Command::UpdatePartyHP { hp_percentage } => {
                 if self.state == ClientState::InGame {

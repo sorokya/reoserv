@@ -5,7 +5,7 @@ use crate::{ITEM_DB, QUEST_DB};
 use super::Character;
 
 impl Character {
-    pub fn remove_item(&mut self, item_id: i32, amount: i32) {
+    pub fn remove_item_no_quest_rules(&mut self, item_id: i32, amount: i32) {
         let existing_item = match self.items.iter_mut().find(|item| item.id == item_id) {
             Some(item) => item,
             None => return,
@@ -20,6 +20,10 @@ impl Character {
         if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
             self.weight -= item.weight * amount;
         }
+    }
+
+    pub fn remove_item(&mut self, item_id: i32, amount: i32) {
+        self.remove_item_no_quest_rules(item_id, amount);
 
         let total_amount = self.get_item_amount(item_id);
 

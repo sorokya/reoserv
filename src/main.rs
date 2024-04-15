@@ -19,12 +19,14 @@ use lazy_static::lazy_static;
 mod utils;
 mod arenas;
 mod character;
+mod deep;
 use arenas::Arenas;
 mod commands;
 use commands::Commands;
 mod connection_log;
 mod formulas;
 use formulas::Formulas;
+mod emails;
 mod errors;
 mod lang;
 mod map;
@@ -42,6 +44,7 @@ use tokio::{net::TcpListener, signal, time};
 use world::WorldHandle;
 
 use crate::{
+    emails::Emails,
     lang::Lang,
     player::PlayerHandle,
     utils::{
@@ -58,6 +61,7 @@ lazy_static! {
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
+    static ref EMAILS: Emails = Emails::new().expect("Failed to load emails!");
     static ref CLASS_DB: Ecf = load_class_file().expect("Failed to load ECF file!");
     static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
     static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");

@@ -1,16 +1,14 @@
-use eolib::{
-    protocol::net::{
-        server::{
-            WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
-            WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+        WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
     },
+    PacketAction, PacketFamily,
 };
 use std::{io::Cursor, path::Path};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
-use crate::{errors::WrongSessionIdError, player::ClientState};
+use crate::{errors::WrongSessionIdError, player::ClientState, utils::is_deep};
 
 use super::Player;
 
@@ -60,6 +58,8 @@ impl Player {
         if let Some(relog_coords) = map.get_relog_coords().await {
             character.coords = relog_coords;
         }
+
+        character.is_deep = is_deep(&self.version);
 
         map.enter(Box::new(character), None).await;
 

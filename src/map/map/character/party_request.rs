@@ -29,7 +29,10 @@ impl Map {
             None => return,
         };
 
-        if !in_client_range(&character.coords, &target_character.coords) {
+        if target_character.hidden
+            || target_character.captcha_open
+            || !in_client_range(&character.coords, &target_character.coords)
+        {
             return;
         }
 

@@ -172,6 +172,11 @@ impl Map {
 
             Command::CastSpell { player_id, target } => self.cast_spell(player_id, target).await,
 
+            Command::CloseCaptcha {
+                player_id,
+                experience,
+            } => self.close_captcha(player_id, experience),
+
             Command::CraftItem {
                 player_id,
                 npc_index,
@@ -236,7 +241,7 @@ impl Map {
                 player_id,
                 item_id,
                 sub_loc,
-            } => self.equip(player_id, item_id, sub_loc).await,
+            } => self.equip(player_id, item_id, sub_loc),
 
             Command::Face {
                 player_id: target_player_id,
@@ -381,6 +386,8 @@ impl Map {
                 player_id,
                 board_id,
             } => self.open_board(player_id, board_id),
+
+            Command::OpenCaptcha { player_id } => self.open_captcha(player_id),
 
             Command::OpenChest { player_id, coords } => self.open_chest(player_id, coords),
 
@@ -648,7 +655,13 @@ impl Map {
                 npc_index,
             } => self.upgrade_locker(player_id, npc_index),
 
-            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id).await,
+            Command::UseItem { player_id, item_id } => self.use_item(player_id, item_id),
+
+            Command::UseTitleItem {
+                player_id,
+                item_id,
+                title,
+            } => self.use_title_item(player_id, item_id, title),
 
             Command::ViewBoardPost {
                 player_id,

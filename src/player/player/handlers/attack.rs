@@ -21,6 +21,10 @@ impl Player {
     }
 
     pub fn handle_attack(&mut self, action: PacketAction, reader: EoReader) {
+        if self.captcha.is_some() {
+            return;
+        }
+
         match action {
             PacketAction::Use => self.attack_use(reader),
             _ => error!("Unhandled packet Attack_{:?}", action),

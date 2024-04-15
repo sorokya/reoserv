@@ -231,6 +231,10 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::SetTrading(trading));
     }
 
+    pub fn show_captcha(&self, experience: i32) {
+        let _ = self.tx.send(Command::ShowCaptcha { experience });
+    }
+
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
     }
@@ -242,10 +246,14 @@ impl PlayerHandle {
 
 async fn run_player(mut player: Player) {
     loop {
+        if player.closed {
+            break;
+        }
+
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    trace!("Recv: {:?}", &packet[..4]);
+                    trace!("Recv: {:?}", &packet[4..]);
                     player.queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {

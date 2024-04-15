@@ -1,4 +1,7 @@
-use eolib::protocol::net::{server::RecoverReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{
+    server::{ItemAcceptServerPacket, RecoverReplyServerPacket},
+    PacketAction, PacketFamily,
+};
 
 use super::super::Map;
 
@@ -38,6 +41,15 @@ impl Map {
                     None
                 },
             },
-        )
+        );
+
+        if leveled_up {
+            self.send_packet_near_player(
+                player_id,
+                PacketAction::Accept,
+                PacketFamily::Item,
+                &ItemAcceptServerPacket { player_id },
+            );
+        }
     }
 }

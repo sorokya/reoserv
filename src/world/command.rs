@@ -186,6 +186,10 @@ pub enum Command {
         to: String,
         message: String,
     },
+    ShowCaptcha {
+        victim_name: String,
+        experience: i32,
+    },
     Shutdown {
         respond_to: oneshot::Sender<()>,
     },

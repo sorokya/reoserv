@@ -76,6 +76,9 @@ pub enum Command {
     SetTrading(bool),
     SetChestIndex(usize),
     SetSleepCost(i32),
+    ShowCaptcha {
+        experience: i32,
+    },
     Tick,
     UpdatePartyHP {
         hp_percentage: i32,

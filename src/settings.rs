@@ -40,6 +40,9 @@ pub struct NewCharacter {
 
 #[derive(Debug, Deserialize)]
 pub struct Character {
+    pub max_name_length: usize,
+    pub max_title_length: usize,
+    pub max_skin: i32,
     pub max_hair_color: i32,
     pub max_hair_style: i32,
 }
@@ -80,6 +83,7 @@ pub struct World {
     pub drain_hp_damage: f32,
     pub drain_tp_damage: f32,
     pub warp_suck_rate: i32,
+    pub info_reveals_drops: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -190,7 +194,17 @@ pub struct Jukebox {
 
 #[derive(Debug, Deserialize)]
 pub struct Barber {
+    pub base_cost: i32,
     pub cost_per_level: i32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Account {
+    pub delay_time: i32,
+    pub email_validation: bool,
+    pub recovery: bool,
+    pub recovery_show_email: bool,
+    pub recovery_mask_email: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -237,9 +251,20 @@ pub struct Items {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Smtp {
+    pub from_name: String,
+    pub from_address: String,
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
+    pub account: Account,
     pub new_character: NewCharacter,
     pub jail: Jail,
     pub rescue: Rescue,
@@ -260,6 +285,7 @@ pub struct Settings {
     pub evacuate: Evacuate,
     pub items: Items,
     pub bard: Bard,
+    pub smtp: Smtp,
 }
 
 impl Settings {

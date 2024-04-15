@@ -1,20 +1,29 @@
 use chrono::Utc;
-use eolib::protocol::{
-    net::{
-        server::{
-            AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
-            CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
-            NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket, NpcSpecServerPacket,
-            PartyExpShare, RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
+                CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
+                NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
+                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
+                RecoverTargetGroupServerPacket,
+            },
+            PacketAction, PacketFamily,
         },
-        PacketAction, PacketFamily,
+        Coords, Direction,
     },
-    Coords, Direction,
 };
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
 
-use crate::{map::Item, DROP_DB, FORMULAS, NPC_DB};
+use crate::{
+    deep::{BossPingServerPacket, FAMILY_BOSS},
+    map::Item,
+    utils::in_client_range,
+    DROP_DB, FORMULAS, NPC_DB,
+};
 
 use super::super::Map;
 
@@ -124,6 +133,39 @@ impl Map {
                 PacketFamily::Npc,
                 &packet,
             );
+        }
+
+        if npc.boss {
+            let packet = BossPingServerPacket {
+                npc_index,
+                npc_id: npc.id,
+                hp: npc.hp,
+                hp_percentage: npc.get_hp_percentage(),
+                killed: false,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize BossPingServerPacket: {}", e);
+                return;
+            }
+
+            let buf = writer.to_byte_array();
+
+            for player in self.characters.values().filter_map(|c| {
+                if c.is_deep && in_client_range(&c.coords, &npc.coords) {
+                    c.player.as_ref()
+                } else {
+                    None
+                }
+            }) {
+                player.send_buf(
+                    PacketAction::Ping,
+                    PacketFamily::Unrecognized(FAMILY_BOSS),
+                    buf.clone(),
+                );
+            }
         }
     }
 
@@ -345,6 +387,37 @@ impl Map {
                     NpcJunkServerPacket {
                         npc_id: child_npc.id,
                     },
+                );
+            }
+
+            let packet = BossPingServerPacket {
+                npc_index,
+                npc_id,
+                hp: 0,
+                hp_percentage: 0,
+                killed: true,
+            };
+
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize BossPingServerPacket: {}", e);
+                return;
+            }
+
+            let buf = writer.to_byte_array();
+
+            for player in self.characters.values().filter_map(|c| {
+                if c.is_deep && in_client_range(&c.coords, &npc_coords) {
+                    c.player.as_ref()
+                } else {
+                    None
+                }
+            }) {
+                player.send_buf(
+                    PacketAction::Ping,
+                    PacketFamily::Unrecognized(FAMILY_BOSS),
+                    buf.clone(),
                 );
             }
         }

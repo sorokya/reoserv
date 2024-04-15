@@ -21,6 +21,10 @@ impl Player {
     }
 
     pub fn handle_face(&mut self, action: PacketAction, reader: EoReader) {
+        if self.captcha.is_some() {
+            return;
+        }
+
         match action {
             PacketAction::Player => self.face_player(reader),
             _ => error!("Unhandled packet Face_{:?}", action),

@@ -1,43 +1,40 @@
-use eolib::protocol::{
-    net::{
-        server::{
-            AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
-            AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
-            AvatarChangeType, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
-            ItemReplyServerPacketItemTypeDataCureCurse,
-            ItemReplyServerPacketItemTypeDataEffectPotion,
-            ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
-            RecoverAgreeServerPacket, WarpEffect,
+use eolib::{
+    data::{EoSerialize, EoWriter},
+    protocol::{
+        net::{
+            server::{
+                AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
+                AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
+                AvatarChangeType, AvatarRemoveServerPacket, ItemAcceptServerPacket,
+                ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
+                ItemReplyServerPacketItemTypeDataCureCurse,
+                ItemReplyServerPacketItemTypeDataEffectPotion,
+                ItemReplyServerPacketItemTypeDataExpReward,
+                ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
+                NearbyInfo, PlayersAgreeServerPacket, RecoverAgreeServerPacket, WarpEffect,
+            },
+            Item, PacketAction, PacketFamily,
         },
-        Item, PacketAction, PacketFamily,
+        r#pub::{ItemSpecial, ItemType},
+        Coords,
     },
-    r#pub::{ItemSpecial, ItemType},
-    Coords,
 };
 
-use crate::{character::EquipmentSlot, INN_DB, ITEM_DB, SETTINGS};
+use crate::{
+    character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN, utils::in_client_range, INN_DB,
+    ITEM_DB, SETTINGS, SPELL_DB,
+};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn use_item(&mut self, player_id: i32, item_id: i32) {
+    pub fn use_item(&mut self, player_id: i32, item_id: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
                 return;
             }
         };
-
-        // TODO: Validate in player thread
-        {
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => return,
-            };
-            if player.is_trading().await {
-                return;
-            }
-        }
 
         if !character.items.iter().any(|item| item.id == item_id) {
             return;
@@ -169,6 +166,38 @@ impl Map {
                     &packet,
                 );
             }
+            ItemType::ExpReward => {
+                packet.item_type = ItemType::ExpReward;
+                let leveled_up = character.add_experience(item.spec1);
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::ExpReward(
+                    ItemReplyServerPacketItemTypeDataExpReward {
+                        experience: character.experience,
+                        level_up: if leveled_up { character.level } else { 0 },
+                        stat_points: character.stat_points,
+                        skill_points: character.skill_points,
+                        max_hp: character.max_hp,
+                        max_tp: character.max_tp,
+                        max_sp: character.max_sp,
+                    },
+                ));
+
+                if leveled_up {
+                    self.send_packet_near_player(
+                        player_id,
+                        PacketAction::Accept,
+                        PacketFamily::Item,
+                        &ItemAcceptServerPacket { player_id },
+                    );
+                }
+            }
+            ItemType::Reserved7 => {
+                if SPELL_DB.skills.len() < item.spec1 as usize {
+                    return;
+                }
+
+                packet.item_type = ItemType::Reserved7;
+                character.add_spell(item.spec1);
+            }
             ItemType::CureCurse => {
                 let paperdoll = character.get_equipment_array();
                 let mut cursed_items: Vec<EquipmentSlot> = Vec::new();
@@ -229,6 +258,94 @@ impl Map {
                     );
                 }
             }
+            ItemType::Reserved5 => {
+                character.skin = item.spec1;
+                packet.item_type = ItemType::Reserved5;
+
+                if !character.hidden {
+                    let packet = AvatarAgreeServerPacket {
+                        change: AvatarChange {
+                            sound: false,
+                            change_type: AvatarChangeType::Unrecognized(AVATAR_CHANGE_TYPE_SKIN),
+                            player_id,
+                            change_type_data: None,
+                        },
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize AvatarAgreeServerPacket: {}", e);
+                        return;
+                    }
+
+                    if writer.add_char(character.skin).is_err() {
+                        return;
+                    }
+
+                    let deep_buf = writer.to_byte_array();
+
+                    let character_coords = character.coords;
+
+                    let packet = AvatarRemoveServerPacket {
+                        player_id,
+                        warp_effect: None,
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize AvatarRemoveServerPacket: {}", e);
+                        return;
+                    }
+
+                    let remove_buf = writer.to_byte_array();
+
+                    let packet = PlayersAgreeServerPacket {
+                        nearby: NearbyInfo {
+                            characters: vec![character.to_map_info()],
+                            npcs: Vec::default(),
+                            items: Vec::default(),
+                        },
+                    };
+
+                    let mut writer = EoWriter::new();
+
+                    if let Err(e) = packet.serialize(&mut writer) {
+                        error!("Failed to serialize PlayersAgreeServerPacket: {}", e);
+                        return;
+                    }
+
+                    let agree_buf = writer.to_byte_array();
+
+                    for (is_deep, player) in self.characters.iter().filter_map(|(id, c)| {
+                        if *id != player_id || in_client_range(&c.coords, &character_coords) {
+                            c.player.as_ref().map(|player| (c.is_deep, player))
+                        } else {
+                            None
+                        }
+                    }) {
+                        if is_deep {
+                            player.send_buf(
+                                PacketAction::Agree,
+                                PacketFamily::Avatar,
+                                deep_buf.clone(),
+                            );
+                        } else {
+                            player.send_buf(
+                                PacketAction::Remove,
+                                PacketFamily::Avatar,
+                                remove_buf.clone(),
+                            );
+                            player.send_buf(
+                                PacketAction::Agree,
+                                PacketFamily::Players,
+                                agree_buf.clone(),
+                            );
+                        }
+                    }
+                }
+            }
             _ => {
                 return;
             }
@@ -254,7 +371,24 @@ impl Map {
 
             packet.weight = character.get_weight();
 
-            player.send(PacketAction::Reply, PacketFamily::Item, &packet);
+            let mut writer = EoWriter::new();
+
+            if let Err(e) = packet.serialize(&mut writer) {
+                error!("Failed to serialize ItemReplyServerPacket: {}", e);
+                return;
+            }
+
+            if (item.r#type == ItemType::Reserved5 || item.r#type == ItemType::Reserved7)
+                && writer.add_char(item.spec1).is_err()
+            {
+                return;
+            }
+
+            player.send_buf(
+                PacketAction::Reply,
+                PacketFamily::Item,
+                writer.to_byte_array(),
+            );
         }
     }
 }

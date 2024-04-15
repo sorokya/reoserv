@@ -8,6 +8,8 @@ use eolib::{
     },
 };
 
+use crate::{deep::ItemReportClientPacket, SETTINGS};
+
 use super::super::Player;
 
 impl Player {
@@ -67,6 +69,24 @@ impl Player {
         }
     }
 
+    fn item_report(&mut self, reader: EoReader) {
+        if let Some(map) = &self.map {
+            let packet = match ItemReportClientPacket::deserialize(&reader) {
+                Ok(packet) => packet,
+                Err(e) => {
+                    error!("Error deserializing ItemReportClientPacket: {}", e);
+                    return;
+                }
+            };
+
+            if packet.title.len() > SETTINGS.character.max_title_length {
+                return;
+            }
+
+            map.use_title_item(self.id, packet.item_id, packet.title);
+        }
+    }
+
     pub fn handle_item(&mut self, action: PacketAction, reader: EoReader) {
         // Prevent interacting with items when trading
         if self.trading {
@@ -78,6 +98,7 @@ impl Player {
             PacketAction::Get => self.item_get(reader),
             PacketAction::Junk => self.item_junk(reader),
             PacketAction::Use => self.item_use(reader),
+            PacketAction::Report => self.item_report(reader),
             _ => error!("Unhandled packet Item_{:?}", action),
         }
     }

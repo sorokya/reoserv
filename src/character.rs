@@ -36,6 +36,8 @@ mod spell_state;
 pub use spell_state::SpellState;
 mod spell_target;
 pub use spell_target::SpellTarget;
+mod equip_result;
+pub use equip_result::EquipResult;
 mod to_map_info;
 mod unequip;
 mod update;
@@ -44,6 +46,7 @@ mod update;
 pub struct Character {
     pub player_id: Option<i32>,
     pub player: Option<PlayerHandle>,
+    pub is_deep: bool,
     pub id: i32,
     pub account_id: i32,
     pub name: String,
@@ -106,6 +109,7 @@ pub struct Character {
     pub logged_in_at: Option<DateTime<Utc>>,
     pub spell_state: SpellState,
     pub quests: Vec<QuestProgress>,
+    pub captcha_open: bool,
 }
 
 #[derive(Clone, Debug, Default)]

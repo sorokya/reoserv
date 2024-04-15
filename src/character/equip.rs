@@ -5,26 +5,21 @@ use eolib::protocol::{
 
 use crate::ITEM_DB;
 
-use super::Character;
+use super::{Character, EquipResult};
 
 impl Character {
-    pub fn equip(&mut self, item_id: i32, sub_loc: i32) -> bool {
+    pub fn equip(&mut self, item_id: i32, sub_loc: i32) -> EquipResult {
         if sub_loc > 1 {
-            return false;
+            return EquipResult::Failed;
         }
-
-        let existing_item = match self.items.iter_mut().find(|item| item.id == item_id) {
-            Some(item) => item,
-            None => return false,
-        };
 
         let item_record = match ITEM_DB.items.get(item_id as usize - 1) {
             Some(item) => item,
-            None => return false,
+            None => return EquipResult::Failed,
         };
 
         if item_record.r#type == ItemType::Armor && item_record.spec2 != i32::from(self.gender) {
-            return false;
+            return EquipResult::Failed;
         }
 
         if self.level < item_record.level_requirement
@@ -35,7 +30,7 @@ impl Character {
             || self.adj_constitution < item_record.con_requirement
             || self.adj_charisma < item_record.cha_requirement
         {
-            return false;
+            return EquipResult::Failed;
         }
 
         if item_record.class_requirement != 0 && item_record.class_requirement != self.class {
@@ -49,98 +44,54 @@ impl Character {
                 );
             }
 
-            return false;
+            return EquipResult::Failed;
         }
 
-        match item_record.r#type {
-            ItemType::Weapon => {
-                if self.equipment.weapon != 0 {
-                    return false;
+        let mut result = EquipResult::Equiped;
+
+        {
+            let equipment_slot = match item_record.r#type {
+                ItemType::Weapon => &mut self.equipment.weapon,
+                ItemType::Shield => &mut self.equipment.shield,
+                ItemType::Armor => &mut self.equipment.armor,
+                ItemType::Hat => &mut self.equipment.hat,
+                ItemType::Boots => &mut self.equipment.boots,
+                ItemType::Gloves => &mut self.equipment.gloves,
+                ItemType::Accessory => &mut self.equipment.accessory,
+                ItemType::Belt => &mut self.equipment.belt,
+                ItemType::Necklace => &mut self.equipment.necklace,
+                ItemType::Ring => &mut self.equipment.ring[sub_loc as usize],
+                ItemType::Armlet => &mut self.equipment.armlet[sub_loc as usize],
+                ItemType::Bracer => &mut self.equipment.bracer[sub_loc as usize],
+                _ => {
+                    warn!(
+                        "{} tried to equip an invalid item type: {:?}",
+                        self.name, item_record.r#type
+                    );
+                    return EquipResult::Failed;
                 }
-                self.equipment.weapon = item_id
-            }
-            ItemType::Shield => {
-                if self.equipment.shield != 0 {
-                    return false;
+            };
+
+            if *equipment_slot != 0 {
+                if self.is_deep {
+                    result = EquipResult::Swapped(*equipment_slot);
+                    *equipment_slot = item_id;
+                } else {
+                    return EquipResult::Failed;
                 }
-                self.equipment.shield = item_id
-            }
-            ItemType::Armor => {
-                if self.equipment.armor != 0 {
-                    return false;
-                }
-                self.equipment.armor = item_id
-            }
-            ItemType::Hat => {
-                if self.equipment.hat != 0 {
-                    return false;
-                }
-                self.equipment.hat = item_id
-            }
-            ItemType::Boots => {
-                if self.equipment.boots != 0 {
-                    return false;
-                }
-                self.equipment.boots = item_id
-            }
-            ItemType::Gloves => {
-                if self.equipment.gloves != 0 {
-                    return false;
-                }
-                self.equipment.gloves = item_id
-            }
-            ItemType::Accessory => {
-                if self.equipment.accessory != 0 {
-                    return false;
-                }
-                self.equipment.accessory = item_id
-            }
-            ItemType::Belt => {
-                if self.equipment.belt != 0 {
-                    return false;
-                }
-                self.equipment.belt = item_id
-            }
-            ItemType::Necklace => {
-                if self.equipment.necklace != 0 {
-                    return false;
-                }
-                self.equipment.necklace = item_id
-            }
-            ItemType::Ring => {
-                if self.equipment.ring[sub_loc as usize] != 0 {
-                    return false;
-                }
-                self.equipment.ring[sub_loc as usize] = item_id
-            }
-            ItemType::Armlet => {
-                if self.equipment.armlet[sub_loc as usize] != 0 {
-                    return false;
-                }
-                self.equipment.armlet[sub_loc as usize] = item_id
-            }
-            ItemType::Bracer => {
-                if self.equipment.bracer[sub_loc as usize] != 0 {
-                    return false;
-                }
-                self.equipment.bracer[sub_loc as usize] = item_id
-            }
-            _ => {
-                warn!(
-                    "{} tried to equip an invalid item type: {:?}",
-                    self.name, item_record.r#type
-                );
-                return false;
+            } else {
+                *equipment_slot = item_id;
             }
         }
 
-        if existing_item.amount <= 1 {
-            self.items.retain(|item| item.id != item_id);
-        } else {
-            existing_item.amount -= 1;
+        if let EquipResult::Swapped(item_id) = result {
+            self.add_item_no_quest_rules(item_id, 1);
         }
+
+        self.remove_item_no_quest_rules(item_id, 1);
 
         self.calculate_stats();
-        true
+
+        result
     }
 }

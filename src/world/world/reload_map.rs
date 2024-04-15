@@ -24,7 +24,7 @@ impl World {
             None => return,
         };
 
-        let raw_path = format!("maps/{:0>5}.emf", map_id);
+        let raw_path = format!("data/maps/{:0>5}.emf", map_id);
         let path = Path::new(&raw_path);
 
         if !Path::exists(path) {

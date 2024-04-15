@@ -167,7 +167,7 @@ impl Map {
                     3 => Direction::Right,
                     _ => unreachable!(),
                 }
-            }
+            };
         }
     }
 }

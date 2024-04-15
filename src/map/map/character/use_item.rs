@@ -5,9 +5,11 @@ use eolib::{
             server::{
                 AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
                 AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
-                AvatarChangeType, AvatarRemoveServerPacket, ItemReplyServerPacket,
-                ItemReplyServerPacketItemTypeData, ItemReplyServerPacketItemTypeDataCureCurse,
+                AvatarChangeType, AvatarRemoveServerPacket, ItemAcceptServerPacket,
+                ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
+                ItemReplyServerPacketItemTypeDataCureCurse,
                 ItemReplyServerPacketItemTypeDataEffectPotion,
+                ItemReplyServerPacketItemTypeDataExpReward,
                 ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
                 NearbyInfo, PlayersAgreeServerPacket, RecoverAgreeServerPacket, WarpEffect,
             },
@@ -20,7 +22,7 @@ use eolib::{
 
 use crate::{
     character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN, utils::in_client_range, INN_DB,
-    ITEM_DB, SETTINGS,
+    ITEM_DB, SETTINGS, SPELL_DB,
 };
 
 use super::super::Map;
@@ -163,6 +165,38 @@ impl Map {
                     PacketFamily::Avatar,
                     &packet,
                 );
+            }
+            ItemType::ExpReward => {
+                packet.item_type = ItemType::ExpReward;
+                let leveled_up = character.add_experience(item.spec1);
+                packet.item_type_data = Some(ItemReplyServerPacketItemTypeData::ExpReward(
+                    ItemReplyServerPacketItemTypeDataExpReward {
+                        experience: character.experience,
+                        level_up: if leveled_up { character.level } else { 0 },
+                        stat_points: character.stat_points,
+                        skill_points: character.skill_points,
+                        max_hp: character.max_hp,
+                        max_tp: character.max_tp,
+                        max_sp: character.max_sp,
+                    },
+                ));
+
+                if leveled_up {
+                    self.send_packet_near_player(
+                        player_id,
+                        PacketAction::Accept,
+                        PacketFamily::Item,
+                        &ItemAcceptServerPacket { player_id },
+                    );
+                }
+            }
+            ItemType::Reserved7 => {
+                if SPELL_DB.skills.len() < item.spec1 as usize {
+                    return;
+                }
+
+                packet.item_type = ItemType::Reserved7;
+                character.add_spell(item.spec1);
             }
             ItemType::CureCurse => {
                 let paperdoll = character.get_equipment_array();
@@ -347,7 +381,7 @@ impl Map {
                 return;
             }
 
-            if item.r#type == ItemType::Reserved5 {
+            if item.r#type == ItemType::Reserved5 || item.r#type == ItemType::Reserved7 {
                 if writer.add_char(item.spec1).is_err() {
                     return;
                 }

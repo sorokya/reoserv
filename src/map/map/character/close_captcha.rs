@@ -1,4 +1,7 @@
-use eolib::protocol::net::{server::RecoverReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{
+    server::{ItemAcceptServerPacket, RecoverReplyServerPacket},
+    PacketAction, PacketFamily,
+};
 
 use crate::deep::{CaptchaCloseServerPacket, FAMILY_CAPTCHA};
 
@@ -16,6 +19,12 @@ impl Map {
         }
 
         let leveled_up = character.add_experience(experience);
+        character.captcha_open = false;
+
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
         if let Some(player) = &character.player {
             player.send(
@@ -37,10 +46,17 @@ impl Map {
                         stat_points: Some(character.stat_points),
                         skill_points: Some(character.skill_points),
                     },
-                )
+                );
+
+                if leveled_up {
+                    self.send_packet_near_player(
+                        player_id,
+                        PacketAction::Accept,
+                        PacketFamily::Item,
+                        &ItemAcceptServerPacket { player_id },
+                    );
+                }
             }
         }
-
-        character.captcha_open = false;
     }
 }

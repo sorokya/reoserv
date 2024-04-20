@@ -7,6 +7,7 @@ mod enter;
 mod equip;
 mod face;
 mod find_player;
+mod get_item;
 mod give_karma;
 mod junk_item;
 mod leave;

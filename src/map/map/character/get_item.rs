@@ -58,24 +58,25 @@ impl Map {
             }
         }
 
-        let reply = ItemRemoveServerPacket { item_index };
-
-        self.send_packet_near(
-            &item_coords,
+        self.send_packet_near_player(
+            player_id,
             PacketAction::Remove,
             PacketFamily::Item,
-            reply,
+            &ItemRemoveServerPacket { item_index },
         );
 
         if amount_picked_up != item_amount {
-            let reply = ItemAddServerPacket {
-                item_id,
-                item_index,
-                item_amount: item_amount - amount_picked_up,
-                coords: item_coords,
-            };
-
-            self.send_packet_near(&item_coords, PacketAction::Add, PacketFamily::Item, reply);
+            self.send_packet_near(
+                &item_coords,
+                PacketAction::Add,
+                PacketFamily::Item,
+                ItemAddServerPacket {
+                    item_id,
+                    item_index,
+                    item_amount: item_amount - amount_picked_up,
+                    coords: item_coords,
+                },
+            );
         }
     }
 }

@@ -66,7 +66,7 @@ impl Map {
                 &LockerGetServerPacket {
                     taken_item: ThreeItem {
                         id: item_id,
-                        amount: character.get_item_amount(item_id),
+                        amount,
                     },
                     weight: character.get_weight(),
                     locker_items: character

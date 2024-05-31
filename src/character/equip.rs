@@ -39,7 +39,7 @@ impl Character {
                     PacketAction::Ping,
                     PacketFamily::Paperdoll,
                     &PaperdollPingServerPacket {
-                        class_id: self.class,
+                        class_id: item_record.class_requirement,
                     },
                 );
             }

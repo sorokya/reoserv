@@ -80,7 +80,7 @@ impl Map {
                         reply_code: SkillMasterReply::WrongClass,
                         reply_code_data: Some(StatSkillReplyServerPacketReplyCodeData::WrongClass(
                             StatSkillReplyServerPacketReplyCodeDataWrongClass {
-                                class_id: character.class,
+                                class_id: skill.class_requirement,
                             },
                         )),
                     },

@@ -6,7 +6,7 @@ use eolib::{
                 AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
                 AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
                 AvatarChangeType, AvatarRemoveServerPacket, ItemAcceptServerPacket,
-                ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
+                ItemAgreeServerPacket, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
                 ItemReplyServerPacketItemTypeDataCureCurse,
                 ItemReplyServerPacketItemTypeDataEffectPotion,
                 ItemReplyServerPacketItemTypeDataExpReward,
@@ -37,6 +37,13 @@ impl Map {
         };
 
         if !character.items.iter().any(|item| item.id == item_id) {
+            if let Some(player) = character.player.as_ref() {
+                player.send(
+                    PacketAction::Agree,
+                    PacketFamily::Item,
+                    &ItemAgreeServerPacket { item_id },
+                );
+            }
             return;
         }
 

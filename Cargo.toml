@@ -29,7 +29,7 @@ num-traits = "0.2"
 pretty_env_logger = "0.5"
 futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
-reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "json"] }
 glob = "0.3.1"
 serde_json = "^1.0.117"
 serde_derive = "^1.0.8"
@@ -46,6 +46,9 @@ duration-str = "0.7.1"
 version-compare = "0.2"
 mail-send = "0.4.7"
 mail-builder = "0.3.1"
+axum = "0.7.5"
+axum-extra = {version = "0.9.3", features = ["typed-header"]}
+headers = "0.4.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

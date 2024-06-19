@@ -21,11 +21,8 @@ use crate::{
         ACCOUNT_REPLY_WRONG_PIN, ACTION_CONFIG,
     },
     errors::WrongSessionIdError,
-    player::{
-        player::account::{account_exists, generate_password_hash, validate_password},
-        ClientState,
-    },
-    utils::{is_deep, send_email},
+    player::{player::account::account_exists, ClientState},
+    utils::{generate_password_hash, is_deep, send_email, validate_password},
     EMAILS, SETTINGS,
 };
 

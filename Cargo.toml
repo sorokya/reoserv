@@ -46,6 +46,10 @@ duration-str = "0.11.2"
 version-compare = "0.2"
 mail-send = "0.4.7"
 mail-builder = "0.3.2"
+axum = "0.7.5"
+async-session = "3.0.0"
+axum-extra = {version = "0.9.3", features = ["typed-header"]}
+headers = "0.4.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

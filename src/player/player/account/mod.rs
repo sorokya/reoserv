@@ -6,8 +6,6 @@ mod get_character_list;
 pub(super) use get_character_list::get_character_list;
 mod get_num_of_characters;
 pub(super) use get_num_of_characters::get_num_of_characters;
-mod password_hash;
-pub(super) use password_hash::{generate_password_hash, validate_password};
 mod select_character;
 mod update_last_login_ip;
 pub(super) use update_last_login_ip::update_last_login_ip;

@@ -247,7 +247,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    tokio::spawn(api::run_api(pool.clone()));
+    if SETTINGS.api.enabled {
+        tokio::spawn(api::run_api(pool.clone()));
+    }
 
     tokio::select! {
         ctrl_c = signal::ctrl_c() => match ctrl_c {

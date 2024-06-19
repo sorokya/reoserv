@@ -1,10 +1,12 @@
 INSERT INTO
     `AccessToken` (
         `account_id`,
-        `token`
+        `token`,
+        `ttl`
     )
 VALUES
     (
         :account_id,
-        :token
+        :token,
+        :ttl
     );

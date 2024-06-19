@@ -51,6 +51,19 @@ generate_pub = false
 # Server language. Should match a ron file in the lang directory
 lang = "en"
 
+[api]
+# Set to true to enable the REOSERV HTTP API
+enabled = false
+
+# Host IP the API will listen for incoming requests on
+host = "0.0.0.0"
+
+# Host Port the API will listen for incoming requests on
+port = "3000"
+
+# Minutes a user access token is considered valid
+access_token_ttl = 20
+
 [database]
 host = "127.0.0.1"
 port = "3306"

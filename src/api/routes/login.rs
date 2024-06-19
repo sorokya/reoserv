@@ -9,6 +9,7 @@ use mysql_async::{params, prelude::Queryable, Params, Pool, Row};
 use crate::{
     api::{generate_access_token::generate_access_token, AppError},
     utils::validate_password,
+    SETTINGS,
 };
 
 pub async fn login(
@@ -47,6 +48,7 @@ pub async fn login(
         params! {
             "account_id" => &account_id,
             "token" => &access_token,
+            "ttl" => &SETTINGS.api.access_token_ttl,
         },
     )
     .await?;
@@ -56,8 +58,9 @@ pub async fn login(
         AppendHeaders([(
             SET_COOKIE,
             format!(
-                "access_token={}; Max-Age=1200; Secure; HttpOnly",
-                access_token
+                "access_token={}; Max-Age={}; Secure; HttpOnly",
+                access_token,
+                SETTINGS.api.access_token_ttl * 60,
             ),
         )]),
         String::from("authenticated"),

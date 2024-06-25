@@ -23,7 +23,7 @@ bytes = "1.6"
 config = { version = "0.14", features = ["toml", "ron"] }
 crc = "3.2.1"
 chrono = "0.4"
-lazy_static = "1.0"
+lazy_static = "1.5"
 log = "0.4"
 num-traits = "0.2"
 pretty_env_logger = "0.5"

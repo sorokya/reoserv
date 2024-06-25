@@ -22,14 +22,6 @@ impl Map {
                 }
             }
 
-            if original_hp != character.hp {
-                character
-                    .player
-                    .as_ref()
-                    .unwrap()
-                    .update_party_hp(character.get_hp_percentage());
-            }
-
             if character.tp < character.max_tp {
                 character.tp += (character.max_tp / divisor) + 1;
 
@@ -48,7 +40,9 @@ impl Map {
                     },
                 );
 
-                player.update_party_hp(character.get_hp_percentage());
+                if original_hp != character.hp {
+                    player.update_party_hp(character.get_hp_percentage());
+                }
             }
         }
     }

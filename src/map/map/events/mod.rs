@@ -1,5 +1,7 @@
 mod abandon_arena;
 mod act_npcs;
+mod recover_npcs;
+mod recover_players;
 mod spawn_items;
 mod spawn_npcs;
 mod timed_arena;

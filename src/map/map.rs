@@ -287,6 +287,10 @@ impl Map {
                 self.get_item(target_player_id, item_index);
             }
 
+            Command::GetState { respond_to } => {
+                let _ = respond_to.send(self.get_state());
+            }
+
             Command::GetNearbyInfo {
                 player_id: target_player_id,
                 respond_to,

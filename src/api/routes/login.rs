@@ -58,7 +58,7 @@ pub async fn login(
         AppendHeaders([(
             SET_COOKIE,
             format!(
-                "access_token={}; Max-Age={}; Secure; HttpOnly",
+                "access_token={}; Max-Age={}; Secure; HttpOnly; SameSite=Lax",
                 access_token,
                 SETTINGS.api.access_token_ttl * 60,
             ),

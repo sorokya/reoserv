@@ -15,6 +15,8 @@ use crate::{
     player::PartyRequest,
 };
 
+use super::MapState;
+
 #[derive(Debug)]
 pub enum Command {
     AcceptGuildCreationRequest {
@@ -165,6 +167,9 @@ pub enum Command {
     GetNearbyInfo {
         player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
+    },
+    GetState {
+        respond_to: oneshot::Sender<MapState>,
     },
     GetNpcIdForIndex {
         npc_index: i32,

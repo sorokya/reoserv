@@ -20,20 +20,22 @@ use crate::{
     world::WorldHandle,
 };
 
-use super::{Command, Map};
+use super::{Command, Map, MapState};
 
 #[derive(Debug, Clone)]
 pub struct MapHandle {
     tx: UnboundedSender<Command>,
+    pub name: String,
 }
 
 impl MapHandle {
     pub fn new(id: i32, file_size: i32, pool: Pool, file: Emf, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
+        let name = file.name.clone();
         let map = Map::new(id, file_size, file, pool, world, rx);
         tokio::spawn(run_map(map));
 
-        Self { tx }
+        Self { tx, name }
     }
 
     pub fn accept_guild_creation_request(&self, player_id: i32, invitee_player_id: i32) {
@@ -269,6 +271,12 @@ impl MapHandle {
             player_id,
             respond_to: tx,
         });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_state(&self) -> MapState {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetState { respond_to: tx });
         rx.await.unwrap()
     }
 

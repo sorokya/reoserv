@@ -248,7 +248,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     if SETTINGS.api.enabled {
-        tokio::spawn(api::run_api(pool.clone()));
+        tokio::spawn(api::run_api(pool.clone(), world.clone()));
     }
 
     tokio::select! {

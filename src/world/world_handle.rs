@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
-use super::{world::World, Command, Party};
+use super::{world::World, Command, MapListItem, Party};
 
 #[derive(Debug, Clone)]
 pub struct WorldHandle {
@@ -196,6 +196,12 @@ impl WorldHandle {
             map_id,
             respond_to: tx,
         });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_map_list(&self) -> Vec<MapListItem> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetMapList { respond_to: tx });
         rx.await.unwrap()
     }
 

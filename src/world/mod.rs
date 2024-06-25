@@ -7,3 +7,5 @@ mod world_handle;
 pub use world_handle::WorldHandle;
 mod party;
 pub use party::Party;
+mod map_list_item;
+pub(crate) use map_list_item::MapListItem;

@@ -7,6 +7,7 @@ mod get_dimensions;
 mod get_nearby_info;
 mod get_next_item_index;
 mod get_rid_and_size;
+mod get_state;
 mod get_tile;
 mod get_warp;
 mod give_experience;

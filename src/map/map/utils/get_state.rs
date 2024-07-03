@@ -7,6 +7,7 @@ use super::super::Map;
 impl Map {
     pub fn get_state(&self) -> MapState {
         MapState {
+            name: self.file.name.to_owned(),
             chests: self
                 .chests
                 .iter()
@@ -29,20 +30,22 @@ impl Map {
                     index: *index,
                     id: npc.id,
                     coords: npc.coords,
-                    hp: npc.hp,
                     alive: npc.alive,
                 })
                 .collect::<Vec<_>>(),
             characters: self
                 .characters
                 .iter()
-                .map(|(id, character)| MapStateCharacter {
-                    id: *id,
+                .map(|(_, character)| MapStateCharacter {
+                    id: character.id,
                     name: character.name.clone(),
                     coords: character.coords,
-                    hp: character.hp,
-                    tp: character.tp,
                     level: character.level,
+                    class: character.class,
+                    guild: match character.guild_tag.as_ref() {
+                        Some(tag) => tag.to_owned(),
+                        None => "".to_string(),
+                    },
                 })
                 .collect::<Vec<_>>(),
             items: self

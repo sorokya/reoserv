@@ -13,6 +13,7 @@ use tokio::sync::oneshot;
 use crate::{
     character::{Character, SpellTarget},
     player::PartyRequest,
+    world::MapListItem,
 };
 
 use super::MapState;
@@ -528,6 +529,9 @@ pub enum Command {
         speed: i32,
     },
     SpawnNpcs,
+    ToMapListItem {
+        respond_to: oneshot::Sender<MapListItem>,
+    },
     ActNpcs,
     Quake {
         magnitude: i32,

@@ -17,7 +17,7 @@ use tokio::sync::{
 use crate::{
     character::{Character, SpellTarget},
     player::PartyRequest,
-    world::WorldHandle,
+    world::{MapListItem, WorldHandle},
 };
 
 use super::{Command, Map, MapState};
@@ -25,17 +25,15 @@ use super::{Command, Map, MapState};
 #[derive(Debug, Clone)]
 pub struct MapHandle {
     tx: UnboundedSender<Command>,
-    pub name: String,
 }
 
 impl MapHandle {
     pub fn new(id: i32, file_size: i32, pool: Pool, file: Emf, world: WorldHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let name = file.name.clone();
         let map = Map::new(id, file_size, file, pool, world, rx);
         tokio::spawn(run_map(map));
 
-        Self { tx, name }
+        Self { tx }
     }
 
     pub fn accept_guild_creation_request(&self, player_id: i32, invitee_player_id: i32) {
@@ -909,6 +907,12 @@ impl MapHandle {
 
     pub fn quake(&self, magnitude: i32) {
         let _ = self.tx.send(Command::Quake { magnitude });
+    }
+
+    pub async fn to_map_list_item(&self) -> MapListItem {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::ToMapListItem { respond_to: tx });
+        rx.await.unwrap()
     }
 }
 

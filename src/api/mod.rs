@@ -1,3 +1,4 @@
+mod account;
 mod app_state;
 mod generate_access_token;
 mod run_api;

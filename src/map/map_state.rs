@@ -2,6 +2,7 @@ use eolib::protocol::{net::Item, Coords};
 
 #[derive(Debug, Serialize)]
 pub struct MapState {
+    pub name: String,
     pub chests: Vec<MapStateChest>,
     pub npcs: Vec<MapStateNpc>,
     pub characters: Vec<MapStateCharacter>,
@@ -27,7 +28,6 @@ pub struct MapStateNpc {
     pub index: i32,
     pub id: i32,
     pub coords: Coords,
-    pub hp: i32,
     pub alive: bool,
 }
 
@@ -36,7 +36,7 @@ pub struct MapStateCharacter {
     pub id: i32,
     pub name: String,
     pub coords: Coords,
-    pub hp: i32,
-    pub tp: i32,
     pub level: i32,
+    pub class: i32,
+    pub guild: String,
 }

@@ -7,13 +7,20 @@ use axum::{
 };
 use axum_extra::{typed_header::TypedHeaderRejectionReason, TypedHeader};
 use eolib::protocol::AdminLevel;
-use mysql_async::{params, prelude::Queryable, Params, Pool, Row};
+use mysql_async::{params, prelude::Queryable, Pool, Row};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct User {
-    id: i32,
+    pub id: i32,
     username: String,
     admin_level: AdminLevel,
+    characters: Vec<UserCharacter>,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct UserCharacter {
+    id: i32,
+    name: String,
 }
 
 pub struct AuthError;
@@ -56,30 +63,44 @@ where
             }
         };
 
-        let row = match conn
-            .exec_first::<Row, &str, Params>(
+        let mut user = User::default();
+
+        let characters = match conn
+            .exec_map(
                 include_str!("../sql/get_user_from_access_token.sql"),
                 params! {
                     "access_token" => &access_token,
                 },
+                |row: Row| {
+                    if user.id == 0 {
+                        user.id = row.get::<i32, &str>("account_id").unwrap();
+                        user.username = row.get::<String, &str>("account_name").unwrap();
+                    }
+                    let admin_level = row.get::<i32, &str>("admin_level").unwrap();
+                    if admin_level > user.admin_level.into() {
+                        user.admin_level = AdminLevel::from(admin_level);
+                    }
+
+                    UserCharacter {
+                        id: row.get::<i32, &str>("character_id").unwrap(),
+                        name: row.get::<String, &str>("character_name").unwrap(),
+                    }
+                },
             )
             .await
         {
-            Ok(Some(row)) => row,
-            Ok(None) => {
-                return Err(AuthError);
-            }
+            Ok(characters) => characters,
             Err(e) => {
                 error!("Error getting user: {}", e);
                 return Err(AuthError);
             }
         };
 
-        let user = User {
-            id: row.get("id").unwrap(),
-            username: row.get("name").unwrap(),
-            admin_level: AdminLevel::from(row.get::<i32, &str>("admin_level").unwrap()),
-        };
+        if user.id == 0 {
+            return Err(AuthError);
+        }
+
+        user.characters = characters;
 
         Ok(user)
     }

@@ -2,7 +2,7 @@ use crate::{
     connection_log::ConnectionLog, errors::DataNotFoundError, map::MapHandle, player::PlayerHandle,
 };
 
-use super::{load_maps::load_maps, Command, MapListItem, Party};
+use super::{load_maps::load_maps, Command, Party};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -219,17 +219,21 @@ impl World {
 
             Command::GetMapList { respond_to } => match self.maps.as_ref() {
                 Some(maps) => {
-                    let mut list = maps
+                    let maps = maps
                         .iter()
-                        .map(|(id, map)| MapListItem {
-                            id: *id,
-                            name: map.name.clone(),
-                        })
+                        .map(|(_, map)| map.to_owned())
                         .collect::<Vec<_>>();
 
-                    list.sort_by(|a, b| a.id.cmp(&b.id));
+                    tokio::spawn(async move {
+                        let mut list = Vec::with_capacity(maps.len());
+                        for i in 0..maps.len() {
+                            let item = maps[i].to_map_list_item().await;
+                            list.push(item);
+                        }
+                        list.sort_by(|a, b| a.id.cmp(&b.id));
 
-                    let _ = respond_to.send(list);
+                        let _ = respond_to.send(list);
+                    });
                 }
                 None => {
                     let _ = respond_to.send(Vec::new());

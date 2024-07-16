@@ -1,5 +1,6 @@
 mod command;
 pub use command::Command;
+mod event;
 mod load_maps;
 #[allow(clippy::module_inception)]
 mod world;

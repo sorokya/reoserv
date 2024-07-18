@@ -4,7 +4,7 @@ use eolib::protocol::{
     net::{
         server::{
             DialogEntry, DialogEntryEntryTypeData, DialogEntryEntryTypeDataLink, DialogEntryType,
-            DialogQuestEntry, QuestDialogServerPacket,
+            DialogQuestEntry, QuestDialogServerPacket, QuestReportServerPacket,
         },
         PacketAction, PacketFamily,
     },
@@ -166,5 +166,37 @@ impl Map {
                 dialog_entries,
             },
         );
+
+        let messages = quest.states[progress.state as usize]
+            .actions
+            .iter()
+            .filter_map(|action| {
+                if action.name == "AddNpcChat" && action.args[0] == Arg::Int(npc_data.behavior_id) {
+                    Some(match &action.args[1] {
+                        Arg::Str(message) => message.to_owned(),
+                        _ => {
+                            error!("Invalid argument for AddNpcChat");
+                            return None;
+                        }
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<String>>();
+
+        if !messages.is_empty() {
+            let packet = QuestReportServerPacket {
+                npc_id: npc_index,
+                messages,
+            };
+
+            self.send_packet_near(
+                &npc.coords,
+                PacketAction::Report,
+                PacketFamily::Quest,
+                packet,
+            );
+        }
     }
 }

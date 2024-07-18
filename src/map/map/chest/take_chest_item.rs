@@ -54,10 +54,21 @@ impl Map {
         };
 
         let item = chest.items.remove(item_index);
-        if let Some(spawn) = chest
+
+        let spawn_time = match chest
+            .spawns
+            .iter()
+            .find(|spawn| spawn.item_id == item_id && spawn.slot == item.slot)
+        {
+            Some(spawn) => spawn.spawn_time,
+            None => 0,
+        };
+
+        // Updates last_taken for all spawns with the same slot and spawn time
+        for spawn in chest
             .spawns
             .iter_mut()
-            .find(|spawn| spawn.slot == item.slot)
+            .filter(|spawn| spawn.slot == item.slot && spawn.spawn_time == spawn_time)
         {
             spawn.last_taken = Utc::now();
         }

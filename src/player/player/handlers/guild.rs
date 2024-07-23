@@ -136,16 +136,19 @@ impl Player {
                 return;
             }
 
-            player.send_guild_reply(GuildReply::CreateBegin);
-
-            map.send_guild_create_requests(
-                player_id,
-                format!(
-                    "{} ({})",
-                    capitalize(&character.name.to_lowercase()),
-                    request.guild_tag.to_uppercase()
-                ),
-            );
+            if SETTINGS.guild.min_players == 1 {
+                player.send_guild_reply(GuildReply::CreateAddConfirm);
+            } else {
+                player.send_guild_reply(GuildReply::CreateBegin);
+                map.send_guild_create_requests(
+                    player_id,
+                    format!(
+                        "{} ({})",
+                        capitalize(&character.name.to_lowercase()),
+                        request.guild_tag.to_uppercase()
+                    ),
+                );
+            }
         });
     }
 

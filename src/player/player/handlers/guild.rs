@@ -1203,48 +1203,50 @@ impl Player {
                 }
             };
 
-            let leader_count = match conn
-                .exec_map(
-                    include_str!("../../../sql/get_count_guild_leader.sql"),
-                    params! {
-                        "guild_tag" => guild_tag,
+            if character.guild_rank == Some(1) {
+                let leader_count = match conn
+                    .exec_map(
+                        include_str!("../../../sql/get_count_guild_leader.sql"),
+                        params! {
+                            "guild_tag" => guild_tag,
+                        },
+                        |mut row: Row| row.take::<i32, usize>(0).unwrap(),
+                    )
+                    .await
+                {
+                    Ok(leader_counts) => match leader_counts.first() {
+                        Some(leader_count) => *leader_count,
+                        None => 0,
                     },
-                    |mut row: Row| row.take::<i32, usize>(0).unwrap(),
-                )
-                .await
-            {
-                Ok(leader_counts) => match leader_counts.first() {
-                    Some(leader_count) => *leader_count,
-                    None => 0,
-                },
-                Err(e) => {
-                    error!("Error getting leader count: {}", e);
+                    Err(e) => {
+                        error!("Error getting leader count: {}", e);
+                        return;
+                    }
+                };
+
+                if leader_count == 1 {
+                    player.send_server_message("You are the last leader and cannot leave the guild. You must promote someone else to leader first.");
+
+                    // This is dumb but it tricks the v28 client into keeping you in your guild
+                    player.send(
+                        PacketAction::Agree,
+                        PacketFamily::Guild,
+                        &GuildAgreeServerPacket {
+                            recruiter_id: player_id,
+                            guild_tag: guild_tag.to_owned(),
+                            guild_name: character.guild_name.unwrap().clone(),
+                            rank_name: character.guild_rank_string.unwrap().clone(),
+                        },
+                    );
+
+                    player.send(
+                        PacketAction::Accept,
+                        PacketFamily::Guild,
+                        &GuildAcceptServerPacket { rank: 1 },
+                    );
+
                     return;
                 }
-            };
-
-            if leader_count == 1 {
-                player.send_server_message("You are the last leader and cannot leave the guild. You must promote someone else to leader first.");
-
-                // This is dumb but it tricks the v28 client into keeping you in your guild
-                player.send(
-                    PacketAction::Agree,
-                    PacketFamily::Guild,
-                    &GuildAgreeServerPacket {
-                        recruiter_id: player_id,
-                        guild_tag: guild_tag.to_owned(),
-                        guild_name: character.guild_name.unwrap().clone(),
-                        rank_name: character.guild_rank_string.unwrap().clone(),
-                    },
-                );
-
-                player.send(
-                    PacketAction::Accept,
-                    PacketFamily::Guild,
-                    &GuildAcceptServerPacket { rank: 1 },
-                );
-
-                return;
             }
 
             map.leave_guild(player_id);
@@ -1477,7 +1479,7 @@ async fn get_guild_name(conn: &mut Conn, tag: &str) -> Option<String> {
 async fn get_new_member_guild_rank(conn: &mut Conn, tag: &str) -> Option<String> {
     match conn
         .exec_first::<Row, &str, Params>(
-            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 9 WHERE `tag` = :tag",
+            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 8 WHERE `tag` = :tag",
             params! {
                 "tag" => tag,
             },

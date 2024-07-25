@@ -31,9 +31,6 @@ pub enum Command {
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
-    GetChestIndex {
-        respond_to: oneshot::Sender<Option<usize>>,
-    },
     GetMap {
         respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
     },

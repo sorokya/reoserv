@@ -88,12 +88,6 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_chest_index(&self) -> Option<usize> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetChestIndex { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub async fn get_map(&self) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMap { respond_to: tx });

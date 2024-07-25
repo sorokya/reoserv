@@ -538,7 +538,7 @@ impl Map {
             Command::PartyRequest {
                 target_player_id,
                 request,
-            } => self.party_request(target_player_id, request).await,
+            } => self.party_request(target_player_id, request),
 
             Command::RequestToJoinGuild {
                 player_id,
@@ -611,7 +611,7 @@ impl Map {
                 }
             }
 
-            Command::SpawnItems => self.spawn_items().await,
+            Command::SpawnItems => self.spawn_items(),
 
             Command::SpawnNpc {
                 player_id,
@@ -620,7 +620,7 @@ impl Map {
                 speed,
             } => self.spawn_npc(player_id, npc_id, amount, speed),
 
-            Command::SpawnNpcs => self.spawn_npcs().await,
+            Command::SpawnNpcs => self.spawn_npcs(),
 
             Command::TalkToQuestNpc {
                 player_id,

@@ -9,7 +9,7 @@ use crate::{map::NPCBuilder, NPC_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn spawn_npcs(&mut self) {
+    pub fn spawn_npcs(&mut self) {
         self.npcs.retain(|_, n| n.spawn_index.is_some() || n.alive);
 
         if self.file.npcs.is_empty() {

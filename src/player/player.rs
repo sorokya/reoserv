@@ -139,9 +139,6 @@ impl Player {
                         .send(Err(InvalidStateError::new(ClientState::InGame, self.state)));
                 }
             }
-            Command::GetChestIndex { respond_to } => {
-                let _ = respond_to.send(self.chest_index);
-            }
             Command::GetMap { respond_to } => {
                 if let Some(map) = self.map.as_ref() {
                     let _ = respond_to.send(Ok(map.to_owned()));

@@ -6,19 +6,14 @@ use eolib::protocol::net::{
 use super::super::Map;
 
 impl Map {
-    pub async fn send_trade_update(&self, player_id: i32) {
+    pub fn send_trade_update(&self, player_id: i32, partner_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
 
         let player = match character.player.as_ref() {
-            Some(player) => player,
-            None => return,
-        };
-
-        let partner_id = match player.get_interact_player_id().await {
-            Some(partner_id) => partner_id,
+            Some(player) => player.to_owned(),
             None => return,
         };
 
@@ -28,51 +23,57 @@ impl Map {
         };
 
         let partner = match partner_character.player.as_ref() {
-            Some(partner) => partner,
+            Some(partner) => partner.to_owned(),
             None => return,
         };
 
-        let partner_accepted = partner.is_trade_accepted().await;
+        let partner_items = partner_character.trade_items.to_owned();
+        let your_items = character.trade_items.to_owned();
 
-        player.send(
-            PacketAction::Reply,
-            PacketFamily::Trade,
-            &TradeReplyServerPacket {
-                trade_data: TradeItemData {
-                    partner_player_id: partner_id,
-                    partner_items: partner_character.trade_items.clone(),
-                    your_player_id: player_id,
-                    your_items: character.trade_items.clone(),
-                },
-            },
-        );
+        tokio::spawn(async move {
+            let partner_accepted = partner.is_trade_accepted().await;
 
-        if partner_accepted {
-            partner.send(
-                PacketAction::Admin,
-                PacketFamily::Trade,
-                &TradeAdminServerPacket {
-                    trade_data: TradeItemData {
-                        partner_player_id: player_id,
-                        partner_items: character.trade_items.clone(),
-                        your_player_id: partner_id,
-                        your_items: partner_character.trade_items.clone(),
-                    },
-                },
-            );
-        } else {
-            partner.send(
+            player.send(
                 PacketAction::Reply,
                 PacketFamily::Trade,
                 &TradeReplyServerPacket {
                     trade_data: TradeItemData {
-                        partner_player_id: player_id,
-                        partner_items: character.trade_items.clone(),
-                        your_player_id: partner_id,
-                        your_items: partner_character.trade_items.clone(),
+                        partner_player_id: partner_id,
+                        partner_items: partner_items.to_owned(),
+                        your_player_id: player_id,
+                        your_items: your_items.to_owned(),
                     },
                 },
             );
-        }
+
+            if partner_accepted {
+                partner.set_trade_accepted(false);
+                partner.send(
+                    PacketAction::Admin,
+                    PacketFamily::Trade,
+                    &TradeAdminServerPacket {
+                        trade_data: TradeItemData {
+                            partner_player_id: player_id,
+                            partner_items: your_items,
+                            your_player_id: partner_id,
+                            your_items: partner_items,
+                        },
+                    },
+                );
+            } else {
+                partner.send(
+                    PacketAction::Reply,
+                    PacketFamily::Trade,
+                    &TradeReplyServerPacket {
+                        trade_data: TradeItemData {
+                            partner_player_id: player_id,
+                            partner_items: your_items,
+                            your_player_id: partner_id,
+                            your_items: partner_items,
+                        },
+                    },
+                );
+            }
+        });
     }
 }

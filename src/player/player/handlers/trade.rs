@@ -58,7 +58,12 @@ impl Player {
                 }
             };
 
-            map.add_trade_item(self.id, add.add_item);
+            let partner_id = match self.interact_player_id {
+                Some(id) => id,
+                None => return,
+            };
+
+            map.add_trade_item(self.id, partner_id, add.add_item);
         }
     }
 
@@ -72,7 +77,12 @@ impl Player {
                 }
             };
 
-            map.remove_trade_item(self.id, remove.item_id);
+            let partner_id = match self.interact_player_id {
+                Some(id) => id,
+                None => return,
+            };
+
+            map.remove_trade_item(self.id, partner_id, remove.item_id);
         }
     }
 
@@ -86,10 +96,15 @@ impl Player {
                 }
             };
 
+            let partner_id = match self.interact_player_id {
+                Some(id) => id,
+                None => return,
+            };
+
             if agree.agree {
-                map.agree_trade(self.id);
+                map.agree_trade(self.id, partner_id);
             } else {
-                map.disagree_trade(self.id);
+                map.disagree_trade(self.id, partner_id);
             }
         }
     }

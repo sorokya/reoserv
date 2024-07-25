@@ -6,7 +6,7 @@ use eolib::protocol::net::{
 use super::super::Map;
 
 impl Map {
-    pub async fn accept_trade(&mut self, player_id: i32) {
+    pub fn accept_trade(&mut self, player_id: i32, partner_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
@@ -17,12 +17,7 @@ impl Map {
         }
 
         let player = match character.player.as_ref() {
-            Some(player) => player,
-            None => return,
-        };
-
-        let partner_id = match player.get_interact_player_id().await {
-            Some(partner_id) => partner_id,
+            Some(player) => player.to_owned(),
             None => return,
         };
 
@@ -36,30 +31,40 @@ impl Map {
         }
 
         let partner = match partner_character.player.as_ref() {
-            Some(partner) => partner,
+            Some(partner) => partner.to_owned(),
             None => return,
         };
 
         player.set_trade_accepted(true);
 
-        if partner.is_trade_accepted().await {
-            self.complete_trade(player_id, partner_id).await;
-            return;
-        }
+        tokio::spawn(async move {
+            if partner.is_trade_accepted().await {
+                let map = match partner.get_map().await {
+                    Ok(map) => map,
+                    Err(e) => {
+                        error!("Failed to get map: {}", e);
+                        return;
+                    }
+                };
 
-        player.send(
-            PacketAction::Spec,
-            PacketFamily::Trade,
-            &TradeSpecServerPacket { agree: true },
-        );
+                map.complete_trade(player_id, partner_id);
+                return;
+            }
 
-        partner.send(
-            PacketAction::Agree,
-            PacketFamily::Trade,
-            &TradeAgreeServerPacket {
-                agree: true,
-                partner_player_id: player_id,
-            },
-        );
+            player.send(
+                PacketAction::Spec,
+                PacketFamily::Trade,
+                &TradeSpecServerPacket { agree: true },
+            );
+
+            partner.send(
+                PacketAction::Agree,
+                PacketFamily::Trade,
+                &TradeAgreeServerPacket {
+                    agree: true,
+                    partner_player_id: player_id,
+                },
+            );
+        });
     }
 }

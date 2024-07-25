@@ -39,10 +39,12 @@ pub enum Command {
     },
     AddTradeItem {
         player_id: i32,
+        partner_id: i32,
         item: Item,
     },
     AgreeTrade {
         player_id: i32,
+        partner_id: i32,
     },
     Attack {
         player_id: i32,
@@ -71,6 +73,10 @@ pub enum Command {
     CloseCaptcha {
         player_id: i32,
         experience: i32,
+    },
+    CompleteTrade {
+        player_id: i32,
+        partner_id: i32,
     },
     CraftItem {
         player_id: i32,
@@ -103,6 +109,7 @@ pub enum Command {
     },
     DisagreeTrade {
         player_id: i32,
+        partner_id: i32,
     },
     DropItem {
         player_id: i32,
@@ -315,6 +322,7 @@ pub enum Command {
     },
     RemoveTradeItem {
         player_id: i32,
+        partner_id: i32,
         item_id: i32,
     },
     RequestBook {

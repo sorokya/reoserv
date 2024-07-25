@@ -138,7 +138,7 @@ impl Map {
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
-            } => self.accept_trade_request(player_id, target_player_id).await,
+            } => self.accept_trade_request(player_id, target_player_id),
             Command::AcceptWeddingRequest { player_id } => self.accept_wedding_request(player_id),
             Command::AddChestItem {
                 player_id,
@@ -148,8 +148,15 @@ impl Map {
             Command::AddLockerItem { player_id, item } => {
                 self.add_locker_item(player_id, item).await
             }
-            Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
-            Command::AgreeTrade { player_id } => self.accept_trade(player_id).await,
+            Command::AddTradeItem {
+                player_id,
+                partner_id,
+                item,
+            } => self.add_trade_item(player_id, partner_id, item),
+            Command::AgreeTrade {
+                player_id,
+                partner_id,
+            } => self.accept_trade(player_id, partner_id),
             Command::Attack {
                 player_id: target_player_id,
                 direction,
@@ -181,6 +188,11 @@ impl Map {
                 experience,
             } => self.close_captcha(player_id, experience),
 
+            Command::CompleteTrade {
+                player_id,
+                partner_id,
+            } => self.complete_trade(player_id, partner_id),
+
             Command::CraftItem {
                 player_id,
                 npc_index,
@@ -211,7 +223,10 @@ impl Map {
                 self.deposit_guild_gold(player_id, amount)
             }
 
-            Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
+            Command::DisagreeTrade {
+                player_id,
+                partner_id,
+            } => self.unaccept_trade(player_id, partner_id),
 
             Command::DivorcePartner { player_id } => self.divorce_partner(player_id),
 
@@ -465,9 +480,11 @@ impl Map {
                 npc_index,
             } => self.remove_citizenship(player_id, npc_index),
 
-            Command::RemoveTradeItem { player_id, item_id } => {
-                self.remove_trade_item(player_id, item_id).await
-            }
+            Command::RemoveTradeItem {
+                player_id,
+                partner_id,
+                item_id,
+            } => self.remove_trade_item(player_id, partner_id, item_id),
 
             Command::ReplyToQuestNpc {
                 player_id,

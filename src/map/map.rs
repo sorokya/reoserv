@@ -463,9 +463,9 @@ impl Map {
                 track_id,
             } => self.play_jukebox_track(player_id, track_id),
 
-            Command::RecoverNpcs => self.recover_npcs().await,
+            Command::RecoverNpcs => self.recover_npcs(),
 
-            Command::RecoverPlayers => self.recover_players().await,
+            Command::RecoverPlayers => self.recover_players(),
 
             Command::RemoveBoardPost {
                 player_id,
@@ -528,7 +528,7 @@ impl Map {
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
-            } => self.request_paperdoll(player_id, target_player_id).await,
+            } => self.request_paperdoll(player_id, target_player_id),
 
             Command::RequestSleep {
                 player_id,

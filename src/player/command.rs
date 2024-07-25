@@ -52,9 +52,6 @@ pub enum Command {
     IsTradeAccepted {
         respond_to: oneshot::Sender<bool>,
     },
-    IsTrading {
-        respond_to: oneshot::Sender<bool>,
-    },
     QuestAction {
         action: String,
         args: Vec<Arg>,

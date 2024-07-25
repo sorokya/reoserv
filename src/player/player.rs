@@ -165,9 +165,6 @@ impl Player {
             Command::IsTradeAccepted { respond_to } => {
                 let _ = respond_to.send(self.trade_accepted);
             }
-            Command::IsTrading { respond_to } => {
-                let _ = respond_to.send(self.trading);
-            }
             Command::QuestAction { action, args } => self.quest_action(action, args).await,
             Command::RequestWarp {
                 map_id,

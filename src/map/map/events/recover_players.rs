@@ -6,7 +6,7 @@ use eolib::protocol::net::{
 use super::super::Map;
 
 impl Map {
-    pub async fn recover_players(&mut self) {
+    pub fn recover_players(&mut self) {
         for character in self.characters.values_mut() {
             let divisor = match character.sit_state {
                 SitState::Stand => 5,

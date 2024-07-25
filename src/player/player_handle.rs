@@ -148,12 +148,6 @@ impl PlayerHandle {
         (rx.await).unwrap_or(false)
     }
 
-    pub async fn is_trading(&self) -> bool {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::IsTrading { respond_to: tx });
-        (rx.await).unwrap_or(false)
-    }
-
     pub fn quest_action(&self, action: String, args: Vec<Arg>) {
         let _ = self.tx.send(Command::QuestAction { action, args });
     }

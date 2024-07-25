@@ -38,11 +38,6 @@ impl Map {
                 None => return,
             };
 
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => return,
-            };
-
             if character.map_id == SETTINGS.jail.map {
                 return;
             }

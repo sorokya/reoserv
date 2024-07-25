@@ -332,8 +332,9 @@ impl Player {
         }
         .unwrap();
 
+        let username: String = row.get("name").unwrap();
         let password_hash: String = row.get("password_hash").unwrap();
-        if !validate_password(&agree.username, &agree.old_password, &password_hash) {
+        if !validate_password(&username, &agree.old_password, &password_hash) {
             let _ = self
                 .bus
                 .send(
@@ -352,7 +353,7 @@ impl Player {
 
         let account_id: i32 = row.get("id").unwrap();
 
-        let password_hash = generate_password_hash(&agree.username, &agree.new_password);
+        let password_hash = generate_password_hash(&username, &agree.new_password);
         if let Err(e) = conn
             .exec_drop(
                 include_str!("../../../sql/update_password_hash.sql"),

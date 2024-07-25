@@ -159,8 +159,9 @@ impl Player {
         }
         .unwrap();
 
+        let username: String = row.get("name").unwrap();
         let password_hash: String = row.get("password_hash").unwrap();
-        if !validate_password(&request.username, &request.password, &password_hash) {
+        if !validate_password(&username, &request.password, &password_hash) {
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;

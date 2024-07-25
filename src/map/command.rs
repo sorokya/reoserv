@@ -30,6 +30,7 @@ pub enum Command {
     },
     AddChestItem {
         player_id: i32,
+        chest_index: usize,
         item: Item,
     },
     AddLockerItem {
@@ -443,6 +444,7 @@ pub enum Command {
     },
     TakeChestItem {
         player_id: i32,
+        chest_index: usize,
         item_id: i32,
     },
     TakeLockerItem {

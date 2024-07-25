@@ -140,7 +140,11 @@ impl Map {
                 target_player_id,
             } => self.accept_trade_request(player_id, target_player_id).await,
             Command::AcceptWeddingRequest { player_id } => self.accept_wedding_request(player_id),
-            Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
+            Command::AddChestItem {
+                player_id,
+                chest_index,
+                item,
+            } => self.add_chest_item(player_id, chest_index, item),
             Command::AddLockerItem { player_id, item } => {
                 self.add_locker_item(player_id, item).await
             }
@@ -610,8 +614,12 @@ impl Map {
                 session_id,
             } => self.talk_to_quest_npc(player_id, npc_index, quest_id, session_id),
 
-            Command::TakeChestItem { player_id, item_id } => {
-                self.take_chest_item(player_id, item_id).await;
+            Command::TakeChestItem {
+                player_id,
+                chest_index,
+                item_id,
+            } => {
+                self.take_chest_item(player_id, chest_index, item_id);
             }
 
             Command::TakeLockerItem { player_id, item_id } => {

@@ -12,20 +12,9 @@ use crate::{map::Chest, utils::get_distance};
 use super::super::Map;
 
 impl Map {
-    // TODO: Make sure player can hold item before taking
-    pub async fn take_chest_item(&mut self, player_id: i32, item_id: i32) {
+    pub fn take_chest_item(&mut self, player_id: i32, chest_index: usize, item_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
-            None => return,
-        };
-
-        let player = match character.player.as_ref() {
-            Some(player) => player,
-            None => return,
-        };
-
-        let chest_index = match player.get_chest_index().await {
-            Some(index) => index,
             None => return,
         };
 
@@ -52,6 +41,15 @@ impl Map {
             Some(index) => index,
             None => return,
         };
+
+        let item = match chest.items.get(item_index) {
+            Some(item) => item,
+            None => return,
+        };
+
+        if character.can_hold(item.item_id, item.amount) == 0 {
+            return;
+        }
 
         let item = chest.items.remove(item_index);
 
@@ -123,16 +121,7 @@ impl Map {
                 None => continue,
             };
 
-            let player_chest_index = match player.get_chest_index().await {
-                Some(index) => index,
-                None => continue,
-            };
-
-            if player_chest_index != chest_index {
-                continue;
-            }
-
-            player.send_buf(PacketAction::Agree, PacketFamily::Chest, buf.clone());
+            player.update_chest_content(chest_index, buf.clone());
         }
     }
 }

@@ -83,4 +83,8 @@ pub enum Command {
     UpdatePartyHP {
         hp_percentage: i32,
     },
+    UpdateChestContent {
+        chest_index: usize,
+        buf: Bytes,
+    },
 }

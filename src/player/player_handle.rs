@@ -239,6 +239,12 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Tick);
     }
 
+    pub fn update_chest_content(&self, chest_index: usize, buf: Bytes) {
+        let _ = self
+            .tx
+            .send(Command::UpdateChestContent { chest_index, buf });
+    }
+
     pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
     }

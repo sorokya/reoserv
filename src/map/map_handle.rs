@@ -54,8 +54,12 @@ impl MapHandle {
         let _ = self.tx.send(Command::AcceptWeddingRequest { player_id });
     }
 
-    pub fn add_chest_item(&self, player_id: i32, item: Item) {
-        let _ = self.tx.send(Command::AddChestItem { player_id, item });
+    pub fn add_chest_item(&self, player_id: i32, chest_index: usize, item: Item) {
+        let _ = self.tx.send(Command::AddChestItem {
+            player_id,
+            chest_index,
+            item,
+        });
     }
 
     pub fn add_locker_item(&self, player_id: i32, item: Item) {
@@ -744,8 +748,12 @@ impl MapHandle {
         });
     }
 
-    pub fn take_chest_item(&self, player_id: i32, item_id: i32) {
-        let _ = self.tx.send(Command::TakeChestItem { player_id, item_id });
+    pub fn take_chest_item(&self, player_id: i32, chest_index: usize, item_id: i32) {
+        let _ = self.tx.send(Command::TakeChestItem {
+            player_id,
+            chest_index,
+            item_id,
+        });
     }
 
     pub fn take_locker_item(&self, player_id: i32, item_id: i32) {

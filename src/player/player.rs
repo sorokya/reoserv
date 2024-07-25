@@ -66,6 +66,7 @@ mod show_captcha;
 mod take_session_id;
 mod tick;
 mod update_captcha;
+mod update_chest_content;
 
 impl Player {
     pub fn new(
@@ -217,6 +218,9 @@ impl Player {
             }
             Command::ShowCaptcha { experience } => self.show_captcha(experience).await,
             Command::Tick => return self.tick().await,
+            Command::UpdateChestContent { chest_index, buf } => {
+                self.update_chest_content(chest_index, buf).await;
+            }
             Command::UpdatePartyHP { hp_percentage } => {
                 if self.state == ClientState::InGame {
                     self.world.update_party_hp(self.id, hp_percentage);

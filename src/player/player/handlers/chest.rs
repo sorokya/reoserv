@@ -19,8 +19,18 @@ impl Player {
                 }
             };
 
+            let chest_index = match self.chest_index {
+                Some(index) => index,
+                None => return,
+            };
+
+            if self.trading {
+                return;
+            }
+
             map.add_chest_item(
                 self.id,
+                chest_index,
                 Item {
                     id: add.add_item.id,
                     amount: add.add_item.amount,
@@ -52,7 +62,16 @@ impl Player {
                 }
             };
 
-            map.take_chest_item(self.id, take.take_item_id);
+            let chest_index = match self.chest_index {
+                Some(index) => index,
+                None => return,
+            };
+
+            if self.trading {
+                return;
+            }
+
+            map.take_chest_item(self.id, chest_index, take.take_item_id);
         }
     }
 

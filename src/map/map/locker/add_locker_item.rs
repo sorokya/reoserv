@@ -14,7 +14,7 @@ use crate::SETTINGS;
 use super::super::Map;
 
 impl Map {
-    pub async fn add_locker_item(&mut self, player_id: i32, item: Item) {
+    pub fn add_locker_item(&mut self, player_id: i32, item: Item) {
         if item.id <= 1 || item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
             return;
         }
@@ -23,18 +23,6 @@ impl Map {
             Some(character) => character,
             None => return,
         };
-
-        // TODO: move this check to player thread
-        {
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => return,
-            };
-
-            if player.is_trading().await {
-                return;
-            }
-        }
 
         let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
         if character.bank.len() as i32 >= bank_size {

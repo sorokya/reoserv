@@ -23,6 +23,10 @@ impl Player {
                 }
             };
 
+            if self.trading {
+                return;
+            }
+
             map.drop_item(self.id, drop.item, drop.coords);
         }
     }
@@ -50,6 +54,10 @@ impl Player {
                     return;
                 }
             };
+
+            if self.trading {
+                return;
+            }
 
             map.junk_item(self.id, junk.item.id, junk.item.amount);
         }

@@ -19,6 +19,10 @@ impl Player {
                 }
             };
 
+            if self.trading {
+                return;
+            }
+
             map.add_locker_item(
                 self.id,
                 Item {

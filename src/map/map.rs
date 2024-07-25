@@ -145,9 +145,7 @@ impl Map {
                 chest_index,
                 item,
             } => self.add_chest_item(player_id, chest_index, item),
-            Command::AddLockerItem { player_id, item } => {
-                self.add_locker_item(player_id, item).await
-            }
+            Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
             Command::AddTradeItem {
                 player_id,
                 partner_id,
@@ -234,7 +232,7 @@ impl Map {
                 player_id: target_player_id,
                 item,
                 coords,
-            } => self.drop_item(target_player_id, item, coords).await,
+            } => self.drop_item(target_player_id, item, coords),
 
             Command::EffectOnCoord { coords, effect_id } => {
                 self.effect_on_coords(&[coords], effect_id)
@@ -361,7 +359,7 @@ impl Map {
                 player_id: target_player_id,
                 item_id,
                 amount,
-            } => self.junk_item(target_player_id, item_id, amount).await,
+            } => self.junk_item(target_player_id, item_id, amount),
 
             Command::KickFromGuild { player_id } => self.kick_from_guild(player_id),
 

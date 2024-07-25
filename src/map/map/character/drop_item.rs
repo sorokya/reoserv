@@ -15,7 +15,7 @@ use crate::{utils::get_distance, ITEM_DB, SETTINGS};
 use super::super::Map;
 
 impl Map {
-    pub async fn drop_item(&mut self, player_id: i32, item: ThreeItem, coords: ByteCoords) {
+    pub fn drop_item(&mut self, player_id: i32, item: ThreeItem, coords: ByteCoords) {
         if item.amount <= 0
             || item.amount > SETTINGS.limits.max_item
             || SETTINGS.items.protected_items.contains(&item.id)
@@ -44,11 +44,6 @@ impl Map {
             };
 
             if character.map_id == SETTINGS.jail.map {
-                return;
-            }
-
-            // TODO: Validate in player thread
-            if player.is_trading().await {
                 return;
             }
 

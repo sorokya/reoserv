@@ -12,11 +12,11 @@ pub struct BossPingServerPacket {
 impl EoSerialize for BossPingServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.npc_index = reader.get_short()?;
-        packet.npc_id = reader.get_short()?;
-        packet.hp = reader.get_three()?;
-        packet.hp_percentage = reader.get_char()?;
-        packet.killed = reader.get_char()? == 1;
+        packet.npc_index = reader.get_short();
+        packet.npc_id = reader.get_short();
+        packet.hp = reader.get_three();
+        packet.hp_percentage = reader.get_char();
+        packet.killed = reader.get_char() == 1;
         Ok(packet)
     }
 

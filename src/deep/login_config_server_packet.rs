@@ -10,9 +10,9 @@ pub struct LoginConfigServerPacket {
 impl EoSerialize for LoginConfigServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.max_skins = reader.get_short()?;
-        packet.max_hair_modals = reader.get_short()?;
-        packet.max_character_name = reader.get_char()?;
+        packet.max_skins = reader.get_short();
+        packet.max_hair_modals = reader.get_short();
+        packet.max_character_name = reader.get_char();
         Ok(packet)
     }
 

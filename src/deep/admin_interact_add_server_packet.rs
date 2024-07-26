@@ -14,7 +14,7 @@ impl EoSerialize for AdminInteractAddServerPacket {
         let mut packet = Self::default();
         reader.set_chunked_reading_mode(true);
 
-        while reader.remaining()? > 0 {
+        while reader.remaining() > 0 {
             packet.lines.push(EoSerialize::deserialize(reader)?);
         }
 

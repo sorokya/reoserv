@@ -8,7 +8,7 @@ pub struct LoginAcceptClientPacket {
 impl EoSerialize for LoginAcceptClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.pin = reader.get_string()?;
+        packet.pin = reader.get_string();
         Ok(packet)
     }
 

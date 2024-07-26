@@ -11,8 +11,8 @@ pub struct AdminInteractTakeClientPacket {
 impl EoSerialize for AdminInteractTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.lookup_type = LookupType::from(reader.get_char()?);
-        packet.id = reader.get_short()?;
+        packet.lookup_type = LookupType::from(reader.get_char());
+        packet.id = reader.get_short();
         Ok(packet)
     }
 

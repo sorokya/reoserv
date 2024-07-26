@@ -43,14 +43,7 @@ impl Player {
 
         if let Some(email_pin) = &self.email_pin {
             reader.set_chunked_reading_mode(true);
-            let pin = match reader.get_string() {
-                Ok(code) => code,
-                Err(e) => {
-                    self.close(format!("Failed to get email code: {}", e)).await;
-                    return;
-                }
-            };
-
+            let pin = reader.get_string();
             if pin != *email_pin {
                 let _ = self
                     .bus

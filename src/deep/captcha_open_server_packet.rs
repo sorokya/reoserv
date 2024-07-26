@@ -12,10 +12,10 @@ impl EoSerialize for CaptchaOpenServerPacket {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
         let mut packet = Self::default();
-        packet.id = reader.get_short()?;
-        packet.reward_exp = reader.get_three()?;
+        packet.id = reader.get_short();
+        packet.reward_exp = reader.get_three();
         if reader.next_chunk().is_ok() {
-            packet.captcha = Some(reader.get_string()?);
+            packet.captcha = Some(reader.get_string());
         }
         reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)

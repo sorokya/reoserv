@@ -88,12 +88,6 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_chest_index(&self) -> Option<usize> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::GetChestIndex { respond_to: tx });
-        rx.await.unwrap()
-    }
-
     pub async fn get_map(&self) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMap { respond_to: tx });
@@ -145,12 +139,6 @@ impl PlayerHandle {
     pub async fn is_trade_accepted(&self) -> bool {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });
-        (rx.await).unwrap_or(false)
-    }
-
-    pub async fn is_trading(&self) -> bool {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::IsTrading { respond_to: tx });
         (rx.await).unwrap_or(false)
     }
 
@@ -237,6 +225,12 @@ impl PlayerHandle {
 
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
+    }
+
+    pub fn update_chest_content(&self, chest_index: usize, buf: Bytes) {
+        let _ = self
+            .tx
+            .send(Command::UpdateChestContent { chest_index, buf });
     }
 
     pub fn update_party_hp(&self, hp_percentage: i32) {

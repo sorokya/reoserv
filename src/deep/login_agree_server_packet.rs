@@ -10,7 +10,7 @@ pub struct LoginAgreeServerPacket {
 impl EoSerialize for LoginAgreeServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.reply_code = AccountRecoverUpdateReply::from(reader.get_short()?);
+        packet.reply_code = AccountRecoverUpdateReply::from(reader.get_short());
         Ok(packet)
     }
 

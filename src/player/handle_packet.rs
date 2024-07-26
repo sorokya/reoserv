@@ -11,7 +11,7 @@ use super::{ClientState, Player};
 impl Player {
     pub async fn handle_packet(&mut self, packet: Bytes) {
         let reader = EoReader::new(packet);
-        let action = PacketAction::from(reader.get_byte().unwrap_or(0xfe));
+        let action = PacketAction::from(reader.get_byte());
         if let PacketAction::Unrecognized(id) = action {
             if id != 0xfe {
                 self.close("invalid packet action".to_string()).await;
@@ -19,7 +19,7 @@ impl Player {
             }
         }
 
-        let family = PacketFamily::from(reader.get_byte().unwrap_or(0xfe));
+        let family = PacketFamily::from(reader.get_byte());
         if let PacketFamily::Unrecognized(id) = family {
             if id != 0xfe && id != FAMILY_CAPTCHA {
                 self.close("invalid packet family".to_string()).await;
@@ -36,7 +36,7 @@ impl Player {
                 }
 
                 let server_sequence = self.bus.sequencer.next_sequence();
-                let client_sequence = reader.get_char().unwrap_or_default();
+                let client_sequence = reader.get_char();
 
                 if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
                     self.close(format!(

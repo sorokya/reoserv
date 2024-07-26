@@ -8,7 +8,7 @@ pub struct CaptchaCloseServerPacket {
 impl EoSerialize for CaptchaCloseServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.experience = reader.get_int()?;
+        packet.experience = reader.get_int();
         Ok(packet)
     }
 

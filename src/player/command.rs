@@ -31,9 +31,6 @@ pub enum Command {
     GetCharacter {
         respond_to: oneshot::Sender<Result<Box<Character>, InvalidStateError>>,
     },
-    GetChestIndex {
-        respond_to: oneshot::Sender<Option<usize>>,
-    },
     GetMap {
         respond_to: oneshot::Sender<Result<MapHandle, InvalidStateError>>,
     },
@@ -50,9 +47,6 @@ pub enum Command {
         respond_to: oneshot::Sender<ClientState>,
     },
     IsTradeAccepted {
-        respond_to: oneshot::Sender<bool>,
-    },
-    IsTrading {
         respond_to: oneshot::Sender<bool>,
     },
     QuestAction {
@@ -82,5 +76,9 @@ pub enum Command {
     Tick,
     UpdatePartyHP {
         hp_percentage: i32,
+    },
+    UpdateChestContent {
+        chest_index: usize,
+        buf: Bytes,
     },
 }

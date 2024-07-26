@@ -11,9 +11,9 @@ impl EoSerialize for ItemReportClientPacket {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
         let mut packet = Self::default();
-        packet.item_id = reader.get_short()?;
+        packet.item_id = reader.get_short();
         reader.next_chunk()?;
-        packet.title = reader.get_string()?;
+        packet.title = reader.get_string();
         reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)
     }

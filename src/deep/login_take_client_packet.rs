@@ -5,7 +5,7 @@ pub struct LoginTakeClientPacket;
 
 impl EoSerialize for LoginTakeClientPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
-        reader.get_byte()?;
+        reader.get_byte();
         Ok(Self)
     }
 

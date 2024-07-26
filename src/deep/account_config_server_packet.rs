@@ -9,8 +9,8 @@ pub struct AccountConfigServerPacket {
 impl EoSerialize for AccountConfigServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.delay_time = reader.get_short()?;
-        packet.email_validation = reader.get_char()? == 1;
+        packet.delay_time = reader.get_short();
+        packet.email_validation = reader.get_char() == 1;
         Ok(packet)
     }
 

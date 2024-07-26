@@ -138,14 +138,23 @@ impl Map {
             Command::AcceptTradeRequest {
                 player_id,
                 target_player_id,
-            } => self.accept_trade_request(player_id, target_player_id).await,
+            } => self.accept_trade_request(player_id, target_player_id),
             Command::AcceptWeddingRequest { player_id } => self.accept_wedding_request(player_id),
-            Command::AddChestItem { player_id, item } => self.add_chest_item(player_id, item).await,
-            Command::AddLockerItem { player_id, item } => {
-                self.add_locker_item(player_id, item).await
-            }
-            Command::AddTradeItem { player_id, item } => self.add_trade_item(player_id, item).await,
-            Command::AgreeTrade { player_id } => self.accept_trade(player_id).await,
+            Command::AddChestItem {
+                player_id,
+                chest_index,
+                item,
+            } => self.add_chest_item(player_id, chest_index, item),
+            Command::AddLockerItem { player_id, item } => self.add_locker_item(player_id, item),
+            Command::AddTradeItem {
+                player_id,
+                partner_id,
+                item,
+            } => self.add_trade_item(player_id, partner_id, item),
+            Command::AgreeTrade {
+                player_id,
+                partner_id,
+            } => self.accept_trade(player_id, partner_id),
             Command::Attack {
                 player_id: target_player_id,
                 direction,
@@ -177,6 +186,11 @@ impl Map {
                 experience,
             } => self.close_captcha(player_id, experience),
 
+            Command::CompleteTrade {
+                player_id,
+                partner_id,
+            } => self.complete_trade(player_id, partner_id),
+
             Command::CraftItem {
                 player_id,
                 npc_index,
@@ -207,7 +221,10 @@ impl Map {
                 self.deposit_guild_gold(player_id, amount)
             }
 
-            Command::DisagreeTrade { player_id } => self.unaccept_trade(player_id).await,
+            Command::DisagreeTrade {
+                player_id,
+                partner_id,
+            } => self.unaccept_trade(player_id, partner_id),
 
             Command::DivorcePartner { player_id } => self.divorce_partner(player_id),
 
@@ -215,7 +232,7 @@ impl Map {
                 player_id: target_player_id,
                 item,
                 coords,
-            } => self.drop_item(target_player_id, item, coords).await,
+            } => self.drop_item(target_player_id, item, coords),
 
             Command::EffectOnCoord { coords, effect_id } => {
                 self.effect_on_coords(&[coords], effect_id)
@@ -342,7 +359,7 @@ impl Map {
                 player_id: target_player_id,
                 item_id,
                 amount,
-            } => self.junk_item(target_player_id, item_id, amount).await,
+            } => self.junk_item(target_player_id, item_id, amount),
 
             Command::KickFromGuild { player_id } => self.kick_from_guild(player_id),
 
@@ -446,9 +463,9 @@ impl Map {
                 track_id,
             } => self.play_jukebox_track(player_id, track_id),
 
-            Command::RecoverNpcs => self.recover_npcs().await,
+            Command::RecoverNpcs => self.recover_npcs(),
 
-            Command::RecoverPlayers => self.recover_players().await,
+            Command::RecoverPlayers => self.recover_players(),
 
             Command::RemoveBoardPost {
                 player_id,
@@ -461,9 +478,11 @@ impl Map {
                 npc_index,
             } => self.remove_citizenship(player_id, npc_index),
 
-            Command::RemoveTradeItem { player_id, item_id } => {
-                self.remove_trade_item(player_id, item_id).await
-            }
+            Command::RemoveTradeItem {
+                player_id,
+                partner_id,
+                item_id,
+            } => self.remove_trade_item(player_id, partner_id, item_id),
 
             Command::ReplyToQuestNpc {
                 player_id,
@@ -509,7 +528,7 @@ impl Map {
             Command::RequestPaperdoll {
                 player_id,
                 target_player_id,
-            } => self.request_paperdoll(player_id, target_player_id).await,
+            } => self.request_paperdoll(player_id, target_player_id),
 
             Command::RequestSleep {
                 player_id,
@@ -519,7 +538,7 @@ impl Map {
             Command::PartyRequest {
                 target_player_id,
                 request,
-            } => self.party_request(target_player_id, request).await,
+            } => self.party_request(target_player_id, request),
 
             Command::RequestToJoinGuild {
                 player_id,
@@ -592,7 +611,7 @@ impl Map {
                 }
             }
 
-            Command::SpawnItems => self.spawn_items().await,
+            Command::SpawnItems => self.spawn_items(),
 
             Command::SpawnNpc {
                 player_id,
@@ -601,7 +620,7 @@ impl Map {
                 speed,
             } => self.spawn_npc(player_id, npc_id, amount, speed),
 
-            Command::SpawnNpcs => self.spawn_npcs().await,
+            Command::SpawnNpcs => self.spawn_npcs(),
 
             Command::TalkToQuestNpc {
                 player_id,
@@ -610,8 +629,12 @@ impl Map {
                 session_id,
             } => self.talk_to_quest_npc(player_id, npc_index, quest_id, session_id),
 
-            Command::TakeChestItem { player_id, item_id } => {
-                self.take_chest_item(player_id, item_id).await;
+            Command::TakeChestItem {
+                player_id,
+                chest_index,
+                item_id,
+            } => {
+                self.take_chest_item(player_id, chest_index, item_id);
             }
 
             Command::TakeLockerItem { player_id, item_id } => {

@@ -1,6 +1,4 @@
-use eolib::{
-    protocol::net::{server::TradeCloseServerPacket, PacketAction, PacketFamily},
-};
+use eolib::protocol::net::{server::TradeCloseServerPacket, PacketAction, PacketFamily};
 
 use super::Player;
 

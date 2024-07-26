@@ -8,12 +8,12 @@ use eolib::protocol::{
     Emote,
 };
 
-use crate::{SETTINGS};
+use crate::SETTINGS;
 
 use super::super::Map;
 
 impl Map {
-    pub async fn complete_trade(&mut self, player_id: i32, partner_id: i32) {
+    pub fn complete_trade(&mut self, player_id: i32, partner_id: i32) {
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,

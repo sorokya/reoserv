@@ -12,11 +12,11 @@ impl EoSerialize for LoginAgreeClientPacket {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
         let mut packet = Self::default();
-        packet.account_name = reader.get_string()?;
+        packet.account_name = reader.get_string();
         reader.next_chunk()?;
-        packet.pin = reader.get_string()?;
+        packet.pin = reader.get_string();
         reader.next_chunk()?;
-        packet.password = reader.get_string()?;
+        packet.password = reader.get_string();
         reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)
     }

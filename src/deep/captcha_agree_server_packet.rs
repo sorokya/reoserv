@@ -9,8 +9,8 @@ pub struct CaptchaAgreeServerPacket {
 impl EoSerialize for CaptchaAgreeServerPacket {
     fn deserialize(reader: &EoReader) -> Result<Self, EoReaderError> {
         let mut packet = Self::default();
-        packet.id = reader.get_short()?;
-        packet.captcha = reader.get_string()?;
+        packet.id = reader.get_short();
+        packet.captcha = reader.get_string();
         Ok(packet)
     }
 

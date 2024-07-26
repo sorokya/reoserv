@@ -13,10 +13,10 @@ impl EoSerialize for LoginCreateServerPacket {
         let current_chunked_reading_mode = reader.get_chunked_reading_mode();
         reader.set_chunked_reading_mode(true);
         let mut packet = Self::default();
-        packet.reply_code = AccountRecoverReply::from(reader.get_short()?);
+        packet.reply_code = AccountRecoverReply::from(reader.get_short());
         reader.next_chunk()?;
-        if reader.remaining()? > 0 {
-            packet.email_address = Some(reader.get_string()?);
+        if reader.remaining() > 0 {
+            packet.email_address = Some(reader.get_string());
         }
         reader.set_chunked_reading_mode(current_chunked_reading_mode);
         Ok(packet)

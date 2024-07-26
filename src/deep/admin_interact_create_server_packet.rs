@@ -15,10 +15,10 @@ impl EoSerialize for AdminInteractCreateServerPacket {
         let mut packet = Self::default();
         reader.set_chunked_reading_mode(true);
 
-        packet.title = reader.get_string()?;
+        packet.title = reader.get_string();
         reader.next_chunk()?;
 
-        while reader.remaining()? > 0 {
+        while reader.remaining() > 0 {
             packet.lines.push(EoSerialize::deserialize(reader)?);
         }
 

@@ -54,20 +54,31 @@ impl MapHandle {
         let _ = self.tx.send(Command::AcceptWeddingRequest { player_id });
     }
 
-    pub fn add_chest_item(&self, player_id: i32, item: Item) {
-        let _ = self.tx.send(Command::AddChestItem { player_id, item });
+    pub fn add_chest_item(&self, player_id: i32, chest_index: usize, item: Item) {
+        let _ = self.tx.send(Command::AddChestItem {
+            player_id,
+            chest_index,
+            item,
+        });
     }
 
     pub fn add_locker_item(&self, player_id: i32, item: Item) {
         let _ = self.tx.send(Command::AddLockerItem { player_id, item });
     }
 
-    pub fn add_trade_item(&self, player_id: i32, item: Item) {
-        let _ = self.tx.send(Command::AddTradeItem { player_id, item });
+    pub fn add_trade_item(&self, player_id: i32, partner_id: i32, item: Item) {
+        let _ = self.tx.send(Command::AddTradeItem {
+            player_id,
+            partner_id,
+            item,
+        });
     }
 
-    pub fn agree_trade(&self, player_id: i32) {
-        let _ = self.tx.send(Command::AgreeTrade { player_id });
+    pub fn agree_trade(&self, player_id: i32, partner_id: i32) {
+        let _ = self.tx.send(Command::AgreeTrade {
+            player_id,
+            partner_id,
+        });
     }
 
     pub fn buy_item(&self, player_id: i32, npc_index: i32, item: Item) {
@@ -102,6 +113,13 @@ impl MapHandle {
         let _ = self.tx.send(Command::CloseCaptcha {
             player_id,
             experience,
+        });
+    }
+
+    pub fn complete_trade(&self, player_id: i32, partner_id: i32) {
+        let _ = self.tx.send(Command::CompleteTrade {
+            player_id,
+            partner_id,
         });
     }
 
@@ -151,8 +169,11 @@ impl MapHandle {
             .send(Command::DepositGuildGold { player_id, amount });
     }
 
-    pub fn disagree_trade(&self, player_id: i32) {
-        let _ = self.tx.send(Command::DisagreeTrade { player_id });
+    pub fn disagree_trade(&self, player_id: i32, partner_id: i32) {
+        let _ = self.tx.send(Command::DisagreeTrade {
+            player_id,
+            partner_id,
+        });
     }
 
     pub fn divorce_partner(&self, player_id: i32) {
@@ -500,10 +521,12 @@ impl MapHandle {
         });
     }
 
-    pub fn remove_trade_item(&self, player_id: i32, item_id: i32) {
-        let _ = self
-            .tx
-            .send(Command::RemoveTradeItem { player_id, item_id });
+    pub fn remove_trade_item(&self, player_id: i32, partner_id: i32, item_id: i32) {
+        let _ = self.tx.send(Command::RemoveTradeItem {
+            player_id,
+            partner_id,
+            item_id,
+        });
     }
 
     pub fn reply_to_quest_npc(
@@ -744,8 +767,12 @@ impl MapHandle {
         });
     }
 
-    pub fn take_chest_item(&self, player_id: i32, item_id: i32) {
-        let _ = self.tx.send(Command::TakeChestItem { player_id, item_id });
+    pub fn take_chest_item(&self, player_id: i32, chest_index: usize, item_id: i32) {
+        let _ = self.tx.send(Command::TakeChestItem {
+            player_id,
+            chest_index,
+            item_id,
+        });
     }
 
     pub fn take_locker_item(&self, player_id: i32, item_id: i32) {

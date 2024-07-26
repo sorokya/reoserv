@@ -14,8 +14,6 @@ impl Map {
             character.save(&mut conn).await.unwrap();
         }
 
-        // TODO: Save map state
-
         let _ = respond_to.send(());
     }
 }

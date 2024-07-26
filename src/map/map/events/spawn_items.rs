@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::ChestAgreeServerPacket, PacketAction, PacketFamily, ThreeItem},
+    protocol::net::{server::ChestAgreeServerPacket, ThreeItem},
 };
 use rand::seq::SliceRandom;
 
@@ -10,12 +10,11 @@ use crate::{map::chest::ChestItem, utils::get_distance};
 use super::super::Map;
 
 impl Map {
-    pub async fn spawn_items(&mut self) {
+    pub fn spawn_items(&mut self) {
         if !self.file.items.is_empty() {
             let now = Utc::now();
             let mut chest_index: usize = 0;
             for chest in self.chests.iter_mut() {
-                chest_index += 1;
                 let max_slot = chest
                     .spawns
                     .iter()
@@ -90,23 +89,11 @@ impl Map {
                             None => continue,
                         };
 
-                        let player_chest_index = match player.get_chest_index().await {
-                            Some(index) => index,
-                            None => continue,
-                        };
-
-                        if player_chest_index != chest_index - 1 {
-                            continue;
-                        }
-
-                        let player = match character.player.as_ref() {
-                            Some(player) => player,
-                            None => continue,
-                        };
-
-                        player.send_buf(PacketAction::Agree, PacketFamily::Chest, buf.clone());
+                        player.update_chest_content(chest_index, buf.clone());
                     }
                 }
+
+                chest_index += 1;
             }
         }
     }

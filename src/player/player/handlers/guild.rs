@@ -1388,7 +1388,7 @@ async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9]
                 params! {
                     "rank" => rank,
                     "tag" => tag,
-                    "index" => index + 1,
+                    "index" => index,
                 },
             )
             .await

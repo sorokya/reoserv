@@ -240,16 +240,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    match signal::ctrl_c().await {
-        Ok(()) => {}
-        Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
+    tokio::select! {
+        ctrl_c = signal::ctrl_c() => match ctrl_c {
+            Ok(()) => {},
+            Err(err) => {
+                error!("Unable to listen for shutdown signal: {}", err);
+            }
+        },
+        close = close() => match close {
+            Ok(()) => {},
+            Err(err) => {
+                error!("Unable to listen for shutdown signal: {}", err);
+            }
         }
     }
 
     info!("Shutting down server...");
     world.shutdown().await;
 
+    Ok(())
+}
+
+#[cfg(windows)]
+async fn close() -> Result<(), Box<dyn std::error::Error>> {
+    let mut close_stream = signal::windows::ctrl_close()?;
+    close_stream.recv().await;
+    Ok(())
+}
+
+#[cfg(unix)]
+async fn close() -> Result<(), Box<dyn std::error::Error>> {
+    let mut stream = signal::unix::signal(signal::unix::SignalKind::terminate())?;
+    let _ = stream.recv().await;
     Ok(())
 }
 

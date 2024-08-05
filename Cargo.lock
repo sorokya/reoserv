@@ -832,16 +832,16 @@ dependencies = [
 
 [[package]]
 name = "duration-str"
-version = "0.7.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8bb6a301a95ba86fa0ebaf71d49ae4838c51f8b84cb88ed140dfb66452bb3c4"
+checksum = "709d653e7c92498eb29fb86a2a6f0f3502b97530f33aedb32ef848d4d28b31a3"
 dependencies = [
  "chrono",
- "nom",
  "rust_decimal",
  "serde",
  "thiserror",
  "time",
+ "winnow 0.6.18",
 ]
 
 [[package]]

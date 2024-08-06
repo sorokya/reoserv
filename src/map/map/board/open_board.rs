@@ -48,14 +48,21 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut conn = pool.get_conn().await.unwrap();
+            let mut conn = match pool.get_conn().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    error!("Failed to get connection from pool: {}", e);
+                    return;
+                }
+            };
+
             let limit = if board_id == SETTINGS.board.admin_board {
                 SETTINGS.board.admin_max_posts
             } else {
                 SETTINGS.board.max_posts
             };
 
-            let posts = conn
+            let posts = match conn
                 .exec_map(
                     include_str!("../../../sql/get_board_posts.sql"),
                     params! {
@@ -70,7 +77,13 @@ impl Map {
                     },
                 )
                 .await
-                .unwrap();
+            {
+                Ok(posts) => posts,
+                Err(e) => {
+                    error!("Failed to get board posts: {}", e);
+                    return;
+                }
+            };
 
             player.send(
                 PacketAction::Open,

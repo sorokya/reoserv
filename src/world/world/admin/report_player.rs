@@ -88,8 +88,15 @@ impl World {
     ) {
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut conn = pool.get_conn().await.unwrap();
-            conn.exec_drop(
+            let mut conn = match pool.get_conn().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    error!("Failed to get connection from pool: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = conn.exec_drop(
                 include_str!("../../../sql/create_board_post.sql"),
                 params! {
                     "board_id" => SETTINGS.board.admin_board,
@@ -98,7 +105,9 @@ impl World {
                     "body" => message,
                 },
             )
-            .await
+            .await {
+                error!("Failed to add report to admin board: {}", e);
+            }
         });
     }
 }

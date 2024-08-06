@@ -9,12 +9,22 @@ impl Player {
             let guild_tag = character.guild_tag.clone();
             let pool = self.pool.clone();
             tokio::spawn(async move {
-                let mut conn = pool.get_conn().await.unwrap();
+                let mut conn = match pool.get_conn().await {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        error!("Failed to get connection from pool: {}", e);
+                        return;
+                    }
+                };
+
                 if let Some(logged_in_at) = character.logged_in_at {
                     let now = chrono::Utc::now();
                     character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
                 }
-                character.save(&mut conn).await.unwrap();
+
+                if let Err(e) = character.save(&mut conn).await {
+                    error!("Failed to update character: {}", e);
+                }
             });
             (character_name, guild_tag)
         } else {

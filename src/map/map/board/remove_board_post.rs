@@ -31,7 +31,13 @@ impl Map {
 
         let pool = self.pool.clone();
         tokio::spawn(async move {
-            let mut conn = pool.get_conn().await.unwrap();
+            let mut conn = match pool.get_conn().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    error!("Failed to get connection from pool: {}", e);
+                    return;
+                }
+            };
 
             let map = match player.get_map().await {
                 Ok(map) => map,

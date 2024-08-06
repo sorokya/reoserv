@@ -7,7 +7,11 @@ use eolib::protocol::{
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, world::WorldHandle, SETTINGS};
+use crate::{
+    character::Character,
+    world::{MapListItem, WorldHandle},
+    SETTINGS,
+};
 
 use super::{Chest, Command, Door, Item, Npc, Wedding};
 
@@ -285,6 +289,10 @@ impl Map {
                 item_index,
             } => {
                 self.get_item(target_player_id, item_index);
+            }
+
+            Command::GetState { respond_to } => {
+                let _ = respond_to.send(self.get_state());
             }
 
             Command::GetNearbyInfo {
@@ -724,6 +732,15 @@ impl Map {
             } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
             Command::RequestRefresh { player_id } => self.request_refresh(player_id),
             Command::Quake { magnitude } => self.quake(magnitude),
+            Command::ToMapListItem { respond_to } => {
+                let _ = respond_to.send(MapListItem {
+                    id: self.id,
+                    name: self.file.name.clone(),
+                    players: self.characters.len() as i32,
+                    npcs: self.npcs.values().filter(|npc| npc.alive).count() as i32,
+                    items: self.items.len() as i32,
+                });
+            }
         }
     }
 }

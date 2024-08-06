@@ -4,7 +4,7 @@ use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
-use super::{Party, WorldHandle};
+use super::{MapListItem, Party, WorldHandle};
 
 #[derive(Debug)]
 pub enum Command {
@@ -104,6 +104,9 @@ pub enum Command {
     GetMap {
         map_id: i32,
         respond_to: oneshot::Sender<Result<MapHandle, Box<dyn std::error::Error + Send + Sync>>>,
+    },
+    GetMapList {
+        respond_to: oneshot::Sender<Vec<MapListItem>>,
     },
     GetNextPlayerId {
         respond_to: oneshot::Sender<i32>,

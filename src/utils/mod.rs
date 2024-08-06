@@ -46,3 +46,5 @@ mod send_email;
 pub use send_email::send_email;
 mod mask_email;
 pub use mask_email::mask_email;
+mod password_hash;
+pub use password_hash::{generate_password_hash, validate_password};

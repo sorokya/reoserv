@@ -23,12 +23,11 @@ use crate::{
     },
     player::{
         player::account::{
-            account_banned, account_exists, generate_password_hash, get_character_list,
-            update_last_login_ip, validate_password,
+            account_banned, account_exists, get_character_list, update_last_login_ip,
         },
         ClientState,
     },
-    utils::{is_deep, mask_email, send_email},
+    utils::{generate_password_hash, is_deep, mask_email, send_email, validate_password},
     EMAILS, SETTINGS,
 };
 

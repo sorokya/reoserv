@@ -13,7 +13,10 @@ use tokio::sync::oneshot;
 use crate::{
     character::{Character, SpellTarget},
     player::PartyRequest,
+    world::MapListItem,
 };
+
+use super::MapState;
 
 #[derive(Debug)]
 pub enum Command {
@@ -165,6 +168,9 @@ pub enum Command {
     GetNearbyInfo {
         player_id: i32,
         respond_to: oneshot::Sender<NearbyInfo>,
+    },
+    GetState {
+        respond_to: oneshot::Sender<MapState>,
     },
     GetNpcIdForIndex {
         npc_index: i32,
@@ -523,6 +529,9 @@ pub enum Command {
         speed: i32,
     },
     SpawnNpcs,
+    ToMapListItem {
+        respond_to: oneshot::Sender<MapListItem>,
+    },
     ActNpcs,
     Quake {
         magnitude: i32,

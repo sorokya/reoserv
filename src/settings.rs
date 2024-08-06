@@ -21,6 +21,14 @@ pub struct Server {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct API {
+    pub enabled: bool,
+    pub host: String,
+    pub port: String,
+    pub access_token_ttl: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Database {
     pub host: String,
     pub port: String,
@@ -286,6 +294,7 @@ pub struct Settings {
     pub items: Items,
     pub bard: Bard,
     pub smtp: Smtp,
+    pub api: API,
 }
 
 impl Settings {

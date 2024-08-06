@@ -26,6 +26,7 @@ use commands::Commands;
 mod connection_log;
 mod formulas;
 use formulas::Formulas;
+mod api;
 mod emails;
 mod errors;
 mod lang;
@@ -186,6 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let mut server_world = world.clone();
+    let player_pool = pool.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -227,8 +229,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let player_id = server_world.get_next_player_id().await.unwrap();
 
-            let player =
-                PlayerHandle::new(player_id, socket, now, server_world.clone(), pool.clone());
+            let player = PlayerHandle::new(
+                player_id,
+                socket,
+                now,
+                server_world.clone(),
+                player_pool.clone(),
+            );
             server_world.add_player(player_id, player).await.unwrap();
 
             info!(
@@ -239,6 +246,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
     });
+
+    if SETTINGS.api.enabled {
+        tokio::spawn(api::run_api(pool.clone(), world.clone()));
+    }
 
     tokio::select! {
         ctrl_c = signal::ctrl_c() => match ctrl_c {

@@ -217,6 +217,29 @@ impl World {
                 }
             }
 
+            Command::GetMapList { respond_to } => match self.maps.as_ref() {
+                Some(maps) => {
+                    let maps = maps
+                        .iter()
+                        .map(|(_, map)| map.to_owned())
+                        .collect::<Vec<_>>();
+
+                    tokio::spawn(async move {
+                        let mut list = Vec::with_capacity(maps.len());
+                        for i in 0..maps.len() {
+                            let item = maps[i].to_map_list_item().await;
+                            list.push(item);
+                        }
+                        list.sort_by(|a, b| a.id.cmp(&b.id));
+
+                        let _ = respond_to.send(list);
+                    });
+                }
+                None => {
+                    let _ = respond_to.send(Vec::new());
+                }
+            },
+
             Command::GetNextPlayerId { respond_to } => {
                 let _ = respond_to.send(self.get_next_player_id(300));
             }

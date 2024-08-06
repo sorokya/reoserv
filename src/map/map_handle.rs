@@ -17,10 +17,10 @@ use tokio::sync::{
 use crate::{
     character::{Character, SpellTarget},
     player::PartyRequest,
-    world::WorldHandle,
+    world::{MapListItem, WorldHandle},
 };
 
-use super::{Command, Map};
+use super::{Command, Map, MapState};
 
 #[derive(Debug, Clone)]
 pub struct MapHandle {
@@ -269,6 +269,12 @@ impl MapHandle {
             player_id,
             respond_to: tx,
         });
+        rx.await.unwrap()
+    }
+
+    pub async fn get_state(&self) -> MapState {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetState { respond_to: tx });
         rx.await.unwrap()
     }
 
@@ -901,6 +907,12 @@ impl MapHandle {
 
     pub fn quake(&self, magnitude: i32) {
         let _ = self.tx.send(Command::Quake { magnitude });
+    }
+
+    pub async fn to_map_list_item(&self) -> MapListItem {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::ToMapListItem { respond_to: tx });
+        rx.await.unwrap()
     }
 }
 

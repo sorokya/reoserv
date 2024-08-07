@@ -12,12 +12,17 @@ impl Player {
             .await;
 
         let current_map = character.map_id;
+
         character.map_id = 0;
         character.coords = Coords { x: 0, y: 0 };
-        self.character = Some(character);
-        self.map = None;
 
-        self.request_warp(current_map, spawn_coords, false, None)
+        self.character = Some(character.clone());
+
+        let nirvana = self.world.get_map(0).await.unwrap();
+        nirvana.enter(Box::new(character), None).await;
+        self.map = Some(nirvana);
+
+        self.request_warp(current_map, spawn_coords, true, None)
             .await;
     }
 }

@@ -6,7 +6,7 @@ use eolib::protocol::Coords;
 
 use crate::character::Character;
 use crate::errors::DataNotFoundError;
-use crate::player::{ClientState};
+use crate::player::ClientState;
 use crate::SETTINGS;
 
 use super::super::Player;
@@ -71,6 +71,11 @@ impl Player {
         character.logged_in_at = Some(chrono::Utc::now());
 
         character.calculate_stats();
+
+        if character.map_id == 0 {
+            character.map_id = character.get_spawn_map();
+            character.coords = character.get_spawn_coords();
+        }
 
         if self.world.get_map(character.map_id).await.is_err() {
             if self.world.get_map(SETTINGS.rescue.map).await.is_ok() {

@@ -52,6 +52,11 @@ pub async fn load_maps(
 
     info!("{} maps loaded", map_files.len());
 
+    map_files.insert(
+        0,
+        MapHandle::new(0, 0, pool.to_owned(), Emf::default(), world.to_owned()),
+    );
+
     Ok(map_files)
 }
 

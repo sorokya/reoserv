@@ -77,7 +77,6 @@ pub struct World {
     pub skill_points_per_level: i32,
     pub tick_rate: i32,
     pub arena_spawn_rate: i32,
-    pub door_close_rate: i32,
     pub quake_rate: i32,
     pub spike_rate: i32,
     pub spike_damage: f32,

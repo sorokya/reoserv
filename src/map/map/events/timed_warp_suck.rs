@@ -1,19 +1,46 @@
+use std::cmp;
+
+use crate::SETTINGS;
+
 use super::super::Map;
 
 impl Map {
     pub fn timed_warp_suck(&mut self) {
-        for character in self.characters.values() {
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => continue,
+        let player_ids = self
+            .characters
+            .keys()
+            .copied()
+            .collect::<Vec<_>>();
+
+        for id in player_ids {
+            let (coords, level, player) = {
+                let character = match self.characters.get_mut(&id) {
+                    Some(character) => character,
+                    None => continue,
+                };
+
+                let player = match character.player.as_ref() {
+                    Some(player) => player.to_owned(),
+                    None => continue,
+                };
+
+                character.warp_suck_ticks = cmp::max(0, character.warp_suck_ticks - 1);
+
+                if character.warp_suck_ticks > 0 {
+                    continue;
+                }
+
+                character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
+
+                (character.coords, character.level, player)
             };
 
-            let coords = self.get_adjacent_tiles(&character.coords);
+            let coords = self.get_adjacent_tiles(&coords);
             let warp = match coords
                 .iter()
                 .map(|coords| self.get_warp(coords))
                 .find(|warp| match warp {
-                    Some(warp) => warp.door <= 1 && warp.level_required <= character.level,
+                    Some(warp) => warp.door <= 1 && warp.level_required <= level,
                     None => false,
                 }) {
                 Some(warp) => warp.unwrap(),

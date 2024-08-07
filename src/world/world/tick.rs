@@ -68,11 +68,11 @@ impl World {
                 map.timed_drain();
             }
 
-            if self.warp_suck_ticks >= SETTINGS.world.warp_suck_rate {
+            if self.warp_suck_ticks >= ONE_SECOND {
                 map.timed_warp_suck();
             }
 
-            if self.door_close_ticks >= SETTINGS.world.door_close_rate {
+            if self.door_close_ticks >= ONE_SECOND {
                 map.timed_door_close();
             }
 
@@ -88,10 +88,8 @@ impl World {
                 map.timed_arena();
             }
 
-            if self.jukebox_ticks >= ONE_SECOND {
-                if SETTINGS.jukebox.track_timer > 0 {
-                    map.jukebox_timer();
-                }
+            if self.jukebox_ticks >= ONE_SECOND && SETTINGS.jukebox.track_timer > 0 {
+                map.jukebox_timer();
             }
 
             if self.drop_ticks >= ONE_SECOND {
@@ -135,11 +133,11 @@ impl World {
             self.drain_ticks = 0;
         }
 
-        if self.warp_suck_ticks >= SETTINGS.world.warp_suck_rate {
+        if self.warp_suck_ticks >= ONE_SECOND {
             self.warp_suck_ticks = 0;
         }
 
-        if self.door_close_ticks >= SETTINGS.world.door_close_rate {
+        if self.door_close_ticks >= ONE_SECOND {
             self.door_close_ticks = 0;
         }
 

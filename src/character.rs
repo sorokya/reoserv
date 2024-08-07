@@ -110,6 +110,7 @@ pub struct Character {
     pub spell_state: SpellState,
     pub quests: Vec<QuestProgress>,
     pub captcha_open: bool,
+    pub warp_suck_ticks: i32,
 }
 
 #[derive(Clone, Debug, Default)]

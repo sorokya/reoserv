@@ -159,11 +159,8 @@ tick_rate = 125
 # Number of ticks before maps are checked for arena spawn
 arena_spawn_rate = 8
 
-# Number of ticks before maps are checked for open doors
-door_close_rate = 8
-
-# Amount of ticks before a player is "sucked" into a nearby warp
-warp_suck_rate = 120
+# Amount of seconds before a player is "sucked" into a nearby warp
+warp_suck_rate = 15
 
 # How frequently timed drain events occur in ticks
 drain_rate = 125
@@ -219,8 +216,7 @@ quakes = [
   { min_ticks = 2, max_ticks = 8, min_strength = 6, max_strength = 8 }
 ]
 
-# Number of ticks before a door is closed
-# This should be a multiple of world.door_close_rate
+# Number of seconds before a door is closed
 door_close_rate = 3
 
 [character]

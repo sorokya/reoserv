@@ -5,6 +5,8 @@ use eolib::protocol::{
 };
 use mysql_async::{prelude::*, Conn, Params, Row};
 
+use crate::SETTINGS;
+
 use super::{Character, QuestProgress};
 
 impl Character {
@@ -163,6 +165,8 @@ impl Character {
                 },
             )
             .await?;
+
+        character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
 
         Ok(character)
     }

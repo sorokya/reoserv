@@ -7,7 +7,10 @@ use eolib::protocol::{
     Coords, Direction,
 };
 
-use crate::utils::{get_next_coords, in_client_range};
+use crate::{
+    utils::{get_next_coords, in_client_range},
+    SETTINGS,
+};
 
 use super::super::Map;
 
@@ -41,6 +44,7 @@ impl Map {
                 character.coords = coords;
                 character.direction = direction;
                 character.entered_coord();
+                character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
             }
 
             // TODO: Ghost timer check

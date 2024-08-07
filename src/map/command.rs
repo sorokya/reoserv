@@ -49,7 +49,6 @@ pub enum Command {
     Attack {
         player_id: i32,
         direction: Direction,
-        timestamp: i32,
     },
     BuyItem {
         player_id: i32,
@@ -509,7 +508,6 @@ pub enum Command {
         player_id: i32,
         direction: Direction,
         coords: Coords,
-        timestamp: i32,
     },
     WithdrawGold {
         player_id: i32,

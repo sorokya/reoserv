@@ -27,8 +27,7 @@ enum AttackTarget {
 }
 
 impl Map {
-    // TODO: enforce timestamp
-    pub async fn attack(&mut self, player_id: i32, direction: Direction, _timestamp: i32) {
+    pub async fn attack(&mut self, player_id: i32, direction: Direction) {
         let reply = AttackPlayerServerPacket {
             player_id,
             direction,

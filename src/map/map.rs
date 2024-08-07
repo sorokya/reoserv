@@ -158,8 +158,7 @@ impl Map {
             Command::Attack {
                 player_id: target_player_id,
                 direction,
-                timestamp,
-            } => self.attack(target_player_id, direction, timestamp).await,
+            } => self.attack(target_player_id, direction).await,
 
             Command::BuyItem {
                 player_id,
@@ -702,8 +701,7 @@ impl Map {
                 player_id: target_player_id,
                 direction,
                 coords,
-                timestamp,
-            } => self.walk(target_player_id, direction, coords, timestamp),
+            } => self.walk(target_player_id, direction, coords),
 
             Command::WithdrawGold {
                 player_id,

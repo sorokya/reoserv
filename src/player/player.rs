@@ -42,6 +42,7 @@ pub struct Player {
     version: Version,
     email_pin: Option<String>,
     captcha: Option<Captcha>,
+    timestamp: i32,
 }
 
 mod account;
@@ -109,6 +110,7 @@ impl Player {
             version: Version::default(),
             email_pin: None,
             captcha: None,
+            timestamp: 0,
         }
     }
 

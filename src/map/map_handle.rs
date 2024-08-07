@@ -878,12 +878,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::ViewQuestProgress { player_id });
     }
 
-    pub fn walk(&self, player_id: i32, direction: Direction, coords: Coords, timestamp: i32) {
+    pub fn walk(&self, player_id: i32, direction: Direction, coords: Coords) {
         let _ = self.tx.send(Command::Walk {
             player_id,
             direction,
             coords,
-            timestamp,
         });
     }
 
@@ -895,11 +894,10 @@ impl MapHandle {
         });
     }
 
-    pub fn attack(&self, player_id: i32, direction: Direction, timestamp: i32) {
+    pub fn attack(&self, player_id: i32, direction: Direction) {
         let _ = self.tx.send(Command::Attack {
             player_id,
             direction,
-            timestamp,
         });
     }
 

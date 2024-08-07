@@ -1,13 +1,11 @@
-use eolib::{
-    protocol::{
-        map::MapTimedEffect,
-        net::{
-            server::{
-                EffectUseServerPacket, EffectUseServerPacketEffectData,
-                EffectUseServerPacketEffectDataQuake, MapEffect,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    map::MapTimedEffect,
+    net::{
+        server::{
+            EffectUseServerPacket, EffectUseServerPacketEffectData,
+            EffectUseServerPacketEffectDataQuake, MapEffect,
         },
+        PacketAction, PacketFamily,
     },
 };
 use rand::{thread_rng, Rng};

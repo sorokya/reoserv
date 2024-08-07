@@ -1,14 +1,12 @@
-use eolib::{
-    protocol::{
-        net::{
-            server::{
-                AdminInteractAgreeServerPacket, AdminInteractRemoveServerPacket, NearbyInfo,
-                PlayersAgreeServerPacket,
-            },
-            PacketAction, PacketFamily,
+use eolib::protocol::{
+    net::{
+        server::{
+            AdminInteractAgreeServerPacket, AdminInteractRemoveServerPacket, NearbyInfo,
+            PlayersAgreeServerPacket,
         },
-        AdminLevel,
+        PacketAction, PacketFamily,
     },
+    AdminLevel,
 };
 
 use super::super::Map;

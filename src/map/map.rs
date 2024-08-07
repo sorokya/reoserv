@@ -657,6 +657,8 @@ impl Map {
 
             Command::TimedEvacuate => self.timed_evacuate(),
 
+            Command::TimedDropProtection => self.timed_drop_protection(),
+
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),

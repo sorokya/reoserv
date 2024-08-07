@@ -7,6 +7,7 @@ mod spawn_npcs;
 mod timed_arena;
 mod timed_door_close;
 mod timed_drain;
+mod timed_drop_protection;
 mod timed_evacuate;
 mod timed_quake;
 mod timed_spikes;

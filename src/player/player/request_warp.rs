@@ -1,5 +1,5 @@
 use eolib::{
-    data::{SHORT_MAX},
+    data::SHORT_MAX,
     protocol::{
         net::{
             server::{

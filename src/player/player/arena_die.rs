@@ -22,7 +22,7 @@ impl Player {
         nirvana.enter(Box::new(character), None).await;
         self.map = Some(nirvana);
 
-        self.request_warp(current_map, spawn_coords, true, None)
+        self.request_warp(current_map, spawn_coords, false, None)
             .await;
     }
 }

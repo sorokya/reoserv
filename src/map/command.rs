@@ -67,6 +67,7 @@ pub enum Command {
     },
     CastSpell {
         player_id: i32,
+        spell_id: i32,
         target: SpellTarget,
     },
     CloseCaptcha {
@@ -440,7 +441,6 @@ pub enum Command {
     StartSpellChant {
         player_id: i32,
         spell_id: i32,
-        timestamp: i32,
     },
     StartEvacuate,
     TalkToQuestNpc {

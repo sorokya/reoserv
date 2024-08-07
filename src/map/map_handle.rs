@@ -105,8 +105,12 @@ impl MapHandle {
         });
     }
 
-    pub fn cast_spell(&self, player_id: i32, target: SpellTarget) {
-        let _ = self.tx.send(Command::CastSpell { player_id, target });
+    pub fn cast_spell(&self, player_id: i32, spell_id: i32, target: SpellTarget) {
+        let _ = self.tx.send(Command::CastSpell {
+            player_id,
+            spell_id,
+            target,
+        });
     }
 
     pub fn close_captcha(&self, player_id: i32, experience: i32) {
@@ -687,11 +691,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::Stand { player_id });
     }
 
-    pub fn start_spell_chant(&self, player_id: i32, spell_id: i32, timestamp: i32) {
+    pub fn start_spell_chant(&self, player_id: i32, spell_id: i32) {
         let _ = self.tx.send(Command::StartSpellChant {
             player_id,
             spell_id,
-            timestamp,
         });
     }
 

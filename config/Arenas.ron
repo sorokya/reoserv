@@ -2,7 +2,7 @@
   arenas: [
     (
       map: 46,
-      rate: 720,
+      rate: 90,
       block: 4,
       spawns: [
         ( from: ( x: 11, y: 44 ), to: ( x: 12, y: 24 ) ), 
@@ -17,7 +17,7 @@
     ),
     (
       map: 137,
-      rate: 720,
+      rate: 90,
       block: 2,
       spawns: [
         ( from: ( x: 17, y: 9 ), to: ( x: 14, y: 10 ) ), 
@@ -26,7 +26,7 @@
     ),
     (
       map: 138,
-      rate: 720,
+      rate: 90,
       block: 2,
       spawns: [
         ( from: ( x: 17, y: 9 ), to: ( x: 14, y: 10 ) ), 
@@ -35,7 +35,7 @@
     ),
     (
       map: 183,
-      rate: 720,
+      rate: 90,
       block: 4,
       spawns: [
         ( from: ( x: 18, y: 39 ), to: ( x: 16, y: 12 ) ), 
@@ -47,7 +47,7 @@
     ),
     (
       map: 184,
-      rate: 720,
+      rate: 90,
       block: 4,
       spawns: [
         ( from: ( x: 18, y: 39 ), to: ( x: 16, y: 12 ) ), 

@@ -76,7 +76,6 @@ pub struct World {
     pub stat_points_per_level: i32,
     pub skill_points_per_level: i32,
     pub tick_rate: i32,
-    pub arena_spawn_rate: i32,
     pub quake_rate: i32,
     pub spike_rate: i32,
     pub spike_damage: f32,
@@ -96,7 +95,6 @@ pub struct Bard {
 #[derive(Debug, Deserialize)]
 pub struct NPCs {
     pub instant_spawn: bool,
-    pub respawn_rate: i32,
     pub freeze_on_empty_map: bool,
     pub chase_distance: i32,
     pub bored_timer: i32,

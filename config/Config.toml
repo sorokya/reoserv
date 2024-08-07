@@ -156,9 +156,6 @@ skill_points_per_level = 4
 # Recommended not to change
 tick_rate = 125
 
-# Number of ticks before maps are checked for arena spawn
-arena_spawn_rate = 8
-
 # Amount of seconds before a player is "sucked" into a nearby warp
 warp_suck_rate = 15
 
@@ -240,9 +237,6 @@ max_hair_color = 9
 # Should NPCs spawn immediately when the server starts?
 # if false they will spawn after their respawn time
 instant_spawn = false
-
-# How often NPCs will respawn in ticks
-respawn_rate = 8
 
 # Should NPCs stand still if there are no players on their map?
 # if false they will always act even if there are no players

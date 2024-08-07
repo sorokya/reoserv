@@ -11,28 +11,19 @@ impl World {
             None => return,
         };
 
-        self.player_ticks += 1;
+        self.second_ticks += 1;
         self.npc_act_ticks += 1;
-        self.npc_spawn_ticks += 1;
         self.item_spawn_ticks += 1;
         self.player_recover_ticks += 1;
         self.npc_recover_ticks += 1;
         self.quake_ticks += 1;
         self.spike_ticks += 1;
         self.drain_ticks += 1;
-        self.warp_suck_ticks += 1;
-        self.arena_ticks += 1;
-        self.door_close_ticks += 1;
-        self.wedding_ticks += 1;
-        self.evacuate_ticks += 1;
-        self.jukebox_ticks += 1;
-        self.drop_ticks += 1;
 
-        if self.player_ticks >= ONE_SECOND {
+        if self.second_ticks >= ONE_SECOND {
             for player in self.players.values() {
                 player.tick();
             }
-            self.player_ticks = 0;
         }
 
         for map in maps {
@@ -40,8 +31,17 @@ impl World {
                 map.act_npcs();
             }
 
-            if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {
+            if self.second_ticks >= ONE_SECOND {
                 map.spawn_npcs();
+                map.timed_warp_suck();
+                map.timed_door_close();
+                map.timed_wedding();
+                map.timed_evacuate();
+                map.timed_arena();
+                if SETTINGS.jukebox.track_timer > 0 {
+                    map.jukebox_timer();
+                }
+                map.timed_drop_protection();
             }
 
             if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {
@@ -67,46 +67,14 @@ impl World {
             if self.drain_ticks >= SETTINGS.world.drain_rate {
                 map.timed_drain();
             }
-
-            if self.warp_suck_ticks >= ONE_SECOND {
-                map.timed_warp_suck();
-            }
-
-            if self.door_close_ticks >= ONE_SECOND {
-                map.timed_door_close();
-            }
-
-            if self.wedding_ticks >= ONE_SECOND {
-                map.timed_wedding();
-            }
-
-            if self.evacuate_ticks >= ONE_SECOND {
-                map.timed_evacuate();
-            }
-
-            if self.arena_ticks >= ONE_SECOND {
-                map.timed_arena();
-            }
-
-            if self.jukebox_ticks >= ONE_SECOND && SETTINGS.jukebox.track_timer > 0 {
-                map.jukebox_timer();
-            }
-
-            if self.drop_ticks >= ONE_SECOND {
-                map.timed_drop_protection();
-            }
         }
 
-        if self.player_ticks >= ONE_SECOND {
-            self.player_ticks = 0;
+        if self.second_ticks >= ONE_SECOND {
+            self.second_ticks = 0;
         }
 
         if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
             self.npc_act_ticks = 0;
-        }
-
-        if self.npc_spawn_ticks >= SETTINGS.npcs.respawn_rate {
-            self.npc_spawn_ticks = 0;
         }
 
         if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {
@@ -131,34 +99,6 @@ impl World {
 
         if self.drain_ticks >= SETTINGS.world.drain_rate {
             self.drain_ticks = 0;
-        }
-
-        if self.warp_suck_ticks >= ONE_SECOND {
-            self.warp_suck_ticks = 0;
-        }
-
-        if self.door_close_ticks >= ONE_SECOND {
-            self.door_close_ticks = 0;
-        }
-
-        if self.arena_ticks >= ONE_SECOND {
-            self.arena_ticks = 0;
-        }
-
-        if self.jukebox_ticks >= ONE_SECOND {
-            self.jukebox_ticks = 0;
-        }
-
-        if self.drop_ticks >= ONE_SECOND {
-            self.drop_ticks = 0;
-        }
-
-        if self.wedding_ticks >= ONE_SECOND {
-            self.wedding_ticks = 0;
-        }
-
-        if self.evacuate_ticks >= ONE_SECOND {
-            self.evacuate_ticks = 0;
         }
     }
 }

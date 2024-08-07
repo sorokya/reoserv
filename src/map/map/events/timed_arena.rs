@@ -6,7 +6,7 @@ use eolib::protocol::{
     Coords,
 };
 
-use crate::{map::map::ArenaPlayer, ARENAS, SETTINGS};
+use crate::{map::map::ArenaPlayer, ARENAS};
 
 use super::super::Map;
 
@@ -17,7 +17,7 @@ impl Map {
             None => return,
         };
 
-        self.arena_ticks += SETTINGS.world.arena_spawn_rate;
+        self.arena_ticks += 1;
 
         if self.arena_ticks >= config.rate {
             self.arena_ticks = 0;

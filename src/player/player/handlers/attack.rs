@@ -3,6 +3,8 @@ use eolib::{
     protocol::net::{client::AttackUseClientPacket, PacketAction},
 };
 
+use crate::utils::timestamp_diff;
+
 use super::super::Player;
 
 impl Player {
@@ -16,7 +18,7 @@ impl Player {
                 }
             };
 
-            if packet.timestamp - self.timestamp < 48 {
+            if timestamp_diff(packet.timestamp, self.timestamp) < 48 {
                 return;
             }
 

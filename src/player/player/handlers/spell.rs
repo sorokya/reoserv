@@ -11,7 +11,7 @@ use eolib::{
     },
 };
 
-use crate::{character::SpellTarget, SPELL_DB};
+use crate::{character::SpellTarget, utils::timestamp_diff, SPELL_DB};
 
 use super::super::Player;
 
@@ -145,7 +145,7 @@ impl Player {
             None => return false,
         };
 
-        let diff = timestamp - self.timestamp;
+        let diff = timestamp_diff(timestamp, self.timestamp);
 
         diff >= (spell.cast_time - 1) * 47 + 35 && diff < cmp::max(spell.cast_time, 1) * 50
     }

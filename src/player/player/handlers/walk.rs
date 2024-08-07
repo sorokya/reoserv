@@ -3,6 +3,8 @@ use eolib::{
     protocol::net::client::WalkPlayerClientPacket,
 };
 
+use crate::utils::timestamp_diff;
+
 use super::super::Player;
 
 impl Player {
@@ -20,13 +22,7 @@ impl Player {
                 }
             };
 
-            if packet.walk_action.timestamp - self.timestamp < 36 {
-                debug!(
-                    "Walk action too fast: {} - {} == {}",
-                    packet.walk_action.timestamp,
-                    self.timestamp,
-                    packet.walk_action.timestamp - self.timestamp
-                );
+            if timestamp_diff(packet.walk_action.timestamp, self.timestamp) < 36 {
                 return;
             }
 

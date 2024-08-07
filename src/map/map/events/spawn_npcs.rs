@@ -1,6 +1,5 @@
 use std::cmp;
 
-use chrono::Duration;
 use eolib::protocol::{r#pub::NpcType, Coords, Direction};
 use rand::Rng;
 
@@ -16,15 +15,8 @@ impl Map {
             return;
         }
 
-        let now = chrono::Utc::now();
         if self.npcs.is_empty() {
             let mut npc_index: i32 = 0;
-
-            let dead_since = if SETTINGS.npcs.instant_spawn {
-                now - Duration::try_days(1).unwrap()
-            } else {
-                now
-            };
 
             for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
                 let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
@@ -47,8 +39,13 @@ impl Map {
                             .direction(Direction::Down)
                             .spawn_index(spawn_index)
                             .spawn_type(spawn.spawn_type)
+                            .spawn_time(spawn.spawn_time)
                             .alive(false)
-                            .dead_since(dead_since)
+                            .spawn_ticks(if SETTINGS.npcs.instant_spawn {
+                                0
+                            } else {
+                                spawn.spawn_time
+                            })
                             .hp(data_record.hp)
                             .max_hp(data_record.hp)
                             .boss(data_record.boss)
@@ -64,13 +61,15 @@ impl Map {
         let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
 
         for index in indexes {
-            let (child, alive, spawn_time, dead_since, spawn_coords, spawn_type, npc_type) = {
-                match self.npcs.get(&index) {
+            let (child, alive, spawn_ticks, spawn_coords, spawn_type, npc_type) = {
+                match self.npcs.get_mut(&index) {
                     Some(npc) => {
                         let spawn_index = match npc.spawn_index {
                             Some(index) => index,
                             None => continue,
                         };
+
+                        npc.spawn_ticks = cmp::max(npc.spawn_ticks - 1, 0);
 
                         let spawn = &self.file.npcs[spawn_index];
                         let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
@@ -80,8 +79,7 @@ impl Map {
                         (
                             npc.child,
                             npc.alive,
-                            spawn.spawn_time,
-                            npc.dead_since,
+                            npc.spawn_ticks,
                             spawn.coords,
                             spawn.spawn_type,
                             npc_data.r#type,
@@ -99,7 +97,7 @@ impl Map {
                 }
             }
 
-            if alive || now.timestamp() - dead_since.timestamp() < spawn_time.into() {
+            if alive || spawn_ticks > 0 {
                 continue;
             }
 

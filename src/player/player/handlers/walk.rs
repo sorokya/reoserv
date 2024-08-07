@@ -21,6 +21,12 @@ impl Player {
             };
 
             if packet.walk_action.timestamp - self.timestamp < 36 {
+                debug!(
+                    "Walk action too fast: {} - {} == {}",
+                    packet.walk_action.timestamp,
+                    self.timestamp,
+                    packet.walk_action.timestamp - self.timestamp
+                );
                 return;
             }
 

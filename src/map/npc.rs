@@ -1,6 +1,5 @@
 use std::cmp;
 
-use chrono::{DateTime, Utc};
 use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
 use evalexpr::{context_map, eval_float_with_context};
 use rand::Rng;
@@ -13,9 +12,10 @@ pub struct Npc {
     pub coords: Coords,
     pub direction: Direction,
     pub spawn_type: i32,
+    pub spawn_time: i32,
     pub spawn_index: Option<usize>,
     pub alive: bool,
-    pub dead_since: DateTime<Utc>,
+    pub spawn_ticks: i32,
     pub act_ticks: i32,
     pub talk_ticks: i32,
     pub walk_idle_for: Option<i32>,
@@ -112,8 +112,11 @@ impl Npc {
             }
         } else {
             self.alive = false;
-            self.dead_since = Utc::now();
             self.opponents.clear();
+
+            if self.spawn_index.is_some() {
+                self.spawn_ticks = self.spawn_time;
+            }
         }
 
         damage
@@ -127,8 +130,9 @@ pub struct NPCBuilder {
     direction: Direction,
     spawn_index: Option<usize>,
     spawn_type: i32,
+    spawn_time: i32,
     alive: bool,
-    dead_since: DateTime<Utc>,
+    spawn_ticks: i32,
     act_ticks: i32,
     talk_ticks: i32,
     walk_idle_for: Option<i32>,
@@ -153,6 +157,11 @@ impl NPCBuilder {
         self
     }
 
+    pub fn spawn_time(mut self, spawn_time: i32) -> Self {
+        self.spawn_time = spawn_time;
+        self
+    }
+
     pub fn coords(mut self, coords: Coords) -> Self {
         self.coords = coords;
         self
@@ -173,8 +182,8 @@ impl NPCBuilder {
         self
     }
 
-    pub fn dead_since(mut self, dead_since: DateTime<Utc>) -> Self {
-        self.dead_since = dead_since;
+    pub fn spawn_ticks(mut self, spawn_ticks: i32) -> Self {
+        self.spawn_ticks = spawn_ticks;
         self
     }
 
@@ -204,9 +213,10 @@ impl NPCBuilder {
             coords: self.coords,
             direction: self.direction,
             spawn_type: self.spawn_type,
+            spawn_time: self.spawn_time,
             spawn_index: self.spawn_index,
             alive: self.alive,
-            dead_since: self.dead_since,
+            spawn_ticks: self.spawn_ticks,
             act_ticks: self.act_ticks,
             talk_ticks: self.talk_ticks,
             walk_idle_for: self.walk_idle_for,

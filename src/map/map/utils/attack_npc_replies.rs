@@ -1,4 +1,3 @@
-use chrono::Utc;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -377,7 +376,10 @@ impl Map {
                     child.alive = false;
                     child.hp = 0;
                     child.opponents.clear();
-                    child.dead_since = Utc::now();
+
+                    if child.spawn_index.is_some() {
+                        child.spawn_ticks = child.spawn_time;
+                    }
                 });
 
             if let Some((_, child_npc)) = self.npcs.iter().find(|(_, n)| n.child) {

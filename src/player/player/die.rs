@@ -11,9 +11,6 @@ impl Player {
             .leave(self.id, None, self.interact_player_id)
             .await;
 
-        let spawn_map = character.get_spawn_map();
-        let local = character.map_id == spawn_map;
-
         character.map_id = 0;
         character.coords = Coords { x: 0, y: 0 };
 
@@ -26,7 +23,7 @@ impl Player {
         nirvana.enter(Box::new(character), None).await;
         self.map = Some(nirvana);
 
-        self.request_warp(spawn_map, spawn_coords, local, None)
+        self.request_warp(spawn_map, spawn_coords, false, None)
             .await;
     }
 }

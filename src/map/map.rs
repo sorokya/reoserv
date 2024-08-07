@@ -158,8 +158,7 @@ impl Map {
             Command::Attack {
                 player_id: target_player_id,
                 direction,
-                timestamp,
-            } => self.attack(target_player_id, direction, timestamp).await,
+            } => self.attack(target_player_id, direction).await,
 
             Command::BuyItem {
                 player_id,
@@ -179,7 +178,11 @@ impl Map {
                 partner_player_id,
             } => self.cancel_trade(player_id, partner_player_id),
 
-            Command::CastSpell { player_id, target } => self.cast_spell(player_id, target).await,
+            Command::CastSpell {
+                player_id,
+                spell_id,
+                target,
+            } => self.cast_spell(player_id, spell_id, target).await,
 
             Command::CloseCaptcha {
                 player_id,
@@ -600,8 +603,7 @@ impl Map {
             Command::StartSpellChant {
                 player_id,
                 spell_id,
-                timestamp,
-            } => self.start_spell_chant(player_id, spell_id, timestamp),
+            } => self.start_spell_chant(player_id, spell_id),
 
             Command::StartEvacuate => {
                 if self.evacuate_ticks.is_some() {
@@ -702,8 +704,7 @@ impl Map {
                 player_id: target_player_id,
                 direction,
                 coords,
-                timestamp,
-            } => self.walk(target_player_id, direction, coords, timestamp),
+            } => self.walk(target_player_id, direction, coords),
 
             Command::WithdrawGold {
                 player_id,

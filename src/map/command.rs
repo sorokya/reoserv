@@ -49,7 +49,6 @@ pub enum Command {
     Attack {
         player_id: i32,
         direction: Direction,
-        timestamp: i32,
     },
     BuyItem {
         player_id: i32,
@@ -68,6 +67,7 @@ pub enum Command {
     },
     CastSpell {
         player_id: i32,
+        spell_id: i32,
         target: SpellTarget,
     },
     CloseCaptcha {
@@ -441,7 +441,6 @@ pub enum Command {
     StartSpellChant {
         player_id: i32,
         spell_id: i32,
-        timestamp: i32,
     },
     StartEvacuate,
     TalkToQuestNpc {
@@ -509,7 +508,6 @@ pub enum Command {
         player_id: i32,
         direction: Direction,
         coords: Coords,
-        timestamp: i32,
     },
     WithdrawGold {
         player_id: i32,

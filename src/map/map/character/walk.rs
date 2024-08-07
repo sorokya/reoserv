@@ -14,11 +14,9 @@ use crate::{
 
 use super::super::Map;
 
-// TODO: this function is sooooooooo ugly. Please refactor it
-// TODO: force refresh if client out of sync
-// TODO: enforce timestamp
 impl Map {
-    pub fn walk(&mut self, player_id: i32, direction: Direction, _coords: Coords, _timestamp: i32) {
+    // TODO: Ghost timer check
+    pub fn walk(&mut self, player_id: i32, direction: Direction, client_coords: Coords) {
         if let Some((previous_coords, coords, player, hidden)) = {
             let (coords, admin_level, player, hidden) = match self.characters.get(&player_id) {
                 Some(character) => (
@@ -47,7 +45,6 @@ impl Map {
                 character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
             }
 
-            // TODO: Ghost timer check
             if let Some(warp) = self.get_warp(&coords) {
                 let character = match self.characters.get(&player_id) {
                     Some(character) => character,
@@ -63,8 +60,6 @@ impl Map {
                     return;
                 }
 
-                // TODO: Maybe don't do this.. player can get out of sync if door was open out of
-                // range
                 if warp.door > 0 {
                     let door = match self.doors.iter().find(|door| door.coords == coords) {
                         Some(door) => door,
@@ -140,6 +135,10 @@ impl Map {
                         self.spike_damage(player_id)
                     }
                 }
+            }
+
+            if coords != client_coords {
+                self.request_refresh(player_id);
             }
         }
     }

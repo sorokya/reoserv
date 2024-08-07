@@ -14,19 +14,20 @@ use eolib::protocol::{
 use rand::Rng;
 
 use crate::utils::in_client_range;
-use crate::{
-    character::{SpellState, SpellTarget},
-    NPC_DB, SPELL_DB,
-};
+use crate::{character::SpellTarget, NPC_DB, SPELL_DB};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn cast_spell(&mut self, player_id: i32, target: SpellTarget) {
-        let spell_id = match self.get_player_spell_id(player_id) {
-            Some(spell_id) => spell_id,
+    pub async fn cast_spell(&mut self, player_id: i32, spell_id: i32, target: SpellTarget) {
+        match self.characters.get(&player_id) {
+            Some(character) => {
+                if !character.has_spell(spell_id) {
+                    return;
+                }
+            }
             None => return,
-        };
+        }
 
         let spell_data = match SPELL_DB.skills.get(spell_id as usize - 1) {
             Some(spell_data) => spell_data,
@@ -42,31 +43,7 @@ impl Map {
                 self.cast_damage_spell(player_id, spell_id, spell_data, target)
                     .await
             }
-            SkillType::Bard => {}
             _ => {}
-        }
-    }
-
-    fn get_player_spell_id(&self, player_id: i32) -> Option<i32> {
-        let character = match self.characters.get(&player_id) {
-            Some(character) => character,
-            None => return None,
-        };
-
-        match character.spell_state {
-            SpellState::Requested {
-                spell_id,
-                timestamp: _,
-                cast_time: _,
-            } => {
-                // TODO: enforce timestamp
-                if character.has_spell(spell_id) {
-                    Some(spell_id)
-                } else {
-                    None
-                }
-            }
-            SpellState::None => None,
         }
     }
 
@@ -103,7 +80,6 @@ impl Map {
             return;
         }
 
-        character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
         let original_hp = character.hp;
         character.hp = cmp::min(character.hp + spell.hp_heal, character.max_hp);
@@ -164,7 +140,6 @@ impl Map {
             None => return,
         };
 
-        character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
 
         let mut healed_players: Vec<GroupHealTargetPlayer> =
@@ -258,7 +233,6 @@ impl Map {
             return;
         }
 
-        character.spell_state = SpellState::None;
         character.tp -= spell.tp_cost;
 
         let target = match self.characters.get_mut(&target_player_id) {
@@ -379,7 +353,6 @@ impl Map {
             return;
         }
 
-        character.spell_state = SpellState::None;
         character.tp -= spell_data.tp_cost;
 
         let party_player_ids = match self.world.get_player_party(player_id).await {
@@ -485,7 +458,6 @@ impl Map {
                 None => return,
             };
 
-            character.spell_state = SpellState::None;
             character.tp -= spell_data.tp_cost;
 
             if let Some(player) = character.player.as_ref() {

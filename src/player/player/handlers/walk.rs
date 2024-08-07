@@ -20,11 +20,16 @@ impl Player {
                 }
             };
 
+            if packet.walk_action.timestamp - self.timestamp < 36 {
+                return;
+            }
+
+            self.timestamp = packet.walk_action.timestamp;
+
             map.walk(
                 self.id,
                 packet.walk_action.direction,
                 packet.walk_action.coords,
-                packet.walk_action.timestamp,
             );
         }
     }

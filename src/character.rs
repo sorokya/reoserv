@@ -32,8 +32,6 @@ mod load;
 pub use equipment_slot::EquipmentSlot;
 mod remove_item;
 mod reset;
-mod spell_state;
-pub use spell_state::SpellState;
 mod spell_target;
 pub use spell_target::SpellTarget;
 mod equip_result;
@@ -107,7 +105,6 @@ pub struct Character {
     pub trade_items: Vec<Item>,
     pub spells: Vec<Spell>,
     pub logged_in_at: Option<DateTime<Utc>>,
-    pub spell_state: SpellState,
     pub quests: Vec<QuestProgress>,
     pub captcha_open: bool,
     pub warp_suck_ticks: i32,

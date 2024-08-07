@@ -16,7 +16,13 @@ impl Player {
                 }
             };
 
-            map.attack(self.id, packet.direction, packet.timestamp);
+            if packet.timestamp - self.timestamp < 48 {
+                return;
+            }
+
+            self.timestamp = packet.timestamp;
+
+            map.attack(self.id, packet.direction);
         }
     }
 

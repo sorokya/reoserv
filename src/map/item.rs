@@ -6,7 +6,7 @@ pub struct Item {
     pub amount: i32,
     pub coords: Coords,
     pub owner: i32,
-    // TODO: unprotect timer
+    pub protected_ticks: i32,
 }
 
 impl Item {

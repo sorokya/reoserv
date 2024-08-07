@@ -9,10 +9,21 @@ use super::super::Map;
 
 impl Map {
     pub fn get_item(&mut self, player_id: i32, item_index: i32) {
-        let (item_id, item_amount, item_coords) = match self.items.get(&item_index) {
-            Some(item) => (item.id, item.amount, item.coords),
-            None => return,
-        };
+        let (item_id, item_amount, item_coords, owner, protected_ticks) =
+            match self.items.get(&item_index) {
+                Some(item) => (
+                    item.id,
+                    item.amount,
+                    item.coords,
+                    item.owner,
+                    item.protected_ticks,
+                ),
+                None => return,
+            };
+
+        if protected_ticks > 0 && owner != player_id {
+            return;
+        }
 
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,

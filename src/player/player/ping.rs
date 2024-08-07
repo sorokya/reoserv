@@ -14,7 +14,11 @@ impl Player {
         }
 
         if self.bus.need_pong {
-            self.close(format!("player {} connection closed: ping timeout", self.id)).await;
+            self.close(format!(
+                "player {} connection closed: ping timeout",
+                self.id
+            ))
+            .await;
             false
         } else {
             self.bus.upcoming_sequence_start = generate_sequence_start();

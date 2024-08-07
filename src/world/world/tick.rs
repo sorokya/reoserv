@@ -25,6 +25,8 @@ impl World {
         self.door_close_ticks += 1;
         self.wedding_ticks += 1;
         self.evacuate_ticks += 1;
+        self.jukebox_ticks += 1;
+        self.drop_ticks += 1;
 
         if self.player_ticks >= ONE_SECOND {
             for player in self.players.values() {
@@ -84,10 +86,16 @@ impl World {
 
             if self.arena_ticks >= ONE_SECOND {
                 map.timed_arena();
+            }
 
+            if self.jukebox_ticks >= ONE_SECOND {
                 if SETTINGS.jukebox.track_timer > 0 {
                     map.jukebox_timer();
                 }
+            }
+
+            if self.drop_ticks >= ONE_SECOND {
+                map.timed_drop_protection();
             }
         }
 
@@ -137,6 +145,14 @@ impl World {
 
         if self.arena_ticks >= ONE_SECOND {
             self.arena_ticks = 0;
+        }
+
+        if self.jukebox_ticks >= ONE_SECOND {
+            self.jukebox_ticks = 0;
+        }
+
+        if self.drop_ticks >= ONE_SECOND {
+            self.drop_ticks = 0;
         }
 
         if self.wedding_ticks >= ONE_SECOND {

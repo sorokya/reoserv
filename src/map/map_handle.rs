@@ -815,6 +815,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedEvacuate);
     }
 
+    pub fn timed_drop_protection(&self) {
+        let _ = self.tx.send(Command::TimedDropProtection);
+    }
+
     pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

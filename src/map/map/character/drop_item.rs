@@ -114,6 +114,7 @@ impl Map {
                 amount: amount_to_drop,
                 coords,
                 owner: player_id,
+                protected_ticks: SETTINGS.world.drop_protect_player,
             },
         );
 

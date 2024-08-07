@@ -9,8 +9,6 @@ use eolib::{
     },
 };
 
-
-
 use super::super::Player;
 
 impl Player {

@@ -1,12 +1,10 @@
-use eolib::{
-    protocol::net::{
-        server::{
-            GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
-            GuildReplyServerPacketReplyCodeDataCreateAdd,
-            GuildReplyServerPacketReplyCodeDataCreateAddConfirm,
-        },
-        PacketAction, PacketFamily,
+use eolib::protocol::net::{
+    server::{
+        GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
+        GuildReplyServerPacketReplyCodeDataCreateAdd,
+        GuildReplyServerPacketReplyCodeDataCreateAddConfirm,
     },
+    PacketAction, PacketFamily,
 };
 
 use crate::SETTINGS;

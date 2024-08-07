@@ -131,6 +131,12 @@ y = 24
 # Max distance a player can drop/pick up an item
 drop_distance = 2
 
+# Seconds a player dropped item is protected from another player picking it up
+drop_protect_player = 5
+
+# Seconds a NPC dropped item is protected from another player picking it up
+drop_protect_npc = 30
+
 # How often players recover HP/TP in ticks
 recover_rate = 720
 

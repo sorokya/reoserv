@@ -467,6 +467,7 @@ pub enum Command {
     TimedWarpSuck,
     TimedWedding,
     TimedEvacuate,
+    TimedDropProtection,
     ToggleHidden {
         player_id: i32,
     },

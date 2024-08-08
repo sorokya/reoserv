@@ -1,4 +1,4 @@
-const VERSION: &str = "1.4.2";
+const VERSION: &str = "1.5.0";
 
 #[macro_use]
 extern crate log;

@@ -15,23 +15,26 @@ use crate::{
 use super::super::Map;
 
 impl Map {
-    // TODO: Ghost timer check
     pub fn walk(&mut self, player_id: i32, direction: Direction, client_coords: Coords) {
         if let Some((previous_coords, coords, player, hidden)) = {
-            let (coords, admin_level, player, hidden) = match self.characters.get(&player_id) {
-                Some(character) => (
-                    character.coords,
-                    character.admin_level,
-                    character.player.clone(),
-                    character.hidden,
-                ),
-                None => return,
-            };
+            let (coords, admin_level, player, hidden, ghost_ticks) =
+                match self.characters.get(&player_id) {
+                    Some(character) => (
+                        character.coords,
+                        character.admin_level,
+                        character.player.clone(),
+                        character.hidden,
+                        character.ghost_ticks,
+                    ),
+                    None => return,
+                };
 
             let previous_coords = coords;
             let coords = get_next_coords(&coords, direction, self.file.width, self.file.height);
             let is_tile_walkable = i32::from(admin_level) >= 1
-                || (self.is_tile_walkable(&coords) && !self.is_tile_occupied(&coords));
+                || (self.is_tile_walkable(&coords)
+                    && (!self.is_tile_occupied(&coords) || ghost_ticks == 0));
+
             if !self.is_in_bounds(coords) || !is_tile_walkable {
                 return;
             }
@@ -43,6 +46,7 @@ impl Map {
                 character.direction = direction;
                 character.entered_coord();
                 character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
+                character.ghost_ticks = SETTINGS.world.ghost_rate;
             }
 
             if let Some(warp) = self.get_warp(&coords) {

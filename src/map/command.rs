@@ -467,6 +467,7 @@ pub enum Command {
     TimedWedding,
     TimedEvacuate,
     TimedDropProtection,
+    TimedGhost,
     ToggleHidden {
         player_id: i32,
     },

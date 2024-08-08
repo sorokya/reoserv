@@ -167,6 +167,7 @@ impl Character {
             .await?;
 
         character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
+        character.ghost_ticks = SETTINGS.world.ghost_rate;
 
         Ok(character)
     }

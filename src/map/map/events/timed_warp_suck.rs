@@ -6,11 +6,7 @@ use super::super::Map;
 
 impl Map {
     pub fn timed_warp_suck(&mut self) {
-        let player_ids = self
-            .characters
-            .keys()
-            .copied()
-            .collect::<Vec<_>>();
+        let player_ids = self.characters.keys().copied().collect::<Vec<_>>();
 
         for id in player_ids {
             let (coords, level, player) = {

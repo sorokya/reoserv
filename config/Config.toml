@@ -159,6 +159,9 @@ tick_rate = 125
 # Amount of seconds before a player is "sucked" into a nearby warp
 warp_suck_rate = 15
 
+# Amount of seconds before a player can "ghost" another player
+ghost_rate = 5
+
 # How frequently timed drain events occur in ticks
 drain_rate = 125
 

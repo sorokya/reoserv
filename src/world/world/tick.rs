@@ -42,6 +42,7 @@ impl World {
                     map.jukebox_timer();
                 }
                 map.timed_drop_protection();
+                map.timed_ghost();
             }
 
             if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {

@@ -822,6 +822,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedDropProtection);
     }
 
+    pub fn timed_ghost(&self) {
+        let _ = self.tx.send(Command::TimedGhost);
+    }
+
     pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

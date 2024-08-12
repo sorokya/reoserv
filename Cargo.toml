@@ -33,7 +33,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 glob = "0.3.1"
 serde_json = "^1.0.122"
 serde_derive = "^1.0.8"
-serde = "^1.0.205"
+serde = "^1.0.206"
 console-subscriber = { version = "0.4", optional = true }
 mysql_common = { version = "0.32", features = ["chrono"] }
 mysql_async = { version = "0.34", default-features = false, features = ["default-rustls"] }

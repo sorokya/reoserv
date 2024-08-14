@@ -32,9 +32,6 @@ impl World {
                 map.kick_from_guild(player_id);
             }
 
-            // Wait a few seconds to ensure all characters have been saved.
-            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-
             let mut conn = match pool.get_conn().await {
                 Ok(conn) => conn,
                 Err(e) => {
@@ -50,6 +47,13 @@ impl World {
                         "tag" => &guild_tag,
                     },
                 )
+                .await
+            {
+                error!("Error deleting guild: {}", e);
+            }
+
+            if let Err(e) = conn
+                .query_drop(include_str!("../../sql/cleanup_guildless_characters.sql"))
                 .await
             {
                 error!("Error deleting guild: {}", e);

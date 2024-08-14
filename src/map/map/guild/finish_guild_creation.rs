@@ -6,7 +6,7 @@ use eolib::{
     },
 };
 
-use crate::{character::Character, SETTINGS};
+use crate::SETTINGS;
 
 use super::super::Map;
 
@@ -18,37 +18,31 @@ impl Map {
         guild_tag: String,
         guild_name: String,
     ) {
-        let mut guild_characters: Vec<Character> = Vec::with_capacity(SETTINGS.guild.min_players);
+        let character = match self.characters.get_mut(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
-        {
-            let character = match self.characters.get_mut(&player_id) {
-                Some(character) => character,
-                None => return,
-            };
+        character.remove_item(1, SETTINGS.guild.create_cost);
+        character.guild_tag = Some(guild_tag.clone());
+        character.guild_name = Some(guild_name.clone());
+        character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
+        character.guild_rank = Some(1);
 
-            character.remove_item(1, SETTINGS.guild.create_cost);
-            character.guild_tag = Some(guild_tag.clone());
-            character.guild_name = Some(guild_name.clone());
-            character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
-            character.guild_rank = Some(1);
+        self.world.add_guild_member(player_id, guild_tag.clone());
 
-            guild_characters.push(character.to_owned());
-
-            self.world.add_guild_member(player_id, guild_tag.clone());
-
-            if let Some(player) = character.player.as_ref() {
-                player.send(
-                    PacketAction::Create,
-                    PacketFamily::Guild,
-                    &GuildCreateServerPacket {
-                        leader_player_id: player_id,
-                        guild_tag: guild_tag.clone(),
-                        guild_name: guild_name.clone(),
-                        rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
-                        gold_amount: character.get_item_amount(1),
-                    },
-                );
-            }
+        if let Some(player) = character.player.as_ref() {
+            player.send(
+                PacketAction::Create,
+                PacketFamily::Guild,
+                &GuildCreateServerPacket {
+                    leader_player_id: player_id,
+                    guild_tag: guild_tag.clone(),
+                    guild_name: guild_name.clone(),
+                    rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
+                    gold_amount: character.get_item_amount(1),
+                },
+            );
         }
 
         let packet = GuildAgreeServerPacket {
@@ -82,31 +76,11 @@ impl Map {
             character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
             character.guild_rank = Some(9);
 
-            guild_characters.push(character.to_owned());
-
             self.world.add_guild_member(*player_id, guild_tag.clone());
 
             if let Some(player) = character.player.as_ref() {
                 player.send_buf(PacketAction::Agree, PacketFamily::Guild, buf.clone());
             }
         }
-
-        let pool = self.pool.clone();
-
-        tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            for character in guild_characters.iter_mut() {
-                character.save(&mut conn).await.unwrap_or_else(|e| {
-                    error!("Error saving character: {}", e);
-                });
-            }
-        });
     }
 }

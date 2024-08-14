@@ -19,22 +19,5 @@ impl Map {
                 &GuildAcceptServerPacket { rank },
             );
         }
-
-        let mut character = character.to_owned();
-        let pool = self.pool.clone();
-
-        tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = character.save(&mut conn).await {
-                error!("Error saving character: {}", e);
-            }
-        });
     }
 }

@@ -18,22 +18,5 @@ impl Map {
         character.guild_rank_string = None;
 
         self.world.remove_guild_member(player_id, guild_tag);
-
-        let mut character = character.to_owned();
-        let pool = self.pool.clone();
-
-        tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = character.save(&mut conn).await {
-                error!("Error saving character: {}", e);
-            }
-        });
     }
 }

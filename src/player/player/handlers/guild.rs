@@ -236,9 +236,11 @@ impl Player {
                 return;
             }
 
+            let guild_tag = create.guild_tag.to_uppercase();
+
             if let Err(e) = create_guild(
                 &mut conn,
-                &create.guild_tag,
+                &guild_tag,
                 &create.guild_name,
                 &create.description,
             )
@@ -251,7 +253,7 @@ impl Player {
             map.finish_guild_creation(
                 player_id,
                 guild_create_members,
-                create.guild_tag,
+                guild_tag,
                 create.guild_name,
             );
         });

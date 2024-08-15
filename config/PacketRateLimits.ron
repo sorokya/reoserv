@@ -6,6 +6,7 @@
 
 (
   packets: [
+    (family: "Account", action: "Agree", limit: 1000),
     (family: "Attack", action: "Use", limit: 500),
     (family: "Bank", action: "Open", limit: 1000),
     (family: "Barber", action: "Open", limit: 1000),

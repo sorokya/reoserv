@@ -275,7 +275,14 @@ impl Player {
             }
         };
 
+        self.login_attempts += 1;
+
         if !exists {
+            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+                self.close("Too many login attempts".to_string()).await;
+                return;
+            }
+
             let _ = self
                 .bus
                 .send(
@@ -328,6 +335,11 @@ impl Player {
         let username: String = row.get("name").unwrap();
         let password_hash: String = row.get("password_hash").unwrap();
         if !validate_password(&username, &agree.old_password, &password_hash) {
+            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+                self.close("Too many login attempts".to_string()).await;
+                return;
+            }
+
             let _ = self
                 .bus
                 .send(
@@ -343,6 +355,8 @@ impl Player {
                 .await;
             return;
         }
+
+        self.login_attempts = 0;
 
         let account_id: i32 = row.get("id").unwrap();
 

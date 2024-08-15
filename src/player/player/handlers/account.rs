@@ -279,7 +279,8 @@ impl Player {
 
         if !exists {
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
-                self.close("Too many login attempts".to_string()).await;
+                self.close("Too many password change attempts".to_string())
+                    .await;
                 return;
             }
 
@@ -336,7 +337,8 @@ impl Player {
         let password_hash: String = row.get("password_hash").unwrap();
         if !validate_password(&username, &agree.old_password, &password_hash) {
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
-                self.close("Too many login attempts".to_string()).await;
+                self.close("Too many password change attempts".to_string())
+                    .await;
                 return;
             }
 

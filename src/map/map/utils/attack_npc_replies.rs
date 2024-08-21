@@ -72,8 +72,8 @@ impl Map {
                 damage: damage_dealt,
                 hp_percentage: npc.get_hp_percentage(),
                 caster_tp: match self.characters.get(&player_id) {
-                    Some(character) => character.tp,
-                    None => 0,
+                    Some(character) => Some(character.tp),
+                    None => None,
                 },
                 kill_steal_protection: Some(if protected {
                     NpcKillStealProtectionState::Protected
@@ -91,6 +91,7 @@ impl Map {
                 player.send(PacketAction::Reply, PacketFamily::Cast, &packet);
             }
 
+            packet.caster_tp = None;
             packet.kill_steal_protection = None;
 
             self.send_packet_near_exclude_player(
@@ -271,7 +272,28 @@ impl Map {
             damage: damage_dealt,
         };
 
-        let caster_tp = killer.tp;
+        if party.is_some() {
+            self.attack_npc_killed_leveled_up_party_reply(&exp_gains, killer_player_id);
+
+            let level_up_gains: Vec<PartyExpShare> = exp_gains
+                .iter()
+                .filter(|exp_gain| exp_gain.player_id != killer_player_id)
+                .map(|exp_gain| PartyExpShare {
+                    player_id: exp_gain.player_id,
+                    experience: exp_gain.experience_gained,
+                    level_up: if exp_gain.leveled_up {
+                        exp_gain.level
+                    } else {
+                        0
+                    },
+                })
+                .collect();
+
+            if !level_up_gains.is_empty() {
+                self.world
+                    .update_party_exp(killer_player_id, level_up_gains);
+            }
+        }
 
         for (player_id, character) in self.characters.iter() {
             let exp_gain = exp_gains.iter().find(|gain| gain.player_id == *player_id);
@@ -281,7 +303,7 @@ impl Map {
             };
 
             if let Some(spell_id) = spell_id {
-                if leveled_up && exp_gains.len() == 1 {
+                if leveled_up {
                     if let Some(player) = character.player.as_ref() {
                         player.send(
                             PacketAction::Accept,
@@ -289,15 +311,27 @@ impl Map {
                             &CastAcceptServerPacket {
                                 spell_id,
                                 npc_killed_data: npc_killed_data.clone(),
-                                caster_tp,
-                                experience: character.experience,
-                                level_up: LevelUpStats {
-                                    level: character.level,
-                                    stat_points: character.stat_points,
-                                    skill_points: character.skill_points,
-                                    max_hp: character.max_hp,
-                                    max_tp: character.max_tp,
-                                    max_sp: character.max_sp,
+                                caster_tp: if *player_id == killer_player_id {
+                                    Some(character.tp)
+                                } else {
+                                    None
+                                },
+                                experience: if *player_id == killer_player_id {
+                                    Some(character.experience)
+                                } else {
+                                    None
+                                },
+                                level_up: if *player_id == killer_player_id {
+                                    Some(LevelUpStats {
+                                        level: character.level,
+                                        stat_points: character.stat_points,
+                                        skill_points: character.skill_points,
+                                        max_hp: character.max_hp,
+                                        max_tp: character.max_tp,
+                                        max_sp: character.max_sp,
+                                    })
+                                } else {
+                                    None
                                 },
                             },
                         );
@@ -309,26 +343,42 @@ impl Map {
                         &CastSpecServerPacket {
                             spell_id,
                             npc_killed_data: npc_killed_data.clone(),
-                            caster_tp,
-                            experience: exp_gain.map(|exp_gain| exp_gain.total_experience),
+                            caster_tp: if *player_id == killer_player_id {
+                                Some(character.tp)
+                            } else {
+                                None
+                            },
+                            experience: if *player_id == killer_player_id {
+                                exp_gain.map(|exp_gain| exp_gain.total_experience)
+                            } else {
+                                None
+                            },
                         },
                     );
                 }
-            } else if leveled_up && exp_gains.len() == 1 {
+            } else if leveled_up {
                 if let Some(player) = character.player.as_ref() {
                     player.send(
                         PacketAction::Accept,
                         PacketFamily::Npc,
                         &NpcAcceptServerPacket {
                             npc_killed_data: npc_killed_data.clone(),
-                            experience: character.experience,
-                            level_up: LevelUpStats {
-                                level: character.level,
-                                stat_points: character.stat_points,
-                                skill_points: character.skill_points,
-                                max_hp: character.max_hp,
-                                max_tp: character.max_tp,
-                                max_sp: character.max_sp,
+                            experience: if *player_id == killer_player_id {
+                                Some(character.experience)
+                            } else {
+                                None
+                            },
+                            level_up: if *player_id == killer_player_id {
+                                Some(LevelUpStats {
+                                    level: character.level,
+                                    stat_points: character.stat_points,
+                                    skill_points: character.skill_points,
+                                    max_hp: character.max_hp,
+                                    max_tp: character.max_tp,
+                                    max_sp: character.max_sp,
+                                })
+                            } else {
+                                None
                             },
                         },
                     );
@@ -339,32 +389,13 @@ impl Map {
                     PacketFamily::Npc,
                     &NpcSpecServerPacket {
                         npc_killed_data: npc_killed_data.clone(),
-                        experience: Some(character.experience),
+                        experience: if *player_id == killer_player_id {
+                            Some(character.experience)
+                        } else {
+                            None
+                        },
                     },
                 );
-            }
-        }
-
-        if party.is_some() {
-            self.attack_npc_killed_leveled_up_party_reply(&exp_gains);
-
-            let level_up_gains: Vec<PartyExpShare> = exp_gains
-                .iter()
-                .map(|exp_gain| PartyExpShare {
-                    player_id: exp_gain.player_id,
-                    experience: exp_gain.experience_gained,
-                    level_up: if exp_gain.leveled_up {
-                        exp_gain.level
-                    } else {
-                        0
-                    },
-                })
-                .filter(|gain| gain.level_up > 0)
-                .collect();
-
-            if !level_up_gains.is_empty() {
-                self.world
-                    .update_party_exp(killer_player_id, level_up_gains);
             }
         }
 
@@ -431,7 +462,11 @@ impl Map {
         }
     }
 
-    fn attack_npc_killed_leveled_up_party_reply(&self, exp_gains: &Vec<ExpGain>) {
+    fn attack_npc_killed_leveled_up_party_reply(
+        &self,
+        exp_gains: &Vec<ExpGain>,
+        killer_player_id: i32,
+    ) {
         for exp_gain in exp_gains {
             if exp_gain.leveled_up {
                 let character = match self.characters.get(&exp_gain.player_id) {
@@ -443,6 +478,10 @@ impl Map {
                     Some(player) => player,
                     None => continue,
                 };
+
+                if exp_gain.player_id == killer_player_id {
+                    continue;
+                }
 
                 player.send(
                     PacketAction::TargetGroup,

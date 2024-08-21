@@ -195,7 +195,7 @@ impl Map {
 
         if !messages.is_empty() {
             let packet = QuestReportServerPacket {
-                npc_id: npc_index,
+                npc_index,
                 messages,
             };
 

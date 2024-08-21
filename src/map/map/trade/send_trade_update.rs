@@ -37,12 +37,16 @@ impl Map {
                 PacketAction::Reply,
                 PacketFamily::Trade,
                 &TradeReplyServerPacket {
-                    trade_data: TradeItemData {
-                        partner_player_id: partner_id,
-                        partner_items: partner_items.to_owned(),
-                        your_player_id: player_id,
-                        your_items: your_items.to_owned(),
-                    },
+                    trade_data: [
+                        TradeItemData {
+                            player_id: partner_id,
+                            items: partner_items.to_owned(),
+                        },
+                        TradeItemData {
+                            player_id,
+                            items: your_items.to_owned(),
+                        },
+                    ],
                 },
             );
 
@@ -52,12 +56,16 @@ impl Map {
                     PacketAction::Admin,
                     PacketFamily::Trade,
                     &TradeAdminServerPacket {
-                        trade_data: TradeItemData {
-                            partner_player_id: player_id,
-                            partner_items: your_items,
-                            your_player_id: partner_id,
-                            your_items: partner_items,
-                        },
+                        trade_data: [
+                            TradeItemData {
+                                player_id,
+                                items: your_items,
+                            },
+                            TradeItemData {
+                                player_id: partner_id,
+                                items: partner_items,
+                            },
+                        ],
                     },
                 );
             } else {
@@ -65,12 +73,16 @@ impl Map {
                     PacketAction::Reply,
                     PacketFamily::Trade,
                     &TradeReplyServerPacket {
-                        trade_data: TradeItemData {
-                            partner_player_id: player_id,
-                            partner_items: your_items,
-                            your_player_id: partner_id,
-                            your_items: partner_items,
-                        },
+                        trade_data: [
+                            TradeItemData {
+                                player_id,
+                                items: your_items,
+                            },
+                            TradeItemData {
+                                player_id: partner_id,
+                                items: partner_items,
+                            },
+                        ],
                     },
                 );
             }

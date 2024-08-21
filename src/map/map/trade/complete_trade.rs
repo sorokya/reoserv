@@ -92,12 +92,16 @@ impl Map {
                 PacketAction::Use,
                 PacketFamily::Trade,
                 &TradeUseServerPacket {
-                    trade_data: TradeItemData {
-                        partner_player_id: partner_id,
-                        partner_items: partner_trade_items.clone(),
-                        your_player_id: player_id,
-                        your_items: trade_items.clone(),
-                    },
+                    trade_data: [
+                        TradeItemData {
+                            player_id: partner_id,
+                            items: partner_trade_items.clone(),
+                        },
+                        TradeItemData {
+                            player_id,
+                            items: trade_items.clone(),
+                        },
+                    ],
                 },
             );
         }
@@ -110,12 +114,16 @@ impl Map {
                 PacketAction::Use,
                 PacketFamily::Trade,
                 &TradeUseServerPacket {
-                    trade_data: TradeItemData {
-                        partner_player_id: player_id,
-                        partner_items: trade_items.clone(),
-                        your_player_id: partner_id,
-                        your_items: partner_trade_items.clone(),
-                    },
+                    trade_data: [
+                        TradeItemData {
+                            player_id,
+                            items: trade_items.clone(),
+                        },
+                        TradeItemData {
+                            player_id: partner_id,
+                            items: partner_trade_items.clone(),
+                        },
+                    ],
                 },
             );
         }

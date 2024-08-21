@@ -70,6 +70,7 @@ impl World {
                         },
                         elemental_stats: CharacterElementalStats::default(),
                     },
+                    gold_bank: character.gold_bank,
                     weight: character.get_weight(),
                 },
             );

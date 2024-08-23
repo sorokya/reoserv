@@ -29,6 +29,12 @@ pub enum Command {
     AddLoggedInAccount {
         account_id: i32,
     },
+    AddPendingLogin {
+        account_id: i32,
+    },
+    RemovePendingLogin {
+        account_id: i32,
+    },
     AddPlayer {
         respond_to: oneshot::Sender<()>,
         player_id: i32,

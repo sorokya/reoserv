@@ -12,6 +12,7 @@ pub struct World {
     pub rx: UnboundedReceiver<Command>,
     players: HashMap<i32, PlayerHandle>,
     accounts: Vec<i32>,
+    pending_logins: Vec<i32>,
     characters: HashMap<String, i32>,
     guilds: HashMap<String, Vec<i32>>,
     pool: Pool,
@@ -52,6 +53,7 @@ impl World {
             pool,
             players: HashMap::new(),
             accounts: Vec::new(),
+            pending_logins: Vec::new(),
             characters: HashMap::new(),
             guilds: HashMap::new(),
             maps: None,
@@ -87,6 +89,14 @@ impl World {
 
             Command::AddLoggedInAccount { account_id } => {
                 self.accounts.push(account_id);
+            }
+
+            Command::AddPendingLogin { account_id } => {
+                self.pending_logins.push(account_id);
+            }
+
+            Command::RemovePendingLogin { account_id } => {
+                self.pending_logins.retain(|id| *id != account_id);
             }
 
             Command::AddCharacter {
@@ -231,7 +241,14 @@ impl World {
                 account_id,
                 respond_to,
             } => {
-                let _ = respond_to.send(self.accounts.contains(&account_id));
+                debug!(
+                    "Accounts: {:?}, Pending logins: {:?}",
+                    self.accounts, self.pending_logins
+                );
+                let _ = respond_to.send(
+                    self.accounts.contains(&account_id)
+                        || self.pending_logins.contains(&account_id),
+                );
             }
 
             Command::LoadMapFiles { world, respond_to } => {

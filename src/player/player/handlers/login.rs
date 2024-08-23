@@ -161,7 +161,12 @@ impl Player {
 
         let username: String = row.get("name").unwrap();
         let password_hash: String = row.get("password_hash").unwrap();
+        let account_id: i32 = row.get("id").unwrap();
+        let logged_in = self.world.is_logged_in(account_id).await;
+        self.world.add_pending_login(account_id);
+
         if !validate_password(&username, &request.password, &password_hash) {
+            self.world.remove_pending_login(account_id);
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
@@ -185,8 +190,8 @@ impl Player {
             return;
         }
 
-        let account_id: i32 = row.get("id").unwrap();
-        if self.world.is_logged_in(account_id).await {
+        if logged_in {
+            self.world.remove_pending_login(account_id);
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
@@ -209,6 +214,7 @@ impl Player {
         }
 
         if let Err(e) = update_last_login_ip(&mut conn, account_id, &self.ip).await {
+            self.world.remove_pending_login(account_id);
             self.close(format!("Error updating last login IP: {}", e))
                 .await;
             return;
@@ -223,8 +229,8 @@ impl Player {
             }
         };
 
-        self.world.add_logged_in_account(account_id);
         self.account_id = account_id;
+        self.world.add_logged_in_account(account_id);
         self.state = ClientState::LoggedIn;
 
         if is_deep(&self.version) {

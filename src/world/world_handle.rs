@@ -39,6 +39,14 @@ impl WorldHandle {
         let _ = self.tx.send(Command::AddLoggedInAccount { account_id });
     }
 
+    pub fn add_pending_login(&self, account_id: i32) {
+        let _ = self.tx.send(Command::AddPendingLogin { account_id });
+    }
+
+    pub fn remove_pending_login(&self, account_id: i32) {
+        let _ = self.tx.send(Command::RemovePendingLogin { account_id });
+    }
+
     pub fn add_character(&self, player_id: i32, name: String, guild_tag: Option<String>) {
         let _ = self.tx.send(Command::AddCharacter {
             player_id,

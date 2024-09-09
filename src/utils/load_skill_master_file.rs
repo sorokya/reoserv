@@ -77,6 +77,68 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
+    if let Ok(mut file) = File::open("data/pub/serv_trainers.epf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+
+        if reader.get_fixed_string(3) != "EMF" {
+            return Err("Invalid file".into());
+        }
+
+        reader.get_short();
+        reader.get_short();
+
+        let mut emf = SkillMasterFile::default();
+
+        let num_records = reader.get_short();
+
+        emf.skill_masters = Vec::with_capacity(num_records as usize);
+
+        reader.get_char();
+
+        for _ in 0..num_records {
+            let mut record = SkillMasterRecord::default();
+            record.behavior_id = reader.get_short();
+            let name_length = reader.get_char();
+            record.name = reader.get_fixed_string(name_length as usize);
+
+            record.min_level = reader.get_short();
+            record.max_level = reader.get_short();
+            record.class_requirement = reader.get_char();
+
+            let num_skills = reader.get_short();
+            record.skills = Vec::with_capacity(num_skills as usize);
+
+            for _ in 0..num_skills {
+                record.skills.push(SkillMasterSkillRecord {
+                    skill_id: reader.get_short(),
+                    level_requirement: reader.get_short(),
+                    class_requirement: reader.get_char(),
+                    price: reader.get_three(),
+                    skill_requirements: [
+                        reader.get_short(),
+                        reader.get_short(),
+                        reader.get_short(),
+                        reader.get_short(),
+                    ],
+                    str_requirement: reader.get_short(),
+                    int_requirement: reader.get_short(),
+                    wis_requirement: reader.get_short(),
+                    agi_requirement: reader.get_short(),
+                    con_requirement: reader.get_short(),
+                    cha_requirement: reader.get_short(),
+                });
+            }
+
+            emf.skill_masters.push(record);
+        }
+
+        return Ok(emf);
+    }
+
     if let Ok(mut file) = File::open("data/pub/dsm001.emf") {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;

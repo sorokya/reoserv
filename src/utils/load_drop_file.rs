@@ -81,14 +81,19 @@ fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
         for _ in 0..num_records {
             let mut record = DropNpcRecord::default();
             record.npc_id = reader.get_short();
-            reader.get_char();
+            let num_drops = reader.get_short();
 
-            let num_messages = reader.get_char();
-            record.messages = Vec::with_capacity(num_messages as usize);
-            for _ in 0..num_messages {
-                let length = reader.get_char();
-                record.messages.push(TalkMessageRecord {
-                    message: reader.get_fixed_string(length as usize),
+            record.drops = Vec::with_capacity(num_drops as usize);
+            for _ in 0..num_drops {
+                let item_id = reader.get_short();
+                let min_amount = reader.get_three();
+                let max_amount = reader.get_three();
+                let rate = ((reader.get_short() as f32) / 10_000. * 64_000.).floor() as i32;
+                record.drops.push(DropRecord {
+                    item_id,
+                    min_amount,
+                    max_amount,
+                    rate,
                 });
             }
 

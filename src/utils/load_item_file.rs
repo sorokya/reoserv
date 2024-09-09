@@ -108,11 +108,14 @@ fn load_json() -> Result<Eif, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<Eif, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/dat001.eif")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/dat001.eif") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(Eif::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(Eif::deserialize(&reader)?);
+    }
+
+    Ok(Eif::default())
 }

@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{cmp, fs::File, io::Read};
 
 use bytes::Bytes;
 use eolib::{
@@ -81,11 +81,69 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<InnFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/din001.eid")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/serv_inns.epf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(InnFile::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        if reader.get_fixed_string(3) != "EID" {
+            return Err("Invalid file".into());
+        }
+
+        reader.get_short();
+        reader.get_short();
+
+        let mut eif = InnFile::default();
+
+        let num_records = reader.get_short();
+
+        eif.inns = Vec::with_capacity(num_records as usize);
+
+        reader.get_char();
+
+        for _ in 0..num_records {
+            let mut record = InnRecord::default();
+            record.behavior_id = reader.get_short();
+            let name_length = reader.get_char();
+            record.name = reader.get_fixed_string(name_length as usize);
+
+            // sleep cost
+            reader.get_three();
+
+            record.sleep_map = reader.get_short();
+            record.sleep_x = reader.get_char();
+            record.sleep_y = reader.get_char();
+            record.spawn_map = reader.get_short();
+            record.spawn_x = reader.get_char();
+            record.spawn_y = reader.get_char();
+            record.alternate_spawn_enabled = reader.get_short() != 0;
+            record.alternate_spawn_map = reader.get_short();
+            record.alternate_spawn_x = reader.get_char();
+            record.alternate_spawn_y = reader.get_char();
+
+            let num_questions = reader.get_char();
+            for i in 0..cmp::min(num_questions as usize, 3) {
+                let question_length = reader.get_char();
+                let question = reader.get_fixed_string(question_length as usize);
+                let answer_length = reader.get_char();
+                let answer = reader.get_fixed_string(answer_length as usize);
+                record.questions[i] = InnQuestionRecord { question, answer };
+            }
+            eif.inns.push(record);
+        }
+
+        return Ok(eif);
+    }
+
+    if let Ok(mut file) = File::open("data/pub/din001.eid") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(InnFile::deserialize(&reader)?);
+    }
+
+    Ok(InnFile::default())
 }

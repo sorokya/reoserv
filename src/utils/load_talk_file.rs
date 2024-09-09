@@ -55,6 +55,49 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<TalkFile, Box<dyn std::error::Error>> {
+    if let Ok(mut file) = File::open("data/pub/serv_chats.epf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+
+        if reader.get_fixed_string(3) != "ETF" {
+            return Err("Invalid file".into());
+        }
+
+        reader.get_short();
+        reader.get_short();
+
+        let mut etf = TalkFile::default();
+
+        let num_records = reader.get_short();
+
+        etf.npcs = Vec::with_capacity(num_records as usize);
+
+        reader.get_char();
+
+        for _ in 0..num_records {
+            let mut record = TalkRecord::default();
+            record.npc_id = reader.get_short();
+            reader.get_char();
+            record.rate = reader.get_char();
+
+            let num_messages = reader.get_char();
+            record.messages = Vec::with_capacity(num_messages as usize);
+            for _ in 0..num_messages {
+                let length = reader.get_char();
+                record.messages.push(TalkMessageRecord {
+                    message: reader.get_fixed_string(length as usize),
+                });
+            }
+
+            etf.npcs.push(record);
+        }
+
+        return Ok(etf);
+    }
+
     let mut file = File::open("data/pub/ttd001.etf")?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;

@@ -84,7 +84,7 @@ fn load_pub() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
         let bytes = Bytes::from(buf);
         let reader = EoReader::new(bytes);
 
-        if reader.get_fixed_string(3) != "EMF" {
+        if reader.get_fixed_string(3) != "ETF" {
             return Err("Invalid file".into());
         }
 

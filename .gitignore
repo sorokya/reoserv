@@ -20,6 +20,7 @@ data/pub/*.edf
 data/pub/*.enf
 data/pub/*.evf
 data/pub/*.etf
+data/pub/*.epf
 data/pub/**/*.json
 data/maps/*.emf
 data/quests/*.txt*

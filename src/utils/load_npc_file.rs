@@ -88,11 +88,14 @@ fn load_json() -> Result<Enf, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<Enf, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/dtn001.enf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/dtn001.enf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(Enf::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(Enf::deserialize(&reader)?);
+    }
+
+    Ok(Enf::default())
 }

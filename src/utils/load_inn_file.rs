@@ -81,11 +81,14 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<InnFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/din001.eid")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/din001.eid") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(InnFile::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(InnFile::deserialize(&reader)?);
+    }
+
+    Ok(InnFile::default())
 }

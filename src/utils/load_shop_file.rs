@@ -85,11 +85,14 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<ShopFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/dts001.esf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/dts001.esf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(ShopFile::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(ShopFile::deserialize(&reader)?);
+    }
+
+    Ok(ShopFile::default())
 }

@@ -56,11 +56,56 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
-    let mut file = File::open("data/pub/dtd001.edf")?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)?;
+    if let Ok(mut file) = File::open("data/pub/server_drops.epf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
 
-    let bytes = Bytes::from(buf);
-    let reader = EoReader::new(bytes);
-    Ok(DropFile::deserialize(&reader)?)
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+
+        if reader.get_fixed_string(3) != "EDF" {
+            return Err("Invalid file".into());
+        }
+
+        reader.get_short();
+        reader.get_short();
+
+        let mut edf = DropFile::default();
+
+        let num_records = reader.get_short();
+
+        edf.npcs = Vec::with_capacity(num_records as usize);
+
+        reader.get_char();
+
+        for _ in 0..num_records {
+            let mut record = DropNpcRecord::default();
+            record.npc_id = reader.get_short();
+            reader.get_char();
+
+            let num_messages = reader.get_char();
+            record.messages = Vec::with_capacity(num_messages as usize);
+            for _ in 0..num_messages {
+                let length = reader.get_char();
+                record.messages.push(TalkMessageRecord {
+                    message: reader.get_fixed_string(length as usize),
+                });
+            }
+
+            edf.npcs.push(record);
+        }
+
+        return Ok(edf);
+    }
+
+    if let Ok(mut file) = File::open("data/pub/dtd001.edf") {
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        let bytes = Bytes::from(buf);
+        let reader = EoReader::new(bytes);
+        return Ok(DropFile::deserialize(&reader)?);
+    }
+
+    Ok(DropFile::default())
 }

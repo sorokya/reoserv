@@ -56,7 +56,7 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
-    if let Ok(mut file) = File::open("data/pub/server_drops.epf") {
+    if let Ok(mut file) = File::open("data/pub/serv_drops.epf") {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;
 

@@ -55,7 +55,7 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
 }
 
 fn load_pub() -> Result<TalkFile, Box<dyn std::error::Error>> {
-    if let Ok(mut file) = File::open("data/pub/server_chats.epf") {
+    if let Ok(mut file) = File::open("data/pub/serv_chats.epf") {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf)?;
 

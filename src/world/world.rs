@@ -88,6 +88,7 @@ impl World {
             }
 
             Command::AddLoggedInAccount { account_id } => {
+                self.pending_logins.retain(|id| *id != account_id);
                 self.accounts.push(account_id);
             }
 

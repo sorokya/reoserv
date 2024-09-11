@@ -23,6 +23,8 @@ mod deep;
 use arenas::Arenas;
 mod commands;
 use commands::Commands;
+mod player_commands;
+use player_commands::PlayerCommands;
 mod connection_log;
 mod formulas;
 use formulas::Formulas;
@@ -59,6 +61,8 @@ lazy_static! {
     static ref PACKET_RATE_LIMITS: PacketRateLimits =
         PacketRateLimits::new().expect("Failed to load packet rate limits!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
+    static ref PLAYER_COMMANDS: PlayerCommands =
+        PlayerCommands::new().expect("Failed to load player commands!");
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
     static ref EMAILS: Emails = Emails::new().expect("Failed to load emails!");

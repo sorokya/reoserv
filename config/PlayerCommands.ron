@@ -1,0 +1,21 @@
+(
+    commands: [
+        (
+            name: "autopickup",
+            alias: "a",
+            description: "Configure auto item pickups",
+            usage: "$autopickup add gold",
+            args: [
+                (
+                    name: "sub_command",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "item",
+                    type: "String",
+                ),
+            ],
+        ),
+    ]
+)

@@ -826,6 +826,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedGhost);
     }
 
+    pub fn timed_auto_pickup(&self) {
+        let _ = self.tx.send(Command::TimedAutoPickup);
+    }
+
     pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

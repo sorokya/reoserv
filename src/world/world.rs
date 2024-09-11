@@ -26,6 +26,7 @@ pub struct World {
     spike_ticks: i32,
     drain_ticks: i32,
     second_ticks: i32,
+    auto_pickup_ticks: i32,
     global_locked: bool,
     connection_log: ConnectionLog,
 }
@@ -66,6 +67,7 @@ impl World {
             spike_ticks: 0,
             drain_ticks: 0,
             second_ticks: 0,
+            auto_pickup_ticks: 0,
             global_locked: false,
             connection_log: ConnectionLog::new(),
         }

@@ -468,6 +468,7 @@ pub enum Command {
     TimedEvacuate,
     TimedDropProtection,
     TimedGhost,
+    TimedAutoPickup,
     ToggleHidden {
         player_id: i32,
     },

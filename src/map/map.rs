@@ -664,6 +664,8 @@ impl Map {
 
             Command::TimedGhost => self.timed_ghost(),
 
+            Command::TimedAutoPickup => self.timed_auto_pickup(),
+
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),

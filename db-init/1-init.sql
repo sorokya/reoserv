@@ -182,3 +182,10 @@ CREATE TABLE IF NOT EXISTS `Stats` (
   PRIMARY KEY (`character_id`),
   CONSTRAINT `stats_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS `AutoPickup` (
+  `character_id` int NOT NULL,
+  `item_id` int NOT NULL,
+  PRIMARY KEY (`character_id`, `item_id`),
+  CONSTRAINT `autopickup_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+);

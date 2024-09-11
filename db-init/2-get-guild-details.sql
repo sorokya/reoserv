@@ -1,13 +1,7 @@
-DELIMITER $$
-
+DELIMITER //
 CREATE PROCEDURE `GetGuildDetails`(
 	IN `guild_identity` VARCHAR(32)
 )
-LANGUAGE SQL
-NOT DETERMINISTIC
-CONTAINS SQL
-SQL SECURITY DEFINER
-COMMENT ''
 BEGIN
 
 SELECT `tag`,
@@ -34,4 +28,5 @@ INNER JOIN `Character`
 	AND `Character`.`guild_rank` <= 2
 WHERE `guild_identity` IN (`Guild`.`tag`, `Guild`.`name`);
 
-END $$
+END//
+DELIMITER ;

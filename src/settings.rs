@@ -261,6 +261,12 @@ pub struct Smtp {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct AutoPickup {
+    pub enabled: bool,
+    pub rate: i32,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -286,6 +292,7 @@ pub struct Settings {
     pub items: Items,
     pub bard: Bard,
     pub smtp: Smtp,
+    pub auto_pickup: AutoPickup,
 }
 
 impl Settings {

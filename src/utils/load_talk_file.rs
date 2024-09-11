@@ -78,8 +78,11 @@ fn load_pub() -> Result<TalkFile, Box<dyn std::error::Error>> {
         reader.get_char();
 
         for _ in 0..num_records {
-            let mut record = TalkRecord::default();
-            record.npc_id = reader.get_short();
+            let mut record = TalkRecord {
+                npc_id: reader.get_short(),
+                ..Default::default()
+            };
+
             reader.get_char();
             record.rate = reader.get_char();
 

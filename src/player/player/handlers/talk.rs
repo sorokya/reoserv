@@ -13,7 +13,11 @@ use eolib::{
     },
 };
 
-use super::{super::Player, handle_command::handle_command};
+use super::{
+    super::Player,
+    handle_command::handle_command,
+    handle_player_command::{handle_player_command, PlayerCommandResult},
+};
 
 impl Player {
     fn talk_admin(&mut self, reader: EoReader) {
@@ -132,10 +136,28 @@ impl Player {
                     };
 
                     handle_command(args.as_slice(), &character, player, world).await;
+                    return;
                 }
-            } else {
-                map.send_chat_message(player_id, report.message);
             }
+
+            if report.message.starts_with('#') {
+                let args: Vec<&str> = report.message[1..].split_whitespace().collect();
+                if !args.is_empty() {
+                    let player = match world.get_player(player_id).await {
+                        Some(player) => player,
+                        None => return,
+                    };
+
+                    if handle_player_command(player_id, args.as_slice(), &player, &map).await
+                        == PlayerCommandResult::NotFound
+                    {
+                        map.send_chat_message(player_id, report.message);
+                    }
+                    return;
+                }
+            }
+
+            map.send_chat_message(player_id, report.message);
         });
     }
 

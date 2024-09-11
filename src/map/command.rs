@@ -527,4 +527,18 @@ pub enum Command {
     Quake {
         magnitude: i32,
     },
+    ListAutoPickupItems {
+        player_id: i32,
+    },
+    ClearAutoPickupItems {
+        player_id: i32,
+    },
+    AddAutoPickupItem {
+        player_id: i32,
+        item_id: i32,
+    },
+    RemoveAutoPickupItem {
+        player_id: i32,
+        item_id: i32,
+    },
 }

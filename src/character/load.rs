@@ -166,6 +166,16 @@ impl Character {
             )
             .await?;
 
+        character.auto_pickup_items = conn
+            .exec_map(
+                include_str!("../sql/get_character_auto_pickup.sql"),
+                params! {
+                    "character_id" => id,
+                },
+                |mut row: Row| row.take::<i32, usize>(0).unwrap(),
+            )
+            .await?;
+
         character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
         character.ghost_ticks = SETTINGS.world.ghost_rate;
 

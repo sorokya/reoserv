@@ -44,6 +44,7 @@ pub struct ArenaPlayer {
     pub kills: i32,
 }
 
+mod auto_pickup;
 mod bank;
 mod barber;
 mod board;
@@ -729,6 +730,14 @@ impl Map {
             } => self.request_players_and_npcs(player_id, player_ids, npc_indexes),
             Command::RequestRefresh { player_id } => self.request_refresh(player_id),
             Command::Quake { magnitude } => self.quake(magnitude),
+            Command::ListAutoPickupItems { player_id } => self.list_auto_pickup_items(player_id),
+            Command::ClearAutoPickupItems { player_id } => self.clear_auto_pickup_items(player_id),
+            Command::AddAutoPickupItem { player_id, item_id } => {
+                self.add_auto_pickup_item(player_id, item_id)
+            }
+            Command::RemoveAutoPickupItem { player_id, item_id } => {
+                self.remove_auto_pickup_item(player_id, item_id)
+            }
         }
     }
 }

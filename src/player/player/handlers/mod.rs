@@ -16,6 +16,7 @@ mod emote;
 mod face;
 mod guild;
 mod handle_command;
+mod handle_player_command;
 mod init;
 mod item;
 mod jukebox;

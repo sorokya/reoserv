@@ -826,6 +826,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedGhost);
     }
 
+    pub fn timed_auto_pickup(&self) {
+        let _ = self.tx.send(Command::TimedAutoPickup);
+    }
+
     pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }
@@ -910,6 +914,26 @@ impl MapHandle {
 
     pub fn quake(&self, magnitude: i32) {
         let _ = self.tx.send(Command::Quake { magnitude });
+    }
+
+    pub fn list_auto_pickup_items(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ListAutoPickupItems { player_id });
+    }
+
+    pub fn clear_auto_pickup_items(&self, player_id: i32) {
+        let _ = self.tx.send(Command::ClearAutoPickupItems { player_id });
+    }
+
+    pub fn add_auto_pickup_item(&self, player_id: i32, item_id: i32) {
+        let _ = self
+            .tx
+            .send(Command::AddAutoPickupItem { player_id, item_id });
+    }
+
+    pub fn remove_auto_pickup_item(&self, player_id: i32, item_id: i32) {
+        let _ = self
+            .tx
+            .send(Command::RemoveAutoPickupItem { player_id, item_id });
     }
 }
 

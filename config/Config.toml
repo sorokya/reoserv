@@ -443,3 +443,11 @@ infinite_use_items = []
 
 # Array of item ids that can never be junked/dropped/traded
 protected_items = []
+
+[auto_pickup]
+
+# Set to true to allow players to automatically pickup items
+enabled = false
+
+# How often in ticks players will pickup nearby items
+rate = 8

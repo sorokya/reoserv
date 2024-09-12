@@ -108,8 +108,10 @@ fn load_pub() -> Result<ShopFile, Box<dyn std::error::Error>> {
         reader.get_char();
 
         for _ in 0..num_records {
-            let mut record = ShopRecord::default();
-            record.behavior_id = reader.get_short();
+            let mut record = ShopRecord {
+                behavior_id: reader.get_short(),
+                ..Default::default()
+            };
 
             let name_length = reader.get_char();
             record.name = reader.get_fixed_string(name_length as usize);

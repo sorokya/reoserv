@@ -71,10 +71,7 @@ impl Map {
                 npc_index,
                 damage: damage_dealt,
                 hp_percentage: npc.get_hp_percentage(),
-                caster_tp: match self.characters.get(&player_id) {
-                    Some(character) => Some(character.tp),
-                    None => None,
-                },
+                caster_tp: self.characters.get(&player_id).map(|character| character.tp),
                 kill_steal_protection: Some(if protected {
                     NpcKillStealProtectionState::Protected
                 } else {

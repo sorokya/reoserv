@@ -468,6 +468,7 @@ pub enum Command {
     TimedEvacuate,
     TimedDropProtection,
     TimedGhost,
+    TimedAutoPickup,
     ToggleHidden {
         player_id: i32,
     },
@@ -526,5 +527,19 @@ pub enum Command {
     ActNpcs,
     Quake {
         magnitude: i32,
+    },
+    ListAutoPickupItems {
+        player_id: i32,
+    },
+    ClearAutoPickupItems {
+        player_id: i32,
+    },
+    AddAutoPickupItem {
+        player_id: i32,
+        item_id: i32,
+    },
+    RemoveAutoPickupItem {
+        player_id: i32,
+        item_id: i32,
     },
 }

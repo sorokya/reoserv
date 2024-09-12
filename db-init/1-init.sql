@@ -1,30 +1,7 @@
-CREATE DATABASE  IF NOT EXISTS `reoserv` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE IF NOT EXISTS `reoserv`;
 USE `reoserv`;
--- MySQL dump 10.13  Distrib 8.0.22, for macos10.15 (x86_64)
---
--- Host: 127.0.0.1    Database: reoserv
--- ------------------------------------------------------
--- Server version	8.0.28
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `Account`
---
-
-DROP TABLE IF EXISTS `Account`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Account` (
+CREATE TABLE IF NOT EXISTS `Account` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(16) NOT NULL,
   `password_hash` char(100) NOT NULL,
@@ -34,58 +11,34 @@ CREATE TABLE `Account` (
   `computer` varchar(64) NOT NULL,
   `hdid` int unsigned NOT NULL,
   `register_ip` varchar(15) NOT NULL,
-  `last_login_ip` varchar(15) NULL,
+  `last_login_ip` varchar(15) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Bank`
---
-
-DROP TABLE IF EXISTS `Bank`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Bank` (
-  `character_id` int NOT NULL,
-  `item_id` int NOT NULL,
-  `quantity` int NOT NULL,
-  PRIMARY KEY (`character_id`,`item_id`),
-  CONSTRAINT `bank_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `BoardPost`
---
-
-DROP TABLE IF EXISTS `BoardPost`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `BoardPost` (
+CREATE TABLE IF NOT EXISTS `Guild` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `board_id` tinyint NOT NULL,
-  `character_id` int NOT NULL,
-  `subject` varchar(32) NOT NULL,
-  `body` varchar(2048) NOT NULL,
+  `tag` varchar(3) NOT NULL,
+  `name` varchar(32) NOT NULL,
+  `description` text,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `bank` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `GuildRank` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `guild_id` int NOT NULL,
+  `index` tinyint NOT NULL,
+  `rank` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `board_id_idx` (`board_id`),
-  CONSTRAINT `board_post_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  KEY `guild_rank_guild_id` (`guild_id`),
+  CONSTRAINT `guild_rank_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE CASCADE
+);
 
---
--- Table structure for table `Character`
---
-
-DROP TABLE IF EXISTS `Character`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Character` (
+CREATE TABLE IF NOT EXISTS `Character` (
   `id` int NOT NULL AUTO_INCREMENT,
   `account_id` int NOT NULL,
   `name` varchar(16) NOT NULL,
@@ -112,92 +65,52 @@ CREATE TABLE `Character` (
   KEY `guild_id_idx` (`guild_id`),
   CONSTRAINT `character_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
   CONSTRAINT `character_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Ban`
---
-
-DROP TABLE IF EXISTS `Ban`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Ban` (
+CREATE TABLE IF NOT EXISTS `Ban` (
   `id` int NOT NULL AUTO_INCREMENT,
   `account_id` int NOT NULL,
   `ip` varchar(15) NOT NULL,
-  `duration` int NULL,
+  `duration` int DEFAULT NULL,
   `created_by` int NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `account_id_idx` (`account_id`),
-  CONSTRAINT `ban_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
   KEY `created_by_idx` (`created_by`),
-  CONSTRAINT `ban_created_by` FOREIGN KEY (`created_by`) REFERENCES `Character` (`id`) 
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  CONSTRAINT `ban_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ban_created_by` FOREIGN KEY (`created_by`) REFERENCES `Character` (`id`)
+);
 
+CREATE TABLE IF NOT EXISTS `Bank` (
+  `character_id` int NOT NULL,
+  `item_id` int NOT NULL,
+  `quantity` int NOT NULL,
+  PRIMARY KEY (`character_id`,`item_id`),
+  CONSTRAINT `bank_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+);
 
---
--- Table structure for table `Guild`
---
-
-DROP TABLE IF EXISTS `Guild`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Guild` (
+CREATE TABLE IF NOT EXISTS `BoardPost` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `tag` varchar(3) NOT NULL,
-  `name` varchar(32) NOT NULL,
-  `description` text,
+  `board_id` tinyint NOT NULL,
+  `character_id` int NOT NULL,
+  `subject` varchar(32) NOT NULL,
+  `body` varchar(2048) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `bank` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `GuildRank`
---
-
-DROP TABLE IF EXISTS `GuildRank`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `GuildRank` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `guild_id` int NOT NULL,
-  `index` tinyint NOT NULL,
-  `rank` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `guild_rank_guild_id` (`guild_id`),
-  CONSTRAINT `guild_rank_guild_id` FOREIGN KEY (`guild_id`) REFERENCES `Guild` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  KEY `board_id_idx` (`board_id`),
+  KEY `board_post_character_id` (`character_id`),
+  CONSTRAINT `board_post_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+);
 
---
--- Table structure for table `Inventory`
---
-
-DROP TABLE IF EXISTS `Inventory`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Inventory` (
+CREATE TABLE IF NOT EXISTS `Inventory` (
   `character_id` int NOT NULL,
   `item_id` int NOT NULL,
   `quantity` int NOT NULL,
   PRIMARY KEY (`character_id`,`item_id`),
   CONSTRAINT `inventory_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Paperdoll`
---
-
-DROP TABLE IF EXISTS `Paperdoll`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Paperdoll` (
+CREATE TABLE IF NOT EXISTS `Paperdoll` (
   `character_id` int NOT NULL,
   `boots` int NOT NULL DEFAULT '0',
   `accessory` int NOT NULL DEFAULT '0',
@@ -216,17 +129,9 @@ CREATE TABLE `Paperdoll` (
   `bracer2` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
   CONSTRAINT `paperdoll_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Position`
---
-
-DROP TABLE IF EXISTS `Position`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Position` (
+CREATE TABLE IF NOT EXISTS `Position` (
   `character_id` int NOT NULL,
   `map` int NOT NULL DEFAULT '192',
   `x` int NOT NULL DEFAULT '7',
@@ -236,33 +141,29 @@ CREATE TABLE `Position` (
   `hidden` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
   CONSTRAINT `position_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Spell`
---
+CREATE TABLE IF NOT EXISTS `QuestProgress` (
+  `character_id` int NOT NULL,
+  `quest_id` int NOT NULL,
+  `state` int NOT NULL,
+  `npc_kills` json NOT NULL,
+  `player_kills` int NOT NULL,
+  `done_at` datetime DEFAULT NULL,
+  `completions` int NOT NULL,
+  PRIMARY KEY (`character_id`,`quest_id`),
+  CONSTRAINT `quest_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+);
 
-DROP TABLE IF EXISTS `Spell`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Spell` (
+CREATE TABLE IF NOT EXISTS `Spell` (
   `character_id` int NOT NULL,
   `spell_id` int NOT NULL,
   `level` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`,`spell_id`),
   CONSTRAINT `spell_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+);
 
---
--- Table structure for table `Stats`
---
-
-DROP TABLE IF EXISTS `Stats`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Stats` (
+CREATE TABLE IF NOT EXISTS `Stats` (
   `character_id` int NOT NULL,
   `level` int NOT NULL DEFAULT '0',
   `experience` int NOT NULL DEFAULT '0',
@@ -280,35 +181,11 @@ CREATE TABLE `Stats` (
   `usage` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`character_id`),
   CONSTRAINT `stats_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+);
 
---
--- Table structure for table `QuestProgress`
---
-
-DROP TABLE IF EXISTS `QuestProgress`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `QuestProgress` (
+CREATE TABLE IF NOT EXISTS `AutoPickup` (
   `character_id` int NOT NULL,
-  `quest_id` int NOT NULL,
-  `state` int NOT NULL,
-  `npc_kills` json NOT NULL,
-  `player_kills` int NOT NULL,
-  `done_at` datetime NULL,
-  `completions` int NOT NULL,
-  PRIMARY KEY (`character_id`,`quest_id`),
-  CONSTRAINT `quest_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+  `item_id` int NOT NULL,
+  PRIMARY KEY (`character_id`, `item_id`),
+  CONSTRAINT `autopickup_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
+);

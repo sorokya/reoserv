@@ -11,6 +11,10 @@ impl World {
             None => return,
         };
 
+        if SETTINGS.auto_pickup.enabled {
+            self.auto_pickup_ticks += 1;
+        }
+
         self.second_ticks += 1;
         self.npc_act_ticks += 1;
         self.item_spawn_ticks += 1;
@@ -29,6 +33,10 @@ impl World {
         for map in maps {
             if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
                 map.act_npcs();
+            }
+
+            if self.auto_pickup_ticks >= SETTINGS.auto_pickup.rate && SETTINGS.auto_pickup.enabled {
+                map.timed_auto_pickup();
             }
 
             if self.second_ticks >= ONE_SECOND {
@@ -72,6 +80,10 @@ impl World {
 
         if self.second_ticks >= ONE_SECOND {
             self.second_ticks = 0;
+        }
+
+        if self.auto_pickup_ticks >= SETTINGS.auto_pickup.rate && SETTINGS.auto_pickup.enabled {
+            self.auto_pickup_ticks = 0;
         }
 
         if self.npc_act_ticks >= SETTINGS.npcs.act_rate {

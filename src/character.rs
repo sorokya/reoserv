@@ -109,6 +109,7 @@ pub struct Character {
     pub captcha_open: bool,
     pub warp_suck_ticks: i32,
     pub ghost_ticks: i32,
+    pub auto_pickup_items: Vec<i32>,
 }
 
 #[derive(Clone, Debug, Default)]

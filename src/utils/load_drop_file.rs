@@ -79,8 +79,11 @@ fn load_pub() -> Result<DropFile, Box<dyn std::error::Error>> {
         reader.get_char();
 
         for _ in 0..num_records {
-            let mut record = DropNpcRecord::default();
-            record.npc_id = reader.get_short();
+            let mut record = DropNpcRecord {
+                npc_id: reader.get_short(),
+                ..Default::default()
+            };
+
             let num_drops = reader.get_short();
 
             record.drops = Vec::with_capacity(num_drops as usize);

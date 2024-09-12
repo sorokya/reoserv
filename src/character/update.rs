@@ -60,6 +60,16 @@ impl Character {
             )
             .await?;
 
+        let old_auto_pickup = conn
+            .exec_map(
+                include_str!("../sql/get_character_auto_pickup.sql"),
+                params! {
+                    "character_id" => self.id,
+                },
+                |mut row: Row| row.take::<i32, usize>(0).unwrap(),
+            )
+            .await?;
+
         let mut tx = conn.start_transaction(TxOpts::default()).await?;
 
         tx.exec_drop(
@@ -309,6 +319,32 @@ impl Character {
                         "player_kills" => quest.player_kills,
                         "done_at" => quest.done_at.map(|done_at| done_at.naive_utc()),
                         "completions" => quest.completions,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for item_id in &old_auto_pickup {
+            if !self.auto_pickup_items.iter().any(|i| i == item_id) {
+                tx.exec_drop(
+                    include_str!("../sql/delete_auto_pickup_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item_id,
+                    },
+                )
+                .await?;
+            }
+        }
+
+        for item_id in &self.auto_pickup_items {
+            if !old_auto_pickup.iter().any(|i| i == item_id) {
+                tx.exec_drop(
+                    include_str!("../sql/create_auto_pickup_item.sql"),
+                    params! {
+                        "character_id" => self.id,
+                        "item_id" => item_id,
                     },
                 )
                 .await?;

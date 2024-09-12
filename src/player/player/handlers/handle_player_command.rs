@@ -33,6 +33,14 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
         return;
     }
 
+    if args.len() < 2 {
+        send_error_message(
+            player,
+            "Invalid argument. Must be \"list\", \"add\", or \"remove\".".to_string(),
+        );
+        return;
+    }
+
     let identifier = (*args[1]).to_string();
 
     let item_id = match identifier.parse::<u32>() {

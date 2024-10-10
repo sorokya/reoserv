@@ -33,3 +33,7 @@ data/quests/*.eqf
 .env
 *.local.toml
 *.local.ron
+
+# Endless Online Client
+EOzipped028
+EOzipped028.zip

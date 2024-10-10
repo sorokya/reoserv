@@ -2,51 +2,72 @@
 
 # REOSERV
 
-The rust powered [Endless Online](https://game.eoserv.net/) server emulator!
+The Rust-powered server emulator for [Endless Online](https://endless-online.com) 🦀
 
-# Building
+## Prerequisites
 
-The only depency is rust and cargo. I recommend using [rustup](https://rustup.rs/) to install both.
+Before building the server, ensure you have the following installed:
 
-To build the server simply run
+- [Rust](https://www.rust-lang.org/)
+- [Cargo](https://doc.rust-lang.org/cargo/appendix/glossary.html#cargo)
 
-`cargo build`
+I recommend using [rustup](https://rustup.rs/) to install Rust and Cargo.
 
-or for release build
+## Building
 
-`cargo build --release`
+To build the server, simply run:
 
-# Database setup
-
-0. You should install docker-compose
-1. Create a .env file with the following (replacing <PASSWORD>s with your own secure password)
-
-```
-MYSQL_ROOT_PASSWORD=<ROOT_PASSWORD>
-MYSQL_REOSERV_PASSWORD=<REOSERV_PASSWORD>
+```sh
+cargo build
 ```
 
-2. Start the container
+For a release build, use:
 
-`docker-compose up`
+```sh
+cargo build --release
+```
 
-# Configure the server
+> [!NOTE]
+> Set up and configure a MySQL database before starting the server. See the section below for instructions.
+> Edit `config/Config.toml` to match your production database before creating a release build.
 
-_You can either edit Config.toml directly or edit a copy Config.local.toml_
+## Database setup and configuration
 
-The only required change right now is the settings for the database connection.
+We use a MySQL database to store game data.
 
-If you're using the provided docker-compose file then all you need to do is set
-password to the same password you set to for `MYSQL_REOSERV_PASSWORD` in the .env file.
+1. If you don't have a MySQL database set up, you can run this Docker command to create one:
+    ```sh
+    docker run --name reoserv-db \
+        -e MYSQL_ROOT_PASSWORD="CHANGEME" \
+        -e MYSQL_PASSWORD="CHANGEME" \
+        -e MYSQL_USER="reoserv" \
+        -e MYSQL_DATABASE="reoserv" \
+        -e TZ="UTC" \
+        -p "3306:3306" \
+        -v ./db-init/:/docker-entrypoint-initdb.d/ \
+        --restart unless-stopped \
+        -d mariadb:latest
+    ```
+    Replace `CHANGEME` with your own secure passwords.
 
-# Start server
+2. Edit the database connection settings in `config/Config.toml` or in a copy of it (`config/Config.local.toml`) accordingly before building / running the server.
 
-You can run the server with
+## Start the server
 
-`cargo run`
+To run the server, use:
 
-(if you want more logging then set the `RUST_LOG` environment variable to one
-of the following:
+```sh
+cargo run
+```
 
-- debug: The human readable data structures for every packet will be printed
-- trace: The raw byte arrays for every packet will be printed
+## Setup quests, NPCs and items for your server
+
+See [our documentation](https://reoserv.net/docs) for instructions on how to setup quests, NPCs, items and more for your server.
+
+- [Classes, Items, Spells, NPCs](https://reoserv.net/docs/pubs)
+- [Maps](https://reoserv.net/docs/maps)
+- [Quests](https://reoserv.net/docs/quests)
+
+## Setup the Endless Online client
+
+See `eo-client/README.md` for instructions

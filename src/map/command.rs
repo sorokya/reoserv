@@ -176,6 +176,10 @@ pub enum Command {
     GetRidAndSize {
         respond_to: oneshot::Sender<([i32; 2], i32)>,
     },
+    GetPlayerCount {
+        respond_to: oneshot::Sender<usize>,
+        filter: fn(&Character) -> bool,
+    },
     AwardExperience {
         player_id: i32,
         amount: i32,

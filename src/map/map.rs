@@ -322,7 +322,9 @@ impl Map {
             Command::GetRidAndSize { respond_to } => {
                 self.get_rid_and_size(respond_to);
             }
-
+            Command::GetPlayerCount { respond_to, filter } => {
+                let _ = respond_to.send(self.characters.values().filter(|c| filter(*c)).count());
+            }
             Command::AwardExperience { player_id, amount } => {
                 self.award_experience(player_id, amount)
             }

@@ -297,6 +297,15 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
+    pub async fn get_player_count(&self, filter: fn(&Character) -> bool) -> usize {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetPlayerCount {
+            respond_to: tx,
+            filter,
+        });
+        rx.await.unwrap()
+    }
+
     pub fn award_experience(&self, player_id: i32, amount: i32) {
         let _ = self.tx.send(Command::AwardExperience { player_id, amount });
     }

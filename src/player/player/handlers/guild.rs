@@ -1406,7 +1406,7 @@ async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9]
         }
     }
 
-    player.send_guild_reply(GuildReply::Updated);
+    player.send_guild_reply(GuildReply::RanksUpdated);
 }
 
 async fn get_guild_description(conn: &mut Conn, tag: &str) -> String {

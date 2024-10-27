@@ -1,5 +1,5 @@
 use eolib::protocol::net::{
-    server::{GuildAgreeServerPacket, GuildReply, GuildReplyServerPacket},
+    server::{GuildAgreeServerPacket, GuildReply},
     PacketAction, PacketFamily,
 };
 

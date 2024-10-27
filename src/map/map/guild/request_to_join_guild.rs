@@ -27,10 +27,11 @@ impl Map {
             return;
         }
 
-        let recruiter = match self.characters.values().find(|c| c.name == recruiter_name) {
-            Some(character) => Some(character.to_owned()),
-            None => None,
-        };
+        let recruiter = self
+            .characters
+            .values()
+            .find(|c| c.name == recruiter_name)
+            .map(|character| character.to_owned());
 
         let world = self.world.to_owned();
         let character_name = character.name.to_owned();

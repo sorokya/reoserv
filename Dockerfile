@@ -1,5 +1,5 @@
 # Builder
-FROM rust:1.77.2-bookworm as builder
+FROM rust:1.82.0-bookworm as builder
 
 WORKDIR /usr/src
 

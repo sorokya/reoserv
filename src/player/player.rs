@@ -18,7 +18,6 @@ pub struct Player {
     pub world: WorldHandle,
     // TODO: just use character's map?
     pub map: Option<MapHandle>,
-    pub busy: bool,
     account_id: i32,
     pool: Pool,
     pub state: ClientState,
@@ -89,7 +88,6 @@ impl Player {
             pool,
             queue: RefCell::new(VecDeque::new()),
             map: None,
-            busy: false,
             closed: false,
             account_id: 0,
             state: ClientState::Uninitialized,

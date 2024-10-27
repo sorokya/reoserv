@@ -67,7 +67,7 @@ impl Player {
         }
 
         if let Ok(version_compare::Cmp::Gt) = version_compare::compare(
-            &format!(
+            format!(
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),
@@ -106,7 +106,7 @@ impl Player {
         }
 
         if let Ok(version_compare::Cmp::Lt) = version_compare::compare(
-            &format!(
+            format!(
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),

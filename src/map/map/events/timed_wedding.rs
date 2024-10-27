@@ -196,7 +196,10 @@ impl Map {
                     WeddingState::Hearts
                 }
                 WeddingState::Hearts => {
-                    self.effect_on_players(&[player_id, partner_id], 1);
+                    self.effect_on_players(
+                        &[player_id, partner_id],
+                        SETTINGS.marriage.celebration_effect_id,
+                    );
                     WeddingState::PriestDialog5AndConfetti
                 }
                 WeddingState::PriestDialog5AndConfetti => {

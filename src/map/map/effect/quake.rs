@@ -1,5 +1,3 @@
-use std::cmp;
-
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
@@ -15,7 +13,7 @@ use super::super::Map;
 
 impl Map {
     pub fn quake(&self, magnitude: i32) {
-        let magnitude = cmp::max(1, cmp::min(8, magnitude));
+        let magnitude = magnitude.clamp(1, 8);
 
         let packet = EffectUseServerPacket {
             effect: MapEffect::Quake,

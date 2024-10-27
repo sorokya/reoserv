@@ -12,7 +12,7 @@ use eolib::protocol::{
     Coords, Direction,
 };
 
-use evalexpr::{context_map, eval_float_with_context};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
 use rand::{seq::SliceRandom, Rng};
 
 use crate::{
@@ -597,13 +597,13 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
     let npc_facing_player_back_or_side =
         (i32::from(character.direction) - i32::from(npc.direction)).abs() != 2;
 
-    let context = match context_map! {
+    let context: HashMapContext<DefaultNumericTypes> = match context_map! {
         "critical" => npc_facing_player_back_or_side,
-        "damage" => amount as f64,
-        "target_armor" => character.armor as f64,
+        "damage" => float amount,
+        "target_armor" => float character.armor,
         "target_sitting" => character.sit_state != SitState::Stand,
-        "accuracy" => npc_data.accuracy as f64,
-        "target_evade" => character.evasion as f64,
+        "accuracy" => float npc_data.accuracy,
+        "target_evade" => float character.evasion,
     } {
         Ok(context) => context,
         Err(e) => {

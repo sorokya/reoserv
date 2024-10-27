@@ -8,7 +8,6 @@ pub struct Server {
     pub max_players: i32,
     pub max_connections_per_ip: i32,
     pub ip_reconnect_limit: i32,
-    pub max_uninitialized_connections: i32,
     pub hangup_delay: i32,
     pub max_login_attempts: i32,
     pub ping_rate: i32,

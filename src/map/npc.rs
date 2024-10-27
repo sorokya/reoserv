@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
-use evalexpr::{context_map, eval_float_with_context};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
 use rand::Rng;
 
 use crate::{FORMULAS, NPC_DB};
@@ -56,13 +56,13 @@ impl Npc {
             }
         };
 
-        let context = match context_map! {
+        let context: HashMapContext<DefaultNumericTypes> = match context_map! {
             "critical" => critical,
-            "damage" => amount as f64,
-            "target_armor" => npc_data.armor as f64,
+            "damage" => float amount,
+            "target_armor" => float npc_data.armor,
             "target_sitting" => false,
-            "accuracy" => accuracy as f64,
-            "target_evade" => npc_data.evade as f64,
+            "accuracy" => float accuracy,
+            "target_evade" => float npc_data.evade,
         } {
             Ok(context) => context,
             Err(e) => {

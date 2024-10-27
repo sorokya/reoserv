@@ -16,7 +16,6 @@ pub struct Player {
     pub queue: RefCell<VecDeque<Bytes>>,
     pub bus: PacketBus,
     pub world: WorldHandle,
-    // TODO: just use character's map?
     pub map: Option<MapHandle>,
     account_id: i32,
     pool: Pool,

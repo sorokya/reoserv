@@ -14,7 +14,7 @@ use eolib::{
         Coords, Direction,
     },
 };
-use evalexpr::{context_map, eval_float_with_context};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
 use rand::Rng;
 
 use crate::{
@@ -71,7 +71,10 @@ impl Map {
                 npc_index,
                 damage: damage_dealt,
                 hp_percentage: npc.get_hp_percentage(),
-                caster_tp: self.characters.get(&player_id).map(|character| character.tp),
+                caster_tp: self
+                    .characters
+                    .get(&player_id)
+                    .map(|character| character.tp),
                 kill_steal_protection: Some(if protected {
                     NpcKillStealProtectionState::Protected
                 } else {
@@ -195,9 +198,9 @@ impl Map {
                 .collect();
 
             let experience = if members_on_map.len() > 1 {
-                let context = match context_map! {
-                    "members" => members_on_map.len() as f64,
-                    "exp" => npc_data.experience as f64,
+                let context: HashMapContext<DefaultNumericTypes> = match context_map! {
+                    "members" =>  float members_on_map.len() as f32,
+                    "exp" => float npc_data.experience,
                 } {
                     Ok(context) => context,
                     Err(e) => {

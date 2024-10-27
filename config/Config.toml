@@ -15,9 +15,6 @@ max_connections_per_ip = 3
 # Seconds an IP must wait before reconnecting to the server
 ip_reconnect_limit = 10
 
-# Maximum amount of uninitialized connections
-max_uninitialized_connections = 50
-
 # Number of seconds to wait before dropping an uninitialized connection
 hangup_delay = 10
 

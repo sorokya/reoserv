@@ -1,6 +1,6 @@
 use std::cmp;
 
-use evalexpr::{context_map, eval_float_with_context};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
 
 use crate::{CLASS_DB, FORMULAS, ITEM_DB};
 
@@ -79,20 +79,20 @@ impl Character {
             self.adj_charisma += item.cha;
         }
 
-        let context = match context_map! {
-            "base_str" => self.base_strength as i64,
-            "base_int" => self.base_intelligence as i64,
-            "base_wis" => self.base_wisdom as i64,
-            "base_agi" => self.base_agility as i64,
-            "base_con" => self.base_constitution as i64,
-            "base_cha" => self.base_charisma as i64,
-            "str" => self.adj_strength as i64,
-            "int" => self.adj_intelligence as i64,
-            "wis" => self.adj_wisdom as i64,
-            "agi" => self.adj_agility as i64,
-            "con" => self.adj_constitution as i64,
-            "cha" => self.adj_charisma as i64,
-            "level" => self.level as i64,
+        let context: HashMapContext<DefaultNumericTypes> = match context_map! {
+            "base_str" => int self.base_strength,
+            "base_int" => int self.base_intelligence,
+            "base_wis" => int self.base_wisdom,
+            "base_agi" => int self.base_agility,
+            "base_con" => int self.base_constitution,
+            "base_cha" => int self.base_charisma,
+            "str" => int self.adj_strength,
+            "int" => int self.adj_intelligence,
+            "wis" => int self.adj_wisdom,
+            "agi" => int self.adj_agility,
+            "con" => int self.adj_constitution,
+            "cha" => int self.adj_charisma,
+            "level" => int self.level,
         } {
             Ok(context) => context,
             Err(e) => {

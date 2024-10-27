@@ -8,7 +8,7 @@ use eolib::protocol::{
     AdminLevel, Coords, Direction, Gender,
 };
 use eoplus::Arg;
-use evalexpr::{context_map, eval_float_with_context};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
 use mysql_async::Conn;
 use rand::Rng;
 use std::cmp;
@@ -169,13 +169,13 @@ impl Character {
     }
 
     pub fn damage(&mut self, amount: i32, accuracy: i32, critical: bool) -> i32 {
-        let context = match context_map! {
+        let context: HashMapContext<DefaultNumericTypes> = match context_map! {
             "critical" => critical,
-            "damage" => amount as f64,
-            "target_armor" => self.armor as f64,
+            "damage" => float amount,
+            "target_armor" => float self.armor,
             "target_sitting" => false,
-            "accuracy" => accuracy as f64,
-            "target_evade" => self.evasion as f64,
+            "accuracy" => float accuracy,
+            "target_evade" => float self.evasion,
         } {
             Ok(context) => context,
             Err(e) => {

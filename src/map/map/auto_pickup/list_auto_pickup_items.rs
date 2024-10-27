@@ -12,7 +12,12 @@ impl Map {
         let items = character
             .auto_pickup_items
             .iter()
-            .filter_map(|item_id| ITEM_DB.items.get(*item_id as usize - 1).map(|item| item.name.as_str()))
+            .filter_map(|item_id| {
+                ITEM_DB
+                    .items
+                    .get(*item_id as usize - 1)
+                    .map(|item| item.name.as_str())
+            })
             .collect::<Vec<_>>();
 
         self.show_info_box(

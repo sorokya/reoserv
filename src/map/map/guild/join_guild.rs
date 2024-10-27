@@ -1,4 +1,7 @@
-use eolib::protocol::net::{server::GuildAgreeServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{
+    server::{GuildAgreeServerPacket, GuildReply},
+    PacketAction, PacketFamily,
+};
 
 use super::super::Map;
 
@@ -35,5 +38,17 @@ impl Map {
                 },
             );
         }
+
+        let character = match self.characters.get(&recruiter_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        let recruiter = match character.player.as_ref() {
+            Some(player) => player,
+            None => return,
+        };
+
+        recruiter.send_guild_reply(GuildReply::Accepted);
     }
 }

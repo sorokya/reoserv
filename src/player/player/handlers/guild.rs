@@ -139,6 +139,12 @@ impl Player {
             if SETTINGS.guild.min_players == 1 {
                 player.send_guild_reply(GuildReply::CreateAddConfirm);
             } else {
+                let player_count = map.get_player_count(|c| c.guild_tag.is_none()).await;
+                if player_count < SETTINGS.guild.min_players {
+                    player.send_guild_reply(GuildReply::NoCandidates);
+                    return;
+                }
+
                 player.send_guild_reply(GuildReply::CreateBegin);
                 map.send_guild_create_requests(
                     player_id,
@@ -1400,7 +1406,7 @@ async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9]
         }
     }
 
-    player.send_guild_reply(GuildReply::Updated);
+    player.send_guild_reply(GuildReply::RanksUpdated);
 }
 
 async fn get_guild_description(conn: &mut Conn, tag: &str) -> String {

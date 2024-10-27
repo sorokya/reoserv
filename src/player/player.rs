@@ -114,17 +114,14 @@ impl Player {
         }
     }
 
-    pub async fn handle_command(&mut self, command: Command) -> bool {
+    pub async fn handle_command(&mut self, command: Command) {
         match command {
             Command::AddGuildCreationPlayer { player_id, name } => {
                 self.add_guild_creation_player(player_id, name).await
             }
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::CancelTrade => self.cancel_trade().await,
-            Command::Close(reason) => {
-                self.close(reason).await;
-                return false;
-            }
+            Command::Close(reason) => self.close(reason).await,
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let _ = respond_to.send(self.generate_session_id());
@@ -213,7 +210,7 @@ impl Player {
                 self.trading = trading;
             }
             Command::ShowCaptcha { experience } => self.show_captcha(experience).await,
-            Command::Tick => return self.tick().await,
+            Command::Tick => self.tick().await,
             Command::UpdateChestContent { chest_index, buf } => {
                 self.update_chest_content(chest_index, buf).await;
             }
@@ -223,7 +220,5 @@ impl Player {
                 }
             }
         }
-
-        true
     }
 }

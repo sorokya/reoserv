@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::{
@@ -237,10 +235,6 @@ impl PlayerHandle {
 
 async fn run_player(mut player: Player) {
     loop {
-        if player.closed {
-            break;
-        }
-
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
@@ -263,17 +257,16 @@ async fn run_player(mut player: Player) {
                 }
             },
             Some(command) = player.rx.recv() => {
-                // TODO: really don't like how this reads.. maybe a better way to do this?
-                if !player.handle_command(command).await {
-                    break;
-                }
+                player.handle_command(command).await;
             }
+        }
+
+        if player.closed {
+            break;
         }
 
         if let Some(packet) = player.queue.get_mut().pop_front() {
             player.handle_packet(packet).await;
         }
-
-        tokio::time::sleep(Duration::from_millis(60)).await;
     }
 }

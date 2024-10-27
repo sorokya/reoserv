@@ -5,13 +5,11 @@ use crate::{player::ClientState, SETTINGS};
 use super::Player;
 
 impl Player {
-    pub async fn tick(&mut self) -> bool {
+    pub async fn tick(&mut self) {
         self.ping_ticks += 1;
 
         if self.ping_ticks >= SETTINGS.server.ping_rate {
-            if !self.ping().await {
-                return false;
-            }
+            self.ping().await;
             self.ping_ticks = 0;
         }
 
@@ -23,13 +21,9 @@ impl Player {
                     SETTINGS.server.hangup_delay
                 ))
                 .await;
-
-                return false;
             }
         }
 
         self.bus.log.clean_old_entries();
-
-        true
     }
 }

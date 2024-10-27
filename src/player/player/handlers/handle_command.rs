@@ -24,8 +24,8 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
         } else {
             let map_size = map.get_dimensions().await;
             Coords {
-                x: map_size.0 / 2,
-                y: map_size.1 / 2,
+                x: map_size.x / 2,
+                y: map_size.y / 2,
             }
         };
 

@@ -253,8 +253,7 @@ impl MapHandle {
         rx.await.unwrap()
     }
 
-    // TODO: use coords!
-    pub async fn get_dimensions(&self) -> (i32, i32) {
+    pub async fn get_dimensions(&self) -> Coords {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
         rx.await.unwrap()

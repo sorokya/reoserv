@@ -281,7 +281,10 @@ impl Map {
             } => self.get_character(player_id, respond_to),
 
             Command::GetDimensions { respond_to } => {
-                self.get_dimensions(respond_to);
+                let _ = respond_to.send(Coords {
+                    x: self.file.width,
+                    y: self.file.height,
+                });
             }
 
             Command::GetItem {

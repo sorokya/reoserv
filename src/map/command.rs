@@ -156,7 +156,7 @@ pub enum Command {
         respond_to: oneshot::Sender<Option<Box<Character>>>,
     },
     GetDimensions {
-        respond_to: oneshot::Sender<(i32, i32)>,
+        respond_to: oneshot::Sender<Coords>,
     },
     GetItem {
         player_id: i32,

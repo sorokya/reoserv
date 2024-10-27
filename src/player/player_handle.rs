@@ -121,10 +121,7 @@ impl PlayerHandle {
         let _ = self
             .tx
             .send(Command::GetInteractPlayerId { respond_to: tx });
-        match rx.await {
-            Ok(index) => index,
-            Err(_) => None,
-        }
+        (rx.await).unwrap_or_default()
     }
 
     pub async fn get_state(&self) -> Result<ClientState, Box<dyn std::error::Error + Send + Sync>> {

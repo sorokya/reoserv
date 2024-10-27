@@ -10,18 +10,14 @@ pub enum ArgType {
 
 #[derive(Debug, Deserialize)]
 pub struct Arg {
-    pub name: String,
     pub r#type: ArgType,
     #[serde(default)]
     pub required: bool,
-    #[serde(default)]
-    pub min: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Command {
     pub name: String,
-    pub description: String,
     pub usage: String,
     pub alias: String,
     pub args: Vec<Arg>,

@@ -204,6 +204,7 @@ pub struct Account {
     pub recovery: bool,
     pub recovery_show_email: bool,
     pub recovery_mask_email: bool,
+    pub max_characters: usize,
 }
 
 #[derive(Debug, Deserialize)]

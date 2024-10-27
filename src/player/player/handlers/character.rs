@@ -267,8 +267,7 @@ impl Player {
             }
         };
 
-        // TODO: configurable max number of characters?
-        if num_of_characters >= 3 {
+        if num_of_characters >= SETTINGS.account.max_characters {
             let _ = self
                 .bus
                 .send(

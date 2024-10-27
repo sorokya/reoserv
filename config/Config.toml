@@ -87,6 +87,9 @@ recovery_show_email = true
 # Mask the email address shows to the player (e.g r*******k@gmail.com)
 recovery_mask_email = true
 
+# Maximum number of characters allowed per account
+max_characters = 3
+
 [smtp]
 
 from_name = ""

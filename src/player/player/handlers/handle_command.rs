@@ -37,7 +37,7 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
 
 // TODO: warp player to where you're facing
 async fn warp_to_me(args: &[String], character: &Character, world: &WorldHandle) {
-    let target_name = (*args[0]).to_string();
+    let target_name = &args[0];
 
     if let Ok(target) = world.get_character_by_name(target_name).await {
         let target = match target.player.as_ref() {
@@ -61,7 +61,7 @@ async fn warp_me_to(args: &[String], character: &Character, world: &WorldHandle)
         None => return,
     };
 
-    let target_name = (*args[0]).to_string();
+    let target_name = &args[0];
 
     if let Ok(target) = world.get_character_by_name(target_name).await {
         player.request_warp(target.map_id, target.coords, false, Some(WarpEffect::Admin));

@@ -110,7 +110,7 @@ impl Map {
         let pool = self.pool.clone();
 
         tokio::spawn(async move {
-            if let Ok(character) = world.get_character_by_name(name.to_owned()).await {
+            if let Ok(character) = world.get_character_by_name(&name).await {
                 if let Ok(map) = world.get_map(character.map_id).await {
                     map.divorce_partner(character.player_id.unwrap());
                     return;

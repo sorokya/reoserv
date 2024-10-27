@@ -182,14 +182,13 @@ impl WorldHandle {
         });
     }
 
-    // TODO: pass name  as reference
     pub async fn get_character_by_name(
         &self,
-        name: String,
+        name: &str,
     ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacterByName {
-            name,
+            name: name.to_owned(),
             respond_to: tx,
         });
         rx.await.unwrap()

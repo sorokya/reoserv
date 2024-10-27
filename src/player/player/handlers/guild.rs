@@ -427,7 +427,7 @@ impl Player {
             }
 
             match world
-                .get_character_by_name(packet.member_name.clone())
+                .get_character_by_name(&packet.member_name)
                 .await
             {
                 Ok(member) => {
@@ -811,7 +811,7 @@ impl Player {
             };
 
             let target_character = match world
-                .get_character_by_name(packet.member_name.to_owned())
+                .get_character_by_name(&packet.member_name)
                 .await
             {
                 Ok(character) => character,

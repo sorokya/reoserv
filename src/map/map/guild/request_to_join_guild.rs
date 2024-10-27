@@ -37,7 +37,7 @@ impl Map {
         let character_name = character.name.to_owned();
 
         tokio::spawn(async move {
-            match world.get_character_by_name(recruiter_name.to_owned()).await {
+            match world.get_character_by_name(&recruiter_name).await {
                 Ok(_) => {}
                 _ => {
                     send_reply!(player, GuildReply::RecruiterOffline);

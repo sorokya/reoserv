@@ -1,15 +1,18 @@
 use std::cmp;
 
-use eolib::protocol::net::{server::GuildBuyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::{
+    net::{server::GuildBuyServerPacket, PacketAction, PacketFamily},
+    r#pub::NpcType,
+};
 use mysql_async::{prelude::Queryable, Params};
 use mysql_common::{params, Row};
 
-use crate::SETTINGS;
+use crate::{NPC_DB, SETTINGS};
 
 use super::super::Map;
 
 impl Map {
-    pub fn deposit_guild_gold(&mut self, player_id: i32, amount: i32) {
+    pub fn deposit_guild_gold(&mut self, player_id: i32, npc_index: i32, amount: i32) {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
@@ -19,6 +22,18 @@ impl Map {
             Some(tag) => tag.to_owned(),
             None => return,
         };
+
+        match self.npcs.get(&npc_index) {
+            Some(npc) => match NPC_DB.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => {
+                    if npc_data.r#type != NpcType::Guild {
+                        return;
+                    }
+                }
+                None => return,
+            },
+            None => return,
+        }
 
         let amount = cmp::min(amount, character.get_item_amount(1));
 

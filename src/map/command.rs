@@ -105,6 +105,7 @@ pub enum Command {
     },
     DepositGuildGold {
         player_id: i32,
+        npc_index: i32,
         amount: i32,
     },
     DisagreeTrade {

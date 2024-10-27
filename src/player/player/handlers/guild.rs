@@ -615,26 +615,7 @@ impl Player {
             None => return,
         };
 
-        let player_id = self.id;
-
-        tokio::spawn(async move {
-            // TODO: This is so stupid.. do it in map
-            match map.get_npc_id_for_index(npc_index).await {
-                Some(npc_id) => {
-                    let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
-                        Some(npc_data) => npc_data,
-                        None => return,
-                    };
-
-                    if npc_data.r#type != NpcType::Guild {
-                        return;
-                    }
-                }
-                None => return,
-            }
-
-            map.deposit_guild_gold(player_id, packet.gold_amount);
-        });
+        map.deposit_guild_gold(self.id, npc_index, packet.gold_amount);
     }
 
     fn guild_agree(&mut self, reader: EoReader) {

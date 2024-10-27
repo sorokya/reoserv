@@ -221,9 +221,11 @@ impl Map {
                 amount,
             } => self.deposit_gold(player_id, npc_index, amount),
 
-            Command::DepositGuildGold { player_id, amount } => {
-                self.deposit_guild_gold(player_id, amount)
-            }
+            Command::DepositGuildGold {
+                player_id,
+                npc_index,
+                amount,
+            } => self.deposit_guild_gold(player_id, npc_index, amount),
 
             Command::DisagreeTrade {
                 player_id,

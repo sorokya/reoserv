@@ -8,7 +8,7 @@ use eolib::protocol::{
     AdminLevel, Coords, Direction, Gender,
 };
 use eoplus::Arg;
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
 use mysql_async::Conn;
 use rand::Rng;
 use std::cmp;

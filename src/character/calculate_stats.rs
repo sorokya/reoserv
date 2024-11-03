@@ -1,6 +1,6 @@
 use std::cmp;
 
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
 
 use crate::{CLASS_DB, FORMULAS, ITEM_DB};
 

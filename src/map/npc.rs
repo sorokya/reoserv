@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext, Value};
+use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
 use rand::Rng;
 
 use crate::{FORMULAS, NPC_DB};

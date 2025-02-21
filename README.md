@@ -1,6 +1,6 @@
 [![Rust](https://github.com/sorokya/reoserv/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/sorokya/reoserv/actions/workflows/rust.yml)
 
-<img src="https://reoserv.net/assets/logo-full-zkENLXtH.webp" alt="REOSERV" style="width:500px"/>
+<img src="https://reoserv.net/assets/logo-full-DgBhVpSq.webp" alt="REOSERV" style="width:500px"/>
 
 The Rust-powered server emulator for [Endless Online](https://endless-online.com) 🦀
 

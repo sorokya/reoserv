@@ -10,7 +10,7 @@ ci = "github"
 # The installers to generate for each app
 installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "aarch64-unknown-linux-musl", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
 # Which actions to run on pull requests
 pr-run-mode = "plan"
 # Whether to install an updater program
@@ -18,6 +18,6 @@ install-updater = false
 # Extra static files to include in each App (path relative to this Cargo.toml's dir)
 include = ["config", "data", "db-init"]
 
-[dist.github-custom-runners]
-aarch64-unknown-linux-gnu = "buildjet-2vcpu-ubuntu-2204-arm"
-aarch64-unknown-linux-musl = "buildjet-2vcpu-ubuntu-2204-arm"
+#[dist.github-custom-runners]
+#aarch64-unknown-linux-gnu = "buildjet-2vcpu-ubuntu-2204-arm"
+#aarch64-unknown-linux-musl = "buildjet-2vcpu-ubuntu-2204-arm"

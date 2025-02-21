@@ -19,7 +19,7 @@ console = ["console-subscriber"]
 
 [dependencies]
 anyhow = "1.0"
-bytes = "1.8"
+bytes = "1.10"
 config = { version = "0.15", features = ["toml", "ron"] }
 crc = "3.2.1"
 chrono = "0.4"

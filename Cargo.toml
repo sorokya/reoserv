@@ -45,7 +45,7 @@ eolib = { version = "2.1.1", features = ["use_serde"] }
 eoplus = "1.0.0-RC1"
 rand = "0.8"
 evalexpr = "12.0.1"
-duration-str = "0.12.0"
+duration-str = "0.16.1"
 version-compare = "0.2"
 mail-send = "0.4.7"
 mail-builder = "0.3.2"

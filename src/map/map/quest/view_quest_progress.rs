@@ -59,6 +59,26 @@ impl Map {
                     });
                 }
 
+                if state.rules.iter().any(|rule| rule.name == "EquippedItem") {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Item,
+                        progress: 0,
+                        target: 1,
+                    });
+                }
+
+                if state.rules.iter().any(|rule| rule.name == "UnequippedItem") {
+                    return Some(QuestProgressEntry {
+                        name: quest.name.to_owned(),
+                        description: state.description.to_owned(),
+                        icon: QuestRequirementIcon::Item,
+                        progress: 0,
+                        target: 1,
+                    });
+                }
+
                 if let Some(rule) = state.rules.iter().find(|rule| rule.name == "KilledNpcs") {
                     return Some(QuestProgressEntry {
                         name: quest.name.to_owned(),

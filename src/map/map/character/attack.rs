@@ -74,10 +74,7 @@ impl Map {
         direction: Direction,
         party_player_ids: &[i32],
     ) -> Option<AttackTarget> {
-        let attacker = match self.characters.get(&player_id) {
-            Some(character) => character,
-            None => return None,
-        };
+        let attacker = self.characters.get(&player_id)?;
 
         let range = if self
             .arena_players

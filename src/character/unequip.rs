@@ -1,6 +1,7 @@
 use eolib::protocol::{net::Item, r#pub::ItemType};
+use eoplus::Arg;
 
-use crate::ITEM_DB;
+use crate::{ITEM_DB, QUEST_DB};
 
 use super::Character;
 
@@ -107,6 +108,44 @@ impl Character {
                     amount: 1,
                 });
             }
+        }
+
+        let mut quests_progressed = Vec::new();
+        for progress in self.quests.iter_mut() {
+            let quest = match QUEST_DB.get(&progress.id) {
+                Some(quest) => quest,
+                None => continue,
+            };
+
+            let state = match quest.states.get(progress.state as usize) {
+                Some(state) => state,
+                None => continue,
+            };
+
+            let rule = match state
+                .rules
+                .iter()
+                .find(|rule| rule.name == "UnequippedItem" && rule.args[0] == Arg::Int(item_id))
+            {
+                Some(rule) => rule,
+                None => continue,
+            };
+
+            match quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+            {
+                Some(next_state) => {
+                    progress.state = next_state as i32;
+                    quests_progressed.push(progress.id);
+                }
+                None => continue,
+            };
+        }
+
+        for quest_id in quests_progressed {
+            self.do_quest_actions(quest_id);
         }
 
         self.calculate_stats();

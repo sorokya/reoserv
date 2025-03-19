@@ -26,15 +26,9 @@ use super::super::Map;
 
 impl Map {
     fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateChat> {
-        let talk_record = match TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id) {
-            Some(record) => record,
-            None => return None,
-        };
+        let talk_record = TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id)?;
 
-        let npc = match self.npcs.get_mut(&index) {
-            Some(npc) => npc,
-            None => return None,
-        };
+        let npc = self.npcs.get_mut(&index)?;
 
         if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate {
             return None;
@@ -161,15 +155,9 @@ impl Map {
 
     // TODO: Party stuff
     fn npc_get_chase_target_player_id(&self, index: i32, npc_id: i32) -> Option<i32> {
-        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return None,
-        };
+        let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
 
-        let npc = match self.npcs.get(&index) {
-            Some(npc) => npc,
-            None => return None,
-        };
+        let npc = self.npcs.get(&index)?;
 
         if !npc.opponents.is_empty() {
             let opponents_in_range = npc.opponents.iter().filter(|opponent| {
@@ -209,10 +197,7 @@ impl Map {
     }
 
     fn npc_get_attack_target_player_id(&self, index: i32) -> Option<i32> {
-        let npc = match self.npcs.get(&index) {
-            Some(npc) => npc,
-            None => return None,
-        };
+        let npc = self.npcs.get(&index)?;
 
         let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
 
@@ -236,10 +221,7 @@ impl Map {
         if let Some(opponent) = adjacent_opponent {
             Some(opponent.player_id)
         } else {
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
-                Some(npc_data) => npc_data,
-                None => return None,
-            };
+            let npc_data = NPC_DB.npcs.get(npc.id as usize - 1)?;
 
             // TODO: also attack adjacent players if blocking path to opponent(s)
             // Choose a random player if npc is aggressive
@@ -312,10 +294,7 @@ impl Map {
 
         let idle_rate = act_rate + walk_idle_for;
 
-        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return None,
-        };
+        let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
 
         if npc_data.r#type == NpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id, npc_data.r#type)
@@ -327,26 +306,14 @@ impl Map {
     }
 
     fn act_npc_attack(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateAttack> {
-        let target_player_id = match self.npc_get_attack_target_player_id(index) {
-            Some(player_id) => player_id,
-            None => return None,
-        };
+        let target_player_id = self.npc_get_attack_target_player_id(index)?;
 
         let (damage, direction) = {
-            let character = match self.characters.get(&target_player_id) {
-                Some(character) => character,
-                None => return None,
-            };
+            let character = self.characters.get(&target_player_id)?;
 
-            let npc = match self.npcs.get(&index) {
-                Some(npc) => npc,
-                None => return None,
-            };
+            let npc = self.npcs.get(&index)?;
 
-            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
-                Some(npc_data) => npc_data,
-                None => return None,
-            };
+            let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
 
             let xdiff = npc.coords.x - character.coords.x;
             let ydiff = npc.coords.y - character.coords.y;
@@ -364,10 +331,7 @@ impl Map {
         };
 
         let (killed_state, hp_percentage) = {
-            let character = match self.characters.get_mut(&target_player_id) {
-                Some(character) => character,
-                None => return None,
-            };
+            let character = self.characters.get_mut(&target_player_id)?;
 
             character.hp -= damage;
 

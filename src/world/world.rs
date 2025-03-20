@@ -1,8 +1,9 @@
 use crate::{
     connection_log::ConnectionLog, errors::DataNotFoundError, map::MapHandle, player::PlayerHandle,
+    scripts::ScriptsHandle,
 };
 
-use super::{load_maps::load_maps, Command, Party};
+use super::{load_maps::load_maps, Command, Party, WorldHandle};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -10,6 +11,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
+    scripts: ScriptsHandle,
     players: HashMap<i32, PlayerHandle>,
     accounts: Vec<i32>,
     pending_logins: Vec<i32>,
@@ -48,10 +50,11 @@ mod shutdown;
 mod tick;
 
 impl World {
-    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
+    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool, world: WorldHandle) -> Self {
         Self {
             rx,
             pool,
+            scripts: ScriptsHandle::new(world),
             players: HashMap::new(),
             accounts: Vec::new(),
             pending_logins: Vec::new(),

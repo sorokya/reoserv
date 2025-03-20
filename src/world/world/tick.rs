@@ -30,6 +30,10 @@ impl World {
             }
         }
 
+        if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
+            self.scripts.tick();
+        }
+
         for map in maps {
             if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
                 map.act_npcs();

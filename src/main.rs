@@ -46,6 +46,7 @@ mod packet_rate_limits;
 use packet_rate_limits::PacketRateLimits;
 mod sln;
 use sln::ping_sln;
+mod scripts;
 mod world;
 use mysql_async::prelude::*;
 

@@ -25,6 +25,7 @@ data/pub/**/*.json
 data/maps/*.emf
 data/quests/*.txt*
 data/quests/*.eqf
+data/scripts/*.lua
 
 # Stupid mac thing
 .DS_Store

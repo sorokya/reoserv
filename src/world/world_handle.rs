@@ -16,9 +16,13 @@ pub struct WorldHandle {
 impl WorldHandle {
     pub fn new(pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let world = World::new(rx, pool);
+        let world = World::new(rx, pool, WorldHandle::for_tx(tx.clone()));
         tokio::spawn(run_world(world));
 
+        Self { tx, is_alive: true }
+    }
+
+    fn for_tx(tx: mpsc::UnboundedSender<Command>) -> Self {
         Self { tx, is_alive: true }
     }
 

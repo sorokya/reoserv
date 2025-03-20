@@ -46,6 +46,7 @@ mod global_drops;
 use global_drops::GlobalDrops;
 mod sln;
 use sln::ping_sln;
+mod scripts;
 mod world;
 use mysql_async::prelude::*;
 

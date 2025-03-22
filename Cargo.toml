@@ -53,12 +53,11 @@ duration-str = "0.16.0"
 version-compare = "0.2"
 mail-send = "0.5.0"
 tokio-tungstenite = "0.26.2"
-tealr = { version = "0.10.0", features = [
-    "mlua",
-    "mlua_async",
-    "mlua_lua54",
-    "mlua_vendored",
-    "mlua_send",
+mlua = { version = "0.10", features = [
+    "lua54",
+    "vendored",
+    "send",
+    "serialize",
 ] }
 notify = "8"
 notify-debouncer-full = "0.5.0"

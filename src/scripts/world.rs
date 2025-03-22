@@ -1,14 +1,8 @@
-use tealr::{
-    mlu::{
-        mlua::{self, Function, Table},
-        TealData, UserData,
-    },
-    ToTypename,
-};
+use mlua::{Function, LuaSerdeExt, Table, UserData, UserDataMethods, Value};
 
-use crate::world::WorldHandle;
+use crate::{world::WorldHandle, ITEM_DB};
 
-#[derive(Clone, UserData, ToTypename)]
+#[derive(Clone)]
 pub struct World {
     world: WorldHandle,
 }
@@ -19,14 +13,14 @@ impl World {
     }
 }
 
-impl TealData for World {
-    fn add_methods<T: tealr::mlu::TealDataMethods<Self>>(methods: &mut T) {
-        methods.add_method("quake", |_, this, ()| {
-            this.world.quake(1);
+impl UserData for World {
+    fn add_methods<T: UserDataMethods<Self>>(methods: &mut T) {
+        methods.add_method("quake", |_, this, strength: i32| {
+            this.world.quake(strength);
             Ok(())
         });
 
-        methods.add_method("on_tick", |lua, _, func: Function| {
+        methods.add_method("on_tick", |lua, _, callback: Function| {
             // Save callback into globals on events['on_tick']
             let globals = lua.globals();
 
@@ -47,13 +41,30 @@ impl TealData for World {
                 .unwrap_or_else(|_| lua.create_table().unwrap());
 
             let callback_id = script_table.len().unwrap_or(0) + 1;
-            script_table.set(callback_id, func)?;
+            script_table.set(callback_id, callback)?;
 
             tick_table.set(script_name.to_string(), script_table)?;
             events.set("on_tick", tick_table)?;
             globals.set("events", events)?;
 
             Ok(())
+        });
+
+        methods.add_method("get_item_by_name", |lua, _, name: String| {
+            match ITEM_DB
+                .items
+                .iter()
+                .find(|item| item.name.to_lowercase() == name.to_lowercase())
+            {
+                Some(item) => match lua.to_value(item) {
+                    Ok(item) => Ok(item),
+                    Err(e) => {
+                        error!("Failed to serialize item: {}", e);
+                        Err(e)
+                    }
+                },
+                None => Ok(Value::Nil),
+            }
         });
     }
 }

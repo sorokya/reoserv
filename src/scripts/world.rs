@@ -21,7 +21,6 @@ impl UserData for World {
         });
 
         methods.add_method("on_tick", |lua, _, callback: Function| {
-            // Save callback into globals on events['on_tick']
             let globals = lua.globals();
 
             let script_name: String = globals
@@ -66,5 +65,35 @@ impl UserData for World {
                 None => Ok(Value::Nil),
             }
         });
+
+        methods.add_method(
+            "on_player_command",
+            |lua, _, (cmd, callback): (String, Function)| {
+                let globals = lua.globals();
+
+                let script_name: String = globals
+                    .get("_SCRIPT_NAME")
+                    .map_err(|_| mlua::Error::RuntimeError("Script name not found".into()))?;
+
+                let events: Table = globals
+                    .get("events")
+                    .unwrap_or_else(|_| lua.create_table().unwrap());
+
+                let command_table: Table = events
+                    .get("on_player_command")
+                    .unwrap_or_else(|_| lua.create_table().unwrap());
+
+                let script_table: Table = command_table
+                    .get(script_name.to_string())
+                    .unwrap_or_else(|_| lua.create_table().unwrap());
+
+                script_table.set(cmd, callback)?;
+
+                command_table.set(script_name.to_string(), script_table)?;
+                events.set("on_player_command", command_table)?;
+                globals.set("events", events)?;
+                Ok(())
+            },
+        );
     }
 }

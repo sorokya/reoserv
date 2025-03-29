@@ -40,6 +40,7 @@ mod lang;
 mod map;
 mod player;
 mod settings;
+use scripts::ScriptsHandle;
 use settings::Settings;
 mod packet_rate_limits;
 use packet_rate_limits::PacketRateLimits;
@@ -156,6 +157,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         world.load_maps().await;
     }
 
+    let scripts = ScriptsHandle::new(world.clone());
+    world.set_scripts(scripts.clone());
+
     let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
     let tick_world = world.clone();
     tokio::spawn(async move {
@@ -197,6 +201,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let mut server_world = world.clone();
+    let mut server_scripts = scripts.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -238,8 +243,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let player_id = server_world.get_next_player_id().await.unwrap();
 
-            let player =
-                PlayerHandle::new(player_id, socket, now, server_world.clone(), pool.clone());
+            let player = PlayerHandle::new(
+                player_id,
+                socket,
+                now,
+                server_world.clone(),
+                server_scripts.clone(),
+                pool.clone(),
+            );
             server_world.add_player(player_id, player).await.unwrap();
 
             info!(

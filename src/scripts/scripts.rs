@@ -14,6 +14,9 @@ pub struct Scripts {
     loaded_scripts: HashSet<String>,
 }
 
+mod is_player_command;
+mod tick;
+
 impl Scripts {
     pub fn new(rx: UnboundedReceiver<Command>, world: WorldHandle) -> anyhow::Result<Self> {
         let lua = Lua::new();
@@ -152,24 +155,9 @@ impl Scripts {
 
     pub async fn handle_command(&mut self, command: Command) {
         match command {
-            Command::Tick => {
-                let globals = self.lua.globals();
-
-                if let Ok(events) = globals.get::<Table>("events") {
-                    if let Ok(tick_table) = events.get::<Table>("on_tick") {
-                        for pair in tick_table.pairs::<String, Table>() {
-                            if let Ok((_, table)) = pair {
-                                for pair in table.pairs::<i32, Function>() {
-                                    if let Ok((_, func)) = pair {
-                                        if let Err(err) = func.call::<()>(()) {
-                                            error!("Error in on_tick callback: {}", err);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            Command::Tick => self.tick(),
+            Command::HandlePlayerCommand { args, respond_to } => {
+                let _ = respond_to.send(self.handle_player_command(&args));
             }
         }
     }

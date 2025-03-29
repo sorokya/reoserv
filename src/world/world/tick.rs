@@ -31,7 +31,9 @@ impl World {
         }
 
         if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
-            self.scripts.tick();
+            if let Some(scripts) = &self.scripts {
+                scripts.tick();
+            }
         }
 
         for map in maps {

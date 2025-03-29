@@ -6,7 +6,10 @@ use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketF
 use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
+use crate::{
+    character::Character, errors::InvalidStateError, map::MapHandle, scripts::ScriptsHandle,
+    world::WorldHandle,
+};
 
 use super::{
     packet_bus::PacketBus, Captcha, ClientState, Command, PartyRequest, Socket, WarpSession,
@@ -19,6 +22,7 @@ pub struct Player {
     pub bus: PacketBus,
     pub world: WorldHandle,
     pub map: Option<MapHandle>,
+    scripts: ScriptsHandle,
     account_id: i32,
     pool: Pool,
     pub state: ClientState,
@@ -78,6 +82,7 @@ impl Player {
         connected_at: DateTime<Utc>,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
+        scripts: ScriptsHandle,
         pool: Pool,
     ) -> Self {
         Self {
@@ -86,6 +91,7 @@ impl Player {
             connected_at,
             rx,
             world,
+            scripts,
             pool,
             queue: RefCell::new(VecDeque::new()),
             map: None,

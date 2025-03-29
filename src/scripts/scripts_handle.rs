@@ -2,13 +2,16 @@ use std::{collections::HashSet, path::Path, time::Duration};
 
 use notify::RecursiveMode;
 use notify_debouncer_full::new_debouncer;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::sync::{
+    mpsc::{unbounded_channel, UnboundedSender},
+    oneshot,
+};
 
 use crate::world::WorldHandle;
 
 use super::{Command, Scripts};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ScriptsHandle {
     tx: UnboundedSender<Command>,
 }
@@ -28,6 +31,15 @@ impl ScriptsHandle {
 
     pub fn tick(&self) {
         let _ = self.tx.send(Command::Tick);
+    }
+
+    pub async fn handle_player_command(&self, args: Vec<String>) -> bool {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::HandlePlayerCommand {
+            args,
+            respond_to: tx,
+        });
+        rx.await.unwrap_or(false)
     }
 }
 

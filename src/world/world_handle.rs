@@ -5,7 +5,7 @@ use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::timeout;
 
-use crate::{character::Character, map::MapHandle, player::PlayerHandle};
+use crate::{character::Character, map::MapHandle, player::PlayerHandle, scripts::ScriptsHandle};
 
 use super::{world::World, Command, Party};
 
@@ -18,14 +18,14 @@ pub struct WorldHandle {
 impl WorldHandle {
     pub fn new(pool: Pool) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let world = World::new(rx, pool, WorldHandle::for_tx(tx.clone()));
+        let world = World::new(rx, pool);
         tokio::spawn(run_world(world));
 
         Self { tx, is_alive: true }
     }
 
-    fn for_tx(tx: mpsc::UnboundedSender<Command>) -> Self {
-        Self { tx, is_alive: true }
+    pub fn set_scripts(&self, scripts: ScriptsHandle) {
+        let _ = self.tx.send(Command::SetScripts(scripts));
     }
 
     pub fn accept_party_request(

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use tokio::sync::oneshot;
 
-use crate::{character::Character, map::MapHandle, player::PlayerHandle};
+use crate::{character::Character, map::MapHandle, player::PlayerHandle, scripts::ScriptsHandle};
 
 use super::{Party, WorldHandle};
 
@@ -192,6 +192,7 @@ pub enum Command {
         to: String,
         message: String,
     },
+    SetScripts(ScriptsHandle),
     ShowCaptcha {
         victim_name: String,
         experience: i32,

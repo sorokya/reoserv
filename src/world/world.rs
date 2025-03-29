@@ -11,7 +11,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 #[derive(Debug)]
 pub struct World {
     pub rx: UnboundedReceiver<Command>,
-    scripts: ScriptsHandle,
+    scripts: Option<ScriptsHandle>,
     players: HashMap<i32, PlayerHandle>,
     accounts: Vec<i32>,
     pending_logins: Vec<i32>,
@@ -50,11 +50,11 @@ mod shutdown;
 mod tick;
 
 impl World {
-    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool, world: WorldHandle) -> Self {
+    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
         Self {
             rx,
             pool,
-            scripts: ScriptsHandle::new(world),
+            scripts: None,
             players: HashMap::new(),
             accounts: Vec::new(),
             pending_logins: Vec::new(),
@@ -309,6 +309,8 @@ impl World {
                 to,
                 message,
             } => self.send_private_message(player_id, &to, &message).await,
+
+            Command::SetScripts(scripts) => self.scripts = Some(scripts),
 
             Command::ShowCaptcha {
                 victim_name,

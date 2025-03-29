@@ -41,6 +41,7 @@ mod lang;
 mod map;
 mod player;
 mod settings;
+use scripts::ScriptsHandle;
 use settings::Settings;
 mod packet_rate_limits;
 use packet_rate_limits::PacketRateLimits;
@@ -158,6 +159,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         world.load_maps().await;
     }
 
+    let scripts = ScriptsHandle::new(world.clone());
+    world.set_scripts(scripts.clone());
+
     let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
     let tick_world = world.clone();
     tokio::spawn(async move {
@@ -217,6 +221,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut server_world = world.clone();
     let server_pool = pool.clone();
+    let mut server_scripts = scripts.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -264,6 +269,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ip,
                 now,
                 server_world.clone(),
+                server_scripts.clone(),
                 server_pool.clone(),
             );
             server_world.add_player(player_id, player).await.unwrap();
@@ -279,6 +285,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(websocket_listener) = websocket_listener {
         let mut websocket_world = world.clone();
+        let mut websocket_scripts = scripts.clone();
         tokio::spawn(async move {
             while websocket_world.is_alive {
                 let (socket, addr) = websocket_listener.accept().await.unwrap();
@@ -334,6 +341,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ip,
                     now,
                     websocket_world.clone(),
+                    websocket_scripts.clone(),
                     pool.clone(),
                 );
                 websocket_world.add_player(player_id, player).await.unwrap();

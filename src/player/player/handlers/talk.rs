@@ -121,6 +121,7 @@ impl Player {
 
         let player_id = self.id;
 
+        let scripts = self.scripts.to_owned();
         tokio::spawn(async move {
             let character = match map.get_character(player_id).await {
                 Some(character) => character,
@@ -148,9 +149,15 @@ impl Player {
                         None => return,
                     };
 
-                    if handle_player_command(player_id, args.as_slice(), &player, &map).await
-                        == PlayerCommandResult::NotFound
-                    {
+                    let script_args = args.iter().map(|s| s.to_string()).collect();
+                    let result = scripts.handle_player_command(script_args).await;
+                    if result {
+                        return;
+                    }
+
+                    let result =
+                        handle_player_command(player_id, args.as_slice(), &player, &map).await;
+                    if result == PlayerCommandResult::NotFound {
                         map.send_chat_message(player_id, report.message);
                     }
                     return;

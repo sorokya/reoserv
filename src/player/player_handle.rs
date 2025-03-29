@@ -14,7 +14,7 @@ use eoplus::Arg;
 use mysql_async::Pool;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::{character::Character, map::MapHandle, world::WorldHandle};
+use crate::{character::Character, map::MapHandle, scripts::ScriptsHandle, world::WorldHandle};
 
 use super::{player::Player, ClientState, Command, PartyRequest, Socket};
 
@@ -30,10 +30,11 @@ impl PlayerHandle {
         ip: String,
         connected_at: DateTime<Utc>,
         world: WorldHandle,
+        scripts: ScriptsHandle,
         pool: Pool,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(id, socket, ip, connected_at, rx, world, pool);
+        let player = Player::new(id, socket, ip, connected_at, rx, world, scripts, pool);
         tokio::spawn(run_player(player));
 
         Self { tx }

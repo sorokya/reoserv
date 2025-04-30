@@ -4,6 +4,7 @@ use config::{Config, ConfigError, File};
 pub struct Server {
     pub host: String,
     pub port: String,
+    pub websocket_port: String,
     pub max_connections: i32,
     pub max_players: i32,
     pub max_connections_per_ip: i32,

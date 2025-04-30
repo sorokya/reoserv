@@ -116,8 +116,8 @@ impl PacketBus {
 
     pub async fn recv(&mut self) -> Option<std::io::Result<Bytes>> {
         match &mut self.socket {
-            Socket::Web(socket) => {
-                if let Some(Ok(Message::Binary(buf))) = socket.next().await {
+            Socket::Web(socket) => match socket.next().await {
+                Some(Ok(Message::Binary(buf))) => {
                     let mut data_buf = buf[2..].to_vec();
 
                     if self.client_enryption_multiple != 0 {
@@ -149,10 +149,12 @@ impl PacketBus {
                     }
 
                     Some(Ok(data_buf))
-                } else {
-                    None
                 }
-            }
+                _ => Some(Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "Connection closed",
+                ))),
+            },
             Socket::Standard(_) => {
                 let get_packet_length = self.get_packet_length();
                 let packet_length = get_packet_length.await;

@@ -338,7 +338,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 websocket_world.add_player(player_id, player).await.unwrap();
 
                 info!(
-                    "connection accepted ({}) {}/{}",
+                    "websocket connection accepted ({}) {}/{}",
                     addr,
                     websocket_world.get_connection_count().await,
                     SETTINGS.server.max_connections

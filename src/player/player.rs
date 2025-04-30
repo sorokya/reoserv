@@ -4,11 +4,13 @@ use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily, Version};
 use mysql_async::Pool;
-use tokio::{net::TcpStream, sync::mpsc::UnboundedReceiver};
+use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
 
-use super::{packet_bus::PacketBus, Captcha, ClientState, Command, PartyRequest, WarpSession};
+use super::{
+    packet_bus::PacketBus, Captcha, ClientState, Command, PartyRequest, Socket, WarpSession,
+};
 
 pub struct Player {
     pub id: i32,
@@ -71,13 +73,13 @@ mod update_chest_content;
 impl Player {
     pub fn new(
         id: i32,
-        socket: TcpStream,
+        socket: Socket,
+        ip: String,
         connected_at: DateTime<Utc>,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
         pool: Pool,
     ) -> Self {
-        let ip = socket.peer_addr().unwrap().ip().to_string();
         Self {
             id,
             bus: PacketBus::new(socket),

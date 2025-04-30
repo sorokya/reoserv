@@ -426,10 +426,7 @@ impl Player {
                 return;
             }
 
-            match world
-                .get_character_by_name(&packet.member_name)
-                .await
-            {
+            match world.get_character_by_name(&packet.member_name).await {
                 Ok(member) => {
                     if member.guild_tag != character.guild_tag {
                         player.send_guild_reply(GuildReply::RemoveNotMember);
@@ -810,10 +807,7 @@ impl Player {
                 None => return,
             };
 
-            let target_character = match world
-                .get_character_by_name(&packet.member_name)
-                .await
-            {
+            let target_character = match world.get_character_by_name(&packet.member_name).await {
                 Ok(character) => character,
                 Err(_) => {
                     player.send_server_message("Offline rank updating not currently supported");

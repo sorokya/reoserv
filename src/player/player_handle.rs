@@ -12,14 +12,11 @@ use eolib::{
 };
 use eoplus::Arg;
 use mysql_async::Pool;
-use tokio::{
-    net::TcpStream,
-    sync::{mpsc, oneshot},
-};
+use tokio::sync::{mpsc, oneshot};
 
 use crate::{character::Character, map::MapHandle, world::WorldHandle};
 
-use super::{player::Player, ClientState, Command, PartyRequest};
+use super::{player::Player, ClientState, Command, PartyRequest, Socket};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {
@@ -29,13 +26,14 @@ pub struct PlayerHandle {
 impl PlayerHandle {
     pub fn new(
         id: i32,
-        socket: TcpStream,
+        socket: Socket,
+        ip: String,
         connected_at: DateTime<Utc>,
         world: WorldHandle,
         pool: Pool,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(id, socket, connected_at, rx, world, pool);
+        let player = Player::new(id, socket, ip, connected_at, rx, world, pool);
         tokio::spawn(run_player(player));
 
         Self { tx }

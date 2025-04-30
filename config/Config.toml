@@ -5,6 +5,10 @@ host = "0.0.0.0"
 # Host Port the server will listen for incoming connections on
 port = "8078"
 
+# Host port the server will listen for incoming websocket connections on
+# leave blank to disable websockets
+websocket_port = ""
+
 # Maximum amount of connections to allow to the server
 max_connections = 300
 

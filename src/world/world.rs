@@ -244,10 +244,6 @@ impl World {
                 account_id,
                 respond_to,
             } => {
-                debug!(
-                    "Accounts: {:?}, Pending logins: {:?}",
-                    self.accounts, self.pending_logins
-                );
                 let _ = respond_to.send(
                     self.accounts.contains(&account_id)
                         || self.pending_logins.contains(&account_id),

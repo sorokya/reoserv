@@ -7,14 +7,21 @@ use eolib::{
     packet::{generate_sequence_start, Sequencer},
     protocol::net::{PacketAction, PacketFamily},
 };
+use futures::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
+use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
 use crate::PACKET_RATE_LIMITS;
 
 use super::PacketLog;
 
+pub enum Socket {
+    Standard(TcpStream),
+    Web(WebSocketStream<TcpStream>),
+}
+
 pub struct PacketBus {
-    socket: TcpStream,
+    socket: Socket,
     pub log: PacketLog,
     pub need_pong: bool,
     pub sequencer: Sequencer,
@@ -24,7 +31,7 @@ pub struct PacketBus {
 }
 
 impl PacketBus {
-    pub fn new(socket: TcpStream) -> Self {
+    pub fn new(socket: Socket) -> Self {
         let sequencer = Sequencer::new(generate_sequence_start());
         Self {
             socket,
@@ -82,18 +89,25 @@ impl PacketBus {
         }
         buf.unsplit(data_buf);
 
-        match self.socket.try_write(&buf) {
-            Ok(num_of_bytes_written) => {
-                if num_of_bytes_written != packet_size + 2 {
-                    return Err(anyhow!(
-                        "Written bytes {} do not match packet size {}",
-                        num_of_bytes_written,
-                        packet_size
-                    ));
+        match &mut self.socket {
+            Socket::Standard(socket) => match socket.try_write(&buf) {
+                Ok(num_of_bytes_written) => {
+                    if num_of_bytes_written != packet_size + 2 {
+                        return Err(anyhow!(
+                            "Written bytes {} do not match packet size {}",
+                            num_of_bytes_written,
+                            packet_size
+                        ));
+                    }
                 }
-            }
-            Err(e) => {
-                return Err(e.into());
+                Err(e) => {
+                    return Err(e.into());
+                }
+            },
+            Socket::Web(socket) => {
+                if let Err(e) = socket.send(Message::Binary(buf.into())).await {
+                    return Err(e.into());
+                }
             }
         }
 
@@ -101,54 +115,102 @@ impl PacketBus {
     }
 
     pub async fn recv(&mut self) -> Option<std::io::Result<Bytes>> {
-        let get_packet_length = self.get_packet_length();
-        let packet_length = get_packet_length.await;
-        match packet_length {
-            Some(Ok(packet_length)) => {
-                if packet_length > 0 {
-                    let read = self.read(packet_length);
-                    match read.await {
-                        Some(Ok(buf)) => {
-                            let mut data_buf = buf;
-                            if self.client_enryption_multiple != 0 {
-                                decrypt_packet(&mut data_buf, self.client_enryption_multiple);
-                            }
+        match &mut self.socket {
+            Socket::Web(socket) => {
+                if let Some(Ok(Message::Binary(buf))) = socket.next().await {
+                    let mut data_buf = buf[2..].to_vec();
 
-                            let data_buf = Bytes::from(data_buf);
-
-                            if let Some(rate_limit) = PACKET_RATE_LIMITS.packets.iter().find(|l| {
-                                l.action == PacketAction::from(data_buf[0])
-                                    && l.family == PacketFamily::from(data_buf[1])
-                            }) {
-                                if let Some(last_processed) = self.log.last_processed(&data_buf) {
-                                    if Utc::now()
-                                        .signed_duration_since(last_processed)
-                                        .num_milliseconds()
-                                        < rate_limit.limit
-                                    {
-                                        let mut buf = BytesMut::new();
-                                        buf.put_u8(0xfe);
-                                        buf.put_u8(0xfe);
-                                        buf.put_u8(data_buf[2]);
-
-                                        return Some(Ok(buf.freeze()));
-                                    }
-                                }
-
-                                self.log.add_entry(&data_buf);
-                            }
-
-                            Some(Ok(data_buf))
-                        }
-                        Some(Err(e)) => Some(Err(e)),
-                        None => None,
+                    if self.client_enryption_multiple != 0 {
+                        decrypt_packet(&mut data_buf, self.client_enryption_multiple);
                     }
+
+                    let data_buf = Bytes::from(data_buf);
+
+                    if let Some(rate_limit) = PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                        l.action == PacketAction::from(data_buf[0])
+                            && l.family == PacketFamily::from(data_buf[1])
+                    }) {
+                        if let Some(last_processed) = self.log.last_processed(&data_buf) {
+                            if Utc::now()
+                                .signed_duration_since(last_processed)
+                                .num_milliseconds()
+                                < rate_limit.limit
+                            {
+                                let mut buf = BytesMut::new();
+                                buf.put_u8(0xfe);
+                                buf.put_u8(0xfe);
+                                buf.put_u8(data_buf[2]);
+
+                                return Some(Ok(buf.freeze()));
+                            }
+                        }
+
+                        self.log.add_entry(&data_buf);
+                    }
+
+                    Some(Ok(data_buf))
                 } else {
                     None
                 }
             }
-            Some(Err(e)) => Some(Err(e)),
-            None => None,
+            Socket::Standard(_) => {
+                let get_packet_length = self.get_packet_length();
+                let packet_length = get_packet_length.await;
+                match packet_length {
+                    Some(Ok(packet_length)) => {
+                        if packet_length > 0 {
+                            let read = self.read(packet_length);
+                            match read.await {
+                                Some(Ok(buf)) => {
+                                    let mut data_buf = buf;
+                                    if self.client_enryption_multiple != 0 {
+                                        decrypt_packet(
+                                            &mut data_buf,
+                                            self.client_enryption_multiple,
+                                        );
+                                    }
+
+                                    let data_buf = Bytes::from(data_buf);
+
+                                    if let Some(rate_limit) =
+                                        PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                                            l.action == PacketAction::from(data_buf[0])
+                                                && l.family == PacketFamily::from(data_buf[1])
+                                        })
+                                    {
+                                        if let Some(last_processed) =
+                                            self.log.last_processed(&data_buf)
+                                        {
+                                            if Utc::now()
+                                                .signed_duration_since(last_processed)
+                                                .num_milliseconds()
+                                                < rate_limit.limit
+                                            {
+                                                let mut buf = BytesMut::new();
+                                                buf.put_u8(0xfe);
+                                                buf.put_u8(0xfe);
+                                                buf.put_u8(data_buf[2]);
+
+                                                return Some(Ok(buf.freeze()));
+                                            }
+                                        }
+
+                                        self.log.add_entry(&data_buf);
+                                    }
+
+                                    Some(Ok(data_buf))
+                                }
+                                Some(Err(e)) => Some(Err(e)),
+                                None => None,
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    Some(Err(e)) => Some(Err(e)),
+                    None => None,
+                }
+            }
         }
     }
 
@@ -162,19 +224,23 @@ impl PacketBus {
 
     async fn read(&self, length: usize) -> Option<std::io::Result<Vec<u8>>> {
         let mut buf: Vec<u8> = vec![0; length];
-        self.socket.readable().await.unwrap();
-        match self.socket.try_read(&mut buf) {
-            Ok(0) => {
-                return Some(Err(std::io::Error::new(
-                    std::io::ErrorKind::BrokenPipe,
-                    "Connection closed",
-                )));
+        if let Socket::Standard(socket) = &self.socket {
+            socket.readable().await.unwrap();
+            match socket.try_read(&mut buf) {
+                Ok(0) => {
+                    return Some(Err(std::io::Error::new(
+                        std::io::ErrorKind::BrokenPipe,
+                        "Connection closed",
+                    )));
+                }
+                Ok(_) => {}
+                Err(_) => {
+                    return None;
+                }
             }
-            Ok(_) => {}
-            Err(_) => {
-                return None;
-            }
+            Some(Ok(buf))
+        } else {
+            None
         }
-        Some(Ok(buf))
     }
 }

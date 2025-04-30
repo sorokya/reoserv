@@ -30,6 +30,7 @@ use arenas::Arenas;
 mod commands;
 use commands::Commands;
 mod player_commands;
+use player::Socket;
 use player_commands::PlayerCommands;
 mod connection_log;
 mod formulas;
@@ -49,6 +50,7 @@ mod world;
 use mysql_async::prelude::*;
 
 use tokio::{net::TcpListener, signal, time};
+use tokio_tungstenite::accept_async;
 use world::WorldHandle;
 
 use crate::{
@@ -195,7 +197,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SETTINGS.server.host, SETTINGS.server.port
     );
 
+    let mut websocket_listener = None;
+    if !SETTINGS.server.websocket_port.is_empty() {
+        websocket_listener = Some(
+            TcpListener::bind(format!(
+                "{}:{}",
+                SETTINGS.server.host, SETTINGS.server.websocket_port
+            ))
+            .await
+            .unwrap(),
+        );
+
+        info!(
+            "listening for websockets at {}:{}",
+            SETTINGS.server.host, SETTINGS.server.websocket_port
+        );
+    }
+
     let mut server_world = world.clone();
+    let server_pool = pool.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -237,8 +257,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let player_id = server_world.get_next_player_id().await.unwrap();
 
-            let player =
-                PlayerHandle::new(player_id, socket, now, server_world.clone(), pool.clone());
+            let player = PlayerHandle::new(
+                player_id,
+                Socket::Standard(socket),
+                ip,
+                now,
+                server_world.clone(),
+                server_pool.clone(),
+            );
             server_world.add_player(player_id, player).await.unwrap();
 
             info!(
@@ -249,6 +275,77 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
     });
+
+    if let Some(websocket_listener) = websocket_listener {
+        let mut websocket_world = world.clone();
+        tokio::spawn(async move {
+            while websocket_world.is_alive {
+                let (socket, addr) = websocket_listener.accept().await.unwrap();
+                let websocket = match accept_async(socket).await {
+                    Ok(ws) => ws,
+                    Err(e) => {
+                        error!("Failed to accept websocket: {}", e);
+                        continue;
+                    }
+                };
+
+                let ip = addr.ip().to_string();
+                let now = Utc::now();
+
+                let player_count = websocket_world.get_connection_count().await;
+                if player_count >= SETTINGS.server.max_connections {
+                    warn!("{} has been disconnected because the server is full", addr);
+                    continue;
+                }
+
+                if let Some(last_connect) = websocket_world.get_ip_last_connect(&ip).await {
+                    let time_since_last_connect = now - last_connect;
+                    if SETTINGS.server.ip_reconnect_limit != 0
+                        && time_since_last_connect.num_seconds()
+                            < SETTINGS.server.ip_reconnect_limit.into()
+                    {
+                        warn!(
+                            "{} has been disconnected because it reconnected too quickly",
+                            addr
+                        );
+                        continue;
+                    }
+                }
+
+                let num_of_connections = websocket_world.get_ip_connection_count(&ip).await;
+                if SETTINGS.server.max_connections_per_ip != 0
+                    && num_of_connections >= SETTINGS.server.max_connections_per_ip
+                {
+                    warn!(
+                        "{} has been disconnected because there are already {} connections from {}",
+                        addr, num_of_connections, ip
+                    );
+                    continue;
+                }
+
+                websocket_world.add_connection(&ip).await;
+
+                let player_id = websocket_world.get_next_player_id().await.unwrap();
+
+                let player = PlayerHandle::new(
+                    player_id,
+                    Socket::Web(websocket),
+                    ip,
+                    now,
+                    websocket_world.clone(),
+                    pool.clone(),
+                );
+                websocket_world.add_player(player_id, player).await.unwrap();
+
+                info!(
+                    "connection accepted ({}) {}/{}",
+                    addr,
+                    websocket_world.get_connection_count().await,
+                    SETTINGS.server.max_connections
+                );
+            }
+        });
+    }
 
     tokio::select! {
         ctrl_c = signal::ctrl_c() => match ctrl_c {

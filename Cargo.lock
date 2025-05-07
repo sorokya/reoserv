@@ -1866,7 +1866,7 @@ dependencies = [
  "futures-util",
  "keyed_priority_queue",
  "lru",
- "mysql_common",
+ "mysql_common 0.34.1",
  "pem",
  "percent-encoding",
  "pin-project",
@@ -1898,7 +1898,6 @@ dependencies = [
  "byteorder",
  "bytes",
  "cc",
- "chrono",
  "cmake",
  "crc32fast",
  "flate2",
@@ -1917,6 +1916,34 @@ dependencies = [
  "thiserror 1.0.63",
  "uuid 1.10.0",
  "zstd",
+]
+
+[[package]]
+name = "mysql_common"
+version = "0.35.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e0ec195e788c95f36b7cf88127d538465fc2f7773e6e47af01834738eab0aee"
+dependencies = [
+ "base64 0.22.1",
+ "bitflags 2.6.0",
+ "btoi",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "crc32fast",
+ "flate2",
+ "getrandom 0.3.2",
+ "mysql-common-derive",
+ "num-bigint",
+ "num-traits",
+ "regex",
+ "saturating",
+ "serde",
+ "serde_json",
+ "sha1",
+ "sha2",
+ "thiserror 2.0.11",
+ "uuid 1.10.0",
 ]
 
 [[package]]
@@ -2493,7 +2520,7 @@ dependencies = [
  "mail-send",
  "mimalloc",
  "mysql_async",
- "mysql_common",
+ "mysql_common 0.35.4",
  "num-traits",
  "pretty_env_logger",
  "rand 0.8.5",

@@ -39,11 +39,12 @@ impl ConnectionLog {
     }
 
     pub fn remove_connection(&mut self, ip: &str) {
-        let entry = self.entries.get_mut(ip).unwrap();
-        if entry.connections > 1 {
-            entry.connections -= 1;
-        } else {
-            self.entries.remove(ip);
+        if let Some(entry) = self.entries.get_mut(ip) {
+            if entry.connections > 1 {
+                entry.connections -= 1;
+            } else {
+                self.entries.remove(ip);
+            }
         }
     }
 }

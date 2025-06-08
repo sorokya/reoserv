@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.10.3"
+version = "1.10.4"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2021"
 description = "The rust powered endless online server emulator"

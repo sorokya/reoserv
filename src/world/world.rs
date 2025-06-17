@@ -3,7 +3,7 @@ use crate::{
     scripts::ScriptsHandle,
 };
 
-use super::{load_maps::load_maps, Command, Party, WorldHandle};
+use super::{load_maps::load_maps, Command, Party};
 use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;

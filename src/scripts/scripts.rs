@@ -4,7 +4,7 @@ use crate::world::WorldHandle;
 
 use super::{Command, World};
 use glob::glob;
-use mlua::{Function, Lua, Table};
+use mlua::{Lua, Table};
 use tokio::sync::mpsc::UnboundedReceiver;
 
 #[derive(Debug)]

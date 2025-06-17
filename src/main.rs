@@ -11,7 +11,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{collections::HashMap, env, fs, path::Path, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
@@ -221,7 +221,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut server_world = world.clone();
     let server_pool = pool.clone();
-    let mut server_scripts = scripts.clone();
+    let server_scripts = scripts.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -285,7 +285,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(websocket_listener) = websocket_listener {
         let mut websocket_world = world.clone();
-        let mut websocket_scripts = scripts.clone();
+        let websocket_scripts = scripts.clone();
         tokio::spawn(async move {
             while websocket_world.is_alive {
                 let (socket, addr) = websocket_listener.accept().await.unwrap();

@@ -20,7 +20,10 @@ impl Map {
             self.cancel_trade(player_id, interact_player_id);
         }
 
-        let target = self.characters.remove(&player_id).unwrap();
+        let target = match self.characters.remove(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
 
         if let Some(config) = ARENAS.arenas.iter().find(|a| a.map == self.id) {
             if self.arena_players.iter().any(|p| p.player_id == player_id)

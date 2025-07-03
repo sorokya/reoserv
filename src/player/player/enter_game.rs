@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
     server::{
-        WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+        SitState, WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
         WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
     },
     PacketAction, PacketFamily,
@@ -57,6 +57,7 @@ impl Player {
 
         if let Some(relog_coords) = map.get_relog_coords().await {
             character.coords = relog_coords;
+            character.sit_state = SitState::Stand;
         }
 
         character.is_deep = is_deep(&self.version);

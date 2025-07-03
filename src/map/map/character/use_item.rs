@@ -5,13 +5,14 @@ use eolib::{
             server::{
                 AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
                 AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
-                AvatarChangeType, AvatarRemoveServerPacket, ItemAcceptServerPacket,
-                ItemAgreeServerPacket, ItemReplyServerPacket, ItemReplyServerPacketItemTypeData,
-                ItemReplyServerPacketItemTypeDataCureCurse,
+                AvatarChangeType, AvatarRemoveServerPacket, EffectPlayerServerPacket,
+                ItemAcceptServerPacket, ItemAgreeServerPacket, ItemReplyServerPacket,
+                ItemReplyServerPacketItemTypeData, ItemReplyServerPacketItemTypeDataCureCurse,
                 ItemReplyServerPacketItemTypeDataEffectPotion,
                 ItemReplyServerPacketItemTypeDataExpReward,
                 ItemReplyServerPacketItemTypeDataHairDye, ItemReplyServerPacketItemTypeDataHeal,
-                NearbyInfo, PlayersAgreeServerPacket, RecoverAgreeServerPacket, WarpEffect,
+                NearbyInfo, PlayerEffect, PlayersAgreeServerPacket, RecoverAgreeServerPacket,
+                WarpEffect,
             },
             Item, PacketAction, PacketFamily,
         },
@@ -144,7 +145,17 @@ impl Map {
                         effect_id: item.spec1,
                     },
                 ));
-                self.effect_on_players(&[player_id], item.spec1);
+                self.send_packet_near_player(
+                    player_id,
+                    PacketAction::Player,
+                    PacketFamily::Effect,
+                    &EffectPlayerServerPacket {
+                        effects: vec![PlayerEffect {
+                            player_id,
+                            effect_id: item.spec1,
+                        }],
+                    },
+                );
             }
             ItemType::HairDye => {
                 packet.item_type = ItemType::HairDye;

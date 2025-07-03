@@ -295,7 +295,9 @@ impl Map {
             }
         }
 
-        let leveled_up = exp_gains.iter().any(|gain| gain.leveled_up);
+        let leveled_up = exp_gains
+            .iter()
+            .any(|gain| gain.player_id == killer_player_id && gain.leveled_up);
         for (player_id, character) in self.characters.iter() {
             let exp_gain = exp_gains.iter().find(|gain| gain.player_id == *player_id);
 

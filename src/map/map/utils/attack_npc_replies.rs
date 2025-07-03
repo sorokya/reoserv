@@ -295,12 +295,9 @@ impl Map {
             }
         }
 
+        let leveled_up = exp_gains.iter().any(|gain| gain.leveled_up);
         for (player_id, character) in self.characters.iter() {
             let exp_gain = exp_gains.iter().find(|gain| gain.player_id == *player_id);
-            let leveled_up = match exp_gain {
-                Some(gain) => gain.leveled_up,
-                None => false,
-            };
 
             if let Some(spell_id) = spell_id {
                 if leveled_up {

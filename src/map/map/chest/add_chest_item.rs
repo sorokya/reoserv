@@ -66,9 +66,20 @@ impl Map {
                 existing_item.amount += amount;
             }
         } else if chest_slots.len() + user_items < SETTINGS.chest.slots as usize {
+            let slot = match chest.spawns.iter().find_map(|s| {
+                if s.item_id == item.id {
+                    Some(s.slot)
+                } else {
+                    None
+                }
+            }) {
+                Some(slot) => slot,
+                None => 0,
+            };
+
             character.remove_item(item.id, amount);
             chest.items.push(ChestItem {
-                slot: 0,
+                slot,
                 item_id: item.id,
                 amount,
             });

@@ -387,8 +387,7 @@ impl Player {
             )
             .await
         {
-            self.close(format!("Error deleting session: {}", e))
-                .await;
+            self.close(format!("Error deleting session: {}", e)).await;
             return;
         }
 

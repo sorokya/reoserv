@@ -189,3 +189,12 @@ CREATE TABLE IF NOT EXISTS `AutoPickup` (
   PRIMARY KEY (`character_id`, `item_id`),
   CONSTRAINT `autopickup_character_id` FOREIGN KEY (`character_id`) REFERENCES `Character` (`id`) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS `Session` (
+  `account_id` int NOT NULL,
+  `token` varchar(100) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ttl` int NOT NULL DEFAULT 60,
+  PRIMARY KEY (`account_id`),
+  CONSTRAINT `session_account_id` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE
+);

@@ -11,3 +11,5 @@ pub(super) use password_hash::{generate_password_hash, validate_password};
 mod select_character;
 mod update_last_login_ip;
 pub(super) use update_last_login_ip::update_last_login_ip;
+mod generate_session;
+pub(super) use generate_session::generate_session;

@@ -1,5 +1,5 @@
 use eolib::{
-    data::{EoReader, EoSerialize},
+    data::{EoReader, EoSerialize, EoWriter},
     protocol::net::{
         client::LoginRequestClientPacket,
         server::{
@@ -12,7 +12,7 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable, Params, Row};
+use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 use crate::{
     deep::{
@@ -23,8 +23,8 @@ use crate::{
     },
     player::{
         player::account::{
-            account_banned, account_exists, generate_password_hash, get_character_list,
-            update_last_login_ip, validate_password,
+            account_banned, account_exists, generate_password_hash, generate_session,
+            get_character_list, update_last_login_ip, validate_password,
         },
         ClientState,
     },
@@ -42,6 +42,12 @@ impl Player {
                 error!("Error deserializing LoginRequestClientPacket {}", e);
                 return;
             }
+        };
+
+        let remember_me = if reader.remaining() > 0 {
+            reader.get_char() == 1
+        } else {
+            false
         };
 
         if self.state != ClientState::Accepted {
@@ -213,14 +219,31 @@ impl Player {
             return;
         }
 
-        if let Err(e) = update_last_login_ip(&mut conn, account_id, &self.ip).await {
+        self.finish_login(&mut conn, account_id, remember_me).await;
+    }
+
+    async fn finish_login(&mut self, conn: &mut Conn, account_id: i32, remember_me: bool) {
+        let session_token = if remember_me {
+            match generate_session(conn, account_id).await {
+                Ok(token) => Some(token),
+                Err(e) => {
+                    self.world.remove_pending_login(account_id);
+                    self.close(format!("Error generating session: {}", e)).await;
+                    return;
+                }
+            }
+        } else {
+            None
+        };
+
+        if let Err(e) = update_last_login_ip(conn, account_id, &self.ip).await {
             self.world.remove_pending_login(account_id);
             self.close(format!("Error updating last login IP: {}", e))
                 .await;
             return;
         }
 
-        let characters = match get_character_list(&mut conn, account_id).await {
+        let characters = match get_character_list(conn, account_id).await {
             Ok(characters) => characters,
             Err(e) => {
                 self.close(format!("Error getting character list: {}", e))
@@ -248,17 +271,31 @@ impl Player {
                 .await;
         }
 
+        let packet = LoginReplyServerPacket {
+            reply_code: LoginReply::OK,
+            reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
+                LoginReplyServerPacketReplyCodeDataOk { characters },
+            )),
+        };
+
+        let mut writer = EoWriter::new();
+        if let Err(e) = packet.serialize(&mut writer) {
+            self.world.remove_pending_login(account_id);
+            self.close(format!("Failed to serialize LoginReplyServerPacket: {}", e))
+                .await;
+            return;
+        }
+
+        if let Some(token) = session_token {
+            writer.add_string(&token);
+        }
+
         let _ = self
             .bus
-            .send(
+            .send_buf(
                 PacketAction::Reply,
                 PacketFamily::Login,
-                LoginReplyServerPacket {
-                    reply_code: LoginReply::OK,
-                    reply_code_data: Some(LoginReplyServerPacketReplyCodeData::OK(
-                        LoginReplyServerPacketReplyCodeDataOk { characters },
-                    )),
-                },
+                writer.to_byte_array(),
             )
             .await;
     }
@@ -482,6 +519,62 @@ impl Player {
             .await;
     }
 
+    async fn login_use(&mut self, reader: EoReader) {
+        let token = reader.get_string();
+        if token.is_empty() {
+            return;
+        }
+
+        let mut conn = match self.pool.get_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                self.close(format!("Error getting connection from pool: {}", e))
+                    .await;
+                return;
+            }
+        };
+
+        let row = match conn
+            .exec_first::<Row, &str, Params>(
+                include_str!("../../../sql/get_session.sql"),
+                params! {
+                    "token" => &token,
+                },
+            )
+            .await
+        {
+            Ok(row) => row,
+            Err(e) => {
+                self.close(format!("Error getting session: {}", e)).await;
+                return;
+            }
+        };
+
+        match row {
+            Some(row) => {
+                let account_id: i32 = row.get("account_id").unwrap();
+                self.finish_login(&mut conn, account_id, true).await;
+            }
+            None => {
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Reply,
+                        PacketFamily::Login,
+                        LoginReplyServerPacket {
+                            reply_code: LoginReply::WrongUserPassword,
+                            reply_code_data: Some(
+                                LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                    LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                                ),
+                            ),
+                        },
+                    )
+                    .await;
+            }
+        }
+    }
+
     pub async fn handle_login(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.login_request(reader).await,
@@ -489,6 +582,7 @@ impl Player {
             PacketAction::Create => self.login_create(reader).await,
             PacketAction::Accept => self.login_accept(reader).await,
             PacketAction::Agree => self.login_agree(reader).await,
+            PacketAction::Use => self.login_use(reader).await,
             _ => error!("Unhandled packet Login_{:?}", action),
         }
     }

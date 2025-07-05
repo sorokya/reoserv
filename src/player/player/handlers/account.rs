@@ -378,6 +378,20 @@ impl Player {
             return;
         }
 
+        if let Err(e) = conn
+            .exec_drop(
+                include_str!("../../../sql/delete_session.sql"),
+                params! {
+                    "id" => account_id,
+                },
+            )
+            .await
+        {
+            self.close(format!("Error deleting session: {}", e))
+                .await;
+            return;
+        }
+
         let _ = self
             .bus
             .send(

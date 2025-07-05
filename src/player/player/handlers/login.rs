@@ -553,6 +553,26 @@ impl Player {
         match row {
             Some(row) => {
                 let account_id: i32 = row.get("account_id").unwrap();
+                let logged_in = self.world.is_logged_in(account_id).await;
+                if logged_in {
+                    self.world.remove_pending_login(account_id);
+                    let _ = self
+                        .bus
+                        .send(
+                            PacketAction::Reply,
+                            PacketFamily::Login,
+                            LoginReplyServerPacket {
+                                reply_code: LoginReply::LoggedIn,
+                                reply_code_data: Some(
+                                    LoginReplyServerPacketReplyCodeData::LoggedIn(
+                                        LoginReplyServerPacketReplyCodeDataLoggedIn::new(),
+                                    ),
+                                ),
+                            },
+                        )
+                        .await;
+                    return;
+                }
                 self.finish_login(&mut conn, account_id, true).await;
             }
             None => {

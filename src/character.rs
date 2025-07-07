@@ -575,23 +575,47 @@ impl Character {
             }
         }
 
-        let rule = match state.rules.iter().find(|rule| rule.name == "Always") {
-            Some(rule) => rule,
-            None => return,
-        };
+        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "Always") {
+            if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
+                if let Some(next_state) = quest
+                    .states
+                    .iter()
+                    .position(|state| state.name == rule.goto)
+                {
+                    progress.state = next_state as i32;
+                    self.do_quest_actions(quest_id);
+                }
+            }
+        }
 
-        let progress = match self.quests.iter_mut().find(|q| q.id == quest_id) {
-            Some(progress) => progress,
-            None => return,
-        };
+        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "GotItems") {
+            if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
+                let item_id = match rule.args[0] {
+                    Arg::Int(item_id) => item_id,
+                    _ => return,
+                };
 
-        if let Some(next_state) = quest
-            .states
-            .iter()
-            .position(|state| state.name == rule.goto)
-        {
-            progress.state = next_state as i32;
-            self.do_quest_actions(quest_id);
+                let amount = match rule.args[1] {
+                    Arg::Int(amount) => amount,
+                    _ => return,
+                };
+
+                let item = match self.items.iter().find(|i| i.id == item_id) {
+                    Some(item) => item,
+                    None => return,
+                };
+
+                if item.amount >= amount {
+                    if let Some(next_state) = quest
+                        .states
+                        .iter()
+                        .position(|state| state.name == rule.goto)
+                    {
+                        progress.state = next_state as i32;
+                        self.do_quest_actions(quest_id);
+                    }
+                }
+            }
         }
     }
 }

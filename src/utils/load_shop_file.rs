@@ -37,42 +37,30 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
         let crafts = v["crafts"].as_array().unwrap();
 
         shop_file.shops.push(ShopRecord {
-            behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
+            behavior_id: v["behavior_id"].as_u64().unwrap_or(0) as i32,
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
-            max_level: v["maxLevel"].as_u64().unwrap_or(0) as i32,
-            class_requirement: v["classRequirement"].as_u64().unwrap_or(0) as i32,
+            min_level: v["min_level"].as_u64().unwrap_or(0) as i32,
+            max_level: v["max_level"].as_u64().unwrap_or(0) as i32,
+            class_requirement: v["class_requirement"].as_u64().unwrap_or(0) as i32,
             trades: trades
                 .iter()
                 .map(|v| ShopTradeRecord {
-                    item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                    buy_price: v["buyPrice"].as_u64().unwrap_or(0) as i32,
-                    sell_price: v["sellPrice"].as_u64().unwrap_or(0) as i32,
-                    max_amount: v["maxAmount"].as_u64().unwrap_or(0) as i32,
+                    item_id: v["item_id"].as_u64().unwrap_or(0) as i32,
+                    buy_price: v["buy_price"].as_u64().unwrap_or(0) as i32,
+                    sell_price: v["sell_price"].as_u64().unwrap_or(0) as i32,
+                    max_amount: v["max_amount"].as_u64().unwrap_or(0) as i32,
                 })
                 .collect(),
             crafts: crafts
                 .iter()
                 .map(|v| {
-                    let mut ingredients: Vec<ShopCraftIngredientRecord> = Vec::with_capacity(4);
-
-                    for i in 1..=4 {
-                        ingredients.push(ShopCraftIngredientRecord {
-                            item_id: v[&format!("ingredient{}ItemId", i)].as_u64().unwrap_or(0)
-                                as i32,
-                            amount: v[&format!("ingredient{}Amount", i)].as_u64().unwrap_or(0)
-                                as i32,
-                        })
-                    }
-
+                    let ingredients = v["ingredients"].as_array().unwrap();
                     ShopCraftRecord {
                         item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                        ingredients: [
-                            ingredients[0].clone(),
-                            ingredients[1].clone(),
-                            ingredients[2].clone(),
-                            ingredients[3].clone(),
-                        ],
+                        ingredients: ingredients.iter().map(|v| ShopCraftIngredientRecord {
+                            item_id: v["item_id"].as_u64().unwrap_or(0) as i32,
+                            amount: v["amount"].as_u64().unwrap_or(0) as i32,
+                        }).collect::<Vec<_>>().try_into().unwrap(),
                     }
                 })
                 .collect(),

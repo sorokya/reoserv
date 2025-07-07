@@ -32,15 +32,15 @@ fn load_json() -> Result<TalkFile, Box<dyn std::error::Error>> {
 
         let v: Value = serde_json::from_str(&json)?;
 
-        let messages = v["talkMessages"].as_array().unwrap();
+        let messages = v["talk_messages"].as_array().unwrap();
         if !messages.is_empty() {
             talk_file.npcs.push(TalkRecord {
                 npc_id,
-                rate: v["talkRate"].as_u64().unwrap_or(0) as i32,
+                rate: v["talk_rate"].as_u64().unwrap_or(0) as i32,
                 messages: messages
                     .iter()
                     .map(|v| TalkMessageRecord {
-                        message: v.as_str().unwrap_or_default().to_string(),
+                        message: v["message"].as_str().unwrap_or_default().to_string(),
                     })
                     .collect(),
             });

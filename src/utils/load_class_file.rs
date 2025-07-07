@@ -36,7 +36,7 @@ fn load_json() -> Result<Ecf, Box<dyn std::error::Error>> {
         let record = EcfRecord {
             name: v["name"].as_str().unwrap_or_default().to_string(),
             parent_type: v["parent"].as_u64().unwrap_or(0) as i32,
-            stat_group: v["statGroup"].as_u64().unwrap_or(0) as i32,
+            stat_group: v["stat_group"].as_u64().unwrap_or(0) as i32,
             str: v["str"].as_u64().unwrap_or(0) as i32,
             intl: v["intl"].as_u64().unwrap_or(0) as i32,
             wis: v["wis"].as_u64().unwrap_or(0) as i32,

@@ -61,7 +61,7 @@ impl Map {
         let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
 
         for index in indexes {
-            let (child, alive, spawn_ticks, spawn_coords, spawn_type, npc_type) = {
+            let (child, alive, spawn_ticks, spawn_coords, spawn_type, npc_type, spawn_time) = {
                 match self.npcs.get_mut(&index) {
                     Some(npc) => {
                         let spawn_index = match npc.spawn_index {
@@ -83,6 +83,7 @@ impl Map {
                             spawn.coords,
                             spawn.spawn_type,
                             npc_data.r#type,
+                            spawn.spawn_time,
                         )
                     }
                     None => continue,
@@ -156,7 +157,7 @@ impl Map {
             npc.hp = npc.max_hp;
             npc.coords = spawn_coords;
             npc.direction = if spawn_type == 7 {
-                Direction::from(spawn_type & 0x03)
+                Direction::from(spawn_time & 0x03)
             } else {
                 match rand::random::<u8>() % 4 {
                     0 => Direction::Down,

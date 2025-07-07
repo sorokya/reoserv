@@ -34,37 +34,32 @@ fn load_json() -> Result<SkillMasterFile, Box<dyn std::error::Error>> {
         let skills = v["skills"].as_array().unwrap();
 
         skill_master_file.skill_masters.push(SkillMasterRecord {
-            behavior_id: v["behaviorId"].as_u64().unwrap_or(0) as i32,
+            behavior_id: v["behavior_id"].as_u64().unwrap_or(0) as i32,
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            min_level: v["minLevel"].as_u64().unwrap_or(0) as i32,
-            max_level: v["maxLevel"].as_u64().unwrap_or(0) as i32,
-            class_requirement: v["classReq"].as_u64().unwrap_or(0) as i32,
+            min_level: v["min_level"].as_u64().unwrap_or(0) as i32,
+            max_level: v["max_level"].as_u64().unwrap_or(0) as i32,
+            class_requirement: v["class_requirement"].as_u64().unwrap_or(0) as i32,
             skills: skills
                 .iter()
                 .map(|v| {
-                    let mut skill_requirements: Vec<i32> = Vec::with_capacity(4);
-                    for i in 1..=4 {
-                        skill_requirements
-                            .push(v[&format!("skillIdReq{}", i)].as_u64().unwrap_or(0) as i32);
-                    }
-
+                    let skill_requirements = v["skill_requirements"].as_array().unwrap();
                     SkillMasterSkillRecord {
                         skill_id: v["id"].as_u64().unwrap_or(0) as i32,
-                        level_requirement: v["levelReq"].as_u64().unwrap_or(0) as i32,
-                        class_requirement: v["classReq"].as_u64().unwrap_or(0) as i32,
+                        level_requirement: v["level_requirement"].as_u64().unwrap_or(0) as i32,
+                        class_requirement: v["class_requirement"].as_u64().unwrap_or(0) as i32,
                         price: v["price"].as_u64().unwrap_or(0) as i32,
-                        skill_requirements: [
-                            skill_requirements[0],
-                            skill_requirements[1],
-                            skill_requirements[2],
-                            skill_requirements[3],
-                        ],
-                        str_requirement: v["strReq"].as_u64().unwrap_or(0) as i32,
-                        int_requirement: v["intReq"].as_u64().unwrap_or(0) as i32,
-                        wis_requirement: v["wisReq"].as_u64().unwrap_or(0) as i32,
-                        agi_requirement: v["agiReq"].as_u64().unwrap_or(0) as i32,
-                        con_requirement: v["conReq"].as_u64().unwrap_or(0) as i32,
-                        cha_requirement: v["chaReq"].as_u64().unwrap_or(0) as i32,
+                        skill_requirements: skill_requirements
+                            .iter()
+                            .map(|v| v.as_u64().unwrap_or_default() as i32)
+                            .collect::<Vec<_>>()
+                            .try_into()
+                            .unwrap(),
+                        str_requirement: v["str_requirement"].as_u64().unwrap_or(0) as i32,
+                        int_requirement: v["int_requirement"].as_u64().unwrap_or(0) as i32,
+                        wis_requirement: v["wis_requirement"].as_u64().unwrap_or(0) as i32,
+                        agi_requirement: v["agi_requirement"].as_u64().unwrap_or(0) as i32,
+                        con_requirement: v["con_requirement"].as_u64().unwrap_or(0) as i32,
+                        cha_requirement: v["cha_requirement"].as_u64().unwrap_or(0) as i32,
                     }
                 })
                 .collect(),

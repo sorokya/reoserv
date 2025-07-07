@@ -1,4 +1,4 @@
-const VERSION: &str = "1.11.2";
+const VERSION: &str = "1.11.3";
 
 // Avoid musl's default allocator due to lackluster performance
 // https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance

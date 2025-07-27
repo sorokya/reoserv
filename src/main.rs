@@ -44,6 +44,8 @@ mod settings;
 use settings::Settings;
 mod packet_rate_limits;
 use packet_rate_limits::PacketRateLimits;
+mod global_drops;
+use global_drops::GlobalDrops;
 mod sln;
 use sln::ping_sln;
 mod world;
@@ -74,6 +76,8 @@ lazy_static! {
     static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
     static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
     static ref EMAILS: Emails = Emails::new().expect("Failed to load emails!");
+    static ref GLOBAL_DROPS: GlobalDrops =
+        GlobalDrops::new().expect("Failed to load global drops!");
     static ref CLASS_DB: Ecf = load_class_file().expect("Failed to load ECF file!");
     static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
     static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");

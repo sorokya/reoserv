@@ -21,7 +21,7 @@ use crate::{
     deep::{BossPingServerPacket, FAMILY_BOSS},
     map::Item,
     utils::in_client_range,
-    DROP_DB, FORMULAS, NPC_DB, SETTINGS,
+    DROP_DB, FORMULAS, GLOBAL_DROPS, NPC_DB, SETTINGS,
 };
 
 use super::super::Map;
@@ -511,9 +511,13 @@ impl Map {
 }
 
 fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
+    let mut drops = GLOBAL_DROPS.drops.iter().collect::<Vec<_>>();
     if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc_id) {
+        drops.extend(drop_npc.drops.iter());
+    }
+
+    if !drops.is_empty() {
         let mut rng = rand::thread_rng();
-        let mut drops = drop_npc.drops.clone();
         drops.sort_by(|a, b| a.rate.cmp(&b.rate));
 
         for drop in drops {

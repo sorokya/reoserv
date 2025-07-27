@@ -1,0 +1,20 @@
+/*
+ * Add item drops to every npc in the game
+ *
+ * item_id: The ID of the item to drop
+ * min_amount: The minimum amount of the item to drop
+ * max_amount: The maximum amount of the item to drop
+ * rate: The rate at which the item drops (1 in 100 chance)
+ * 
+ * Example:
+ * (
+ *   drops: [
+ *     (item_id: 1, min_amount: 1, max_amount: 1000, rate: 100),
+ *   ]
+ * )
+ */
+
+(
+  drops: [
+  ]
+)

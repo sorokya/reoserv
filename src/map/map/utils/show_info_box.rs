@@ -86,7 +86,7 @@ impl Map {
                     spaces += 1;
                 }
 
-                content.extend(std::iter::repeat(' ').take(spaces));
+                content.push_str(&" ".repeat(spaces));
                 content_line.clear();
             };
 

@@ -29,11 +29,10 @@ impl Character {
     }
 
     pub fn can_bank_hold(&self, item_id: i32, amount: i32) -> i32 {
-        let item = match self.bank.iter().find(|item| item.id == item_id) {
-            Some(item) => item,
-            None => return cmp::min(amount, SETTINGS.bank.max_item_amount - amount),
-        };
+        if let Some(item) = self.bank.iter().find(|item| item.id == item_id) {
+            return cmp::min(SETTINGS.bank.max_item_amount - item.amount, amount);
+        }
 
-        SETTINGS.bank.max_item_amount - item.amount
+        cmp::min(SETTINGS.bank.max_item_amount, amount)
     }
 }

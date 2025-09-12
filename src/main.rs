@@ -1,5 +1,3 @@
-const VERSION: &str = "1.12.0";
-
 // Avoid musl's default allocator due to lackluster performance
 // https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance
 #[cfg(target_env = "musl")]
@@ -108,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  |    |   \\  ___(  <_> )___ \\\\  ___/|  | \\/\\   /
  |____|_  /\\___  >____/____  >\\___  >__|    \\_/
         \\/     \\/          \\/     \\/\nThe rusty endless online server: v{}\n",
-        VERSION
+        std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "unknown".to_string())
     );
 
     let database_url = format!(

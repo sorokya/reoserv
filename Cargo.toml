@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.12.0"
+version = "1.12.1"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2021"
 description = "The rust powered endless online server emulator"
@@ -32,14 +32,18 @@ num-traits = "0.2"
 pretty_env_logger = "0.5"
 futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+] }
 glob = "0.3.1"
 serde_json = "^1.0.132"
 serde_derive = "^1.0.8"
 serde = "^1.0.218"
 console-subscriber = { version = "0.4", optional = true }
 mysql_common = { version = "0.34.1", features = ["chrono"] }
-mysql_async = { version = "0.35.1", default-features = false, features = ["default-rustls-ring"] }
+mysql_async = { version = "0.35.1", default-features = false, features = [
+    "default-rustls-ring",
+] }
 argon2 = "0.5.3"
 eolib = { version = "2.1.1", features = ["use_serde"] }
 eoplus = "1.0.0-RC1"

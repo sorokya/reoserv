@@ -1,6 +1,6 @@
 use reqwest::Url;
 
-use crate::{SETTINGS, VERSION};
+use crate::SETTINGS;
 
 pub async fn ping_sln() {
     let version_parts = SETTINGS
@@ -14,7 +14,12 @@ pub async fn ping_sln() {
         &format!("{}check", SETTINGS.sln.url),
         &[
             ("software", "REOSERV"),
-            ("v", VERSION),
+            (
+                "v",
+                std::env::var("CARGO_PKG_VERSION")
+                    .unwrap_or_else(|_| "unknown".to_string())
+                    .as_str(),
+            ),
             ("retry", &(SETTINGS.sln.rate * 60).to_string()),
             ("host", &SETTINGS.sln.hostname),
             ("port", &SETTINGS.server.port),

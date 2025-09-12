@@ -57,10 +57,15 @@ fn load_json() -> Result<ShopFile, Box<dyn std::error::Error>> {
                     let ingredients = v["ingredients"].as_array().unwrap();
                     ShopCraftRecord {
                         item_id: v["itemId"].as_u64().unwrap_or(0) as i32,
-                        ingredients: ingredients.iter().map(|v| ShopCraftIngredientRecord {
-                            item_id: v["item_id"].as_u64().unwrap_or(0) as i32,
-                            amount: v["amount"].as_u64().unwrap_or(0) as i32,
-                        }).collect::<Vec<_>>().try_into().unwrap(),
+                        ingredients: ingredients
+                            .iter()
+                            .map(|v| ShopCraftIngredientRecord {
+                                item_id: v["item_id"].as_u64().unwrap_or(0) as i32,
+                                amount: v["amount"].as_u64().unwrap_or(0) as i32,
+                            })
+                            .collect::<Vec<_>>()
+                            .try_into()
+                            .unwrap(),
                     }
                 })
                 .collect(),

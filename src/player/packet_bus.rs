@@ -15,6 +15,7 @@ use crate::PACKET_RATE_LIMITS;
 
 use super::PacketLog;
 
+#[allow(clippy::large_enum_variant)]
 pub enum Socket {
     Standard(TcpStream),
     Web(WebSocketStream<TcpStream>),

@@ -22,12 +22,7 @@ impl Map {
             return;
         }
 
-        if !SETTINGS
-            .bard
-            .instrument_items
-            .iter()
-            .any(|id| instrument_id == *id)
-        {
+        if !SETTINGS.bard.instrument_items.contains(&instrument_id) {
             return;
         }
 

@@ -38,7 +38,7 @@ fn load_json() -> Result<Esf, Box<dyn std::error::Error>> {
         let v: Value = serde_json::from_str(&json)?;
         let record = EsfRecord {
             name: v["name"].as_str().unwrap_or_default().to_string(),
-            chant: v["shout"].as_str().unwrap_or_default().to_string(),
+            chant: v["chant"].as_str().unwrap_or_default().to_string(),
             icon_id: v["icon_id"].as_u64().unwrap_or(0) as i32,
             graphic_id: v["graphic_id"].as_u64().unwrap_or(0) as i32,
             tp_cost: v["tp_cost"].as_u64().unwrap_or(0) as i32,

@@ -9,7 +9,7 @@ impl World {
             self.broadcast_server_message(&get_lang_string!(
                 &LANG.announce_global,
                 name = admin_name,
-                state = "off"
+                state = "on"
             ));
         } else {
             self.global_locked = true;

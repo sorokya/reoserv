@@ -53,5 +53,5 @@ WORKDIR /reoserv
 CMD ["/usr/bin/reoserv"]
 
 # Add healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=5s --start-period=10s --retries=3 \
   CMD /usr/local/bin/healthcheck.sh || exit 1

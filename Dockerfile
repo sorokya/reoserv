@@ -1,5 +1,5 @@
 # Builder
-FROM rust:1.85-bookworm as builder
+FROM rust:1.91-trixie as builder
 
 WORKDIR /usr/src
 
@@ -34,7 +34,13 @@ RUN touch /usr/src/reoserv/src/main.rs
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 # Runtime
-FROM alpine:3.21.3 as runtime
+FROM alpine:3.22.2 as runtime
+
+# Install netcat-openbsd for better nc behavior than BusyBox's default
+RUN apk add --no-cache netcat-openbsd bash
+
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
 
 # Copy application binary from builder image
 COPY --from=builder /usr/src/reoserv/target/x86_64-unknown-linux-musl/release/reoserv /usr/bin/
@@ -46,3 +52,6 @@ WORKDIR /reoserv
 # Run the application
 CMD ["/usr/bin/reoserv"]
 
+# Add healthcheck
+HEALTHCHECK --interval=60s --timeout=5s --start-period=10s --retries=3 \
+  CMD /usr/local/bin/healthcheck.sh || exit 1

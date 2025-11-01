@@ -6,8 +6,8 @@ use eolib::{
                 AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
                 CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
                 NpcKillStealProtectionState, NpcKilledData, NpcReplyServerPacket,
-                NpcSpecServerPacket, PartyExpShare, RecoverReplyServerPacket,
-                RecoverTargetGroupServerPacket,
+                NpcSpecServerPacket, PartyExpShare, PartyTargetGroupServerPacket,
+                RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
             },
             PacketAction, PacketFamily,
         },
@@ -272,10 +272,10 @@ impl Map {
             damage: damage_dealt,
         };
 
-        if party.is_some() {
+        if let Some(party) = &party {
             self.attack_npc_killed_leveled_up_party_reply(&exp_gains, killer_player_id);
 
-            let level_up_gains: Vec<PartyExpShare> = exp_gains
+            let party_gains: Vec<PartyExpShare> = exp_gains
                 .iter()
                 .filter(|exp_gain| exp_gain.player_id != killer_player_id)
                 .map(|exp_gain| PartyExpShare {
@@ -289,9 +289,45 @@ impl Map {
                 })
                 .collect();
 
-            if !level_up_gains.is_empty() {
-                self.world
-                    .update_party_exp(killer_player_id, level_up_gains);
+            if !party_gains.is_empty() {
+                for (player_id, character) in self.characters.iter() {
+                    if *player_id == killer_player_id || party.members.contains(player_id) {
+                        continue;
+                    }
+
+                    let player = match character.player.as_ref() {
+                        Some(player) => player,
+                        None => continue,
+                    };
+
+                    let gains = party_gains
+                        .iter()
+                        .filter_map(|gain| {
+                            let gain_character = match self.characters.get(&gain.player_id) {
+                                Some(c) => c,
+                                None => return None,
+                            };
+
+                            if gain.level_up > 0
+                                && in_client_range(&character.coords, &gain_character.coords)
+                            {
+                                Some(gain.to_owned())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    if !gains.is_empty() {
+                        player.send(
+                            PacketAction::TargetGroup,
+                            PacketFamily::Party,
+                            &PartyTargetGroupServerPacket { gains },
+                        )
+                    }
+                }
+
+                self.world.update_party_exp(killer_player_id, party_gains);
             }
         }
 

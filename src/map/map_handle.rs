@@ -319,6 +319,14 @@ impl MapHandle {
         });
     }
 
+    pub fn spawn_item_at_feet(&self, player_id: i32, item_id: i32, amount: i32) {
+        let _ = self.tx.send(Command::SpawnItemAtFeet {
+            player_id,
+            item_id,
+            amount,
+        });
+    }
+
     pub fn give_karma(&self, player_id: i32, amount: i32) {
         let _ = self.tx.send(Command::GiveKarma { player_id, amount });
     }

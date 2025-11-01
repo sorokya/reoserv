@@ -1,5 +1,6 @@
 use eolib::protocol::net::server::{TalkServerServerPacket, WarpEffect};
 use eolib::protocol::net::{PacketAction, PacketFamily};
+use eolib::protocol::r#pub::EifRecord;
 use eolib::protocol::Coords;
 
 use crate::commands::{ArgType, Command};
@@ -80,39 +81,76 @@ async fn evacuate(character: &Character, world: &WorldHandle) {
     map.start_evacuate();
 }
 
+async fn get_item_id_and_amount(player: &PlayerHandle, args: &[String]) -> Option<(i32, i32)> {
+    let amount = if args.len() > 1 {
+        args.last()
+            .and_then(|s| s.parse::<i32>().ok().map(Some))
+            .unwrap_or(None)
+    } else {
+        None
+    };
+
+    let identifier = if args.len() > 1 && amount.is_some() {
+        args[..args.len() - 1].join(" ")
+    } else {
+        args.join(" ")
+    };
+
+    match identifier.parse::<u32>() {
+        Ok(id) => Some((id as i32, amount.unwrap_or(1))),
+        Err(_) => {
+            // find matches from item db where name starts with identifier
+            let matches = ITEM_DB
+                .items
+                .iter()
+                .filter(|item| item.name.to_lowercase() == identifier.to_lowercase())
+                .collect::<Vec<&EifRecord>>();
+
+            match matches.len() {
+                0 => {
+                    send_error_message(
+                        player,
+                        format!("No item found with name \"{}\".", identifier),
+                    );
+                    None
+                }
+                1 => ITEM_DB
+                    .items
+                    .iter()
+                    .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
+                    .map(|index| index as i32 + 1)
+                    .map(|id| (id, amount.unwrap_or(1))),
+                _ => {
+                    let mut item_ids: Vec<i32> = Vec::new();
+                    for (index, item) in ITEM_DB.items.iter().enumerate() {
+                        if item.name.to_lowercase() == identifier.to_lowercase() {
+                            item_ids.push(index as i32 + 1);
+                        }
+                    }
+
+                    send_error_message(
+                        player,
+                        format!(
+                            "Multiple items found with name \"{}\": IDs {:?}.",
+                            identifier, item_ids
+                        ),
+                    );
+                    None
+                }
+            }
+        }
+    }
+}
+
 async fn spawn_item(args: &[String], character: &Character) {
     let player = match character.player.as_ref() {
         Some(player) => player,
         None => return,
     };
 
-    let identifier = (*args[0]).to_string();
-
-    let item_id = match identifier.parse::<u32>() {
-        Ok(id) => id as i32,
-        Err(_) => {
-            // find matches from item db where name starts with identifier
-            match ITEM_DB
-                .items
-                .iter()
-                .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
-            {
-                Some(index) => index as i32 + 1,
-                None => {
-                    send_error_message(
-                        player,
-                        format!("No item found with name \"{}\".", identifier),
-                    );
-                    return;
-                }
-            }
-        }
-    };
-
-    let amount = if args.len() >= 2 {
-        args[1].parse::<i32>().unwrap()
-    } else {
-        1
+    let (item_id, amount) = match get_item_id_and_amount(player, args).await {
+        Some(data) => data,
+        None => return,
     };
 
     if let Ok(map) = player.get_map().await {
@@ -128,13 +166,46 @@ async fn spawn_item(args: &[String], character: &Character) {
     }
 }
 
+async fn drop_item(args: &[String], character: &Character) {
+    let player = match character.player.as_ref() {
+        Some(player) => player,
+        None => return,
+    };
+
+    let (item_id, amount) = match get_item_id_and_amount(player, args).await {
+        Some(data) => data,
+        None => return,
+    };
+
+    if let Ok(map) = player.get_map().await {
+        let player_id = match player.get_player_id().await {
+            Ok(player_id) => player_id,
+            Err(e) => {
+                error!("Failed to get player id: {}", e);
+                return;
+            }
+        };
+
+        map.spawn_item_at_feet(player_id, item_id, amount);
+    }
+}
+
 async fn spawn_npc(args: &[String], character: &Character) {
     let player = match character.player.as_ref() {
         Some(player) => player,
         None => return,
     };
 
-    let identifier = (*args[0]).to_string();
+    let amount = args
+        .last()
+        .and_then(|s| s.parse::<i32>().ok().map(Some))
+        .unwrap_or(None);
+
+    let identifier = if args.len() > 1 && amount.is_some() {
+        args[..args.len() - 1].join(" ")
+    } else {
+        args.join(" ")
+    };
 
     let npc_id = match identifier.parse::<u32>() {
         Ok(id) => id as i32,
@@ -157,18 +228,6 @@ async fn spawn_npc(args: &[String], character: &Character) {
         }
     };
 
-    let amount = if args.len() >= 2 {
-        args[1].parse::<i32>().unwrap()
-    } else {
-        1
-    };
-
-    let speed = if args.len() >= 3 {
-        args[2].parse::<i32>().unwrap()
-    } else {
-        3
-    };
-
     if let Ok(map) = player.get_map().await {
         let player_id = match player.get_player_id().await {
             Ok(player_id) => player_id,
@@ -178,7 +237,7 @@ async fn spawn_npc(args: &[String], character: &Character) {
             }
         };
 
-        map.spawn_npc(player_id, npc_id, amount, speed);
+        map.spawn_npc(player_id, npc_id, amount.unwrap_or(1), 3);
     }
 }
 
@@ -275,7 +334,11 @@ pub async fn handle_command(
         .find(|c| c.name == command || c.alias == command)
     {
         Some(command) => {
-            if command.name.as_str() == "spawnitem" && args.len() > 1 {
+            if (command.name.as_str() == "spawnitem"
+                || command.name.as_str() == "spawnnpc"
+                || command.name.as_str() == "dropitem")
+                && args.len() > 1
+            {
                 if let Ok(amount) = args.last().unwrap().parse::<u32>() {
                     // join all but the last arg into a single string
                     let item_name = args[..args.len() - 1].join(" ");
@@ -292,6 +355,7 @@ pub async fn handle_command(
                 match command.name.as_str() {
                     "hide" => hide(character).await,
                     "spawnitem" => spawn_item(&args, character).await,
+                    "dropitem" => drop_item(&args, character).await,
                     "spawnnpc" => spawn_npc(&args, character).await,
                     "warp" => warp(&args, character, &world).await,
                     "warptome" => warp_to_me(&args, character, &world).await,

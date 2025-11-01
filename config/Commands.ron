@@ -273,6 +273,25 @@
             ]
         ),
         (
+            name: "dropitem",
+            alias: "di",
+            description: "Spawn an item at your feet",
+            usage: "$di gold 100",
+            admin_level: "HighGameMaster",
+            args: [
+                (
+                    name: "item",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "amount",
+                    type: "UInt",
+                    required: false,
+                )
+            ]
+        ),
+        (
             name: "hide",
             alias: "x",
             description: "Toggle hide state",
@@ -294,11 +313,6 @@
                 ),
                 (
                     name: "amount",
-                    type: "UInt",
-                    required: false,
-                ),
-                (
-                    name: "speed",
                     type: "UInt",
                     required: false,
                 )

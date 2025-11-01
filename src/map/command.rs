@@ -190,6 +190,11 @@ pub enum Command {
         item_id: i32,
         amount: i32,
     },
+    SpawnItemAtFeet {
+        player_id: i32,
+        item_id: i32,
+        amount: i32,
+    },
     GiveKarma {
         player_id: i32,
         amount: i32,

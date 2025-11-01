@@ -340,6 +340,12 @@ impl Map {
                 amount,
             } => self.give_item(target_player_id, item_id, amount),
 
+            Command::SpawnItemAtFeet {
+                player_id,
+                item_id,
+                amount,
+            } => self.spawn_item_at_feet(player_id, item_id, amount),
+
             Command::GiveKarma { player_id, amount } => self.give_karma(player_id, amount),
 
             Command::RemoveKarma { player_id, amount } => self.remove_karma(player_id, amount),

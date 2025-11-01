@@ -116,5 +116,8 @@ async fn load_map(path: PathBuf, pool: Pool, world: WorldHandle) -> Option<(i32,
         }
     };
 
-    Some((id, MapHandle::new(id, file_size as i32, pool, file, world)))
+    let map_handle = MapHandle::new(id, file_size as i32, pool, file, world);
+    map_handle.load().await;
+
+    Some((id, map_handle))
 }

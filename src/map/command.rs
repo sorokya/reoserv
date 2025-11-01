@@ -547,4 +547,7 @@ pub enum Command {
         player_id: i32,
         item_id: i32,
     },
+    Load {
+        respond_to: oneshot::Sender<()>,
+    },
 }

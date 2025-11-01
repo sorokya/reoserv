@@ -945,6 +945,12 @@ impl MapHandle {
             .tx
             .send(Command::RemoveAutoPickupItem { player_id, item_id });
     }
+
+    pub async fn load(&self) {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::Load { respond_to: tx });
+        rx.await.unwrap();
+    }
 }
 
 async fn run_map(mut map: Map) {

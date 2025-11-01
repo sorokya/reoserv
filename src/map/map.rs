@@ -747,6 +747,10 @@ impl Map {
             Command::RemoveAutoPickupItem { player_id, item_id } => {
                 self.remove_auto_pickup_item(player_id, item_id)
             }
+            Command::Load { respond_to } => {
+                self.load().await;
+                let _ = respond_to.send(());
+            }
         }
     }
 }

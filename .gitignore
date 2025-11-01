@@ -22,6 +22,7 @@ data/pub/*.evf
 data/pub/*.etf
 data/pub/*.epf
 data/pub/**/*.json
+data/map_saves/*.json
 data/maps/*.emf
 data/quests/*.txt*
 data/quests/*.eqf

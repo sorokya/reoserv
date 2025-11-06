@@ -47,7 +47,7 @@ mysql_async = { version = "0.35.1", default-features = false, features = [
 argon2 = "0.5.3"
 eolib = { version = "2.1.1", features = ["use_serde"] }
 eoplus = "1.0.0-RC1"
-rand = "0.8"
+rand = "0.9"
 evalexpr = "12.0.1"
 duration-str = "0.16.0"
 version-compare = "0.2"

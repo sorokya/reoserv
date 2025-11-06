@@ -2514,7 +2514,7 @@ dependencies = [
  "mysql_common",
  "num-traits",
  "pretty_env_logger",
- "rand 0.8.5",
+ "rand 0.9.1",
  "reqwest",
  "serde",
  "serde_derive",

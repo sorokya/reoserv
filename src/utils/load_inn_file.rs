@@ -49,7 +49,7 @@ fn load_json() -> Result<InnFile, Box<dyn std::error::Error>> {
             sleep_map: v["sleep_map"].as_u64().unwrap_or(0) as i32,
             sleep_x: v["sleep_x"].as_u64().unwrap_or(0) as i32,
             sleep_y: v["sleep_y"].as_u64().unwrap_or(0) as i32,
-            alternate_spawn_enabled: v["alternate_spawn_enabled"].as_u64().unwrap_or(0) == 1,
+            alternate_spawn_enabled: v["alternate_spawn_enabled"].as_bool().unwrap_or(false),
             alternate_spawn_map: v["alternate_spawn_map"].as_u64().unwrap_or(0) as i32,
             alternate_spawn_x: v["alternate_spawn_x"].as_u64().unwrap_or(0) as i32,
             alternate_spawn_y: v["alternate_spawn_y"].as_u64().unwrap_or(0) as i32,

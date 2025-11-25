@@ -22,7 +22,7 @@ RUN apt update && apt install -y musl-tools musl-dev && \
 COPY .cargo /usr/src/reoserv/.cargo/
 
 # This is a dummy build to get the dependencies cached.
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --target x86_64-unknown-linux-musl --release --features=console
 
 # Now copy in the rest of the sources
 COPY src /usr/src/reoserv/src/

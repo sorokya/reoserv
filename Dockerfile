@@ -47,6 +47,9 @@ COPY --from=builder /usr/src/reoserv/target/x86_64-unknown-linux-musl/release/re
 
 EXPOSE 8078
 
+# Add console port
+EXPOSE 6669
+
 WORKDIR /reoserv
 
 # Run the application

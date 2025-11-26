@@ -31,7 +31,7 @@ COPY src /usr/src/reoserv/src/
 RUN touch /usr/src/reoserv/src/main.rs
 
 # This is the actual application build.
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --target x86_64-unknown-linux-musl --release --features=console
 
 # Runtime
 FROM alpine:3.22.2 as runtime

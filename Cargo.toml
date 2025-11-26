@@ -39,7 +39,7 @@ glob = "0.3.1"
 serde_json = "^1.0.132"
 serde_derive = "^1.0.8"
 serde = "^1.0.218"
-console-subscriber = { version = "0.4", optional = true }
+console-subscriber = { version = "0.5", optional = true }
 mysql_common = { version = "0.34.1", features = ["chrono"] }
 mysql_async = { version = "0.35.1", default-features = false, features = [
     "default-rustls-ring",

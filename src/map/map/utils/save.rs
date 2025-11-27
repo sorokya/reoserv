@@ -2,19 +2,17 @@ use std::path::Path;
 
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use eolib::protocol::{Coords, Direction};
-use tokio::sync::oneshot;
 
 use crate::map::{chest::ChestItem, npc::NpcOpponent, Item};
 
 use super::super::Map;
 
 impl Map {
-    pub async fn save(&mut self, respond_to: oneshot::Sender<()>) {
+    pub async fn save(&mut self) {
         let mut conn = match self.pool.get_conn().await {
             Ok(conn) => conn,
             Err(e) => {
                 error!("Failed to get connection from pool: {}", e);
-                let _ = respond_to.send(());
                 return;
             }
         };
@@ -33,7 +31,6 @@ impl Map {
         }
 
         if self.id == 0 {
-            let _ = respond_to.send(());
             return;
         }
 
@@ -44,13 +41,11 @@ impl Map {
             Ok(false) => {
                 if let Err(e) = tokio::fs::create_dir_all(save_dir).await {
                     error!("Failed to create map_saves directory: {}", e);
-                    let _ = respond_to.send(());
                     return;
                 }
             }
             Err(e) => {
                 error!("Failed to check if map_saves directory exists: {}", e);
-                let _ = respond_to.send(());
                 return;
             }
         }
@@ -128,8 +123,6 @@ impl Map {
         {
             error!("Failed to write map save file: {}", e);
         }
-
-        let _ = respond_to.send(());
     }
 
     pub async fn load(&mut self) {

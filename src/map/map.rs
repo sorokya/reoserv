@@ -573,7 +573,7 @@ impl Map {
                 npc_index,
             } => self.reset_character(player_id, npc_index),
 
-            Command::Save { respond_to } => self.save(respond_to).await,
+            Command::Save => self.save().await,
 
             Command::SayIDo { player_id } => self.say_i_do(player_id),
 

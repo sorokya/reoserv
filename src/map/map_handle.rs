@@ -720,10 +720,8 @@ impl MapHandle {
         let _ = self.tx.send(Command::StartEvacuate);
     }
 
-    pub async fn save(&self) {
-        let (tx, rx) = oneshot::channel();
-        let _ = self.tx.send(Command::Save { respond_to: tx });
-        rx.await.unwrap();
+    pub fn save(&self) {
+        let _ = self.tx.send(Command::Save);
     }
 
     pub fn say_i_do(&self, player_id: i32) {

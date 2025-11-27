@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use mysql_async::Pool;
@@ -422,7 +424,10 @@ impl WorldHandle {
 async fn run_world(mut world: World) {
     loop {
         if let Some(command) = world.rx.recv().await {
+            let start = Instant::now();
+            debug!("got command: {:?}", command);
             world.handle_command(command).await;
+            debug!("command handled in {:?}", start.elapsed());
         }
     }
 }

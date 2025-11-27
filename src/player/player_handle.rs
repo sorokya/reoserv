@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::{
@@ -255,7 +257,10 @@ async fn run_player(mut player: Player) {
                 }
             },
             Some(command) = player.rx.recv() => {
+                let start = Instant::now();
+                debug!("got command: {:?}", command);
                 player.handle_command(command).await;
+                debug!("command handled in {:?}", start.elapsed());
             }
         }
 

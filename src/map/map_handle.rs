@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use bytes::Bytes;
 use eolib::protocol::{
     map::Emf,
@@ -962,7 +964,10 @@ impl MapHandle {
 async fn run_map(mut map: Map) {
     loop {
         if let Some(command) = map.rx.recv().await {
+            let start = Instant::now();
+            debug!("got command: {:?}", command);
             map.handle_command(command).await;
+            debug!("command handled in {:?}", start.elapsed());
         }
     }
 }

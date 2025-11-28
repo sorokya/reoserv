@@ -424,7 +424,7 @@ impl WorldHandle {
 async fn run_world(mut world: World) {
     loop {
         if let Some(command) = world.rx.recv().await {
-            let start = if matches!(command, Command::Tick) {
+            let start = if !matches!(command, Command::Tick) {
                 Some(Instant::now())
             } else {
                 None

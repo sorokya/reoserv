@@ -964,10 +964,37 @@ impl MapHandle {
 async fn run_map(mut map: Map) {
     loop {
         if let Some(command) = map.rx.recv().await {
-            let start = Instant::now();
-            debug!("got command: {:?}", command);
+            let start = if !matches!(
+                command,
+                Command::TimedArena
+                    | Command::TimedAutoPickup
+                    | Command::TimedDoorClose
+                    | Command::TimedDrain
+                    | Command::TimedDropProtection
+                    | Command::TimedEvacuate
+                    | Command::TimedGhost
+                    | Command::TimedQuake
+                    | Command::TimedSpikes
+                    | Command::TimedWarpSuck
+                    | Command::TimedWedding
+                    | Command::JukeboxTimer
+                    | Command::ActNpcs
+                    | Command::SpawnNpcs
+                    | Command::SpawnItems
+            ) {
+                Some(Instant::now())
+            } else {
+                None
+            };
+
+            if start.is_some() {
+                debug!("got command: {:?}", command);
+            }
             map.handle_command(command).await;
-            debug!("command handled in {:?}", start.elapsed());
+
+            if let Some(start) = start {
+                debug!("command handled in {:?}", start.elapsed());
+            }
         }
     }
 }

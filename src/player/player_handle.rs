@@ -257,10 +257,21 @@ async fn run_player(mut player: Player) {
                 }
             },
             Some(command) = player.rx.recv() => {
-                let start = Instant::now();
+                let start = if !matches!(command, Command::Tick) {
+                    Some(Instant::now())
+                } else {
+                    None
+                };
+
+                if start.is_some() {
                 debug!("got command: {:?}", command);
+                }
+
                 player.handle_command(command).await;
-                debug!("command handled in {:?}", start.elapsed());
+
+                if let Some(start) = start {
+                    debug!("command handled in {:?}", start.elapsed());
+                }
             }
         }
 

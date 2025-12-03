@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::{

@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use mysql_async::Pool;

@@ -424,21 +424,7 @@ impl WorldHandle {
 async fn run_world(mut world: World) {
     loop {
         if let Some(command) = world.rx.recv().await {
-            let start = if !matches!(command, Command::Tick) {
-                Some(Instant::now())
-            } else {
-                None
-            };
-
-            if start.is_some() {
-                debug!("got command: {:?}", command);
-            }
-
             world.handle_command(command).await;
-
-            if let Some(start) = start {
-                debug!("command handled in {:?}", start.elapsed());
-            }
         }
     }
 }

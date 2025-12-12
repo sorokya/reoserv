@@ -85,7 +85,8 @@ impl Player {
 
             current_map
                 .enter(Box::new(character), warp_session.animation)
-                .await;
+                .await
+                .expect("Failed to enter map. Timeout");
 
             let nearby_info = current_map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
 

@@ -70,8 +70,8 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
         timeout(Duration::from_secs(5), rx)
             .await
-            .map_err(|_| "Failed to generate session id. Timeout".into())?
-            .map_err(|_| "Failed to generate session id. Channel closed".into())
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Timeout".into() })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Channel closed".into() })
     }
 
     pub async fn get_character(

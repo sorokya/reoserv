@@ -324,7 +324,7 @@ impl Player {
             };
 
             let tag = match character.guild_tag {
-                Some(ref tag) => tag.clone(),
+                Some(ref tag) => tag,
                 None => return,
             };
 
@@ -359,18 +359,18 @@ impl Player {
             }
 
             if let Err(e) =
-                set_guild_bank(&mut conn, &tag, guild_bank - SETTINGS.guild.recruit_cost).await
+                set_guild_bank(&mut conn, tag, guild_bank - SETTINGS.guild.recruit_cost).await
             {
                 error!("Error setting guild bank: {}", e);
                 return;
             }
 
-            let guild_name = match get_guild_name(&mut conn, &tag).await {
+            let guild_name = match get_guild_name(&mut conn, tag).await {
                 Some(guild_name) => guild_name,
                 None => return,
             };
 
-            let rank_string = match get_new_member_guild_rank(&mut conn, &tag).await {
+            let rank_string = match get_new_member_guild_rank(&mut conn, tag).await {
                 Some(rank_string) => rank_string,
                 None => return,
             };

@@ -230,17 +230,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            if let Ok(Some(last_connect)) = server_world.get_ip_last_connect(&ip).await {
-                let time_since_last_connect = now - last_connect;
-                if SETTINGS.server.ip_reconnect_limit != 0
-                    && time_since_last_connect.num_seconds()
-                        < SETTINGS.server.ip_reconnect_limit.into()
-                {
-                    warn!(
-                        "{} has been disconnected because it reconnected too quickly",
-                        addr
-                    );
-                    continue;
+            // Check reconnect rate limiting
+            match server_world.get_ip_last_connect(&ip).await {
+                Ok(Some(last_connect)) => {
+                    let time_since_last_connect = now - last_connect;
+                    if SETTINGS.server.ip_reconnect_limit != 0
+                        && time_since_last_connect.num_seconds()
+                            < SETTINGS.server.ip_reconnect_limit.into()
+                    {
+                        warn!(
+                            "{} has been disconnected because it reconnected too quickly",
+                            addr
+                        );
+                        continue;
+                    }
+                }
+                Ok(None) => {
+                    // First connection from this IP, allow it
+                }
+                Err(e) => {
+                    warn!("Failed to check last connect time for {}: {}", ip, e);
+                    // Continue anyway - we have other rate limiting checks
                 }
             }
 
@@ -300,17 +310,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                if let Ok(Some(last_connect)) = websocket_world.get_ip_last_connect(&ip).await {
-                    let time_since_last_connect = now - last_connect;
-                    if SETTINGS.server.ip_reconnect_limit != 0
-                        && time_since_last_connect.num_seconds()
-                            < SETTINGS.server.ip_reconnect_limit.into()
-                    {
-                        warn!(
-                            "{} has been disconnected because it reconnected too quickly",
-                            addr
-                        );
-                        continue;
+                // Check reconnect rate limiting
+                match websocket_world.get_ip_last_connect(&ip).await {
+                    Ok(Some(last_connect)) => {
+                        let time_since_last_connect = now - last_connect;
+                        if SETTINGS.server.ip_reconnect_limit != 0
+                            && time_since_last_connect.num_seconds()
+                                < SETTINGS.server.ip_reconnect_limit.into()
+                        {
+                            warn!(
+                                "{} has been disconnected because it reconnected too quickly",
+                                addr
+                            );
+                            continue;
+                        }
+                    }
+                    Ok(None) => {
+                        // First connection from this IP, allow it
+                    }
+                    Err(e) => {
+                        warn!("Failed to check last connect time for {}: {}", ip, e);
+                        // Continue anyway - we have other rate limiting checks
                     }
                 }
 

@@ -156,7 +156,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
-        world.load_maps().await;
+        world.load_maps().await.expect("Failed to load maps. Timeout");
     }
 
     let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
@@ -224,13 +224,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ip = addr.ip().to_string();
             let now = Utc::now();
 
-            let player_count = server_world.get_connection_count().await;
+            let player_count = server_world.get_connection_count().await.expect("Failed to get connection count. Timeout");
             if player_count >= SETTINGS.server.max_connections {
                 warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
 
-            if let Some(last_connect) = server_world.get_ip_last_connect(&ip).await {
+            if let Ok(Some(last_connect)) = server_world.get_ip_last_connect(&ip).await {
                 let time_since_last_connect = now - last_connect;
                 if SETTINGS.server.ip_reconnect_limit != 0
                     && time_since_last_connect.num_seconds()
@@ -244,7 +244,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            let num_of_connections = server_world.get_ip_connection_count(&ip).await;
+            let num_of_connections = server_world.get_ip_connection_count(&ip).await.expect("Failed to get IP connection count. Timeout");
             if SETTINGS.server.max_connections_per_ip != 0
                 && num_of_connections >= SETTINGS.server.max_connections_per_ip
             {
@@ -255,7 +255,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            server_world.add_connection(&ip).await;
+            server_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
 
             let player_id = server_world.get_next_player_id().await.unwrap();
 
@@ -272,7 +272,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                server_world.get_connection_count().await,
+                server_world.get_connection_count().await.expect("Failed to get connection count. Timeout"),
                 SETTINGS.server.max_connections
             );
         }
@@ -294,13 +294,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let ip = addr.ip().to_string();
                 let now = Utc::now();
 
-                let player_count = websocket_world.get_connection_count().await;
+                let player_count = websocket_world.get_connection_count().await.expect("Failed to get connection count. Timeout");
                 if player_count >= SETTINGS.server.max_connections {
                     warn!("{} has been disconnected because the server is full", addr);
                     continue;
                 }
 
-                if let Some(last_connect) = websocket_world.get_ip_last_connect(&ip).await {
+                if let Ok(Some(last_connect)) = websocket_world.get_ip_last_connect(&ip).await {
                     let time_since_last_connect = now - last_connect;
                     if SETTINGS.server.ip_reconnect_limit != 0
                         && time_since_last_connect.num_seconds()
@@ -314,7 +314,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                let num_of_connections = websocket_world.get_ip_connection_count(&ip).await;
+                let num_of_connections = websocket_world.get_ip_connection_count(&ip).await.expect("Failed to get IP connection count. Timeout");
                 if SETTINGS.server.max_connections_per_ip != 0
                     && num_of_connections >= SETTINGS.server.max_connections_per_ip
                 {
@@ -325,7 +325,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                websocket_world.add_connection(&ip).await;
+                websocket_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
 
                 let player_id = websocket_world.get_next_player_id().await.unwrap();
 
@@ -342,7 +342,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 info!(
                     "websocket connection accepted ({}) {}/{}",
                     addr,
-                    websocket_world.get_connection_count().await,
+                    websocket_world.get_connection_count().await.expect("Failed to get connection count. Timeout"),
                     SETTINGS.server.max_connections
                 );
             }
@@ -365,7 +365,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     info!("Shutting down server...");
-    world.shutdown().await;
+    world.shutdown().await.expect("Failed to shutdown. Timeout");
 
     Ok(())
 }

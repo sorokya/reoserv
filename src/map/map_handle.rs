@@ -218,7 +218,7 @@ impl MapHandle {
             warp_animation,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to enter map. Timeout".to_string())?
             .map_err(|_| "Failed to enter map. Channel closed".to_string())
@@ -257,7 +257,7 @@ impl MapHandle {
             player_id,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to get character. Timeout".to_string())?
             .map_err(|_| "Failed to get character. Channel closed".to_string())
@@ -266,7 +266,7 @@ impl MapHandle {
     pub async fn get_dimensions(&self) -> Result<Coords, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get dimensions. Timeout".to_string())?
             .map_err(|_| "Failed to get dimensions. Channel closed".to_string())
@@ -285,7 +285,7 @@ impl MapHandle {
             player_id,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to get nearby info. Timeout".to_string())?
             .map_err(|_| "Failed to get nearby info. Channel closed".to_string())
@@ -297,7 +297,7 @@ impl MapHandle {
             npc_index,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get NPC id for index. Timeout".to_string())?
             .map_err(|_| "Failed to get NPC id for index. Channel closed".to_string())
@@ -306,7 +306,7 @@ impl MapHandle {
     pub async fn get_relog_coords(&self) -> Result<Option<Coords>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRelogCoords { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get relog coords. Timeout".to_string())?
             .map_err(|_| "Failed to get relog coords. Channel closed".to_string())
@@ -315,7 +315,7 @@ impl MapHandle {
     pub async fn get_rid_and_size(&self) -> Result<([i32; 2], i32), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRidAndSize { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get rid and size. Timeout".to_string())?
             .map_err(|_| "Failed to get rid and size. Channel closed".to_string())
@@ -327,7 +327,7 @@ impl MapHandle {
             respond_to: tx,
             filter,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get player count. Timeout".to_string())?
             .map_err(|_| "Failed to get player count. Channel closed".to_string())
@@ -770,7 +770,7 @@ impl MapHandle {
     pub async fn serialize(&self) -> Result<Bytes, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to serialize map. Timeout".to_string())?
             .map_err(|_| "Failed to serialize map. Channel closed".to_string())
@@ -984,7 +984,7 @@ impl MapHandle {
     pub async fn load(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Load { respond_to: tx });
-        timeout(Duration::from_secs(30), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to load map. Timeout".to_string())?
             .map_err(|_| "Failed to load map. Channel closed".to_string())

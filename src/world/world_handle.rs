@@ -70,7 +70,7 @@ impl WorldHandle {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to add connection. Timeout".to_string())?
             .map_err(|_| "Failed to add connection. Channel closed".to_string())
@@ -87,7 +87,7 @@ impl WorldHandle {
             player,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Timeout".into() })?
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Channel closed".into() })?;
@@ -171,7 +171,7 @@ impl WorldHandle {
             character_name,
             guild_tag,
         });
-        timeout(Duration::from_secs(10), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Timeout".into() })?
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Channel closed".into() })?;
@@ -202,7 +202,7 @@ impl WorldHandle {
             name: name.to_owned(),
             respond_to: tx,
         });
-        match timeout(Duration::from_secs(10), rx).await {
+        match timeout(Duration::from_secs(5), rx).await {
             Ok(Ok(result)) => result,
             Ok(Err(_)) => Err("Failed to get character by name. Channel closed".into()),
             Err(_) => Err("Failed to get character by name. Timeout".into()),
@@ -218,7 +218,7 @@ impl WorldHandle {
             map_id,
             respond_to: tx,
         });
-        match timeout(Duration::from_secs(10), rx).await {
+        match timeout(Duration::from_secs(5), rx).await {
             Ok(Ok(result)) => result,
             Ok(Err(_)) => Err("Failed to get map. Channel closed".into()),
             Err(_) => Err("Failed to get map. Timeout".into()),
@@ -230,7 +230,7 @@ impl WorldHandle {
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNextPlayerId { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(id)) => Ok(id),
             Ok(Err(_)) => Err("Failed to get next player id. Channel closed".into()),
             Err(_) => Err("Failed to get next player id. Timeout".into()),
@@ -240,7 +240,7 @@ impl WorldHandle {
     pub async fn get_connection_count(&self) -> Result<i32, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetConnectionCount { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get connection count. Timeout".to_string())?
             .map_err(|_| "Failed to get connection count. Channel closed".to_string())
@@ -252,7 +252,7 @@ impl WorldHandle {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get IP connection count. Timeout".to_string())?
             .map_err(|_| "Failed to get IP connection count. Channel closed".to_string())
@@ -264,7 +264,7 @@ impl WorldHandle {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get IP last connect. Timeout".to_string())?
             .map_err(|_| "Failed to get IP last connect. Channel closed".to_string())
@@ -276,7 +276,7 @@ impl WorldHandle {
             player_id,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get player. Timeout".to_string())?
             .map_err(|_| "Failed to get player. Channel closed".to_string())
@@ -285,7 +285,7 @@ impl WorldHandle {
     pub async fn get_player_count(&self) -> Result<i32, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerCount { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get player count. Timeout".to_string())?
             .map_err(|_| "Failed to get player count. Channel closed".to_string())
@@ -297,7 +297,7 @@ impl WorldHandle {
             player_id,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to get player party. Timeout".to_string())?
             .map_err(|_| "Failed to get player party. Channel closed".to_string())
@@ -309,7 +309,7 @@ impl WorldHandle {
             account_id,
             respond_to: tx,
         });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| "Failed to check if logged in. Timeout".to_string())?
             .map_err(|_| "Failed to check if logged in. Channel closed".to_string())
@@ -336,7 +336,7 @@ impl WorldHandle {
             world: self.clone(),
             respond_to: tx,
         });
-        timeout(Duration::from_secs(60), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to load maps. Timeout".to_string())?
             .map_err(|_| "Failed to load maps. Channel closed".to_string())
@@ -433,7 +433,7 @@ impl WorldHandle {
     pub async fn shutdown(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Shutdown { respond_to: tx });
-        timeout(Duration::from_secs(30), rx)
+        timeout(Duration::from_secs(5), rx)
             .await
             .map_err(|_| "Failed to shutdown. Timeout".to_string())?
             .map_err(|_| "Failed to shutdown. Channel closed".to_string())

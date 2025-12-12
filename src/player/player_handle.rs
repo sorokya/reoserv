@@ -68,7 +68,7 @@ impl PlayerHandle {
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
-        timeout(Duration::from_secs(5), rx)
+        timeout(Duration::from_secs(1), rx)
             .await
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Timeout".into() })?
             .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Channel closed".into() })
@@ -79,7 +79,7 @@ impl PlayerHandle {
     ) -> Result<Box<Character>, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter { respond_to: tx });
-        match timeout(Duration::from_secs(10), rx).await {
+        match timeout(Duration::from_secs(5), rx).await {
             Ok(Ok(Ok(character))) => Ok(character),
             Ok(Ok(Err(e))) => Err(Box::new(e)),
             Ok(Err(_)) => Err("Failed to get character. Channel closed".into()),
@@ -90,7 +90,7 @@ impl PlayerHandle {
     pub async fn get_map(&self) -> Result<MapHandle, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetMap { respond_to: tx });
-        match timeout(Duration::from_secs(10), rx).await {
+        match timeout(Duration::from_secs(5), rx).await {
             Ok(Ok(Ok(map))) => Ok(map),
             Ok(Ok(Err(e))) => Err(Box::new(e)),
             Ok(Err(_)) => Err("Failed to get map. Channel closed".into()),
@@ -101,7 +101,7 @@ impl PlayerHandle {
     pub async fn get_party_request(&self) -> Result<PartyRequest, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPartyRequest { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(party_request)) => Ok(party_request),
             Ok(Err(_)) => Err("Failed to get party request. Channel closed".into()),
             Err(_) => Err("Failed to get party request. Timeout".into()),
@@ -111,7 +111,7 @@ impl PlayerHandle {
     pub async fn get_player_id(&self) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerId { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(player_id)) => Ok(player_id),
             Ok(Err(_)) => Err("Failed to get player id. Channel closed".into()),
             Err(_) => Err("Failed to get player id. Timeout".into()),
@@ -123,7 +123,7 @@ impl PlayerHandle {
         let _ = self
             .tx
             .send(Command::GetInteractPlayerId { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(id)) => Ok(id),
             Ok(Err(_)) => Err("Failed to get interact player id. Channel closed".into()),
             Err(_) => Err("Failed to get interact player id. Timeout".into()),
@@ -133,7 +133,7 @@ impl PlayerHandle {
     pub async fn get_state(&self) -> Result<ClientState, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetState { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(state)) => Ok(state),
             Ok(Err(_)) => Err("Failed to get state. Channel closed".into()),
             Err(_) => Err("Failed to get state. Timeout".into()),
@@ -143,7 +143,7 @@ impl PlayerHandle {
     pub async fn is_trade_accepted(&self) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });
-        match timeout(Duration::from_secs(5), rx).await {
+        match timeout(Duration::from_secs(1), rx).await {
             Ok(Ok(accepted)) => Ok(accepted),
             Ok(Err(_)) => Err("Failed to check if trade accepted. Channel closed".into()),
             Err(_) => Err("Failed to check if trade accepted. Timeout".into()),

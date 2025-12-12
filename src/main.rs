@@ -267,7 +267,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             server_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
 
-            let player_id = server_world.get_next_player_id().await.unwrap();
+            let player_id = server_world.get_next_player_id().await.expect("Failed to get next player id. Timeout");
 
             let player = PlayerHandle::new(
                 player_id,
@@ -277,7 +277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 server_world.clone(),
                 server_pool.clone(),
             );
-            server_world.add_player(player_id, player).await.unwrap();
+            server_world.add_player(player_id, player).await.expect("Failed to add player. Timeout");
 
             info!(
                 "connection accepted ({}) {}/{}",
@@ -347,7 +347,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 websocket_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
 
-                let player_id = websocket_world.get_next_player_id().await.unwrap();
+                let player_id = websocket_world.get_next_player_id().await.expect("Failed to get next player id. Timeout");
 
                 let player = PlayerHandle::new(
                     player_id,
@@ -357,7 +357,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     websocket_world.clone(),
                     pool.clone(),
                 );
-                websocket_world.add_player(player_id, player).await.unwrap();
+                websocket_world.add_player(player_id, player).await.expect("Failed to add player. Timeout");
 
                 info!(
                     "websocket connection accepted ({}) {}/{}",

@@ -25,7 +25,7 @@ impl Map {
         let world = self.world.clone();
 
         tokio::spawn(async move {
-            let in_party = world.get_player_party(target_player_id).await.is_some();
+            let in_party = world.get_player_party(target_player_id).await.expect("Failed to get player party. Timeout").is_some();
 
             player.send(
                 PacketAction::Reply,

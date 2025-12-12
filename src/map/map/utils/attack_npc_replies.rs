@@ -188,7 +188,7 @@ impl Map {
 
         let mut exp_gains: Vec<ExpGain> = Vec::new();
 
-        let party = self.world.get_player_party(killer_player_id).await;
+        let party = self.world.get_player_party(killer_player_id).await.expect("Failed to get player party. Timeout");
 
         if let Some(party) = party.as_ref() {
             let members_on_map: Vec<&i32> = party

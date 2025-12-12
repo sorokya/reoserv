@@ -23,7 +23,7 @@ async fn warp(args: &[String], character: &Character, world: &WorldHandle) {
                 y: args[2].parse::<i32>().unwrap(),
             }
         } else {
-            let map_size = map.get_dimensions().await;
+            let map_size = map.get_dimensions().await.expect("Failed to get map dimensions. Timeout");
             Coords {
                 x: map_size.x / 2,
                 y: map_size.y / 2,

@@ -35,7 +35,7 @@ impl Map {
 
         tokio::spawn(async move {
             let target_player_interact_player_id =
-                match target_player.get_interact_player_id().await {
+                match target_player.get_interact_player_id().await.expect("Failed to get interact player id. Timeout") {
                     Some(player_id) => player_id,
                     None => return,
                 };

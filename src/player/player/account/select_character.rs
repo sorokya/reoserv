@@ -17,12 +17,12 @@ impl Player {
             return true;
         }
 
-        let player = match self.world.get_player(self.id).await {
+        let player = match self.world.get_player(self.id).await.expect("Failed to get player. Timeout") {
             Some(player) => player,
             None => return false,
         };
 
-        let player_count = self.world.get_player_count().await;
+        let player_count = self.world.get_player_count().await.expect("Failed to get player count. Timeout");
         if player_count >= SETTINGS.server.max_players {
             let _ = self
                 .bus

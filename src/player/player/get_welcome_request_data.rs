@@ -21,7 +21,7 @@ impl Player {
     > {
         let (map_rid, map_file_size) = {
             let map = self.world.get_map(character.map_id).await?;
-            map.get_rid_and_size().await
+            map.get_rid_and_size().await?
         };
 
         let (eif_rid, eif_length) = { (ITEM_DB.rid, ITEM_DB.items.len() as i32) };

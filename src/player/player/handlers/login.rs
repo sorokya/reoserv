@@ -56,7 +56,7 @@ impl Player {
             return;
         }
 
-        let player_count = self.world.get_player_count().await;
+        let player_count = self.world.get_player_count().await.expect("Failed to get player count. Timeout");
         if player_count >= SETTINGS.server.max_players {
             let _ = self
                 .bus
@@ -168,7 +168,7 @@ impl Player {
         let username: String = row.get("name").unwrap();
         let password_hash: String = row.get("password_hash").unwrap();
         let account_id: i32 = row.get("id").unwrap();
-        let logged_in = self.world.is_logged_in(account_id).await;
+        let logged_in = self.world.is_logged_in(account_id).await.expect("Failed to check if logged in. Timeout");
         self.world.add_pending_login(account_id);
 
         if !validate_password(&username, &request.password, &password_hash) {
@@ -553,7 +553,7 @@ impl Player {
         match row {
             Some(row) => {
                 let account_id: i32 = row.get("account_id").unwrap();
-                let logged_in = self.world.is_logged_in(account_id).await;
+                let logged_in = self.world.is_logged_in(account_id).await.expect("Failed to check if logged in. Timeout");
                 if logged_in {
                     self.world.remove_pending_login(account_id);
                     let _ = self

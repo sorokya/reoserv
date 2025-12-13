@@ -56,7 +56,7 @@ impl Player {
                 } else {
                     match self.world.get_map(map_id).await {
                         Ok(map) => {
-                            let (map_rid, map_file_size) = map.get_rid_and_size().await;
+                            let (map_rid, map_file_size) = map.get_rid_and_size().await.expect("Failed to get rid and size. Timeout");
                             WarpRequestServerPacket {
                                 warp_type: WarpType::MapSwitch,
                                 map_id,

@@ -131,7 +131,7 @@ impl Player {
                 if let Some(character) = self.character.as_ref() {
                     let _ = respond_to.send(Ok(Box::new(character.to_owned())));
                 } else if let Some(map) = self.map.as_ref() {
-                    if let Some(character) = map.get_character(self.id).await {
+                    if let Ok(Some(character)) = map.get_character(self.id).await {
                         let _ = respond_to.send(Ok(character));
                     }
                 } else {

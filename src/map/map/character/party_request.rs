@@ -51,7 +51,7 @@ impl Map {
         let world = self.world.to_owned();
 
         tokio::spawn(async move {
-            if let Some(party) = world.get_player_party(target_player_id).await {
+            if let Ok(Some(party)) = world.get_player_party(target_player_id).await {
                 let reply_code = match request {
                     PartyRequest::Join(_) => {
                         if party.members.contains(&player_id) {
@@ -101,7 +101,7 @@ impl Map {
             }
 
             // Check if party is full
-            if let Some(party) = world
+            if let Ok(Some(party)) = world
                 .get_player_party(match request {
                     PartyRequest::Join(_) => target_player_id,
                     PartyRequest::Invite(_) => player_id,

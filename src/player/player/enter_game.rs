@@ -55,16 +55,16 @@ impl Player {
         let spells = character.spells.clone();
         let weight = character.get_weight();
 
-        if let Some(relog_coords) = map.get_relog_coords().await {
+        if let Ok(Some(relog_coords)) = map.get_relog_coords().await {
             character.coords = relog_coords;
             character.sit_state = SitState::Stand;
         }
 
         character.is_deep = is_deep(&self.version);
 
-        map.enter(Box::new(character), None).await;
+        map.enter(Box::new(character), None).await.expect("Failed to enter map. Timeout");
 
-        let nearby_info = map.get_nearby_info(self.id).await;
+        let nearby_info = map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
 
         let _ = self
             .bus

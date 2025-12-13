@@ -16,7 +16,7 @@ impl World {
             None => return,
         };
 
-        match player.get_party_request().await {
+        match player.get_party_request().await.expect("Failed to get party request. Timeout") {
             PartyRequest::Invite(actual_player_id) => {
                 if request_type != PartyRequestType::Invite || actual_player_id != target_player_id
                 {

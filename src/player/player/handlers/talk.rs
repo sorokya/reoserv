@@ -39,7 +39,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            if let Some(character) = map.get_character(player_id).await {
+            if let Ok(Some(character)) = map.get_character(player_id).await {
                 if i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian) {
                     world.broadcast_admin_message(character.name, admin.message);
                 }
@@ -66,7 +66,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            if let Some(character) = map.get_character(player_id).await {
+            if let Ok(Some(character)) = map.get_character(player_id).await {
                 if i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian) {
                     world.broadcast_announcement(character.name, announce.message);
                 }
@@ -93,7 +93,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            if let Some(character) = map.get_character(player_id).await {
+            if let Ok(Some(character)) = map.get_character(player_id).await {
                 world.broadcast_global_message(
                     character.player_id.unwrap(),
                     character.name,
@@ -122,7 +122,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -130,7 +130,7 @@ impl Player {
             if report.message.starts_with('$') && character.admin_level != AdminLevel::Player {
                 let args: Vec<&str> = report.message[1..].split_whitespace().collect();
                 if !args.is_empty() {
-                    let player = match world.get_player(player_id).await {
+                    let player = match world.get_player(player_id).await.expect("Failed to get player. Timeout") {
                         Some(player) => player,
                         None => return,
                     };
@@ -143,7 +143,7 @@ impl Player {
             if report.message.starts_with('#') {
                 let args: Vec<&str> = report.message[1..].split_whitespace().collect();
                 if !args.is_empty() {
-                    let player = match world.get_player(player_id).await {
+                    let player = match world.get_player(player_id).await.expect("Failed to get player. Timeout") {
                         Some(player) => player,
                         None => return,
                     };
@@ -205,7 +205,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };

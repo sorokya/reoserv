@@ -9,10 +9,12 @@ use eolib::protocol::{
     Coords, Direction, Emote,
 };
 use mysql_async::Pool;
+use std::time::Duration;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     oneshot,
 };
+use tokio::time::timeout;
 
 use crate::{
     character::{Character, SpellTarget},
@@ -209,14 +211,17 @@ impl MapHandle {
         let _ = self.tx.send(Command::Emote { player_id, emote });
     }
 
-    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpEffect>) {
+    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpEffect>) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter {
             character,
             warp_animation,
             respond_to: tx,
         });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to enter map. Timeout".to_string())?
+            .map_err(|_| "Failed to enter map. Channel closed".to_string())
     }
 
     pub fn equip(&self, player_id: i32, item_id: i32, sub_loc: i32) {
@@ -246,19 +251,25 @@ impl MapHandle {
         });
     }
 
-    pub async fn get_character(&self, player_id: i32) -> Option<Box<Character>> {
+    pub async fn get_character(&self, player_id: i32) -> Result<Option<Box<Character>>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetCharacter {
             player_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to get character. Timeout".to_string())?
+            .map_err(|_| "Failed to get character. Channel closed".to_string())
     }
 
-    pub async fn get_dimensions(&self) -> Coords {
+    pub async fn get_dimensions(&self) -> Result<Coords, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetDimensions { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get dimensions. Timeout".to_string())?
+            .map_err(|_| "Failed to get dimensions. Channel closed".to_string())
     }
 
     pub fn get_item(&self, player_id: i32, item_index: i32) {
@@ -268,43 +279,58 @@ impl MapHandle {
         });
     }
 
-    pub async fn get_nearby_info(&self, player_id: i32) -> NearbyInfo {
+    pub async fn get_nearby_info(&self, player_id: i32) -> Result<NearbyInfo, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNearbyInfo {
             player_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to get nearby info. Timeout".to_string())?
+            .map_err(|_| "Failed to get nearby info. Channel closed".to_string())
     }
 
-    pub async fn get_npc_id_for_index(&self, npc_index: i32) -> Option<i32> {
+    pub async fn get_npc_id_for_index(&self, npc_index: i32) -> Result<Option<i32>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNpcIdForIndex {
             npc_index,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get NPC id for index. Timeout".to_string())?
+            .map_err(|_| "Failed to get NPC id for index. Channel closed".to_string())
     }
 
-    pub async fn get_relog_coords(&self) -> Option<Coords> {
+    pub async fn get_relog_coords(&self) -> Result<Option<Coords>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRelogCoords { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get relog coords. Timeout".to_string())?
+            .map_err(|_| "Failed to get relog coords. Channel closed".to_string())
     }
 
-    pub async fn get_rid_and_size(&self) -> ([i32; 2], i32) {
+    pub async fn get_rid_and_size(&self) -> Result<([i32; 2], i32), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetRidAndSize { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get rid and size. Timeout".to_string())?
+            .map_err(|_| "Failed to get rid and size. Channel closed".to_string())
     }
 
-    pub async fn get_player_count(&self, filter: fn(&Character) -> bool) -> usize {
+    pub async fn get_player_count(&self, filter: fn(&Character) -> bool) -> Result<usize, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerCount {
             respond_to: tx,
             filter,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get player count. Timeout".to_string())?
+            .map_err(|_| "Failed to get player count. Channel closed".to_string())
     }
 
     pub fn award_experience(&self, player_id: i32, amount: i32) {
@@ -741,10 +767,13 @@ impl MapHandle {
         });
     }
 
-    pub async fn serialize(&self) -> Bytes {
+    pub async fn serialize(&self) -> Result<Bytes, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Serialize { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to serialize map. Timeout".to_string())?
+            .map_err(|_| "Failed to serialize map. Channel closed".to_string())
     }
 
     pub fn set_class(&self, player_id: i32, class_id: i32) {
@@ -952,10 +981,13 @@ impl MapHandle {
             .send(Command::RemoveAutoPickupItem { player_id, item_id });
     }
 
-    pub async fn load(&self) {
+    pub async fn load(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Load { respond_to: tx });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to load map. Timeout".to_string())?
+            .map_err(|_| "Failed to load map. Channel closed".to_string())
     }
 }
 

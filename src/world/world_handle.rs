@@ -1,7 +1,9 @@
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
 use mysql_async::Pool;
+use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
+use tokio::time::timeout;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};
 
@@ -62,13 +64,16 @@ impl WorldHandle {
         });
     }
 
-    pub async fn add_connection(&self, ip: &str) {
+    pub async fn add_connection(&self, ip: &str) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::AddConnection {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to add connection. Timeout".to_string())?
+            .map_err(|_| "Failed to add connection. Channel closed".to_string())
     }
 
     pub async fn add_player(
@@ -82,7 +87,10 @@ impl WorldHandle {
             player,
             respond_to: tx,
         });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Timeout".into() })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Channel closed".into() })?;
         Ok(())
     }
 
@@ -163,7 +171,10 @@ impl WorldHandle {
             character_name,
             guild_tag,
         });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Timeout".into() })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Channel closed".into() })?;
         Ok(())
     }
 
@@ -191,7 +202,11 @@ impl WorldHandle {
             name: name.to_owned(),
             respond_to: tx,
         });
-        rx.await.unwrap()
+        match timeout(Duration::from_secs(5), rx).await {
+            Ok(Ok(result)) => result,
+            Ok(Err(_)) => Err("Failed to get character by name. Channel closed".into()),
+            Err(_) => Err("Failed to get character by name. Timeout".into()),
+        }
     }
 
     pub async fn get_map(
@@ -203,7 +218,11 @@ impl WorldHandle {
             map_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        match timeout(Duration::from_secs(5), rx).await {
+            Ok(Ok(result)) => result,
+            Ok(Err(_)) => Err("Failed to get map. Channel closed".into()),
+            Err(_) => Err("Failed to get map. Timeout".into()),
+        }
     }
 
     pub async fn get_next_player_id(
@@ -211,64 +230,89 @@ impl WorldHandle {
     ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetNextPlayerId { respond_to: tx });
-        Ok(rx.await.unwrap())
+        match timeout(Duration::from_secs(1), rx).await {
+            Ok(Ok(id)) => Ok(id),
+            Ok(Err(_)) => Err("Failed to get next player id. Channel closed".into()),
+            Err(_) => Err("Failed to get next player id. Timeout".into()),
+        }
     }
 
-    pub async fn get_connection_count(&self) -> i32 {
+    pub async fn get_connection_count(&self) -> Result<i32, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetConnectionCount { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get connection count. Timeout".to_string())?
+            .map_err(|_| "Failed to get connection count. Channel closed".to_string())
     }
 
-    pub async fn get_ip_connection_count(&self, ip: &str) -> i32 {
+    pub async fn get_ip_connection_count(&self, ip: &str) -> Result<i32, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetIpConnectionCount {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get IP connection count. Timeout".to_string())?
+            .map_err(|_| "Failed to get IP connection count. Channel closed".to_string())
     }
 
-    pub async fn get_ip_last_connect(&self, ip: &str) -> Option<DateTime<Utc>> {
+    pub async fn get_ip_last_connect(&self, ip: &str) -> Result<Option<DateTime<Utc>>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetIpLastConnect {
             ip: ip.to_string(),
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get IP last connect. Timeout".to_string())?
+            .map_err(|_| "Failed to get IP last connect. Channel closed".to_string())
     }
 
-    pub async fn get_player(&self, player_id: i32) -> Option<PlayerHandle> {
+    pub async fn get_player(&self, player_id: i32) -> Result<Option<PlayerHandle>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayer {
             player_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get player. Timeout".to_string())?
+            .map_err(|_| "Failed to get player. Channel closed".to_string())
     }
 
-    pub async fn get_player_count(&self) -> i32 {
+    pub async fn get_player_count(&self) -> Result<i32, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerCount { respond_to: tx });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get player count. Timeout".to_string())?
+            .map_err(|_| "Failed to get player count. Channel closed".to_string())
     }
 
-    pub async fn get_player_party(&self, player_id: i32) -> Option<Party> {
+    pub async fn get_player_party(&self, player_id: i32) -> Result<Option<Party>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayerParty {
             player_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get player party. Timeout".to_string())?
+            .map_err(|_| "Failed to get player party. Channel closed".to_string())
     }
 
-    pub async fn is_logged_in(&self, account_id: i32) -> bool {
+    pub async fn is_logged_in(&self, account_id: i32) -> Result<bool, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsLoggedIn {
             account_id,
             respond_to: tx,
         });
-        rx.await.unwrap()
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to check if logged in. Timeout".to_string())?
+            .map_err(|_| "Failed to check if logged in. Channel closed".to_string())
     }
 
     pub fn jail_player(&self, victim_name: String, admin_name: String) {
@@ -286,13 +330,16 @@ impl WorldHandle {
         });
     }
 
-    pub async fn load_maps(&self) {
+    pub async fn load_maps(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::LoadMapFiles {
             world: self.clone(),
             respond_to: tx,
         });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to load maps. Timeout".to_string())?
+            .map_err(|_| "Failed to load maps. Channel closed".to_string())
     }
 
     pub fn mute_player(&self, victim_name: String, admin_name: String) {
@@ -383,10 +430,13 @@ impl WorldHandle {
         });
     }
 
-    pub async fn shutdown(&self) {
+    pub async fn shutdown(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Shutdown { respond_to: tx });
-        rx.await.unwrap();
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to shutdown. Timeout".to_string())?
+            .map_err(|_| "Failed to shutdown. Channel closed".to_string())
     }
 
     pub fn tick(&self) {

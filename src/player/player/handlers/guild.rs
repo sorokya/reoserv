@@ -87,7 +87,7 @@ impl Player {
         self.guild_create_members = Vec::with_capacity(SETTINGS.guild.min_players);
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -103,7 +103,7 @@ impl Player {
                 return;
             }
 
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -139,7 +139,7 @@ impl Player {
             if SETTINGS.guild.min_players == 1 {
                 player.send_guild_reply(GuildReply::CreateAddConfirm);
             } else {
-                let player_count = map.get_player_count(|c| c.guild_tag.is_none()).await;
+                let player_count = map.get_player_count(|c| c.guild_tag.is_none()).await.expect("Failed to get player count. Timeout");
                 if player_count < SETTINGS.guild.min_players {
                     player.send_guild_reply(GuildReply::NoCandidates);
                     return;
@@ -205,7 +205,7 @@ impl Player {
         self.guild_create_members.clear();
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -318,7 +318,7 @@ impl Player {
         let pool = self.pool.clone();
 
         tokio::spawn(async move {
-            let character = match map.get_character(recruiter_id).await {
+            let character = match map.get_character(recruiter_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -412,7 +412,7 @@ impl Player {
         let world = self.world.clone();
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -501,7 +501,7 @@ impl Player {
                 }
             };
 
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -515,7 +515,7 @@ impl Player {
                 return;
             }
 
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -661,7 +661,7 @@ impl Player {
                 }
             };
 
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -675,7 +675,7 @@ impl Player {
                 None => return,
             };
 
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => {
                     return;
@@ -758,7 +758,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -772,7 +772,7 @@ impl Player {
                 None => return,
             };
 
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => {
                     return;
@@ -880,7 +880,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let player = match map.get_character(player_id).await {
+            let player = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => match &character.player {
                     Some(player) => player.to_owned(),
                     None => return,
@@ -888,7 +888,7 @@ impl Player {
                 None => return,
             };
 
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -1071,7 +1071,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let player = match map.get_character(player_id).await {
+            let player = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => match &character.player {
                     Some(player) => player.to_owned(),
                     None => return,
@@ -1079,7 +1079,7 @@ impl Player {
                 None => return,
             };
 
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -1163,7 +1163,7 @@ impl Player {
         let pool = self.pool.clone();
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => return,
             };
@@ -1268,7 +1268,7 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let npc_id = match map.get_npc_id_for_index(npc_index).await {
+            let npc_id = match map.get_npc_id_for_index(npc_index).await.expect("Failed to get NPC id for index. Timeout") {
                 Some(npc_id) => npc_id,
                 None => return,
             };
@@ -1282,7 +1282,7 @@ impl Player {
                 None => return,
             };
 
-            let character = match map.get_character(player_id).await {
+            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
                 Some(character) => character,
                 None => {
                     return;

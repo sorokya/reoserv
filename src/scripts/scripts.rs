@@ -50,7 +50,7 @@ impl Scripts {
                 {}
                 "#,
                 script_name,
-                fs::read_to_string(&path)?
+                fs::read_to_string(path)?
             );
 
             lua.load(&script_content).exec()?;
@@ -104,7 +104,7 @@ impl Scripts {
                 }
 
                 if let Err(err) = lua
-                    .load(&format!(
+                    .load(format!(
                         r#"
                 _SCRIPT_NAME = "{}"
                 {}
@@ -134,15 +134,13 @@ impl Scripts {
 
         let mut empty_events = Vec::new();
 
-        for pair in events.pairs::<String, Table>() {
-            if let Ok((event_name, event_table)) = pair {
-                if event_table.contains_key(script_name).unwrap_or(false) {
-                    event_table.raw_remove(script_name).unwrap();
-                }
+        for (event_name, event_table) in events.pairs::<String, Table>().flatten() {
+            if event_table.contains_key(script_name).unwrap_or(false) {
+                event_table.raw_remove(script_name).unwrap();
+            }
 
-                if event_table.is_empty() {
-                    empty_events.push(event_name);
-                }
+            if event_table.is_empty() {
+                empty_events.push(event_name);
             }
         }
 

@@ -1,5 +1,7 @@
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Default)]
 pub enum LookupType {
+    #[default]
     Item,
     Npc,
     Unrecognized(i32),
@@ -25,8 +27,3 @@ impl From<LookupType> for i32 {
     }
 }
 
-impl Default for LookupType {
-    fn default() -> Self {
-        Self::Item
-    }
-}

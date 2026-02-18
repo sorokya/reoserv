@@ -1,5 +1,7 @@
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Default)]
 pub enum AccountValidationReply {
+    #[default]
     Busy,
     OK,
     TooManyAttempts,
@@ -28,8 +30,3 @@ impl From<AccountValidationReply> for i32 {
     }
 }
 
-impl Default for AccountValidationReply {
-    fn default() -> Self {
-        Self::Busy
-    }
-}

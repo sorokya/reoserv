@@ -8,7 +8,7 @@ impl Scripts {
             return false;
         }
 
-        let name = match args.get(0) {
+        let name = match args.first() {
             Some(name) => name,
             None => return false,
         };

@@ -1,5 +1,7 @@
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Default)]
 pub enum AccountRecoverReply {
+    #[default]
     AccountNotFound,
     RequestAccepted,
     RequestAcceptedShowEmail,
@@ -40,8 +42,3 @@ impl From<AccountRecoverReply> for i32 {
     }
 }
 
-impl Default for AccountRecoverReply {
-    fn default() -> Self {
-        Self::AccountNotFound
-    }
-}

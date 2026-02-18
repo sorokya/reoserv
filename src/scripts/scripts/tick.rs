@@ -14,14 +14,10 @@ impl Scripts {
             .get("on_player_command")
             .unwrap_or_else(|_| self.lua.create_table().unwrap());
 
-        for pair in tick_table.pairs::<String, Table>() {
-            if let Ok((_, table)) = pair {
-                for pair in table.pairs::<i32, Function>() {
-                    if let Ok((_, func)) = pair {
-                        if let Err(err) = func.call::<()>(()) {
-                            error!("Error in on_tick callback: {}", err);
-                        }
-                    }
+        for (_, table) in tick_table.pairs::<String, Table>().flatten() {
+            for (_, func) in table.pairs::<i32, Function>().flatten() {
+                if let Err(err) = func.call::<()>(()) {
+                    error!("Error in on_tick callback: {}", err);
                 }
             }
         }

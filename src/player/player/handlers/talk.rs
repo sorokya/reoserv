@@ -123,7 +123,11 @@ impl Player {
 
         let scripts = self.scripts.to_owned();
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
+            let character = match map
+                .get_character(player_id)
+                .await
+                .expect("Failed to get character. Timeout")
+            {
                 Some(character) => character,
                 None => return,
             };
@@ -131,7 +135,11 @@ impl Player {
             if report.message.starts_with('$') && character.admin_level != AdminLevel::Player {
                 let args: Vec<&str> = report.message[1..].split_whitespace().collect();
                 if !args.is_empty() {
-                    let player = match world.get_player(player_id).await.expect("Failed to get player. Timeout") {
+                    let player = match world
+                        .get_player(player_id)
+                        .await
+                        .expect("Failed to get player. Timeout")
+                    {
                         Some(player) => player,
                         None => return,
                     };
@@ -144,7 +152,11 @@ impl Player {
             if report.message.starts_with('#') {
                 let args: Vec<&str> = report.message[1..].split_whitespace().collect();
                 if !args.is_empty() {
-                    let player = match world.get_player(player_id).await.expect("Failed to get player. Timeout") {
+                    let player = match world
+                        .get_player(player_id)
+                        .await
+                        .expect("Failed to get player. Timeout")
+                    {
                         Some(player) => player,
                         None => return,
                     };
@@ -212,7 +224,11 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let character = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
+            let character = match map
+                .get_character(player_id)
+                .await
+                .expect("Failed to get character. Timeout")
+            {
                 Some(character) => character,
                 None => return,
             };

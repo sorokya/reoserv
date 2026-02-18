@@ -96,7 +96,11 @@ impl Player {
                     InitInitServerPacketReplyCodeData::WarpMap(
                         InitInitServerPacketReplyCodeDataWarpMap {
                             map_file: MapFile {
-                                content: map.serialize().await.expect("Failed to serialize map. Timeout").to_vec(),
+                                content: map
+                                    .serialize()
+                                    .await
+                                    .expect("Failed to serialize map. Timeout")
+                                    .to_vec(),
                             },
                         },
                     )
@@ -104,7 +108,11 @@ impl Player {
                     InitInitServerPacketReplyCodeData::FileEmf(
                         InitInitServerPacketReplyCodeDataFileEmf {
                             map_file: MapFile {
-                                content: map.serialize().await.expect("Failed to serialize map. Timeout").to_vec(),
+                                content: map
+                                    .serialize()
+                                    .await
+                                    .expect("Failed to serialize map. Timeout")
+                                    .to_vec(),
                             },
                         },
                     )

@@ -88,7 +88,10 @@ impl Player {
                 .await
                 .expect("Failed to enter map. Timeout");
 
-            let nearby_info = current_map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
+            let nearby_info = current_map
+                .get_nearby_info(self.id)
+                .await
+                .expect("Failed to get nearby info. Timeout");
 
             WarpAgreeServerPacket {
                 warp_type: WarpType::Local,
@@ -100,7 +103,10 @@ impl Player {
                 .enter(Box::new(character), warp_session.animation)
                 .await
                 .expect("Failed to enter map. Timeout");
-            let nearby_info = new_map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
+            let nearby_info = new_map
+                .get_nearby_info(self.id)
+                .await
+                .expect("Failed to get nearby info. Timeout");
             self.map = Some(new_map);
 
             WarpAgreeServerPacket {
@@ -128,9 +134,14 @@ impl Player {
                 }
             };
 
-            map.enter(Box::new(character), warp_session.animation).await.expect("Failed to enter map. Timeout");
+            map.enter(Box::new(character), warp_session.animation)
+                .await
+                .expect("Failed to enter map. Timeout");
 
-            let nearby_info = map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
+            let nearby_info = map
+                .get_nearby_info(self.id)
+                .await
+                .expect("Failed to get nearby info. Timeout");
             self.map = Some(map);
 
             WarpAgreeServerPacket {

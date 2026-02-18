@@ -1,5 +1,4 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AccountValidationReply {
     #[default]
     Busy,
@@ -29,4 +28,3 @@ impl From<AccountValidationReply> for i32 {
         }
     }
 }
-

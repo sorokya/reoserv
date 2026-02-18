@@ -1,5 +1,4 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AccountRecoverReply {
     #[default]
     AccountNotFound,
@@ -41,4 +40,3 @@ impl From<AccountRecoverReply> for i32 {
         }
     }
 }
-

@@ -158,7 +158,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let world = WorldHandle::new(pool.clone());
     {
         let world = world.clone();
-        world.load_maps().await.expect("Failed to load maps. Timeout");
+        world
+            .load_maps()
+            .await
+            .expect("Failed to load maps. Timeout");
     }
 
     let scripts = ScriptsHandle::new(world.clone());
@@ -230,7 +233,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let ip = addr.ip().to_string();
             let now = Utc::now();
 
-            let player_count = server_world.get_connection_count().await.expect("Failed to get connection count. Timeout");
+            let player_count = server_world
+                .get_connection_count()
+                .await
+                .expect("Failed to get connection count. Timeout");
             if player_count >= SETTINGS.server.max_connections {
                 warn!("{} has been disconnected because the server is full", addr);
                 continue;
@@ -260,7 +266,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            let num_of_connections = server_world.get_ip_connection_count(&ip).await.expect("Failed to get IP connection count. Timeout");
+            let num_of_connections = server_world
+                .get_ip_connection_count(&ip)
+                .await
+                .expect("Failed to get IP connection count. Timeout");
             if SETTINGS.server.max_connections_per_ip != 0
                 && num_of_connections >= SETTINGS.server.max_connections_per_ip
             {
@@ -271,9 +280,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 continue;
             }
 
-            server_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
+            server_world
+                .add_connection(&ip)
+                .await
+                .expect("Failed to add connection. Timeout");
 
-            let player_id = server_world.get_next_player_id().await.expect("Failed to get next player id. Timeout");
+            let player_id = server_world
+                .get_next_player_id()
+                .await
+                .expect("Failed to get next player id. Timeout");
 
             let player = PlayerHandle::new(
                 player_id,
@@ -284,12 +299,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 server_scripts.clone(),
                 server_pool.clone(),
             );
-            server_world.add_player(player_id, player).await.expect("Failed to add player. Timeout");
+            server_world
+                .add_player(player_id, player)
+                .await
+                .expect("Failed to add player. Timeout");
 
             info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                server_world.get_connection_count().await.expect("Failed to get connection count. Timeout"),
+                server_world
+                    .get_connection_count()
+                    .await
+                    .expect("Failed to get connection count. Timeout"),
                 SETTINGS.server.max_connections
             );
         }
@@ -312,7 +333,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let ip = addr.ip().to_string();
                 let now = Utc::now();
 
-                let player_count = websocket_world.get_connection_count().await.expect("Failed to get connection count. Timeout");
+                let player_count = websocket_world
+                    .get_connection_count()
+                    .await
+                    .expect("Failed to get connection count. Timeout");
                 if player_count >= SETTINGS.server.max_connections {
                     warn!("{} has been disconnected because the server is full", addr);
                     continue;
@@ -342,7 +366,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                let num_of_connections = websocket_world.get_ip_connection_count(&ip).await.expect("Failed to get IP connection count. Timeout");
+                let num_of_connections = websocket_world
+                    .get_ip_connection_count(&ip)
+                    .await
+                    .expect("Failed to get IP connection count. Timeout");
                 if SETTINGS.server.max_connections_per_ip != 0
                     && num_of_connections >= SETTINGS.server.max_connections_per_ip
                 {
@@ -353,9 +380,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                websocket_world.add_connection(&ip).await.expect("Failed to add connection. Timeout");
+                websocket_world
+                    .add_connection(&ip)
+                    .await
+                    .expect("Failed to add connection. Timeout");
 
-                let player_id = websocket_world.get_next_player_id().await.expect("Failed to get next player id. Timeout");
+                let player_id = websocket_world
+                    .get_next_player_id()
+                    .await
+                    .expect("Failed to get next player id. Timeout");
 
                 let player = PlayerHandle::new(
                     player_id,
@@ -366,12 +399,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     websocket_scripts.clone(),
                     pool.clone(),
                 );
-                websocket_world.add_player(player_id, player).await.expect("Failed to add player. Timeout");
+                websocket_world
+                    .add_player(player_id, player)
+                    .await
+                    .expect("Failed to add player. Timeout");
 
                 info!(
                     "websocket connection accepted ({}) {}/{}",
                     addr,
-                    websocket_world.get_connection_count().await.expect("Failed to get connection count. Timeout"),
+                    websocket_world
+                        .get_connection_count()
+                        .await
+                        .expect("Failed to get connection count. Timeout"),
                     SETTINGS.server.max_connections
                 );
             }

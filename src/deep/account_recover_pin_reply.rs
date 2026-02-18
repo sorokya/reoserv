@@ -1,5 +1,4 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AccountRecoverPinReply {
     #[default]
     WrongPin,
@@ -26,4 +25,3 @@ impl From<AccountRecoverPinReply> for i32 {
         }
     }
 }
-

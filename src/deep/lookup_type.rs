@@ -1,5 +1,4 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum LookupType {
     #[default]
     Item,
@@ -26,4 +25,3 @@ impl From<LookupType> for i32 {
         }
     }
 }
-

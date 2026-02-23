@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: ["master"]
 
+env:
+  REGISTRY_IMAGE: sorokya/reoserv
+
 jobs:
   build:
     strategy:
@@ -34,6 +37,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+
       - name: Checkout repository
         uses: actions/checkout@v6
 

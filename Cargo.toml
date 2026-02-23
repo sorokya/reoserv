@@ -22,9 +22,9 @@ mimalloc = "0.1.43"
 
 [dependencies]
 anyhow = "1.0"
-bytes = "1.10"
+bytes = "1.11"
 config = { version = "0.15", features = ["toml", "ron"] }
-crc = "3.2.1"
+crc = "3.4"
 chrono = "0.4"
 lazy_static = "1.5"
 log = "0.4"
@@ -32,27 +32,25 @@ num-traits = "0.2"
 pretty_env_logger = "0.5"
 futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
-reqwest = { version = "0.12", default-features = false, features = [
-    "rustls-tls",
-] }
-glob = "0.3.1"
-serde_json = "^1.0.132"
-serde_derive = "^1.0.8"
-serde = "^1.0.218"
+reqwest = "0.13"
+glob = "0.3.3"
+serde_json = "1.0"
+serde_derive = "1.0"
+serde = "1.0"
 console-subscriber = { version = "0.5", optional = true }
-mysql_common = { version = "0.34.1", features = ["chrono"] }
-mysql_async = { version = "0.35.1", default-features = false, features = [
+mysql_async = { version = "0.36.1", default-features = false, features = [
     "default-rustls-ring",
+    "chrono",
 ] }
 argon2 = "0.5.3"
 eolib = { version = "2.1.1", features = ["use_serde"] }
 eoplus = "1.0.0-RC1"
 rand = "0.8"
-evalexpr = "12.0.1"
-duration-str = "0.16.0"
+evalexpr = "13.1"
+duration-str = "0.20"
 version-compare = "0.2"
-mail-send = "0.5.0"
-tokio-tungstenite = "0.26.2"
+mail-send = "0.5"
+tokio-tungstenite = "0.28"
 hex = "0.4"
 
 [target.'cfg(windows)'.build-dependencies]

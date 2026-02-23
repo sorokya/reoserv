@@ -34,11 +34,14 @@ impl Map {
         let your_player_name = character.name.to_owned();
 
         tokio::spawn(async move {
-            let target_player_interact_player_id =
-                match target_player.get_interact_player_id().await.expect("Failed to get interact player id. Timeout") {
-                    Some(player_id) => player_id,
-                    None => return,
-                };
+            let target_player_interact_player_id = match target_player
+                .get_interact_player_id()
+                .await
+                .expect("Failed to get interact player id. Timeout")
+            {
+                Some(player_id) => player_id,
+                None => return,
+            };
 
             if target_player_interact_player_id != player_id {
                 return;

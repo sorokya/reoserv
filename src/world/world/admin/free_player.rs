@@ -1,6 +1,5 @@
 use eolib::protocol::{net::server::WarpEffect, Coords};
-use mysql_async::prelude::Queryable;
-use mysql_common::params;
+use mysql_async::{params, prelude::Queryable};
 
 use crate::SETTINGS;
 

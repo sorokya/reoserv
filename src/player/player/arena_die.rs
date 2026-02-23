@@ -19,7 +19,10 @@ impl Player {
         self.character = Some(character.clone());
 
         let nirvana = self.world.get_map(0).await.unwrap();
-        nirvana.enter(Box::new(character), None).await.expect("Failed to enter nirvana map. Timeout");
+        nirvana
+            .enter(Box::new(character), None)
+            .await
+            .expect("Failed to enter nirvana map. Timeout");
         self.map = Some(nirvana);
 
         self.request_warp(current_map, spawn_coords, false, None)

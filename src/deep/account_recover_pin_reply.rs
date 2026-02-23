@@ -1,5 +1,6 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AccountRecoverPinReply {
+    #[default]
     WrongPin,
     OK,
     Unrecognized(i32),
@@ -22,11 +23,5 @@ impl From<AccountRecoverPinReply> for i32 {
             AccountRecoverPinReply::OK => 1,
             AccountRecoverPinReply::Unrecognized(value) => value,
         }
-    }
-}
-
-impl Default for AccountRecoverPinReply {
-    fn default() -> Self {
-        Self::WrongPin
     }
 }

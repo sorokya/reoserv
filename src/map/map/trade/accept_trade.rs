@@ -38,7 +38,11 @@ impl Map {
         player.set_trade_accepted(true);
 
         tokio::spawn(async move {
-            if partner.is_trade_accepted().await.expect("Failed to check if trade accepted. Timeout") {
+            if partner
+                .is_trade_accepted()
+                .await
+                .expect("Failed to check if trade accepted. Timeout")
+            {
                 let map = match partner.get_map().await {
                     Ok(map) => map,
                     Err(e) => {

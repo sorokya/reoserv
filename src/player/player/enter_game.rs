@@ -62,9 +62,14 @@ impl Player {
 
         character.is_deep = is_deep(&self.version);
 
-        map.enter(Box::new(character), None).await.expect("Failed to enter map. Timeout");
+        map.enter(Box::new(character), None)
+            .await
+            .expect("Failed to enter map. Timeout");
 
-        let nearby_info = map.get_nearby_info(self.id).await.expect("Failed to get nearby info. Timeout");
+        let nearby_info = map
+            .get_nearby_info(self.id)
+            .await
+            .expect("Failed to get nearby info. Timeout");
 
         let _ = self
             .bus

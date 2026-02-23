@@ -1,5 +1,6 @@
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum AccountRecoverUpdateReply {
+    #[default]
     Error,
     OK,
     Unrecognized(i32),
@@ -22,11 +23,5 @@ impl From<AccountRecoverUpdateReply> for i32 {
             AccountRecoverUpdateReply::OK => 1,
             AccountRecoverUpdateReply::Unrecognized(value) => value,
         }
-    }
-}
-
-impl Default for AccountRecoverUpdateReply {
-    fn default() -> Self {
-        Self::Error
     }
 }

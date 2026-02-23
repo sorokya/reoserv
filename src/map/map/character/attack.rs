@@ -51,7 +51,12 @@ impl Map {
             );
         }
 
-        let party_player_ids = match self.world.get_player_party(player_id).await.expect("Failed to get player party. Timeout") {
+        let party_player_ids = match self
+            .world
+            .get_player_party(player_id)
+            .await
+            .expect("Failed to get player party. Timeout")
+        {
             Some(party) => party.members,
             None => Vec::new(),
         };

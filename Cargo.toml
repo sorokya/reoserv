@@ -38,10 +38,7 @@ serde_json = "1.0"
 serde_derive = "1.0"
 serde = "1.0"
 console-subscriber = { version = "0.5", optional = true }
-mysql_async = { version = "0.36.1", default-features = false, features = [
-    "default-rustls-ring",
-    "chrono",
-] }
+mysql_async = { version = "0.36.1", features = ["chrono"] }
 argon2 = "0.5.3"
 eolib = { version = "2.1.1", features = ["use_serde"] }
 eoplus = "1.0.0-RC1"

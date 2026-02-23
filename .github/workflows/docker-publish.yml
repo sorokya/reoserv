@@ -35,7 +35,7 @@ jobs:
           username: sorokya
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build Only
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .

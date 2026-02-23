@@ -679,6 +679,8 @@ impl Map {
 
             Command::TimedAutoPickup => self.timed_auto_pickup(),
 
+            Command::TimedCleanup => self.timed_cleanup(),
+
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),

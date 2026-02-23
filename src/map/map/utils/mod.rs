@@ -19,6 +19,7 @@ mod npc_chat;
 mod player_chat;
 mod player_in_range_of_tile;
 mod reload;
+mod remove_item;
 mod save;
 mod send_packet_all;
 mod send_packet_near;

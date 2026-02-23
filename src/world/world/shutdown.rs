@@ -8,7 +8,7 @@ use super::World;
 
 impl World {
     pub async fn shutdown(&mut self, respond_to: oneshot::Sender<()>) {
-        self.save().await;
+        self.save();
 
         let packet = MessageCloseServerPacket::new();
 
@@ -24,8 +24,8 @@ impl World {
             player.send_buf(PacketAction::Close, PacketFamily::Message, buf.clone());
         }
 
-        // wait a bit for the packets to be sent
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        // wait a bit for the packets to be sent and maps to save
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
         let _ = respond_to.send(());
     }

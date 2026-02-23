@@ -19,5 +19,6 @@ COPY --from=builder /app/target/release/reoserv ./
 COPY README.md LICENSE.txt ./
 
 EXPOSE 8078
+EXPOSE 8079
 
 CMD ["./reoserv"]

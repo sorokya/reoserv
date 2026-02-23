@@ -7,9 +7,6 @@ on:
   pull_request:
     branches: ["master"]
 
-env:
-  REGISTRY_IMAGE: sorokya/reoserv
-
 jobs:
   build:
     strategy:
@@ -36,7 +33,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_IMAGE }}
+          images: |
+            ${{ github.repository }}
+            ghcr.io/${{ github.repository }}
 
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -65,10 +64,12 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            ${{ github.repository }}
+            ghcr.io/${{ github.repository }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,scope=${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Export digest
         run: |
@@ -116,7 +117,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY_IMAGE }}
+          images: |
+            ${{ github.repository }}
+            ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -127,8 +130,8 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+            $(printf '${{ github.repository }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ github.repository }}:${{ steps.meta.outputs.version }}

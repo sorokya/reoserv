@@ -16,6 +16,7 @@ RUN cargo build --release
 FROM alpine:3.23
 WORKDIR /reoserv
 COPY --from=builder /app/target/release/reoserv .
+COPY README.md LICENSE.txt ./
 
 EXPOSE 8078
 

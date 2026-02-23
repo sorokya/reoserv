@@ -135,7 +135,12 @@ impl Map {
             return;
         }
 
-        let party_player_ids = match self.world.get_player_party(player_id).await.expect("Failed to get player party. Timeout") {
+        let party_player_ids = match self
+            .world
+            .get_player_party(player_id)
+            .await
+            .expect("Failed to get player party. Timeout")
+        {
             Some(party) => party.members,
             None => return,
         };
@@ -355,7 +360,12 @@ impl Map {
 
         character.tp -= spell_data.tp_cost;
 
-        let party_player_ids = match self.world.get_player_party(player_id).await.expect("Failed to get player party. Timeout") {
+        let party_player_ids = match self
+            .world
+            .get_player_party(player_id)
+            .await
+            .expect("Failed to get player party. Timeout")
+        {
             Some(party) => party.members,
             None => Vec::new(),
         };

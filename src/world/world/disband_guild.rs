@@ -1,5 +1,4 @@
-use mysql_async::prelude::Queryable;
-use mysql_common::params;
+use mysql_async::{params, prelude::Queryable};
 
 use super::World;
 

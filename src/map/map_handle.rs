@@ -211,7 +211,11 @@ impl MapHandle {
         let _ = self.tx.send(Command::Emote { player_id, emote });
     }
 
-    pub async fn enter(&self, character: Box<Character>, warp_animation: Option<WarpEffect>) -> Result<(), String> {
+    pub async fn enter(
+        &self,
+        character: Box<Character>,
+        warp_animation: Option<WarpEffect>,
+    ) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Enter {
             character,

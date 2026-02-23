@@ -1,5 +1,4 @@
-use mysql_async::{prelude::Queryable, Conn, Params};
-use mysql_common::{params, Row};
+use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 pub async fn guild_exists(conn: &mut Conn, guild_tag: &str, guild_name: &str) -> bool {
     matches!(

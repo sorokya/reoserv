@@ -4,8 +4,7 @@ use eolib::protocol::{
     net::{server::GuildBuyServerPacket, PacketAction, PacketFamily},
     r#pub::NpcType,
 };
-use mysql_async::{prelude::Queryable, Params};
-use mysql_common::{params, Row};
+use mysql_async::{params, prelude::Queryable, Params, Row};
 
 use crate::{NPC_DB, SETTINGS};
 

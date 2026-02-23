@@ -1,5 +1,4 @@
-use mysql_async::{prelude::Queryable, Conn};
-use mysql_common::{params, Row};
+use mysql_async::{params, prelude::Queryable, Conn, Row};
 
 pub async fn get_guild_ranks(conn: &mut Conn, tag: &str) -> Vec<String> {
     match conn

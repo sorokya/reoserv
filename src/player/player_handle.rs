@@ -70,8 +70,12 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::GenerateSessionId { respond_to: tx });
         timeout(Duration::from_secs(1), rx)
             .await
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Timeout".into() })?
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to generate session id. Channel closed".into() })
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to generate session id. Timeout".into()
+            })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to generate session id. Channel closed".into()
+            })
     }
 
     pub async fn get_character(
@@ -98,7 +102,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_party_request(&self) -> Result<PartyRequest, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_party_request(
+        &self,
+    ) -> Result<PartyRequest, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPartyRequest { respond_to: tx });
         match timeout(Duration::from_secs(1), rx).await {
@@ -118,7 +124,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn get_interact_player_id(&self) -> Result<Option<i32>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_interact_player_id(
+        &self,
+    ) -> Result<Option<i32>, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .tx
@@ -140,7 +148,9 @@ impl PlayerHandle {
         }
     }
 
-    pub async fn is_trade_accepted(&self) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn is_trade_accepted(
+        &self,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsTradeAccepted { respond_to: tx });
         match timeout(Duration::from_secs(1), rx).await {

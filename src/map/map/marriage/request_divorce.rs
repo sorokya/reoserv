@@ -8,8 +8,7 @@ use eolib::protocol::{
     },
     r#pub::NpcType,
 };
-use mysql_async::prelude::Queryable;
-use mysql_common::params;
+use mysql_async::prelude::{params, Queryable};
 
 use crate::{NPC_DB, SETTINGS};
 

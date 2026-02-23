@@ -1,5 +1,4 @@
-use mysql_async::{params, prelude::Queryable, Row};
-use mysql_common::Value;
+use mysql_async::{params, prelude::Queryable, Row, Value};
 
 use super::super::World;
 use crate::LANG;

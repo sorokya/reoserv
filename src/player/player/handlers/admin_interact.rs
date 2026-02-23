@@ -114,7 +114,11 @@ impl Player {
             let player_id = self.id;
 
             tokio::spawn(async move {
-                let player = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
+                let player = match map
+                    .get_character(player_id)
+                    .await
+                    .expect("Failed to get character. Timeout")
+                {
                     Some(character) => match &character.player {
                         Some(player) => player.to_owned(),
                         None => return,
@@ -178,7 +182,11 @@ impl Player {
             let player_id = self.id;
 
             tokio::spawn(async move {
-                let player = match map.get_character(player_id).await.expect("Failed to get character. Timeout") {
+                let player = match map
+                    .get_character(player_id)
+                    .await
+                    .expect("Failed to get character. Timeout")
+                {
                     Some(character) => match &character.player {
                         Some(player) => player.to_owned(),
                         None => return,

@@ -1,60 +1,23 @@
-# Builder
-FROM rust:1.91-trixie as builder
+FROM rust:alpine3.23 AS chef
+WORKDIR /app
+RUN apk add --no-cache musl-dev openssl-dev && \
+    cargo install --locked cargo-chef
 
-WORKDIR /usr/src
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Create blank project
-RUN USER=root cargo new reoserv
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --recipe-path recipe.json --release
+COPY . .
+RUN cargo build --release
 
-# We want dependencies cached, so copy those first.
-COPY Cargo.toml Cargo.lock /usr/src/reoserv/
-
-# Set the working directory
-WORKDIR /usr/src/reoserv
-
-# Install target platform (Cross-Compilation) --> Needed for Alpine
-RUN apt update && apt install -y musl-tools musl-dev && \
-    update-ca-certificates && \
-    rustup target add x86_64-unknown-linux-musl && \
-    rustup component add rustfmt
-
-# Copy cargo config
-COPY .cargo /usr/src/reoserv/.cargo/
-
-# This is a dummy build to get the dependencies cached.
-RUN cargo build --target x86_64-unknown-linux-musl --release --features=console
-
-# Now copy in the rest of the sources
-COPY src /usr/src/reoserv/src/
-
-# Touch main.rs to prevent cached release build
-RUN touch /usr/src/reoserv/src/main.rs
-
-# This is the actual application build.
-RUN cargo build --target x86_64-unknown-linux-musl --release --features=console
-
-# Runtime
-FROM alpine:3.22.2 as runtime
-
-# Install netcat-openbsd for better nc behavior than BusyBox's default
-RUN apk add --no-cache netcat-openbsd bash
-
-COPY healthcheck.sh /usr/local/bin/healthcheck.sh
-RUN chmod +x /usr/local/bin/healthcheck.sh
-
-# Copy application binary from builder image
-COPY --from=builder /usr/src/reoserv/target/x86_64-unknown-linux-musl/release/reoserv /usr/bin/
+FROM alpine:3.23
+WORKDIR /reoserv
+COPY --from=builder /app/target/release/reoserv ./
+COPY README.md LICENSE.txt ./
 
 EXPOSE 8078
 
-# Add console port
-EXPOSE 6669
-
-WORKDIR /reoserv
-
-# Run the application
-CMD ["/usr/bin/reoserv"]
-
-# Add healthcheck
-HEALTHCHECK --interval=60s --timeout=5s --start-period=10s --retries=3 \
-  CMD /usr/local/bin/healthcheck.sh || exit 1
+CMD ["./reoserv"]

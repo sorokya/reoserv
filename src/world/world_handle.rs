@@ -89,8 +89,12 @@ impl WorldHandle {
         });
         timeout(Duration::from_secs(5), rx)
             .await
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Timeout".into() })?
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to add player. Channel closed".into() })?;
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to add player. Timeout".into()
+            })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to add player. Channel closed".into()
+            })?;
         Ok(())
     }
 
@@ -173,8 +177,12 @@ impl WorldHandle {
         });
         timeout(Duration::from_secs(5), rx)
             .await
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Timeout".into() })?
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Failed to drop player. Channel closed".into() })?;
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to drop player. Timeout".into()
+            })?
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "Failed to drop player. Channel closed".into()
+            })?;
         Ok(())
     }
 

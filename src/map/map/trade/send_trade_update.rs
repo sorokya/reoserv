@@ -31,7 +31,10 @@ impl Map {
         let your_items = character.trade_items.to_owned();
 
         tokio::spawn(async move {
-            let partner_accepted = partner.is_trade_accepted().await.expect("Failed to check if trade accepted. Timeout");
+            let partner_accepted = partner
+                .is_trade_accepted()
+                .await
+                .expect("Failed to check if trade accepted. Timeout");
 
             player.send(
                 PacketAction::Reply,

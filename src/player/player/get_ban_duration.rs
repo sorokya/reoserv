@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use chrono::{NaiveDateTime, Utc};
-use mysql_async::prelude::*;
-use mysql_common::{params, Row};
+use mysql_async::{params, prelude::Queryable, Row};
 
 use super::Player;
 

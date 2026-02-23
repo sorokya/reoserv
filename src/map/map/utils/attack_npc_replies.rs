@@ -571,6 +571,7 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
                         coords: *npc_coords,
                         owner: target_player_id,
                         protected_ticks: SETTINGS.world.drop_protect_npc,
+                        drop_time: chrono::Utc::now().timestamp_millis(),
                     });
                 }
             }

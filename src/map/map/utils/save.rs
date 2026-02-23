@@ -61,6 +61,7 @@ impl Map {
                     amount: item.amount,
                     x: item.coords.x,
                     y: item.coords.y,
+                    drop_time: item.drop_time,
                     owner: item.owner,
                     ticks: item.protected_ticks,
                 })
@@ -158,6 +159,7 @@ impl Map {
                     },
                     owner: saved_item.owner,
                     protected_ticks: saved_item.ticks,
+                    drop_time: saved_item.drop_time,
                 },
             );
         }
@@ -237,6 +239,8 @@ struct SavedItem {
     y: i32,
     owner: i32,
     ticks: i32,
+    #[serde(default)]
+    drop_time: i64,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

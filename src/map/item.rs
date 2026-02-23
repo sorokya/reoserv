@@ -7,6 +7,7 @@ pub struct Item {
     pub coords: Coords,
     pub owner: i32,
     pub protected_ticks: i32,
+    pub drop_time: i64,
 }
 
 impl Item {

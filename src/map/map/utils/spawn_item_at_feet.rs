@@ -29,6 +29,7 @@ impl Map {
                 coords: character.coords,
                 owner: 0,
                 protected_ticks: 0,
+                drop_time: chrono::Utc::now().timestamp_millis(),
             },
         );
 

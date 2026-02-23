@@ -115,6 +115,7 @@ impl Map {
                 coords,
                 owner: player_id,
                 protected_ticks: SETTINGS.world.drop_protect_player,
+                drop_time: chrono::Utc::now().timestamp_millis(),
             },
         );
 

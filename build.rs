@@ -1,4 +1,4 @@
-use std::io;
+use std::{fs, io};
 #[cfg(windows)]
 use winres::WindowsResource;
 
@@ -10,5 +10,9 @@ fn main() -> io::Result<()> {
             .set_icon("assets/icon.ico")
             .compile()?;
     }
+
+    let version = env!("CARGO_PKG_VERSION");
+    fs::write("VERSION.txt", version)?;
+
     Ok(())
 }

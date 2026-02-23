@@ -106,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  |    |   \\  ___(  <_> )___ \\\\  ___/|  | \\/\\   /
  |____|_  /\\___  >____/____  >\\___  >__|    \\_/
         \\/     \\/          \\/     \\/\nThe rusty endless online server: v{}\n",
-        std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "unknown".to_string())
+        include_str!("../VERSION.txt")
     );
 
     let database_url = format!(

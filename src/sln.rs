@@ -14,12 +14,7 @@ pub async fn ping_sln() {
         &format!("{}check", SETTINGS.sln.url),
         &[
             ("software", "REOSERV"),
-            (
-                "v",
-                std::env::var("CARGO_PKG_VERSION")
-                    .unwrap_or_else(|_| "unknown".to_string())
-                    .as_str(),
-            ),
+            ("v", include_str!("../VERSION.txt")),
             ("retry", &(SETTINGS.sln.rate * 60).to_string()),
             ("host", &SETTINGS.sln.hostname),
             ("port", &SETTINGS.server.port),

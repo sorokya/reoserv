@@ -58,7 +58,7 @@ impl Map {
             );
         }
 
-        let npc = match self.npcs.get(&npc_index) {
+        let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,
             None => return,
         };
@@ -176,10 +176,11 @@ impl Map {
         damage_dealt: i32,
         spell_id: Option<i32>,
     ) {
-        let (npc_id, npc_coords, is_boss) = match self.npcs.get(&npc_index) {
-            Some(npc) => (npc.id, npc.coords, npc.boss),
-            None => return,
-        };
+        let (npc_id, npc_coords, is_boss) =
+            match self.npcs.iter().find(|npc| npc.index == npc_index) {
+                Some(npc) => (npc.id, npc.coords, npc.boss),
+                None => return,
+            };
 
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
@@ -449,8 +450,8 @@ impl Map {
         if is_boss {
             self.npcs
                 .iter_mut()
-                .filter(|(_, n)| n.child)
-                .for_each(|(_, child)| {
+                .filter(|npc| npc.child)
+                .for_each(|child| {
                     child.alive = false;
                     child.hp = 0;
                     child.opponents.clear();
@@ -460,7 +461,7 @@ impl Map {
                     }
                 });
 
-            if let Some((_, child_npc)) = self.npcs.iter().find(|(_, n)| n.child) {
+            if let Some(child_npc) = self.npcs.iter().find(|npc| npc.child) {
                 self.send_packet_all(
                     PacketAction::Junk,
                     PacketFamily::Npc,

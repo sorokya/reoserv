@@ -43,9 +43,9 @@ impl Map {
                     npcs: self
                         .npcs
                         .iter()
-                        .filter_map(|(index, npc)| {
+                        .filter_map(|npc| {
                             if npc.alive && in_client_range(&character.coords, &npc.coords) {
-                                Some(npc.to_map_info(index))
+                                Some(npc.to_map_info())
                             } else {
                                 None
                             }
@@ -67,14 +67,14 @@ impl Map {
         );
 
         if character.is_deep {
-            for (npc_index, npc) in self.npcs.iter().filter(|(_, npc)| {
+            for npc in self.npcs.iter().filter(|npc| {
                 npc.alive && npc.boss && in_client_range(&character.coords, &npc.coords)
             }) {
                 player.send(
                     PacketAction::Ping,
                     PacketFamily::Unrecognized(FAMILY_BOSS),
                     &BossPingServerPacket {
-                        npc_index: *npc_index,
+                        npc_index: npc.index,
                         npc_id: npc.id,
                         hp: npc.hp,
                         hp_percentage: npc.get_hp_percentage(),

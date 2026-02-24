@@ -68,8 +68,8 @@ impl Map {
             npcs: self
                 .npcs
                 .iter()
-                .map(|(index, npc)| SavedNpc {
-                    index: *index,
+                .map(|npc| SavedNpc {
+                    index: npc.index,
                     x: npc.coords.x,
                     y: npc.coords.y,
                     direction: i32::from(npc.direction),
@@ -161,7 +161,11 @@ impl Map {
         }
 
         for saved_npc in save_data.npcs {
-            if let Some(npc) = self.npcs.get_mut(&saved_npc.index) {
+            if let Some(npc) = self
+                .npcs
+                .iter_mut()
+                .find(|npc| npc.index == saved_npc.index)
+            {
                 npc.coords = Coords {
                     x: saved_npc.x,
                     y: saved_npc.y,

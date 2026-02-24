@@ -16,9 +16,9 @@ impl Map {
                 nearby_items.push(item.to_map_info());
             }
         }
-        for (index, npc) in self.npcs.iter() {
+        for npc in self.npcs.iter() {
             if npc.alive && in_client_range(&target.coords, &npc.coords) {
-                nearby_npcs.push(npc.to_map_info(index));
+                nearby_npcs.push(npc.to_map_info());
             }
         }
         for character in self.characters.values() {

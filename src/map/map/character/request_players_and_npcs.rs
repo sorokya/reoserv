@@ -43,9 +43,9 @@ impl Map {
                     npcs: self
                         .npcs
                         .iter()
-                        .filter_map(|(index, npc)| {
-                            if npc.alive && npc_indexes.contains(index) {
-                                Some(npc.to_map_info(index))
+                        .filter_map(|npc| {
+                            if npc.alive && npc_indexes.contains(&npc.index) {
+                                Some(npc.to_map_info())
                             } else {
                                 None
                             }
@@ -57,16 +57,16 @@ impl Map {
         );
 
         if character.is_deep {
-            for (npc_index, npc) in self
+            for npc in self
                 .npcs
                 .iter()
-                .filter(|(index, npc)| npc.alive && npc.boss && npc_indexes.contains(index))
+                .filter(|npc| npc.alive && npc.boss && npc_indexes.contains(&npc.index))
             {
                 player.send(
                     PacketAction::Ping,
                     PacketFamily::Unrecognized(FAMILY_BOSS),
                     &BossPingServerPacket {
-                        npc_index: *npc_index,
+                        npc_index: npc.index,
                         npc_id: npc.id,
                         hp: npc.hp,
                         hp_percentage: npc.get_hp_percentage(),

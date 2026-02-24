@@ -9,7 +9,7 @@ use super::super::Map;
 
 impl Map {
     pub fn spawn_npcs(&mut self) {
-        self.npcs.retain(|_, n| n.spawn_index.is_some() || n.alive);
+        self.npcs.retain(|n| n.spawn_index.is_some() || n.alive);
 
         if self.file.npcs.is_empty() {
             return;
@@ -31,10 +31,10 @@ impl Map {
                 };
 
                 for _ in 0..spawn.amount as i64 {
-                    self.npcs.insert(
-                        npc_index,
+                    self.npcs.push(
                         NPCBuilder::new()
                             .id(spawn.id)
+                            .index(npc_index)
                             .coords(Coords::default())
                             .direction(Direction::Down)
                             .spawn_index(spawn_index)
@@ -58,11 +58,11 @@ impl Map {
         }
 
         let mut rng = rand::thread_rng();
-        let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
+        let indexes = self.npcs.iter().map(|npc| npc.index).collect::<Vec<i32>>();
 
         for index in indexes {
             let (child, alive, spawn_ticks, spawn_coords, spawn_type, npc_type, spawn_time) = {
-                match self.npcs.get_mut(&index) {
+                match self.npcs.iter_mut().find(|npc| npc.index == index) {
                     Some(npc) => {
                         let spawn_index = match npc.spawn_index {
                             Some(index) => index,
@@ -91,7 +91,7 @@ impl Map {
             };
 
             if child {
-                if let Some((_, boss)) = self.npcs.iter().find(|(_, n)| n.boss) {
+                if let Some(boss) = self.npcs.iter().find(|npc| npc.boss) {
                     if !boss.alive {
                         continue;
                     }
@@ -148,7 +148,7 @@ impl Map {
                 }
             }
 
-            let npc = match self.npcs.get_mut(&index) {
+            let npc = match self.npcs.iter_mut().find(|npc| npc.index == index) {
                 Some(npc) => npc,
                 None => continue,
             };

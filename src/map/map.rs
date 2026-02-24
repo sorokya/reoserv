@@ -21,7 +21,7 @@ pub struct Map {
     doors: Vec<Door>,
     items: Vec<Item>,
     item_index_counter: i32,
-    npcs: HashMap<i32, Npc>,
+    npcs: Vec<Npc>,
     npcs_initialized: bool,
     characters: HashMap<i32, Character>,
     pool: Pool,
@@ -112,8 +112,8 @@ impl Map {
             chests,
             doors,
             items: Vec::new(),
-            item_index_counter: 63_999,
-            npcs: HashMap::new(),
+            item_index_counter: 0,
+            npcs: Vec::new(),
             npcs_initialized: false,
             characters: HashMap::new(),
             pool,
@@ -306,7 +306,7 @@ impl Map {
             Command::GetNpcIdForIndex {
                 npc_index,
                 respond_to,
-            } => match self.npcs.get(&npc_index) {
+            } => match self.npcs.iter().find(|npc| npc.index == npc_index) {
                 Some(npc) => {
                     let _ = respond_to.send(Some(npc.id));
                 }

@@ -15,11 +15,25 @@ RUN cargo build --release
 
 FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
+EXPOSE 8078
+EXPOSE 8079
+
+RUN addgroup --gid 1000 reoserv && \
+    adduser \
+        -D \
+        -g "" \
+        -h /home/reoserv \
+        -u 1000 \
+        -G reoserv \
+        reoserv
+
 WORKDIR /reoserv
+
 COPY --from=builder /app/target/release/reoserv ./
 COPY README.md LICENSE.txt ./
 
-EXPOSE 8078
-EXPOSE 8079
+RUN chown -R reoserv:reoserv /reoserv
+
+USER reoserv
 
 CMD ["./reoserv"]

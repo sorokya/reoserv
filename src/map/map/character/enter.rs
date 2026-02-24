@@ -45,7 +45,7 @@ impl Map {
 
         if character.is_deep {
             if let Some(player) = &character.player {
-                for (npc_index, npc) in self.npcs.iter().filter(|(_, npc)| {
+                for npc in self.npcs.iter().filter(|npc| {
                     let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
                         Some(npc) => npc,
                         None => return false,
@@ -57,7 +57,7 @@ impl Map {
                         PacketAction::Ping,
                         PacketFamily::Unrecognized(FAMILY_BOSS),
                         &BossPingServerPacket {
-                            npc_index: *npc_index,
+                            npc_index: npc.index,
                             npc_id: npc.id,
                             hp: npc.hp,
                             hp_percentage: npc.get_hp_percentage(),

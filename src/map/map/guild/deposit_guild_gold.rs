@@ -22,7 +22,7 @@ impl Map {
             None => return,
         };
 
-        match self.npcs.get(&npc_index) {
+        match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => match NPC_DB.npcs.get(npc.id as usize - 1) {
                 Some(npc_data) => {
                     if npc_data.r#type != NpcType::Guild {

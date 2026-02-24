@@ -217,11 +217,14 @@ quakes = [
   { min_ticks = 3, max_ticks = 29, min_strength = 0, max_strength = 2 },
   { min_ticks = 3, max_ticks = 22, min_strength = 0, max_strength = 2 },
   { min_ticks = 3, max_ticks = 15, min_strength = 4, max_strength = 6 },
-  { min_ticks = 2, max_ticks = 8, min_strength = 6, max_strength = 8 }
+  { min_ticks = 2, max_ticks = 8, min_strength = 6, max_strength = 8 },
 ]
 
 # Number of seconds before a door is closed
 door_close_rate = 3
+
+# The maximum amount of items allowed on a map before old items are deleted
+max_items = 250
 
 [character]
 

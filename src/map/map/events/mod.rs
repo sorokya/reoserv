@@ -6,6 +6,7 @@ mod spawn_items;
 mod spawn_npcs;
 mod timed_arena;
 mod timed_auto_pickup;
+mod timed_cleanup;
 mod timed_door_close;
 mod timed_drain;
 mod timed_drop_protection;

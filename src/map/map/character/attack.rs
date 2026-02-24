@@ -116,12 +116,12 @@ impl Map {
         target_coords.retain(|c| c != &attacker.coords);
 
         for coords in target_coords {
-            if let Some((index, _)) = self
+            if let Some(npc) = self
                 .npcs
                 .iter()
-                .find(|(_, npc)| npc.alive && npc.coords == coords)
+                .find(|npc| npc.alive && npc.coords == coords)
             {
-                return Some(AttackTarget::Npc(*index));
+                return Some(AttackTarget::Npc(npc.index));
             }
 
             if let Some((target_player_id, _)) = self.characters.iter().find(|(_, character)| {
@@ -163,7 +163,7 @@ impl Map {
         };
 
         let (is_boss, is_alive, damage_dealt, opponents, protected) = {
-            let npc = match self.npcs.get_mut(&npc_index) {
+            let npc = match self.npcs.iter_mut().find(|npc| npc.index == npc_index) {
                 Some(npc) => npc,
                 None => return,
             };
@@ -210,25 +210,22 @@ impl Map {
         };
 
         if !protected && is_boss {
-            self.npcs
-                .iter_mut()
-                .filter(|(_, n)| n.child)
-                .for_each(|(_, child)| {
-                    opponents.iter().for_each(|opponent| {
-                        if let Some(child_opponent) = child
-                            .opponents
-                            .iter_mut()
-                            .find(|o| o.player_id == opponent.player_id)
-                        {
-                            child_opponent.bored_ticks = 0;
-                            if child_opponent.player_id == player_id {
-                                child_opponent.damage_dealt += damage_dealt;
-                            }
-                        } else {
-                            child.opponents.push(opponent.clone());
+            self.npcs.iter_mut().filter(|n| n.child).for_each(|child| {
+                opponents.iter().for_each(|opponent| {
+                    if let Some(child_opponent) = child
+                        .opponents
+                        .iter_mut()
+                        .find(|o| o.player_id == opponent.player_id)
+                    {
+                        child_opponent.bored_ticks = 0;
+                        if child_opponent.player_id == player_id {
+                            child_opponent.damage_dealt += damage_dealt;
                         }
-                    });
+                    } else {
+                        child.opponents.push(opponent.clone());
+                    }
                 });
+            });
         }
 
         if is_alive {

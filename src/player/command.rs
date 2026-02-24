@@ -62,6 +62,7 @@ pub enum Command {
     SendGuildReply(GuildReply),
     SendServerMessage(String),
     Send(PacketAction, PacketFamily, Bytes),
+    SendAwait(PacketAction, PacketFamily, Bytes, oneshot::Sender<()>),
     SetBoardId(i32),
     SetInteractNpcIndex(i32),
     SetInteractPlayerId(Option<i32>),

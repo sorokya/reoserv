@@ -51,6 +51,7 @@ impl World {
                 }
                 map.timed_drop_protection();
                 map.timed_ghost();
+                map.timed_cleanup();
             }
 
             if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {

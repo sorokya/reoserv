@@ -191,6 +191,20 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Send(action, family, buf));
     }
 
+    pub async fn send_buf_await(
+        &self,
+        action: PacketAction,
+        family: PacketFamily,
+        buf: Bytes,
+    ) -> Result<(), String> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::SendAwait(action, family, buf, tx));
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to send packet. Timeout".to_string())?
+            .map_err(|_| "Failed to send packet. Channel closed".to_string())
+    }
+
     pub fn send<T>(&self, action: PacketAction, family: PacketFamily, packet: &T)
     where
         T: EoSerialize,

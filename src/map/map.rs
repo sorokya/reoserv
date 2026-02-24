@@ -19,8 +19,9 @@ pub struct Map {
     file_size: i32,
     chests: Vec<Chest>,
     doors: Vec<Door>,
-    items: HashMap<i32, Item>,
-    npcs: HashMap<i32, Npc>,
+    items: Vec<Item>,
+    item_index_counter: i32,
+    npcs: Vec<Npc>,
     npcs_initialized: bool,
     characters: HashMap<i32, Character>,
     pool: Pool,
@@ -110,8 +111,9 @@ impl Map {
             rx,
             chests,
             doors,
-            items: HashMap::new(),
-            npcs: HashMap::new(),
+            items: Vec::new(),
+            item_index_counter: 0,
+            npcs: Vec::new(),
             npcs_initialized: false,
             characters: HashMap::new(),
             pool,
@@ -304,7 +306,7 @@ impl Map {
             Command::GetNpcIdForIndex {
                 npc_index,
                 respond_to,
-            } => match self.npcs.get(&npc_index) {
+            } => match self.npcs.iter().find(|npc| npc.index == npc_index) {
                 Some(npc) => {
                     let _ = respond_to.send(Some(npc.id));
                 }
@@ -575,6 +577,11 @@ impl Map {
 
             Command::Save => self.save().await,
 
+            Command::SaveAsync { respond_to } => {
+                self.save().await;
+                let _ = respond_to.send(());
+            }
+
             Command::SayIDo { player_id } => self.say_i_do(player_id),
 
             Command::SellItem {
@@ -678,6 +685,8 @@ impl Map {
             Command::TimedGhost => self.timed_ghost(),
 
             Command::TimedAutoPickup => self.timed_auto_pickup(),
+
+            Command::TimedCleanup => self.timed_cleanup(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

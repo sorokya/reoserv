@@ -55,8 +55,8 @@ impl Map {
             items: self
                 .items
                 .iter()
-                .map(|(index, item)| SavedItem {
-                    index: *index,
+                .map(|item| SavedItem {
+                    index: item.index,
                     id: item.id,
                     amount: item.amount,
                     x: item.coords.x,
@@ -68,8 +68,8 @@ impl Map {
             npcs: self
                 .npcs
                 .iter()
-                .map(|(index, npc)| SavedNpc {
-                    index: *index,
+                .map(|npc| SavedNpc {
+                    index: npc.index,
                     x: npc.coords.x,
                     y: npc.coords.y,
                     direction: i32::from(npc.direction),
@@ -147,23 +147,25 @@ impl Map {
         self.spawn_npcs();
 
         for saved_item in save_data.items {
-            self.items.insert(
-                saved_item.index,
-                Item {
-                    id: saved_item.id,
-                    amount: saved_item.amount,
-                    coords: Coords {
-                        x: saved_item.x,
-                        y: saved_item.y,
-                    },
-                    owner: saved_item.owner,
-                    protected_ticks: saved_item.ticks,
+            self.items.push(Item {
+                index: saved_item.index,
+                id: saved_item.id,
+                amount: saved_item.amount,
+                coords: Coords {
+                    x: saved_item.x,
+                    y: saved_item.y,
                 },
-            );
+                owner: saved_item.owner,
+                protected_ticks: saved_item.ticks,
+            });
         }
 
         for saved_npc in save_data.npcs {
-            if let Some(npc) = self.npcs.get_mut(&saved_npc.index) {
+            if let Some(npc) = self
+                .npcs
+                .iter_mut()
+                .find(|npc| npc.index == saved_npc.index)
+            {
                 npc.coords = Coords {
                     x: saved_npc.x,
                     y: saved_npc.y,

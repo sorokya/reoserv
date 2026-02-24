@@ -9,8 +9,7 @@ impl Map {
             .any(|character| !character.hidden && character.coords == *coords)
             || self
                 .npcs
-                .values()
-                .filter(|npc| npc.alive)
-                .any(|npc| npc.coords == *coords)
+                .iter()
+                .any(|npc| npc.alive && npc.coords == *coords)
     }
 }

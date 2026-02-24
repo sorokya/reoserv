@@ -1,5 +1,3 @@
-use std::cmp;
-
 use eolib::{data::CHAR_MAX, protocol::Direction};
 
 use crate::{map::Npc, NPC_DB};
@@ -19,30 +17,27 @@ impl Map {
         };
 
         let max_index = self.npcs.len() as i32;
-
-        if max_index >= CHAR_MAX {
-            return;
-        }
-
-        let amount = cmp::min(CHAR_MAX - max_index, amount);
-
         for i in 0..amount {
-            self.npcs.insert(
-                max_index + i,
-                Npc {
-                    id: npc_id,
-                    coords: character.coords,
-                    direction: Direction::Down,
-                    spawn_type: speed,
-                    spawn_index: None,
-                    alive: true,
-                    hp: npc_data.hp,
-                    max_hp: npc_data.hp,
-                    boss: npc_data.boss,
-                    child: npc_data.child,
-                    ..Default::default()
-                },
-            );
+            if max_index + i >= CHAR_MAX {
+                if let Some(player) = character.player.as_ref() {
+                    player.send_server_message("Failed to spawn npc! Index exceeds 252");
+                }
+                break;
+            }
+            self.npcs.push(Npc {
+                index: max_index + i,
+                id: npc_id,
+                coords: character.coords,
+                direction: Direction::Down,
+                spawn_type: speed,
+                spawn_index: None,
+                alive: true,
+                hp: npc_data.hp,
+                max_hp: npc_data.hp,
+                boss: npc_data.boss,
+                child: npc_data.child,
+                ..Default::default()
+            });
         }
     }
 }

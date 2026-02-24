@@ -78,14 +78,24 @@ impl Map {
             character.remove_item(item.id, amount_to_drop);
         }
 
-        let item_index = self.get_next_item_index(1);
+        let item_index = match self.add_item(
+            item.id,
+            amount_to_drop,
+            coords,
+            player_id,
+            SETTINGS.world.drop_protect_player,
+        ) {
+            Ok(index) => index,
+            Err(e) => {
+                error!("Failed to add dropped item to map: {}", e);
+                return;
+            }
+        };
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,
             None => return,
         };
-
-        let weight = character.get_weight();
 
         if let Some(player) = character.player.as_ref() {
             player.send(
@@ -102,21 +112,10 @@ impl Map {
                         None => 0,
                     },
                     coords,
-                    weight,
+                    weight: character.get_weight(),
                 },
             );
         }
-
-        self.items.insert(
-            item_index,
-            super::super::Item {
-                id: item.id,
-                amount: amount_to_drop,
-                coords,
-                owner: player_id,
-                protected_ticks: SETTINGS.world.drop_protect_player,
-            },
-        );
 
         self.send_packet_near_exclude_player(
             &coords,

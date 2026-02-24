@@ -12,7 +12,7 @@ use super::super::Map;
 
 impl Map {
     pub fn open_skill_master(&mut self, player_id: i32, npc_index: i32, session_id: i32) {
-        let npc = match self.npcs.get(&npc_index) {
+        let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,
             None => return,
         };

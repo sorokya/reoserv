@@ -11,14 +11,14 @@ impl Map {
         let mut nearby_items = Vec::new();
         let mut nearby_npcs = Vec::new();
         let mut nearby_characters = Vec::new();
-        for (index, item) in self.items.iter() {
+        for item in self.items.iter() {
             if in_client_range(&target.coords, &item.coords) {
-                nearby_items.push(item.to_map_info(index));
+                nearby_items.push(item.to_map_info());
             }
         }
-        for (index, npc) in self.npcs.iter() {
+        for npc in self.npcs.iter() {
             if npc.alive && in_client_range(&target.coords, &npc.coords) {
-                nearby_npcs.push(npc.to_map_info(index));
+                nearby_npcs.push(npc.to_map_info());
             }
         }
         for character in self.characters.values() {

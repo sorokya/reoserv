@@ -97,19 +97,19 @@ impl Map {
                         packet.player_ids.push(*other_id);
                     }
                 }
-                for (index, item) in self.items.iter() {
+                for item in self.items.iter() {
                     if in_client_range(&coords, &item.coords)
                         && !in_client_range(&previous_coords, &item.coords)
                     {
-                        packet.items.push(item.to_map_info(index));
+                        packet.items.push(item.to_map_info());
                     }
                 }
-                for (index, npc) in self.npcs.iter() {
+                for npc in self.npcs.iter() {
                     if npc.alive
                         && in_client_range(&coords, &npc.coords)
                         && !in_client_range(&previous_coords, &npc.coords)
                     {
-                        packet.npc_indexes.push(*index);
+                        packet.npc_indexes.push(npc.index);
                     }
                 }
                 packet

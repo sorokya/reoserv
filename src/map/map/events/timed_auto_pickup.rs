@@ -6,7 +6,7 @@ impl Map {
     pub fn timed_auto_pickup(&mut self) {
         let mut matched: Vec<(i32, i32)> = Vec::new();
 
-        for (item_index, item) in self.items.iter() {
+        for item in self.items.iter() {
             if let Some(player_id) = self
                 .characters
                 .iter()
@@ -23,7 +23,7 @@ impl Map {
                 })
                 .map(|(player_id, _)| *player_id)
             {
-                matched.push((*item_index, player_id));
+                matched.push((item.index, player_id));
             }
         }
 

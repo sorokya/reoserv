@@ -8,6 +8,7 @@ use crate::{FORMULAS, NPC_DB};
 
 #[derive(Clone, Debug, Default)]
 pub struct Npc {
+    pub index: i32,
     pub id: i32,
     pub coords: Coords,
     pub direction: Direction,
@@ -39,9 +40,9 @@ impl Npc {
         percent.floor() as i32
     }
 
-    pub fn to_map_info(&self, index: &i32) -> NpcMapInfo {
+    pub fn to_map_info(&self) -> NpcMapInfo {
         NpcMapInfo {
-            index: *index,
+            index: self.index,
             id: self.id,
             coords: self.coords,
             direction: self.direction,
@@ -125,6 +126,7 @@ impl Npc {
 
 #[derive(Debug, Default)]
 pub struct NPCBuilder {
+    index: i32,
     id: i32,
     coords: Coords,
     direction: Direction,
@@ -145,6 +147,11 @@ pub struct NPCBuilder {
 impl NPCBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn index(mut self, index: i32) -> Self {
+        self.index = index;
+        self
     }
 
     pub fn id(mut self, id: i32) -> Self {
@@ -209,6 +216,7 @@ impl NPCBuilder {
 
     pub fn build(&self) -> Npc {
         Npc {
+            index: self.index,
             id: self.id,
             coords: self.coords,
             direction: self.direction,

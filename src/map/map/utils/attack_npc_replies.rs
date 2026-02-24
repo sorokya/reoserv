@@ -58,7 +58,7 @@ impl Map {
             );
         }
 
-        let npc = match self.npcs.get(&npc_index) {
+        let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,
             None => return,
         };
@@ -176,10 +176,11 @@ impl Map {
         damage_dealt: i32,
         spell_id: Option<i32>,
     ) {
-        let (npc_id, npc_coords, is_boss) = match self.npcs.get(&npc_index) {
-            Some(npc) => (npc.id, npc.coords, npc.boss),
-            None => return,
-        };
+        let (npc_id, npc_coords, is_boss) =
+            match self.npcs.iter().find(|npc| npc.index == npc_index) {
+                Some(npc) => (npc.id, npc.coords, npc.boss),
+                None => return,
+            };
 
         let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
@@ -251,11 +252,19 @@ impl Map {
 
         let (drop_index, drop_item_id, drop_amount) = match drop {
             Some(drop) => {
-                let index = self.get_next_item_index(1);
-                let drop_item_id = drop.id;
-                let drop_amount = drop.amount;
-                self.items.insert(index, drop);
-                (index, drop_item_id, drop_amount)
+                match self.add_item(
+                    drop.id,
+                    drop.amount,
+                    drop.coords,
+                    drop.owner,
+                    drop.protected_ticks,
+                ) {
+                    Ok(index) => (index, drop.id, drop.amount),
+                    Err(e) => {
+                        error!("Failed to add NPC drop to map: {}", e);
+                        (0, 0, 0)
+                    }
+                }
             }
             None => (0, 0, 0),
         };
@@ -441,8 +450,8 @@ impl Map {
         if is_boss {
             self.npcs
                 .iter_mut()
-                .filter(|(_, n)| n.child)
-                .for_each(|(_, child)| {
+                .filter(|npc| npc.child)
+                .for_each(|child| {
                     child.alive = false;
                     child.hp = 0;
                     child.opponents.clear();
@@ -452,7 +461,7 @@ impl Map {
                     }
                 });
 
-            if let Some((_, child_npc)) = self.npcs.iter().find(|(_, n)| n.child) {
+            if let Some(child_npc) = self.npcs.iter().find(|npc| npc.child) {
                 self.send_packet_all(
                     PacketAction::Junk,
                     PacketFamily::Npc,
@@ -566,6 +575,7 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
                 let amount = rng.gen_range(drop.min_amount..=drop.max_amount);
                 if amount > 0 {
                     return Some(Item {
+                        index: -1,
                         id: drop.item_id,
                         amount,
                         coords: *npc_coords,

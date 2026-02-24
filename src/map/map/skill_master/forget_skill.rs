@@ -22,7 +22,7 @@ impl Map {
             return;
         }
 
-        let npc = match self.npcs.get(&npc_index) {
+        let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,
             None => return,
         };

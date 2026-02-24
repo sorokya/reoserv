@@ -344,7 +344,7 @@ impl Map {
 
         let direction = character.direction;
 
-        let npc = match self.npcs.get_mut(&npc_index) {
+        let npc = match self.npcs.iter_mut().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,
             None => return,
         };

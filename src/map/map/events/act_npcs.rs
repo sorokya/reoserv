@@ -28,7 +28,7 @@ impl Map {
     fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateChat> {
         let talk_record = TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id)?;
 
-        let npc = self.npcs.get_mut(&index)?;
+        let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
 
         if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate {
             return None;
@@ -66,10 +66,13 @@ impl Map {
             }
         };
 
-        let npc_coords = match self.npcs.get(&index) {
-            Some(npc) => npc.coords,
-            None => return None,
-        };
+        let npc_coords = self.npcs.iter().find_map(|npc| {
+            if npc.index == index {
+                Some(npc.coords)
+            } else {
+                None
+            }
+        })?;
 
         let x_delta = npc_coords.x - target_coords.x;
         let y_delta = npc_coords.y - target_coords.y;
@@ -89,7 +92,7 @@ impl Map {
         let new_coords = get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
         if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-            let npc = self.npcs.get_mut(&index).unwrap();
+            let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
             npc.direction = direction;
             npc.coords = new_coords;
             npc.act_ticks = 0;
@@ -110,7 +113,7 @@ impl Map {
                 get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
             if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-                let npc = self.npcs.get_mut(&index).unwrap();
+                let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
                 npc.direction = direction;
                 npc.coords = new_coords;
                 npc.act_ticks = 0;
@@ -127,7 +130,7 @@ impl Map {
                     get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
 
                 if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-                    let npc = self.npcs.get_mut(&index).unwrap();
+                    let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
                     npc.direction = direction;
                     npc.coords = new_coords;
                     npc.act_ticks = 0;
@@ -157,7 +160,7 @@ impl Map {
     fn npc_get_chase_target_player_id(&self, index: i32, npc_id: i32) -> Option<i32> {
         let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
 
-        let npc = self.npcs.get(&index)?;
+        let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
         if !npc.opponents.is_empty() {
             let opponents_in_range = npc.opponents.iter().filter(|opponent| {
@@ -197,7 +200,7 @@ impl Map {
     }
 
     fn npc_get_attack_target_player_id(&self, index: i32) -> Option<i32> {
-        let npc = self.npcs.get(&index)?;
+        let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
         let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
 
@@ -235,17 +238,23 @@ impl Map {
     }
 
     fn act_npc_move_idle(&mut self, index: i32) -> Option<NpcUpdatePosition> {
-        let (direction, coords) = match self.npcs.get(&index) {
-            Some(npc) => (npc.direction, npc.coords),
-            None => return None,
-        };
+        let (direction, coords) = self.npcs.iter().find_map(|npc| {
+            if npc.index == index {
+                Some((npc.direction, npc.coords))
+            } else {
+                None
+            }
+        })?;
+
         // Logic ripped from EOServ..
         let mut rng = rand::thread_rng();
         let action = rng.gen_range(1..=10);
 
         if action == 10 {
-            self.npcs.get_mut(&index).unwrap().walk_idle_for =
-                Some(rng.gen_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
+            self.npcs
+                .iter_mut()
+                .find(|npc| npc.index == index)?
+                .walk_idle_for = Some(rng.gen_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
             return None;
         }
 
@@ -257,14 +266,14 @@ impl Map {
 
         let new_coords = get_next_coords(&coords, new_direction, self.file.width, self.file.height);
 
-        if let Some(npc) = self.npcs.get_mut(&index) {
+        if let Some(npc) = self.npcs.iter_mut().find(|npc| npc.index == index) {
             npc.direction = new_direction;
             npc.act_ticks = 0;
             npc.walk_idle_for = None;
         }
 
         if self.is_tile_walkable_npc(&new_coords) && !self.is_tile_occupied(&new_coords) {
-            if let Some(npc) = self.npcs.get_mut(&index) {
+            if let Some(npc) = self.npcs.iter_mut().find(|npc| npc.index == index) {
                 npc.coords = new_coords;
             }
 
@@ -286,7 +295,7 @@ impl Map {
         act_ticks: i32,
     ) -> Option<NpcUpdatePosition> {
         let (walk_idle_for, has_opponent) = {
-            match self.npcs.get(&index) {
+            match self.npcs.iter().find(|npc| npc.index == index) {
                 Some(npc) => (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty()),
                 None => return None,
             }
@@ -311,7 +320,7 @@ impl Map {
         let (damage, direction) = {
             let character = self.characters.get(&target_player_id)?;
 
-            let npc = self.npcs.get(&index)?;
+            let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
             let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
 
@@ -354,7 +363,7 @@ impl Map {
             (killed_state, hp_percentage)
         };
 
-        if let Some(npc) = self.npcs.get_mut(&index) {
+        if let Some(npc) = self.npcs.iter_mut().find(|npc| npc.index == index) {
             npc.direction = direction;
             npc.act_ticks = 0;
 
@@ -382,22 +391,23 @@ impl Map {
         Option<NpcUpdateChat>,
         Option<NpcUpdateAttack>,
     ) {
-        let (npc_id, spawn_type, act_ticks) = match self.npcs.get_mut(&index) {
-            Some(npc) => {
-                if !npc.alive {
-                    return (None, None, None);
-                } else {
-                    for opponent in npc.opponents.iter_mut() {
-                        opponent.bored_ticks += SETTINGS.npcs.act_rate;
-                    }
+        let (npc_id, spawn_type, act_ticks) =
+            match self.npcs.iter_mut().find(|npc| npc.index == index) {
+                Some(npc) => {
+                    if !npc.alive {
+                        return (None, None, None);
+                    } else {
+                        for opponent in npc.opponents.iter_mut() {
+                            opponent.bored_ticks += SETTINGS.npcs.act_rate;
+                        }
 
-                    npc.act_ticks += SETTINGS.npcs.act_rate;
-                    npc.talk_ticks += SETTINGS.npcs.act_rate;
-                    (npc.id, npc.spawn_type, npc.act_ticks)
+                        npc.act_ticks += SETTINGS.npcs.act_rate;
+                        npc.talk_ticks += SETTINGS.npcs.act_rate;
+                        (npc.id, npc.spawn_type, npc.act_ticks)
+                    }
                 }
-            }
-            None => return (None, None, None),
-        };
+                None => return (None, None, None),
+            };
 
         let act_rate = match spawn_type {
             0 => SETTINGS.npcs.speed_0,
@@ -428,7 +438,7 @@ impl Map {
     }
 
     fn drop_opponents(&mut self, index: i32) {
-        let npc = match self.npcs.get_mut(&index) {
+        let npc = match self.npcs.iter_mut().find(|npc| npc.index == index) {
             Some(npc) => npc,
             None => return,
         };
@@ -448,16 +458,18 @@ impl Map {
                 let npcs = {
                     self.npcs
                         .iter()
-                        .filter(|(_, npc)| {
-                            npc.spawn_index == Some(spawn_index) && npc.id == spawn.id
-                        })
-                        .map(|(index, _)| *index)
+                        .filter(|npc| npc.spawn_index == Some(spawn_index) && npc.id == spawn.id)
+                        .map(|npc| npc.index)
                         .collect::<Vec<i32>>()
                         .clone()
                 };
 
-                for (spawn_index, index) in npcs.into_iter().enumerate() {
-                    let npc = self.npcs.get_mut(&index).unwrap();
+                for (spawn_index, index) in npcs.iter().enumerate() {
+                    let npc = self
+                        .npcs
+                        .iter_mut()
+                        .find(|npc| npc.index == *index)
+                        .unwrap();
                     npc.act_ticks = 0;
                     npc.talk_ticks = -60 * spawn_index as i32;
                 }
@@ -468,7 +480,7 @@ impl Map {
         let mut position_updates: Vec<NpcUpdatePosition> = Vec::with_capacity(self.npcs.len());
         let mut talk_updates: Vec<NpcUpdateChat> = Vec::with_capacity(self.npcs.len());
 
-        let indexes = self.npcs.keys().cloned().collect::<Vec<i32>>();
+        let indexes = self.npcs.iter().map(|npc| npc.index).collect::<Vec<i32>>();
         for index in indexes {
             let (move_update, chat_updatee, attack_update) = self.act_npc(index);
             if let Some(attack_update) = attack_update {
@@ -494,9 +506,8 @@ impl Map {
                 let in_range_npc_indexes: Vec<i32> = self
                     .npcs
                     .iter()
-                    .filter(|(_, n)| in_range(&coords, &n.coords))
-                    .map(|(i, _)| i)
-                    .cloned()
+                    .filter(|npc| in_range(&coords, &npc.coords))
+                    .map(|npc| npc.index)
                     .collect();
 
                 let position_updates_in_rage: Vec<NpcUpdatePosition> = position_updates

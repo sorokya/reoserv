@@ -183,6 +183,7 @@ pub struct Quake {
 pub struct Map {
     pub quakes: Vec<Quake>,
     pub door_close_rate: i32,
+    pub max_items: i32,
 }
 
 #[derive(Debug, Deserialize)]

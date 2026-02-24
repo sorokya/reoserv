@@ -12,16 +12,28 @@ impl Map {
         coords: Coords,
         owner: i32,
         protected_ticks: i32,
-    ) -> i32 {
-        let item_index = self.get_next_item_index(1);
+    ) -> anyhow::Result<i32> {
+        self.item_index_counter += 1;
+        if self.item_index_counter > 64_000 {
+            self.item_index_counter = 1;
+        }
+
+        if self
+            .items
+            .iter()
+            .any(|item| item.index == self.item_index_counter)
+        {
+            return Err(anyhow::anyhow!("Item index collision"));
+        }
+
         self.items.push(Item {
-            index: item_index,
+            index: self.item_index_counter,
             id,
             amount,
             coords,
             owner,
             protected_ticks,
         });
-        item_index
+        Ok(self.item_index_counter)
     }
 }

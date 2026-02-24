@@ -251,16 +251,19 @@ impl Map {
 
         let (drop_index, drop_item_id, drop_amount) = match drop {
             Some(drop) => {
-                let index = self.add_item(
+                match self.add_item(
                     drop.id,
                     drop.amount,
                     drop.coords,
                     drop.owner,
                     drop.protected_ticks,
-                );
-                let drop_item_id = drop.id;
-                let drop_amount = drop.amount;
-                (index, drop_item_id, drop_amount)
+                ) {
+                    Ok(index) => (index, drop.id, drop.amount),
+                    Err(e) => {
+                        error!("Failed to add NPC drop to map: {}", e);
+                        (0, 0, 0)
+                    }
+                }
             }
             None => (0, 0, 0),
         };

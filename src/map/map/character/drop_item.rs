@@ -78,13 +78,19 @@ impl Map {
             character.remove_item(item.id, amount_to_drop);
         }
 
-        let item_index = self.add_item(
+        let item_index = match self.add_item(
             item.id,
             amount_to_drop,
             coords,
             player_id,
             SETTINGS.world.drop_protect_player,
-        );
+        ) {
+            Ok(index) => index,
+            Err(e) => {
+                error!("Failed to add dropped item to map: {}", e);
+                return;
+            }
+        };
 
         let character = match self.characters.get(&player_id) {
             Some(character) => character,

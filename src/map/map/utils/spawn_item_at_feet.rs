@@ -19,7 +19,13 @@ impl Map {
 
         let amount = cmp::min(SETTINGS.limits.max_item, amount);
 
-        let item_index = self.add_item(item_id, amount, coords, 0, 0);
+        let item_index = match self.add_item(item_id, amount, coords, 0, 0) {
+            Ok(index) => index,
+            Err(e) => {
+                error!("Failed to add item to map: {}", e);
+                return;
+            }
+        };
 
         self.send_packet_near(
             &coords,

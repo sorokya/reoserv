@@ -19,7 +19,7 @@ pub struct Map {
     file_size: i32,
     chests: Vec<Chest>,
     doors: Vec<Door>,
-    items: HashMap<i32, Item>,
+    items: Vec<Item>,
     npcs: HashMap<i32, Npc>,
     npcs_initialized: bool,
     characters: HashMap<i32, Character>,
@@ -110,7 +110,7 @@ impl Map {
             rx,
             chests,
             doors,
-            items: HashMap::new(),
+            items: Vec::new(),
             npcs: HashMap::new(),
             npcs_initialized: false,
             characters: HashMap::new(),
@@ -574,6 +574,11 @@ impl Map {
             } => self.reset_character(player_id, npc_index),
 
             Command::Save => self.save().await,
+
+            Command::SaveAsync { respond_to } => {
+                self.save().await;
+                let _ = respond_to.send(());
+            }
 
             Command::SayIDo { player_id } => self.say_i_do(player_id),
 

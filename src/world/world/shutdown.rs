@@ -8,10 +8,7 @@ use super::World;
 
 impl World {
     pub async fn shutdown(&mut self, respond_to: oneshot::Sender<()>) {
-        self.save();
-
         let packet = MessageCloseServerPacket::new();
-
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
@@ -20,12 +17,17 @@ impl World {
         }
 
         let buf = writer.to_byte_array();
-        for player in self.players.values() {
-            player.send_buf(PacketAction::Close, PacketFamily::Message, buf.clone());
+        let sends = self.players.values().map(|player| {
+            player.send_buf_await(PacketAction::Close, PacketFamily::Message, buf.clone())
+        });
+        let results = futures::future::join_all(sends).await;
+        for result in results {
+            if let Err(e) = result {
+                error!("Failed to send shutdown packet to player: {}", e);
+            }
         }
 
-        // wait a bit for the packets to be sent and maps to save
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        self.save_async().await;
 
         let _ = respond_to.send(());
     }

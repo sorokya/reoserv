@@ -54,9 +54,9 @@ impl Map {
                     items: self
                         .items
                         .iter()
-                        .filter_map(|(index, item)| {
+                        .filter_map(|item| {
                             if in_client_range(&character.coords, &item.coords) {
-                                Some(item.to_map_info(index))
+                                Some(item.to_map_info())
                             } else {
                                 None
                             }

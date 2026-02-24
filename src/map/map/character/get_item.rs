@@ -10,7 +10,7 @@ use super::super::Map;
 impl Map {
     pub fn get_item(&mut self, player_id: i32, item_index: i32) {
         let (item_id, item_amount, item_coords, owner, protected_ticks) =
-            match self.items.get(&item_index) {
+            match self.items.iter().find(|i| i.index == item_index) {
                 Some(item) => (
                     item.id,
                     item.amount,
@@ -58,9 +58,9 @@ impl Map {
         }
 
         if amount_picked_up == item_amount {
-            self.items.remove(&item_index);
+            self.items.retain(|i| i.index != item_index);
         } else {
-            match self.items.get_mut(&item_index) {
+            match self.items.iter_mut().find(|i| i.index == item_index) {
                 Some(item) => item.amount -= amount_picked_up,
                 None => {
                     error!("Failed to get item {}", item_index);

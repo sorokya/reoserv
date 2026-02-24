@@ -754,6 +754,15 @@ impl MapHandle {
         let _ = self.tx.send(Command::Save);
     }
 
+    pub async fn save_async(&self) -> Result<(), String> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::SaveAsync { respond_to: tx });
+        timeout(Duration::from_secs(5), rx)
+            .await
+            .map_err(|_| "Failed to save map. Timeout".to_string())?
+            .map_err(|_| "Failed to save map. Channel closed".to_string())
+    }
+
     pub fn say_i_do(&self, player_id: i32) {
         let _ = self.tx.send(Command::SayIDo { player_id });
     }

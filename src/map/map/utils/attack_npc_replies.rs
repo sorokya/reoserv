@@ -251,10 +251,15 @@ impl Map {
 
         let (drop_index, drop_item_id, drop_amount) = match drop {
             Some(drop) => {
-                let index = self.get_next_item_index(1);
+                let index = self.add_item(
+                    drop.id,
+                    drop.amount,
+                    drop.coords,
+                    drop.owner,
+                    drop.protected_ticks,
+                );
                 let drop_item_id = drop.id;
                 let drop_amount = drop.amount;
-                self.items.insert(index, drop);
                 (index, drop_item_id, drop_amount)
             }
             None => (0, 0, 0),
@@ -566,12 +571,12 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
                 let amount = rng.gen_range(drop.min_amount..=drop.max_amount);
                 if amount > 0 {
                     return Some(Item {
+                        index: -1,
                         id: drop.item_id,
                         amount,
                         coords: *npc_coords,
                         owner: target_player_id,
                         protected_ticks: SETTINGS.world.drop_protect_npc,
-                        drop_time: chrono::Utc::now().timestamp_millis(),
                     });
                 }
             }

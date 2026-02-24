@@ -186,6 +186,10 @@ impl Player {
             Command::Send(action, family, data) => {
                 let _ = self.bus.send_buf(action, family, data).await;
             }
+            Command::SendAwait(action, family, data, respond_to) => {
+                let _ = self.bus.send_buf(action, family, data).await;
+                let _ = respond_to.send(());
+            }
             Command::SetBoardId(board_id) => {
                 self.board_id = Some(board_id);
             }

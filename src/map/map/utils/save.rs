@@ -55,13 +55,12 @@ impl Map {
             items: self
                 .items
                 .iter()
-                .map(|(index, item)| SavedItem {
-                    index: *index,
+                .map(|item| SavedItem {
+                    index: item.index,
                     id: item.id,
                     amount: item.amount,
                     x: item.coords.x,
                     y: item.coords.y,
-                    drop_time: item.drop_time,
                     owner: item.owner,
                     ticks: item.protected_ticks,
                 })
@@ -148,20 +147,17 @@ impl Map {
         self.spawn_npcs();
 
         for saved_item in save_data.items {
-            self.items.insert(
-                saved_item.index,
-                Item {
-                    id: saved_item.id,
-                    amount: saved_item.amount,
-                    coords: Coords {
-                        x: saved_item.x,
-                        y: saved_item.y,
-                    },
-                    owner: saved_item.owner,
-                    protected_ticks: saved_item.ticks,
-                    drop_time: saved_item.drop_time,
+            self.items.push(Item {
+                index: saved_item.index,
+                id: saved_item.id,
+                amount: saved_item.amount,
+                coords: Coords {
+                    x: saved_item.x,
+                    y: saved_item.y,
                 },
-            );
+                owner: saved_item.owner,
+                protected_ticks: saved_item.ticks,
+            });
         }
 
         for saved_npc in save_data.npcs {
@@ -239,8 +235,6 @@ struct SavedItem {
     y: i32,
     owner: i32,
     ticks: i32,
-    #[serde(default)]
-    drop_time: i64,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

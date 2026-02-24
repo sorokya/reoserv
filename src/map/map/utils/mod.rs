@@ -2,6 +2,7 @@ mod attack_npc_replies;
 mod create_chests;
 mod spawn_item_at_feet;
 pub use create_chests::create_chests;
+mod add_item;
 mod get_adjacent_tiles;
 mod get_character;
 mod get_nearby_info;

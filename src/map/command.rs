@@ -408,6 +408,9 @@ pub enum Command {
         npc_index: i32,
     },
     Save,
+    SaveAsync {
+        respond_to: oneshot::Sender<()>,
+    },
     SayIDo {
         player_id: i32,
     },

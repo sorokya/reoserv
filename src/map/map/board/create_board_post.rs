@@ -1,6 +1,8 @@
-use mysql_async::{params, prelude::Queryable, Conn, Row};
-
-use crate::{errors::DataNotFoundError, utils::get_board_tile_spec, SETTINGS};
+use crate::{
+    db::{insert_params, DbHandle},
+    utils::get_board_tile_spec,
+    SETTINGS,
+};
 
 use super::super::Map;
 
@@ -45,18 +47,10 @@ impl Map {
 
         let character_id = character.id;
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get sql connection: {}", e);
-                    return;
-                }
-            };
-
             let (recent_posts, total_posts) =
-                match get_board_post_counts(&mut conn, board_id, character_id).await {
+                match get_board_post_counts(&db, board_id, character_id).await {
                     Ok((recent_posts, total_posts)) => (recent_posts, total_posts),
                     Err(e) => {
                         error!("Failed to get board post counts: {}", e);
@@ -78,7 +72,7 @@ impl Map {
                 return map.open_board(player_id, board_id);
             }
 
-            if let Err(e) = insert_post(&mut conn, board_id, character_id, subject, body).await {
+            if let Err(e) = insert_post(&db, board_id, character_id, subject, body).await {
                 error!("Failed to insert post: {}", e);
             }
 
@@ -88,86 +82,58 @@ impl Map {
 }
 
 async fn get_board_post_counts(
-    conn: &mut Conn,
+    db: &DbHandle,
     board_id: i32,
     character_id: i32,
-) -> Result<(i32, i32), Box<dyn std::error::Error>> {
+) -> anyhow::Result<(i32, i32)> {
     let limit = if board_id == SETTINGS.board.admin_board {
         SETTINGS.board.admin_max_posts
     } else {
         SETTINGS.board.max_posts
     };
 
-    let mut row: Row = match conn
-        .exec_first(
+    let recent_posts = db
+        .query_int(&insert_params(
             include_str!("../../../sql/get_recent_post_count.sql"),
-            params! {
-                "board_id" => board_id,
-                "character_id" => character_id,
-                "post_time" => SETTINGS.board.recent_post_time,
-            },
-        )
-        .await
-    {
-        Ok(Some(row)) => row,
-        Ok(None) => {
-            return Err(Box::new(DataNotFoundError {
-                kind: "BoardPost".to_string(),
-                id: character_id,
-            }))
-        }
-        Err(e) => {
-            error!("Failed to get recent post count: {}", e);
-            return Err(Box::new(e));
-        }
-    };
+            &[
+                ("board_id", &board_id),
+                ("character_id", &character_id),
+                ("post_time", &SETTINGS.board.recent_post_time),
+            ],
+        ))
+        .await?
+        .unwrap_or_default();
 
-    let recent_posts: i32 = row.take("recent_posts").unwrap_or(0);
-
-    let mut row: Row = match conn
-        .exec_first(
+    let total_posts = db
+        .query_int(&insert_params(
             include_str!("../../../sql/get_total_post_count.sql"),
-            params! {
-                "board_id" => board_id,
-                "character_id" => character_id,
-                "limit" => limit,
-            },
-        )
-        .await
-    {
-        Ok(Some(row)) => row,
-        Ok(None) => {
-            return Err(Box::new(DataNotFoundError {
-                kind: "BoardPost".to_string(),
-                id: character_id,
-            }))
-        }
-        Err(e) => {
-            error!("Failed to get recent post count: {}", e);
-            return Err(Box::new(e));
-        }
-    };
-
-    let total_posts: i32 = row.take("total_posts").unwrap_or(0);
+            &[
+                ("board_id", &board_id),
+                ("character_id", &character_id),
+                ("post_time", &limit),
+            ],
+        ))
+        .await?
+        .unwrap_or_default();
 
     Ok((recent_posts, total_posts))
 }
 
 async fn insert_post(
-    conn: &mut Conn,
+    db: &DbHandle,
     board_id: i32,
     character_id: i32,
     subject: String,
     body: String,
-) -> Result<(), mysql_async::Error> {
-    conn.exec_drop(
+) -> anyhow::Result<()> {
+    db.execute(&insert_params(
         include_str!("../../../sql/create_board_post.sql"),
-        params! {
-            "board_id" => board_id,
-            "character_id" => character_id,
-            "subject" => subject,
-            "body" => body,
-        },
-    )
+        &[
+            ("board_id", &board_id),
+            ("character_id", &character_id),
+            ("subject", &subject),
+            ("body", &body),
+        ],
+    ))
     .await
 }

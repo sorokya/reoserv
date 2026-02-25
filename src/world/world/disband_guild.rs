@@ -1,4 +1,4 @@
-use mysql_async::{params, prelude::Queryable};
+use crate::db::insert_params;
 
 use super::World;
 
@@ -15,7 +15,7 @@ impl World {
             .map(|player| player.to_owned())
             .collect::<Vec<_>>();
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         tokio::spawn(async move {
             for (index, player) in online_players.iter().enumerate() {
@@ -31,31 +31,21 @@ impl World {
                 map.kick_from_guild(player_id);
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = conn
-                .exec_drop(
+            if let Err(e) = db
+                .execute(&insert_params(
                     include_str!("../../sql/delete_guild.sql"),
-                    params! {
-                        "tag" => &guild_tag,
-                    },
-                )
+                    &[("tag", &guild_tag)],
+                ))
                 .await
             {
                 error!("Error deleting guild: {}", e);
             }
 
-            if let Err(e) = conn
-                .query_drop(include_str!("../../sql/cleanup_guildless_characters.sql"))
+            if let Err(e) = db
+                .execute(include_str!("../../sql/cleanup_guildless_characters.sql"))
                 .await
             {
-                error!("Error deleting guild: {}", e);
+                error!("Error cleaning up guildless characters: {}", e);
             }
         });
     }

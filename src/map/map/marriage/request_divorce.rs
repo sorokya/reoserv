@@ -8,9 +8,8 @@ use eolib::protocol::{
     },
     r#pub::NpcType,
 };
-use mysql_async::prelude::{params, Queryable};
 
-use crate::{NPC_DB, SETTINGS};
+use crate::{db::insert_params, NPC_DB, SETTINGS};
 
 use super::super::Map;
 
@@ -106,7 +105,7 @@ impl Map {
         }
 
         let world = self.world.clone();
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         tokio::spawn(async move {
             if let Ok(character) = world.get_character_by_name(&name).await {
@@ -116,21 +115,11 @@ impl Map {
                 }
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get sql connection: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = conn
-                .exec_drop(
+            if let Err(e) = db
+                .execute(&insert_params(
                     include_str!("../../../sql/divorce_character.sql"),
-                    params! {
-                        "name" => name
-                    },
-                )
+                    &[("name", &name)],
+                ))
                 .await
             {
                 error!("Failed to divorce character: {}", e);

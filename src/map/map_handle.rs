@@ -8,7 +8,6 @@ use eolib::protocol::{
     },
     Coords, Direction, Emote,
 };
-use mysql_async::Pool;
 use std::time::Duration;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
@@ -30,9 +29,15 @@ pub struct MapHandle {
 }
 
 impl MapHandle {
-    pub fn new(id: i32, file_size: i32, pool: Pool, file: Emf, world: WorldHandle) -> Self {
+    pub fn new(
+        id: i32,
+        file_size: i32,
+        db: crate::db::DbHandle,
+        file: Emf,
+        world: WorldHandle,
+    ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(id, file_size, file, pool, world, rx);
+        let map = Map::new(id, file_size, file, db, world, rx);
         tokio::spawn(run_map(map));
 
         Self { tx }

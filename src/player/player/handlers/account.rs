@@ -13,9 +13,9 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable, Params, Row};
 
 use crate::{
+    db::insert_params,
     deep::{
         AccountAcceptClientPacket, AccountAcceptServerPacket, AccountConfigServerPacket,
         ACCOUNT_REPLY_WRONG_PIN, ACTION_CONFIG,
@@ -64,17 +64,6 @@ impl Player {
             return;
         }
 
-        let conn = self.pool.get_conn();
-
-        let mut conn = match conn.await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
         let session_id = match self.take_session_id() {
             Ok(session_id) => session_id,
             Err(e) => {
@@ -94,7 +83,7 @@ impl Player {
 
         // TODO: validate name
 
-        let exists = match account_exists(&mut conn, &create.username).await {
+        let exists = match account_exists(&self.db, &create.username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -122,20 +111,21 @@ impl Player {
 
         let password_hash = generate_password_hash(&create.username, &create.password);
 
-        match conn
-            .exec_drop(
+        match self
+            .db
+            .execute(&insert_params(
                 include_str!("../../../sql/create_account.sql"),
-                params! {
-                    "name" => &create.username,
-                    "password_hash" => &password_hash,
-                    "real_name" => &create.full_name,
-                    "location" => &create.location,
-                    "email" => &create.email,
-                    "computer" => &create.computer,
-                    "hdid" => &create.hdid,
-                    "register_ip" => &self.ip,
-                },
-            )
+                &[
+                    ("name", &create.username),
+                    ("password_hash", &password_hash),
+                    ("real_name", &create.full_name),
+                    ("location", &create.location),
+                    ("email", &create.email),
+                    ("computer", &create.computer),
+                    ("hdid", &create.hdid),
+                    ("register_ip", &self.ip),
+                ],
+            ))
             .await
         {
             Ok(_) => {
@@ -176,16 +166,7 @@ impl Player {
 
         // TODO: validate name
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let exists = match account_exists(&mut conn, &request.username).await {
+        let exists = match account_exists(&self.db, &request.username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -256,17 +237,7 @@ impl Player {
             return;
         }
 
-        let conn = self.pool.get_conn();
-        let mut conn = match conn.await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let exists = match account_exists(&mut conn, &agree.username).await {
+        let exists = match account_exists(&self.db, &agree.username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -300,16 +271,19 @@ impl Player {
             return;
         }
 
-        let row = match conn
-            .exec_first::<Row, &str, Params>(
+        let row = match self
+            .db
+            .query_one(&insert_params(
                 include_str!("../../../sql/get_password_hash.sql"),
-                params! {
-                    "name" => &agree.username,
-                },
-            )
+                &[("name", &agree.username)],
+            ))
             .await
         {
-            Ok(row) => row,
+            Ok(Some(row)) => row,
+            Ok(None) => {
+                self.close("Account not found".to_string()).await;
+                return;
+            }
             Err(e) => {
                 error!("Error getting password hash: {}", e);
 
@@ -330,11 +304,10 @@ impl Player {
                     .await;
                 return;
             }
-        }
-        .unwrap();
+        };
 
-        let username: String = row.get("name").unwrap();
-        let password_hash: String = row.get("password_hash").unwrap();
+        let username: String = row.get_string(1).unwrap();
+        let password_hash: String = row.get_string(2).unwrap();
         if !validate_password(&username, &agree.old_password, &password_hash) {
             if self.login_attempts >= SETTINGS.server.max_login_attempts {
                 self.close("Too many password change attempts".to_string())
@@ -360,17 +333,15 @@ impl Player {
 
         self.login_attempts = 0;
 
-        let account_id: i32 = row.get("id").unwrap();
+        let account_id: i32 = row.get_int(0).unwrap();
 
         let password_hash = generate_password_hash(&username, &agree.new_password);
-        if let Err(e) = conn
-            .exec_drop(
+        if let Err(e) = self
+            .db
+            .execute(&insert_params(
                 include_str!("../../../sql/update_password_hash.sql"),
-                params! {
-                    "id" => account_id,
-                    "password_hash" => &password_hash,
-                },
-            )
+                &[("id", &account_id), ("password_hash", &password_hash)],
+            ))
             .await
         {
             self.close(format!("Error updating password hash: {}", e))
@@ -378,13 +349,12 @@ impl Player {
             return;
         }
 
-        if let Err(e) = conn
-            .exec_drop(
+        if let Err(e) = self
+            .db
+            .execute(&insert_params(
                 include_str!("../../../sql/delete_session.sql"),
-                params! {
-                    "id" => account_id,
-                },
-            )
+                &[("id", &account_id)],
+            ))
             .await
         {
             self.close(format!("Error deleting session: {}", e)).await;

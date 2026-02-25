@@ -8,10 +8,9 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable};
 
 use super::super::World;
-use crate::{utils::capitalize, SETTINGS};
+use crate::{db::insert_params, utils::capitalize, SETTINGS};
 
 impl World {
     pub async fn report_player(&self, player_id: i32, reportee_name: String, message: String) {
@@ -85,26 +84,27 @@ impl World {
         message: String,
         reportee_name: String,
     ) {
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = conn.exec_drop(
-                include_str!("../../../sql/create_board_post.sql"),
-                params! {
-                    "board_id" => SETTINGS.board.admin_board,
-                    "character_id" => character_id,
-                    "subject" => format!("[Report] {} reports {}", capitalize(&player_name), capitalize(&reportee_name)),
-                    "body" => message,
-                },
-            )
-            .await {
+            if let Err(e) = db
+                .execute(&insert_params(
+                    include_str!("../../../sql/create_board_post.sql"),
+                    &[
+                        ("board_id", &SETTINGS.board.admin_board),
+                        ("character_id", &character_id),
+                        (
+                            "subject",
+                            &format!(
+                                "[Report] {} reports {}",
+                                capitalize(&player_name),
+                                capitalize(&reportee_name)
+                            ),
+                        ),
+                        ("body", &message),
+                    ],
+                ))
+                .await
+            {
                 error!("Failed to add report to admin board: {}", e);
             }
         });

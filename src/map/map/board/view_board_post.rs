@@ -1,7 +1,6 @@
 use eolib::protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily};
-use mysql_async::{params, prelude::Queryable, Row};
 
-use crate::utils::get_board_tile_spec;
+use crate::{db::insert_params, utils::get_board_tile_spec};
 
 use super::super::Map;
 
@@ -26,38 +25,27 @@ impl Map {
             return;
         }
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
+            let post_body = match db
+                .query_string(&insert_params(
+                    include_str!("../../../sql/get_board_post.sql"),
+                    &[("board_id", &board_id), ("post_id", &post_id)],
+                ))
+                .await
+            {
+                Ok(Some(body)) => body,
+                Ok(None) => "".to_string(),
                 Err(e) => {
-                    error!("Failed to get sql connection: {}", e);
+                    error!("Failed to query board post: {}", e);
                     return;
                 }
-            };
-
-            let row = conn
-                .exec_first(
-                    include_str!("../../../sql/get_board_post.sql"),
-                    params! {
-                        "board_id" => board_id,
-                        "post_id" => post_id,
-                    },
-                )
-                .await;
-
-            let mut row: Row = match row {
-                Ok(Some(row)) => row,
-                _ => return,
             };
 
             player.send(
                 PacketAction::Player,
                 PacketFamily::Board,
-                &BoardPlayerServerPacket {
-                    post_id,
-                    post_body: row.take::<String, &str>("body").unwrap(),
-                },
+                &BoardPlayerServerPacket { post_id, post_body },
             );
         });
     }

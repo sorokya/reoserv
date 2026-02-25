@@ -1,13 +1,13 @@
-use mysql_async::{params, prelude::Queryable, Conn, Row};
+use crate::db::{insert_params, DbHandle};
 
-pub async fn get_guild_ranks(conn: &mut Conn, tag: &str) -> Vec<String> {
-    match conn
-        .exec_map(
-            include_str!("../sql/get_guild_ranks.sql"),
-            params! {
-                "tag" => tag,
-            },
-            |row: Row| row.get::<String, usize>(0).unwrap(),
+pub async fn get_guild_ranks(db: &DbHandle, tag: &str) -> Vec<String> {
+    match db
+        .query_map(
+            &insert_params(
+                include_str!("../sql/get_guild_ranks.sql"),
+                &[("tag", &tag.to_string())],
+            ),
+            |row| row.get_string(0).unwrap(),
         )
         .await
     {

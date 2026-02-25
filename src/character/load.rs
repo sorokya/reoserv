@@ -1,27 +1,26 @@
-use chrono::{NaiveDateTime, TimeZone, Utc};
 use eolib::protocol::{
     net::{server::SitState, Item, Spell},
     AdminLevel, Direction, Gender,
 };
-use mysql_async::{prelude::*, Conn, Params, Row};
 
-use crate::SETTINGS;
+use crate::{
+    db::{insert_params, DbHandle},
+    SETTINGS,
+};
 
 use super::{Character, QuestProgress};
 
 impl Character {
     pub async fn load(
-        conn: &mut Conn,
+        db: &DbHandle,
         id: i32,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let mut character = Character::default();
-        let mut row = match conn
-            .exec_first::<Row, &str, Params>(
+        let row = match db
+            .query_one(&insert_params(
                 include_str!("../sql/get_character.sql"),
-                params! {
-                    "character_id" => id,
-                },
-            )
+                &[("character_id", &id)],
+            ))
             .await?
         {
             Some(row) => row,
@@ -34,110 +33,110 @@ impl Character {
         };
 
         character.id = id;
-        character.account_id = row.take("account_id").unwrap();
-        character.name = row.take("name").unwrap();
-        character.title = row.take("title").unwrap();
-        character.home = row.take("home").unwrap();
-        character.fiance = row.take("fiance").unwrap();
-        character.partner = row.take("partner").unwrap();
-        character.admin_level = AdminLevel::from(row.take::<i32, &str>("admin_level").unwrap());
-        character.class = row.take("class").unwrap();
-        character.gender = Gender::from(row.take::<i32, &str>("gender").unwrap());
-        character.skin = row.take("race").unwrap();
-        character.hair_style = row.take("hair_style").unwrap();
-        character.hair_color = row.take("hair_color").unwrap();
-        character.bank_level = row.take("bank_level").unwrap();
-        character.gold_bank = row.take("gold_bank").unwrap();
-        character.guild_rank = row.take("guild_rank").unwrap();
-        character.guild_rank_string = row.take("guild_rank_string").unwrap();
-        character.equipment.boots = row.take("boots").unwrap();
-        character.equipment.accessory = row.take("accessory").unwrap();
-        character.equipment.gloves = row.take("gloves").unwrap();
-        character.equipment.belt = row.take("belt").unwrap();
-        character.equipment.armor = row.take("armor").unwrap();
-        character.equipment.hat = row.take("hat").unwrap();
-        character.equipment.shield = row.take("shield").unwrap();
-        character.equipment.weapon = row.take("weapon").unwrap();
-        character.equipment.ring[0] = row.take("ring").unwrap();
-        character.equipment.ring[1] = row.take("ring2").unwrap();
-        character.equipment.armlet[0] = row.take("armlet").unwrap();
-        character.equipment.armlet[1] = row.take("armlet2").unwrap();
-        character.equipment.bracer[0] = row.take("bracer").unwrap();
-        character.equipment.bracer[1] = row.take("bracer2").unwrap();
-        character.equipment.necklace = row.take("necklace").unwrap();
-        character.level = row.take("level").unwrap();
-        character.experience = row.take("experience").unwrap();
-        character.hp = row.take("hp").unwrap();
-        character.tp = row.take("tp").unwrap();
-        character.base_strength = row.take("strength").unwrap();
-        character.base_intelligence = row.take("intelligence").unwrap();
-        character.base_wisdom = row.take("wisdom").unwrap();
-        character.base_agility = row.take("agility").unwrap();
-        character.base_constitution = row.take("constitution").unwrap();
-        character.base_charisma = row.take("charisma").unwrap();
-        character.stat_points = row.take("stat_points").unwrap();
-        character.skill_points = row.take("skill_points").unwrap();
-        character.karma = row.take("karma").unwrap();
-        character.usage = row.take("usage").unwrap();
-        character.map_id = row.take("map").unwrap();
-        character.coords.x = row.take("x").unwrap();
-        character.coords.y = row.take("y").unwrap();
-        character.direction = Direction::from(row.take::<i32, &str>("direction").unwrap());
-        character.sit_state = SitState::from(row.take::<i32, &str>("sitting").unwrap());
-        character.hidden = row.take::<u32, &str>("hidden").unwrap() == 1;
-        character.guild_name = row.take("guild_name").unwrap();
-        character.guild_tag = row.take("tag").unwrap();
+        character.account_id = row.get_int(0).unwrap();
+        character.name = row.get_string(1).unwrap();
+        character.title = row.get_string(2);
+        character.home = row.get_string(3).unwrap();
+        character.fiance = row.get_string(4);
+        character.partner = row.get_string(5);
+        character.admin_level = AdminLevel::from(row.get_int(6).unwrap());
+        character.class = row.get_int(7).unwrap();
+        character.gender = Gender::from(row.get_int(8).unwrap());
+        character.skin = row.get_int(9).unwrap();
+        character.hair_style = row.get_int(10).unwrap();
+        character.hair_color = row.get_int(11).unwrap();
+        character.bank_level = row.get_int(12).unwrap();
+        character.gold_bank = row.get_int(13).unwrap();
+        character.guild_rank = row.get_int(14);
+        character.guild_rank_string = row.get_string(15);
+        character.equipment.boots = row.get_int(16).unwrap();
+        character.equipment.accessory = row.get_int(17).unwrap();
+        character.equipment.gloves = row.get_int(18).unwrap();
+        character.equipment.belt = row.get_int(19).unwrap();
+        character.equipment.armor = row.get_int(20).unwrap();
+        character.equipment.hat = row.get_int(21).unwrap();
+        character.equipment.shield = row.get_int(22).unwrap();
+        character.equipment.weapon = row.get_int(23).unwrap();
+        character.equipment.ring[0] = row.get_int(24).unwrap();
+        character.equipment.ring[1] = row.get_int(25).unwrap();
+        character.equipment.armlet[0] = row.get_int(26).unwrap();
+        character.equipment.armlet[1] = row.get_int(27).unwrap();
+        character.equipment.bracer[0] = row.get_int(28).unwrap();
+        character.equipment.bracer[1] = row.get_int(29).unwrap();
+        character.equipment.necklace = row.get_int(30).unwrap();
+        character.level = row.get_int(31).unwrap();
+        character.experience = row.get_int(32).unwrap();
+        character.hp = row.get_int(33).unwrap();
+        character.tp = row.get_int(34).unwrap();
+        character.base_strength = row.get_int(35).unwrap();
+        character.base_intelligence = row.get_int(36).unwrap();
+        character.base_wisdom = row.get_int(37).unwrap();
+        character.base_agility = row.get_int(38).unwrap();
+        character.base_constitution = row.get_int(39).unwrap();
+        character.base_charisma = row.get_int(40).unwrap();
+        character.stat_points = row.get_int(41).unwrap();
+        character.skill_points = row.get_int(42).unwrap();
+        character.karma = row.get_int(43).unwrap();
+        character.usage = row.get_int(44).unwrap();
+        character.map_id = row.get_int(45).unwrap();
+        character.coords.x = row.get_int(46).unwrap();
+        character.coords.y = row.get_int(47).unwrap();
+        character.direction = Direction::from(row.get_int(48).unwrap());
+        character.sit_state = SitState::from(row.get_int(49).unwrap());
+        character.hidden = row.get_int(50).unwrap() == 1;
+        character.guild_name = row.get_string(51);
+        character.guild_tag = row.get_string(52);
 
-        character.items = conn
-            .exec_map(
-                include_str!("../sql/get_character_inventory.sql"),
-                params! {
-                    "character_id" => id,
-                },
-                |mut row: Row| Item {
-                    id: row.take(0).unwrap(),
-                    amount: row.take(1).unwrap(),
+        character.items = db
+            .query_map(
+                &insert_params(
+                    include_str!("../sql/get_character_inventory.sql"),
+                    &[("character_id", &id)],
+                ),
+                |row| Item {
+                    id: row.get_int(0).unwrap(),
+                    amount: row.get_int(1).unwrap(),
                 },
             )
             .await?;
 
-        character.bank = conn
-            .exec_map(
-                include_str!("../sql/get_character_bank.sql"),
-                params! {
-                    "character_id" => id,
-                },
-                |mut row: Row| Item {
-                    id: row.take(0).unwrap(),
-                    amount: row.take(1).unwrap(),
-                },
-            )
-            .await?;
-
-        character.spells = conn
-            .exec_map(
-                include_str!("../sql/get_character_spells.sql"),
-                params! {
-                    "character_id" => id,
-                },
-                |mut row: Row| Spell {
-                    id: row.take(0).unwrap(),
-                    level: row.take(1).unwrap(),
+        character.bank = db
+            .query_map(
+                &insert_params(
+                    include_str!("../sql/get_character_bank.sql"),
+                    &[("character_id", &id)],
+                ),
+                |row| Item {
+                    id: row.get_int(0).unwrap(),
+                    amount: row.get_int(1).unwrap(),
                 },
             )
             .await?;
 
-        character.quests = conn
-            .exec_map(
-                include_str!("../sql/get_character_quest_progress.sql"),
-                params! {
-                    "character_id" => id,
+        character.spells = db
+            .query_map(
+                &insert_params(
+                    include_str!("../sql/get_character_spells.sql"),
+                    &[("character_id", &id)],
+                ),
+                |row| Spell {
+                    id: row.get_int(0).unwrap(),
+                    level: row.get_int(1).unwrap(),
                 },
-                |mut row: Row| QuestProgress {
-                    id: row.take(0).unwrap(),
-                    state: row.take(1).unwrap(),
+            )
+            .await?;
+
+        character.quests = db
+            .query_map(
+                &insert_params(
+                    include_str!("../sql/get_character_quest_progress.sql"),
+                    &[("character_id", &id)],
+                ),
+                |row| QuestProgress {
+                    id: row.get_int(0).unwrap(),
+                    state: row.get_int(1).unwrap(),
                     npc_kills: {
-                        let json = row.take::<String, usize>(2).unwrap();
+                        let json = row.get_string(2).unwrap();
                         match serde_json::from_str::<serde_json::Value>(&json) {
                             Ok(value) => match value.as_object() {
                                 Some(object) => object
@@ -154,25 +153,20 @@ impl Character {
                             Err(_) => Vec::new(),
                         }
                     },
-                    player_kills: row.take(3).unwrap(),
-                    done_at: row
-                        .take::<Option<NaiveDateTime>, usize>(4)
-                        .map(|done_at| {
-                            done_at.map(|done_at| Utc.from_local_datetime(&done_at).unwrap())
-                        })
-                        .unwrap(),
-                    completions: row.take(5).unwrap(),
+                    player_kills: row.get_int(3).unwrap(),
+                    done_at: row.get_date(4),
+                    completions: row.get_int(5).unwrap(),
                 },
             )
             .await?;
 
-        character.auto_pickup_items = conn
-            .exec_map(
-                include_str!("../sql/get_character_auto_pickup.sql"),
-                params! {
-                    "character_id" => id,
-                },
-                |mut row: Row| row.take::<i32, usize>(0).unwrap(),
+        character.auto_pickup_items = db
+            .query_map(
+                &insert_params(
+                    include_str!("../sql/get_character_auto_pickup.sql"),
+                    &[("character_id", &id)],
+                ),
+                |row| row.get_int(0).unwrap(),
             )
             .await?;
 

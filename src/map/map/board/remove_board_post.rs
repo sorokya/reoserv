@@ -1,6 +1,7 @@
-use mysql_async::{params, prelude::Queryable, Conn};
-
-use crate::utils::get_board_tile_spec;
+use crate::{
+    db::{insert_params, DbHandle},
+    utils::get_board_tile_spec,
+};
 
 use super::super::Map;
 
@@ -29,16 +30,8 @@ impl Map {
             return;
         }
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get connection from pool: {}", e);
-                    return;
-                }
-            };
-
             let map = match player.get_map().await {
                 Ok(map) => map,
                 Err(e) => {
@@ -47,7 +40,7 @@ impl Map {
                 }
             };
 
-            if let Err(e) = delete_post(&mut conn, post_id).await {
+            if let Err(e) = delete_post(&db, post_id).await {
                 error!("Failed to delete post: {}", e);
             }
 
@@ -56,12 +49,10 @@ impl Map {
     }
 }
 
-async fn delete_post(conn: &mut Conn, post_id: i32) -> Result<(), mysql_async::Error> {
-    conn.exec_drop(
+async fn delete_post(db: &DbHandle, post_id: i32) -> anyhow::Result<()> {
+    db.execute(&insert_params(
         include_str!("../../../sql/delete_board_post.sql"),
-        params! {
-            "id" => post_id,
-        },
-    )
+        &[("id", &post_id)],
+    ))
     .await
 }

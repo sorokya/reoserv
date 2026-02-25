@@ -1,7 +1,5 @@
-use mysql_async::{params, prelude::Queryable, Row, Value};
-
 use super::super::World;
-use crate::LANG;
+use crate::{db::insert_params, LANG};
 
 impl World {
     pub async fn ban_player(
@@ -26,23 +24,13 @@ impl World {
             ));
         }
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(err) => {
-                    error!("Failed to get connection from pool: {}", err);
-                    return;
-                }
-            };
-
-            let row: Row = match conn
-                .exec_first(
+            let row = match db
+                .query_one(&insert_params(
                     include_str!("../../../sql/get_character_account.sql"),
-                    params! {
-                        "character_name" => &victim_name,
-                    },
-                )
+                    &[("character_name", &victim_name)],
+                ))
                 .await
             {
                 Ok(Some(row)) => row,
@@ -53,31 +41,34 @@ impl World {
                 _ => return,
             };
 
-            let account_id: u32 = match row.get("id") {
+            let account_id = match row.get_int(0) {
                 Some(account_id) => account_id,
                 None => return,
             };
 
-            let ip: String = match row.get("last_login_ip") {
+            let ip = match row.get_string(1) {
                 Some(ip) => ip,
                 None => return,
             };
 
             let duration = duration_str::parse(&duration);
 
-            match conn
-                .exec_drop(
+            match db
+                .execute(&insert_params(
                     include_str!("../../../sql/create_ban.sql"),
-                    params! {
-                        "account_id" => account_id,
-                        "admin_name" => &admin_name,
-                        "ip" => &ip,
-                        "duration" => &match duration {
-                            Ok(duration) => Value::from(format!("{}", duration.as_secs() / 60)),
-                            Err(_) => Value::NULL,
-                        },
-                    },
-                )
+                    &[
+                        ("account_id", &account_id),
+                        ("admin_name", &admin_name),
+                        ("ip", &ip),
+                        (
+                            "duration",
+                            &match duration {
+                                Ok(duration) => Some(format!("{}", duration.as_secs() / 60)),
+                                Err(_) => None,
+                            },
+                        ),
+                    ],
+                ))
                 .await
             {
                 Ok(_) => {}

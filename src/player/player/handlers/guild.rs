@@ -1,4 +1,3 @@
-use chrono::NaiveDateTime;
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::{
@@ -21,10 +20,9 @@ use eolib::{
         r#pub::NpcType,
     },
 };
-use futures::StreamExt;
-use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 use crate::{
+    db::{insert_params, DbHandle},
     player::{
         player::guild::{
             guild_exists, validate_guild_description, validate_guild_name, validate_guild_rank,
@@ -82,7 +80,7 @@ impl Player {
         };
 
         let player_id = self.id;
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         self.guild_create_members = Vec::with_capacity(SETTINGS.guild.min_players);
 
@@ -131,15 +129,7 @@ impl Player {
                 return;
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting SQL connection: {}", e);
-                    return;
-                }
-            };
-
-            if guild_exists(&mut conn, &request.guild_tag, &request.guild_name).await {
+            if guild_exists(&db, &request.guild_tag, &request.guild_name).await {
                 player.send_guild_reply(GuildReply::Exists);
                 return;
             }
@@ -211,7 +201,7 @@ impl Player {
         };
 
         let player_id = self.id;
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         let guild_create_members = self.guild_create_members.clone();
         self.guild_create_members.clear();
 
@@ -244,28 +234,15 @@ impl Player {
                 return;
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting SQL connection: {}", e);
-                    return;
-                }
-            };
-
-            if guild_exists(&mut conn, &create.guild_tag, &create.guild_name).await {
+            if guild_exists(&db, &create.guild_tag, &create.guild_name).await {
                 player.send_guild_reply(GuildReply::Exists);
                 return;
             }
 
             let guild_tag = create.guild_tag.to_uppercase();
 
-            if let Err(e) = create_guild(
-                &mut conn,
-                &guild_tag,
-                &create.guild_name,
-                &create.description,
-            )
-            .await
+            if let Err(e) =
+                create_guild(&db, &guild_tag, &create.guild_name, &create.description).await
             {
                 error!("Error creating guild: {}", e);
                 return;
@@ -330,7 +307,7 @@ impl Player {
 
         let recruiter_id = self.id;
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         tokio::spawn(async move {
             let character = match map
@@ -356,15 +333,7 @@ impl Player {
                 None => return,
             };
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            let guild_bank = get_guild_bank(&mut conn, character.guild_tag.as_ref().unwrap()).await;
+            let guild_bank = get_guild_bank(&db, character.guild_tag.as_ref().unwrap()).await;
             if guild_bank < SETTINGS.guild.recruit_cost {
                 player.send(
                     PacketAction::Reply,
@@ -377,19 +346,18 @@ impl Player {
                 return;
             }
 
-            if let Err(e) =
-                set_guild_bank(&mut conn, tag, guild_bank - SETTINGS.guild.recruit_cost).await
+            if let Err(e) = set_guild_bank(&db, tag, guild_bank - SETTINGS.guild.recruit_cost).await
             {
                 error!("Error setting guild bank: {}", e);
                 return;
             }
 
-            let guild_name = match get_guild_name(&mut conn, tag).await {
+            let guild_name = match get_guild_name(&db, tag).await {
                 Some(guild_name) => guild_name,
                 None => return,
             };
 
-            let rank_string = match get_new_member_guild_rank(&mut conn, tag).await {
+            let rank_string = match get_new_member_guild_rank(&db, tag).await {
                 Some(rank_string) => rank_string,
                 None => return,
             };
@@ -512,18 +480,10 @@ impl Player {
             None => return,
         };
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
             let npc_id = match map
                 .get_npc_id_for_index(npc_index)
                 .await
@@ -563,8 +523,7 @@ impl Player {
             match packet.info_type {
                 GuildInfoType::Description => {
                     let description =
-                        get_guild_description(&mut conn, character.guild_tag.as_ref().unwrap())
-                            .await;
+                        get_guild_description(&db, character.guild_tag.as_ref().unwrap()).await;
 
                     player.send(
                         PacketAction::Take,
@@ -573,8 +532,7 @@ impl Player {
                     );
                 }
                 GuildInfoType::Ranks => {
-                    let ranks =
-                        get_guild_ranks(&mut conn, character.guild_tag.as_ref().unwrap()).await;
+                    let ranks = get_guild_ranks(&db, character.guild_tag.as_ref().unwrap()).await;
 
                     player.send(
                         PacketAction::Rank,
@@ -596,7 +554,7 @@ impl Player {
                 }
                 GuildInfoType::Bank => {
                     let gold_amount =
-                        get_guild_bank(&mut conn, character.guild_tag.as_ref().unwrap()).await;
+                        get_guild_bank(&db, character.guild_tag.as_ref().unwrap()).await;
 
                     player.send(
                         PacketAction::Sell,
@@ -679,19 +637,11 @@ impl Player {
             None => return,
         };
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         let player_id = self.id;
 
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get SQL connection: {}", e);
-                    return;
-                }
-            };
-
             let npc_id = match map
                 .get_npc_id_for_index(npc_index)
                 .await
@@ -741,7 +691,7 @@ impl Player {
                         player,
                         character.guild_tag.as_ref().unwrap(),
                         description.description,
-                        &mut conn,
+                        &db,
                     )
                     .await
                 }
@@ -750,7 +700,7 @@ impl Player {
                         player,
                         character.guild_tag.as_ref().unwrap(),
                         ranks.ranks,
-                        &mut conn,
+                        &db,
                     )
                     .await
                 }
@@ -792,7 +742,7 @@ impl Player {
 
         let world = self.world.clone();
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         let player_id = self.id;
 
@@ -840,15 +790,7 @@ impl Player {
                 None => return,
             };
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            let ranks = get_guild_ranks(&mut conn, guild_tag).await;
+            let ranks = get_guild_ranks(&db, guild_tag).await;
             let rank_str = match ranks.get(packet.rank as usize - 1) {
                 Some(rank) => rank,
                 None => return,
@@ -923,7 +865,7 @@ impl Player {
             None => return,
         };
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         let player_id = self.id;
 
         tokio::spawn(async move {
@@ -957,137 +899,69 @@ impl Player {
                 return;
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
+            let row = match db
+            .query_one(&insert_params("SELECT `id`, `tag`, `name`, `description`, `bank`, `created_at` FROM `guilds` WHERE :guild_identity IN (`tag`, `name`)", &[("guild_identity", &report.guild_identity)])).await {
+                Ok(Some(row)) => row,
+                Ok(None) => {
+                    player.send_guild_reply(GuildReply::NotFound);
                     return;
                 }
-            };
-
-            let mut result = match conn
-                .exec_iter(
-                    "CALL GetGuildDetails(:guild_identity);",
-                    params! {
-                        "guild_identity" => &report.guild_identity,
-                    },
-                )
-                .await
-            {
-                Ok(result) => result,
                 Err(e) => {
                     error!("Error getting guild details: {}", e);
                     return;
                 }
             };
 
+            let guild_id = row.get_int(0).unwrap();
+            let tag = row.get_string(1).unwrap();
+
+            let staff = match db.query_map(
+                &insert_params(
+                    "SELECT `guild_rank`, `name` FROM `characters` WHERE `guild_id` = :guild_id AND `guild_rank` <= 2",
+                    &[("guild_id", &guild_id)],
+                ),
+                |row| GuildStaff {
+                    rank: row.get_int(0).unwrap(),
+                    name: row.get_string(1).unwrap(),
+                },
+            ).await {
+                Ok(staff) => staff,
+                Err(e) => {
+                    error!("Error getting guild staff: {}", e);
+                    return;
+                }
+            };
+
+            let ranks = get_guild_ranks(&db, &tag).await;
+
             let mut packet = GuildReportServerPacket::default();
 
-            {
-                let mut stream = match result.stream::<Row>().await {
-                    Ok(Some(stream)) => stream,
-                    Ok(None) => {
-                        player.send_guild_reply(GuildReply::NotFound);
-                        return;
-                    }
-                    Err(e) => {
-                        error!("Error getting guild details: {}", e);
-                        return;
-                    }
-                };
-
-                let mut row = match stream.next().await {
-                    Some(Ok(row)) => row,
-                    Some(Err(e)) => {
-                        error!("Error getting guild details: {}", e);
-                        return;
-                    }
-                    None => {
-                        error!("Error getting guild details: no rows returned");
-                        return;
-                    }
-                };
-
-                packet.tag = row.take("tag").unwrap();
-                packet.name = row.take("name").unwrap();
-                packet.description = row.take("description").unwrap();
-
-                let created_at: NaiveDateTime = row.take("created_at").unwrap();
-                packet.create_date = created_at.format("%Y-%m-%d").to_string();
-
-                let bank: i32 = row.take("bank").unwrap();
-                packet.wealth = if bank < 2000 {
-                    "bankrupt".to_string()
-                } else if bank < 10_000 {
-                    "poor".to_string()
-                } else if bank < 50_000 {
-                    "normal".to_string()
-                } else if bank < 100_000 {
-                    "wealthy".to_string()
-                } else {
-                    "very wealthy".to_string()
-                };
+            for i in 0..9 {
+                packet.ranks[i] =
+                    format!("{:<4}", ranks.get(i).unwrap_or(&"".to_string()).to_owned());
             }
 
-            {
-                let mut stream = match result.stream::<Row>().await {
-                    Ok(Some(stream)) => stream,
-                    Ok(None) => {
-                        player.send_guild_reply(GuildReply::NotFound);
-                        return;
-                    }
-                    Err(e) => {
-                        error!("Error getting guild details: {}", e);
-                        return;
-                    }
-                };
+            packet.staff = staff;
 
-                let mut index = 0;
-                while let Some(row) = stream.next().await {
-                    let mut row = match row {
-                        Ok(row) => row,
-                        Err(e) => {
-                            error!("Error getting guild details: {}", e);
-                            return;
-                        }
-                    };
+            packet.tag = tag;
+            packet.name = row.get_string(2).unwrap();
+            packet.description = row.get_string(3).unwrap();
 
-                    // Client won't display ranks less than 4 characters long
-                    packet.ranks[index] =
-                        format!("{:<4}", row.take::<String, &str>("rank").unwrap());
+            let created_at = row.get_date(5).unwrap();
+            packet.create_date = created_at.format("%Y-%m-%d").to_string();
 
-                    index += 1;
-                }
-            }
-
-            {
-                let mut stream = match result.stream::<Row>().await {
-                    Ok(Some(stream)) => stream,
-                    Ok(None) => {
-                        player.send_guild_reply(GuildReply::NotFound);
-                        return;
-                    }
-                    Err(e) => {
-                        error!("Error getting guild details: {}", e);
-                        return;
-                    }
-                };
-
-                while let Some(row) = stream.next().await {
-                    let mut row = match row {
-                        Ok(row) => row,
-                        Err(e) => {
-                            error!("Error getting guild details: {}", e);
-                            return;
-                        }
-                    };
-
-                    packet.staff.push(GuildStaff {
-                        rank: row.take("guild_rank").unwrap(),
-                        name: row.take("name").unwrap(),
-                    });
-                }
-            }
+            let bank = row.get_int(4).unwrap();
+            packet.wealth = if bank < 2000 {
+                "bankrupt".to_string()
+            } else if bank < 10_000 {
+                "poor".to_string()
+            } else if bank < 50_000 {
+                "normal".to_string()
+            } else if bank < 100_000 {
+                "wealthy".to_string()
+            } else {
+                "very wealthy".to_string()
+            };
 
             player.send(PacketAction::Report, PacketFamily::Guild, &packet);
         });
@@ -1121,7 +995,7 @@ impl Player {
             None => return,
         };
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         let player_id = self.id;
 
@@ -1156,24 +1030,16 @@ impl Player {
                 return;
             }
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            let members: Vec<GuildMember> = match conn
-                .exec_map(
-                    include_str!("../../../sql/get_guild_memberlist.sql"),
-                    params! {
-                        "guild_identity" => &tell.guild_identity,
-                    },
-                    |mut row: Row| GuildMember {
-                        rank: row.take("guild_rank").unwrap(),
-                        name: row.take("name").unwrap(),
-                        rank_name: row.take("guild_rank_string").unwrap(),
+            let members: Vec<GuildMember> = match db
+                .query_map(
+                    &insert_params(
+                        include_str!("../../../sql/get_guild_memberlist.sql"),
+                        &[("guild_identity", &tell.guild_identity)],
+                    ),
+                    |row| GuildMember {
+                        rank: row.get_int(0).unwrap(),
+                        name: row.get_string(1).unwrap(),
+                        rank_name: row.get_string(2).unwrap(),
                     },
                 )
                 .await
@@ -1223,7 +1089,7 @@ impl Player {
 
         let player_id = self.id;
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         tokio::spawn(async move {
             let character = match map
@@ -1245,29 +1111,15 @@ impl Player {
                 None => return,
             };
 
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
             if character.guild_rank == Some(1) {
-                let leader_count = match conn
-                    .exec_map(
+                let leader_count = match db
+                    .query_int(&insert_params(
                         include_str!("../../../sql/get_count_guild_leader.sql"),
-                        params! {
-                            "guild_tag" => guild_tag,
-                        },
-                        |mut row: Row| row.take::<i32, usize>(0).unwrap(),
-                    )
+                        &[("guild_tag", guild_tag)],
+                    ))
                     .await
                 {
-                    Ok(leader_counts) => match leader_counts.first() {
-                        Some(leader_count) => *leader_count,
-                        None => 0,
-                    },
+                    Ok(count) => count.unwrap_or(1),
                     Err(e) => {
                         error!("Error getting leader count: {}", e);
                         return;
@@ -1403,20 +1255,20 @@ async fn update_guild_description(
     player: &PlayerHandle,
     tag: &str,
     description: String,
-    conn: &mut Conn,
+    db: &DbHandle,
 ) {
     if !validate_guild_description(&description) {
         return;
     }
 
-    match conn
-        .exec_drop(
+    match db
+        .execute(&insert_params(
             "UPDATE Guild SET `description` = :description WHERE `tag` = :tag",
-            params! {
-                "description" => description,
-                "tag" => tag,
-            },
-        )
+            &[
+                ("description", &description.to_string()),
+                ("tag", &tag.to_string()),
+            ],
+        ))
         .await
     {
         Ok(_) => {
@@ -1428,27 +1280,27 @@ async fn update_guild_description(
     };
 }
 
-async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9], conn: &mut Conn) {
+async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9], db: &DbHandle) {
     if ranks.iter().any(|rank| !validate_guild_rank(rank)) {
         return;
     }
 
-    let existing_ranks = get_guild_ranks(conn, tag).await;
+    let existing_ranks = get_guild_ranks(db, tag).await;
 
     for (index, rank) in ranks.iter().enumerate() {
         if existing_ranks[index].eq(rank) {
             continue;
         }
 
-        if let Err(e) = conn
-            .exec_drop(
+        if let Err(e) = db
+            .execute(&insert_params(
                 include_str!("../../../sql/update_guild_rank.sql"),
-                params! {
-                    "rank" => rank,
-                    "tag" => tag,
-                    "index" => index,
-                },
-            )
+                &[
+                    ("rank", &rank.to_string()),
+                    ("tag", &tag.to_string()),
+                    ("index", &index.to_string()),
+                ],
+            ))
             .await
         {
             error!("Error updating guild rank: {}", e);
@@ -1459,43 +1311,42 @@ async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9]
     player.send_guild_reply(GuildReply::RanksUpdated);
 }
 
-async fn get_guild_description(conn: &mut Conn, tag: &str) -> String {
-    match conn
-        .exec_first::<Row, &str, Params>(
+async fn get_guild_description(db: &DbHandle, tag: &str) -> String {
+    let value = match db
+        .query_string(&insert_params(
             include_str!("../../../sql/get_guild_description.sql"),
-            params! {
-                "tag" => tag,
-            },
-        )
+            &[("tag", &tag.to_string())],
+        ))
         .await
     {
-        Ok(Some(row)) => {
-            let description: String = row.get(0).unwrap();
+        Ok(description) => description,
+        Err(e) => {
+            error!("Error getting guild description: {}", e);
+            None
+        }
+    };
+
+    match value {
+        Some(description) => {
             if description.is_empty() {
-                " ".to_owned()
+                " ".to_string()
             } else {
                 description
             }
         }
-        Err(e) => {
-            error!("Error getting guild description: {}", e);
-            " ".to_owned()
-        }
-        _ => " ".to_owned(),
+        None => " ".to_string(),
     }
 }
 
-async fn get_guild_bank(conn: &mut Conn, tag: &str) -> i32 {
-    match conn
-        .exec_first::<Row, &str, Params>(
+async fn get_guild_bank(db: &DbHandle, tag: &str) -> i32 {
+    match db
+        .query_int(&insert_params(
             "SELECT `bank` FROM Guild WHERE `tag` = :tag",
-            params! {
-                "tag" => tag,
-            },
-        )
+            &[("tag", &tag.to_string())],
+        ))
         .await
     {
-        Ok(Some(row)) => row.get::<i32, usize>(0).unwrap(),
+        Ok(Some(amount)) => amount,
         Err(e) => {
             error!("Error getting guild bank: {}", e);
             0
@@ -1504,28 +1355,23 @@ async fn get_guild_bank(conn: &mut Conn, tag: &str) -> i32 {
     }
 }
 
-async fn set_guild_bank(conn: &mut Conn, tag: &str, bank: i32) -> Result<(), mysql_async::Error> {
-    conn.exec_drop(
+async fn set_guild_bank(db: &DbHandle, tag: &str, bank: i32) -> anyhow::Result<()> {
+    db.execute(&insert_params(
         "UPDATE Guild SET `bank` = :bank WHERE `tag` = :tag",
-        params! {
-            "bank" => bank,
-            "tag" => tag,
-        },
-    )
+        &[("bank", &bank.to_string()), ("tag", &tag.to_string())],
+    ))
     .await
 }
 
-async fn get_guild_name(conn: &mut Conn, tag: &str) -> Option<String> {
-    match conn
-        .exec_first::<Row, &str, Params>(
+async fn get_guild_name(db: &DbHandle, tag: &str) -> Option<String> {
+    match db
+        .query_string(&insert_params(
             "SELECT `name` FROM Guild WHERE `tag` = :tag",
-            params! {
-                "tag" => tag,
-            },
-        )
+            &[("tag", &tag.to_string())],
+        ))
         .await
     {
-        Ok(Some(row)) => Some(row.get(0).unwrap()),
+        Ok(Some(name)) => Some(name),
         Err(e) => {
             error!("Error getting guild name: {}", e);
             None
@@ -1534,17 +1380,15 @@ async fn get_guild_name(conn: &mut Conn, tag: &str) -> Option<String> {
     }
 }
 
-async fn get_new_member_guild_rank(conn: &mut Conn, tag: &str) -> Option<String> {
-    match conn
-        .exec_first::<Row, &str, Params>(
+async fn get_new_member_guild_rank(db: &DbHandle, tag: &str) -> Option<String> {
+    match db
+        .query_string(&insert_params(
             "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 8 WHERE `tag` = :tag",
-            params! {
-                "tag" => tag,
-            },
-        )
+            &[("tag", &tag.to_string())],
+        ))
         .await
     {
-        Ok(Some(row)) => Some(row.get(0).unwrap()),
+        Ok(Some(rank)) => Some(rank),
         Err(e) => {
             error!("Error getting guild rank: {}", e);
             None
@@ -1554,32 +1398,41 @@ async fn get_new_member_guild_rank(conn: &mut Conn, tag: &str) -> Option<String>
 }
 
 async fn create_guild(
-    conn: &mut Conn,
+    db: &DbHandle,
     tag: &str,
     name: &str,
     description: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    conn.exec_drop(
+    db.execute(&insert_params(
         include_str!("../../../sql/create_guild.sql"),
-        params! {
-            "tag" => tag,
-            "name" => name,
-            "description" => description,
-        },
-    )
+        &[
+            ("tag", &tag.to_string()),
+            ("name", &name.to_string()),
+            ("description", &description.to_string()),
+        ],
+    ))
     .await?;
 
-    let guild_id = conn.last_insert_id().unwrap();
+    let guild_id = db.get_last_insert_id().await.unwrap();
 
-    conn.exec_drop(
+    db.execute(&insert_params(
         include_str!("../../../sql/create_guild_ranks.sql"),
-        params! {
-            "guild_id" => guild_id,
-            "leader_rank_name" => SETTINGS.guild.default_leader_rank_name.clone(),
-            "recruiter_rank_name" => SETTINGS.guild.default_recruiter_rank_name.clone(),
-            "new_member_rank_name" => SETTINGS.guild.default_new_member_rank_name.clone(),
-        },
-    )
+        &[
+            ("guild_id", &guild_id.to_string()),
+            (
+                "leader_rank_name",
+                &SETTINGS.guild.default_leader_rank_name.clone(),
+            ),
+            (
+                "recruiter_rank_name",
+                &SETTINGS.guild.default_recruiter_rank_name.clone(),
+            ),
+            (
+                "new_member_rank_name",
+                &SETTINGS.guild.default_new_member_rank_name.clone(),
+            ),
+        ],
+    ))
     .await?;
 
     Ok(())

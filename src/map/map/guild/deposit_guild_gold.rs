@@ -4,9 +4,8 @@ use eolib::protocol::{
     net::{server::GuildBuyServerPacket, PacketAction, PacketFamily},
     r#pub::NpcType,
 };
-use mysql_async::{params, prelude::Queryable, Params, Row};
 
-use crate::{NPC_DB, SETTINGS};
+use crate::{db::insert_params, NPC_DB, SETTINGS};
 
 use super::super::Map;
 
@@ -48,27 +47,17 @@ impl Map {
             );
         }
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
 
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Error getting connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            let current_bank_amount = match conn
-                .exec_first::<Row, &str, Params>(
-                    "SELECT `bank` FROM Guild WHERE `tag` = :tag",
-                    params! {
-                        "tag" => &tag,
-                    },
-                )
+            let current_bank_amount = match db
+                .query_int(&insert_params(
+                    "SELECT `bank` FROM `guilds` WHERE `tag` = :tag",
+                    &[("tag", &tag)],
+                ))
                 .await
             {
-                Ok(Some(row)) => row.get::<i32, usize>(0).unwrap(),
+                Ok(Some(amount)) => amount,
                 Ok(None) => return,
                 Err(e) => {
                     error!("Error getting guild bank amount: {}", e);
@@ -82,14 +71,11 @@ impl Map {
 
             let amount = cmp::min(SETTINGS.guild.bank_max_gold - current_bank_amount, amount);
 
-            if let Err(e) = conn
-                .exec_drop(
+            if let Err(e) = db
+                .execute(&insert_params(
                     "UPDATE Guild SET `bank` = `bank` + :amount WHERE `tag` = :tag",
-                    params! {
-                        "amount" => amount,
-                        "tag" => tag,
-                    },
-                )
+                    &[("amount", &amount), ("tag", &tag)],
+                ))
                 .await
             {
                 error!("Error updating guild bank: {}", e);

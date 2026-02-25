@@ -1,14 +1,11 @@
-use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
+use crate::db::{insert_params, DbHandle};
 
-pub async fn guild_exists(conn: &mut Conn, guild_tag: &str, guild_name: &str) -> bool {
+pub async fn guild_exists(db: &DbHandle, guild_tag: &str, guild_name: &str) -> bool {
     matches!(
-        conn.exec_first::<Row, &str, Params>(
+        db.query_one(&insert_params(
             "SELECT id FROM Guild WHERE name = :name OR tag = :tag",
-            params! {
-                "name" => guild_name,
-                "tag" => guild_tag,
-            },
-        )
+            &[("name", &guild_name), ("tag", &guild_tag)],
+        ))
         .await,
         Ok(Some(_))
     )

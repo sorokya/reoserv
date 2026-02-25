@@ -3,7 +3,6 @@ use crate::{
 };
 
 use super::{load_maps::load_maps, Command, Party};
-use mysql_async::Pool;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -15,7 +14,7 @@ pub struct World {
     pending_logins: Vec<i32>,
     characters: HashMap<String, i32>,
     guilds: HashMap<String, Vec<i32>>,
-    pool: Pool,
+    db: crate::db::DbHandle,
     maps: Option<HashMap<i32, MapHandle>>,
     parties: Vec<Party>,
     npc_act_ticks: i32,
@@ -48,10 +47,10 @@ mod shutdown;
 mod tick;
 
 impl World {
-    pub fn new(rx: UnboundedReceiver<Command>, pool: Pool) -> Self {
+    pub fn new(rx: UnboundedReceiver<Command>, db: crate::db::DbHandle) -> Self {
         Self {
             rx,
-            pool,
+            db,
             players: HashMap::new(),
             accounts: Vec::new(),
             pending_logins: Vec::new(),
@@ -251,7 +250,7 @@ impl World {
             }
 
             Command::LoadMapFiles { world, respond_to } => {
-                match load_maps(self.pool.to_owned(), world).await {
+                match load_maps(self.db.to_owned(), world).await {
                     Ok(maps) => {
                         self.maps = Some(maps);
                         let _ = respond_to.send(());

@@ -9,11 +9,10 @@ use eolib::protocol::{
 };
 use eoplus::Arg;
 use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
-use mysql_async::Conn;
 use rand::Rng;
 use std::cmp;
 
-use crate::{player::PlayerHandle, EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS};
+use crate::{db::DbHandle, player::PlayerHandle, EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS};
 
 mod add_bank_item;
 mod add_item;
@@ -118,7 +117,7 @@ pub struct QuestProgress {
     pub state: i32,
     pub npc_kills: Vec<(i32, i32)>,
     pub player_kills: i32,
-    pub done_at: Option<DateTime<Utc>>,
+    pub done_at: Option<NaiveDateTime>,
     pub completions: i32,
 }
 
@@ -303,12 +302,12 @@ impl Character {
 
     pub async fn save(
         &mut self,
-        conn: &mut Conn,
+        db: &DbHandle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if self.id > 0 {
-            self.update(conn).await
+            self.update(db).await
         } else {
-            self.create(conn).await
+            self.create(db).await
         }
     }
 
@@ -356,7 +355,7 @@ impl Character {
                             None => return false,
                         };
 
-                        let diff = (Utc::now() - done_at).num_days() as i32;
+                        let diff = (Utc::now().naive_utc() - done_at).num_days() as i32;
                         if diff < 1 {
                             progress.completions >= times_per_day
                         } else {
@@ -553,12 +552,12 @@ impl Character {
                         .iter_mut()
                         .find(|q| q.id == quest_id)
                         .unwrap()
-                        .done_at = Some(Utc::now());
+                        .done_at = Some(Utc::now().naive_utc());
                 }
                 "ResetDaily" => {
                     let progress = self.quests.iter_mut().find(|q| q.id == quest_id).unwrap();
                     if progress.done_at.is_none() {
-                        progress.done_at = Some(Utc::now());
+                        progress.done_at = Some(Utc::now().naive_utc());
                     }
                     progress.completions += 1;
                     progress.state = 0;

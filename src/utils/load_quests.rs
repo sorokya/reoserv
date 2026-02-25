@@ -64,6 +64,13 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
 
     let input = String::from_utf8_lossy(&buf);
 
+    // Remove comments
+    let input = input
+        .lines()
+        .filter(|line| !line.trim_start().starts_with("//") && !line.trim().is_empty())
+        .collect::<Vec<&str>>()
+        .join("\n");
+
     match parse_quest(&input) {
         Ok(quest) => Some((id, quest)),
         Err(e) => {

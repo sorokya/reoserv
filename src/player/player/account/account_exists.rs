@@ -1,16 +1,14 @@
-use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
+use crate::db::{insert_params, DbHandle};
 
 pub async fn account_exists(
-    conn: &mut Conn,
+    db: &DbHandle,
     name: &str,
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-    match conn
-        .exec_first::<Row, &str, Params>(
+    match db
+        .query_one(&insert_params(
             r"SELECT id FROM `Account` WHERE `name` = :name",
-            params! {
-                "name" => name,
-            },
-        )
+            &[("name", &name)],
+        ))
         .await?
     {
         Some(_) => Ok(true),

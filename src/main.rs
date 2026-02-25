@@ -23,6 +23,7 @@ use lazy_static::lazy_static;
 mod utils;
 mod arenas;
 mod character;
+mod db;
 mod deep;
 use arenas::Arenas;
 mod commands;

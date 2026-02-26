@@ -2,14 +2,14 @@ use anyhow::anyhow;
 use bytes::{BufMut, Bytes, BytesMut};
 use chrono::Utc;
 use eolib::{
-    data::{decode_number, encode_number, EoSerialize, EoWriter},
+    data::{EoSerialize, EoWriter, decode_number, encode_number},
     encrypt::{decrypt_packet, encrypt_packet},
-    packet::{generate_sequence_start, Sequencer},
+    packet::{Sequencer, generate_sequence_start},
     protocol::net::{PacketAction, PacketFamily},
 };
 use futures::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
-use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
+use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 use crate::PACKET_RATE_LIMITS;
 
@@ -131,19 +131,18 @@ impl PacketBus {
                         l.action == PacketAction::from(data_buf[0])
                             && l.family == PacketFamily::from(data_buf[1])
                     }) {
-                        if let Some(last_processed) = self.log.last_processed(&data_buf) {
-                            if Utc::now()
+                        if let Some(last_processed) = self.log.last_processed(&data_buf)
+                            && Utc::now()
                                 .signed_duration_since(last_processed)
                                 .num_milliseconds()
                                 < rate_limit.limit
-                            {
-                                let mut buf = BytesMut::new();
-                                buf.put_u8(0xfe);
-                                buf.put_u8(0xfe);
-                                buf.put_u8(data_buf[2]);
+                        {
+                            let mut buf = BytesMut::new();
+                            buf.put_u8(0xfe);
+                            buf.put_u8(0xfe);
+                            buf.put_u8(data_buf[2]);
 
-                                return Some(Ok(buf.freeze()));
-                            }
+                            return Some(Ok(buf.freeze()));
                         }
 
                         self.log.add_entry(&data_buf);
@@ -183,19 +182,17 @@ impl PacketBus {
                                     {
                                         if let Some(last_processed) =
                                             self.log.last_processed(&data_buf)
-                                        {
-                                            if Utc::now()
+                                            && Utc::now()
                                                 .signed_duration_since(last_processed)
                                                 .num_milliseconds()
                                                 < rate_limit.limit
-                                            {
-                                                let mut buf = BytesMut::new();
-                                                buf.put_u8(0xfe);
-                                                buf.put_u8(0xfe);
-                                                buf.put_u8(data_buf[2]);
+                                        {
+                                            let mut buf = BytesMut::new();
+                                            buf.put_u8(0xfe);
+                                            buf.put_u8(0xfe);
+                                            buf.put_u8(data_buf[2]);
 
-                                                return Some(Ok(buf.freeze()));
-                                            }
+                                            return Some(Ok(buf.freeze()));
                                         }
 
                                         self.log.add_entry(&data_buf);

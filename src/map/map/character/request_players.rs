@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{NearbyInfo, RangeReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{NearbyInfo, RangeReplyServerPacket},
 };
 
 use super::super::Map;

@@ -1,6 +1,6 @@
 use eolib::protocol::{
     map::MapTileSpec,
-    net::{server::JukeboxOpenServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::JukeboxOpenServerPacket},
 };
 
 use super::super::Map;

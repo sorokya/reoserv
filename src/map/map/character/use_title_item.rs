@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::ItemReplyServerPacket, Item, PacketAction, PacketFamily},
+    net::{Item, PacketAction, PacketFamily, server::ItemReplyServerPacket},
     r#pub::ItemType,
 };
 

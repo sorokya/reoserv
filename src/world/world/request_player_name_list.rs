@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         InitInitServerPacket, InitInitServerPacketReplyCodeData,
         InitInitServerPacketReplyCodeDataPlayersListFriends, InitReply, PlayersListFriends,
     },
-    PacketAction, PacketFamily,
 };
 
 use super::World;

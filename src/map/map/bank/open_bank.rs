@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::BankOpenServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::BankOpenServerPacket},
     r#pub::NpcType,
 };
 

@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::BoardPlayerServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::BoardPlayerServerPacket};
 
 use crate::{db::insert_params, utils::get_board_tile_spec};
 

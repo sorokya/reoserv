@@ -1,10 +1,10 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             PaperdollAddClientPacket, PaperdollRemoveClientPacket, PaperdollRequestClientPacket,
         },
-        PacketAction,
     },
 };
 

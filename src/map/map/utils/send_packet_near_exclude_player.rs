@@ -2,8 +2,8 @@ use bytes::Bytes;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{PacketAction, PacketFamily},
         Coords,
+        net::{PacketAction, PacketFamily},
     },
 };
 

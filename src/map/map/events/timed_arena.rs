@@ -1,12 +1,12 @@
 use eolib::protocol::{
-    net::{
-        server::{ArenaDropServerPacket, ArenaUseServerPacket},
-        PacketAction, PacketFamily,
-    },
     Coords,
+    net::{
+        PacketAction, PacketFamily,
+        server::{ArenaDropServerPacket, ArenaUseServerPacket},
+    },
 };
 
-use crate::{map::map::ArenaPlayer, ARENAS};
+use crate::{ARENAS, map::map::ArenaPlayer};
 
 use super::super::Map;
 

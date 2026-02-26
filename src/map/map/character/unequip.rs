@@ -1,10 +1,10 @@
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
             AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollRemoveServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::ItemType,
 };

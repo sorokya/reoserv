@@ -1,6 +1,7 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction, PacketFamily,
         client::{AccountAgreeClientPacket, AccountCreateClientPacket, AccountRequestClientPacket},
         server::{
             AccountReply, AccountReplyServerPacket, AccountReplyServerPacketReplyCodeData,
@@ -10,23 +11,22 @@ use eolib::{
             AccountReplyServerPacketReplyCodeDataDefault,
             AccountReplyServerPacketReplyCodeDataExists,
         },
-        PacketAction, PacketFamily,
     },
 };
 
 use crate::{
+    EMAILS, SETTINGS,
     db::insert_params,
     deep::{
-        AccountAcceptClientPacket, AccountAcceptServerPacket, AccountConfigServerPacket,
-        ACCOUNT_REPLY_WRONG_PIN, ACTION_CONFIG,
+        ACCOUNT_REPLY_WRONG_PIN, ACTION_CONFIG, AccountAcceptClientPacket,
+        AccountAcceptServerPacket, AccountConfigServerPacket,
     },
     errors::WrongSessionIdError,
     player::{
-        player::account::{account_exists, generate_password_hash, validate_password},
         Action, ClientState,
+        player::account::{account_exists, generate_password_hash, validate_password},
     },
     utils::{is_deep, send_email},
-    EMAILS, SETTINGS,
 };
 
 use super::super::Player;

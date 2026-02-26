@@ -1,13 +1,13 @@
+use eolib::protocol::Coords;
 use eolib::protocol::net::server::{
     WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
 };
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use eolib::protocol::Coords;
 
+use crate::SETTINGS;
 use crate::character::Character;
 use crate::errors::DataNotFoundError;
 use crate::player::ClientState;
-use crate::SETTINGS;
 
 use super::super::Player;
 

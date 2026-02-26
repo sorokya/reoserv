@@ -1,6 +1,6 @@
 use std::cmp;
 
-use eolib::protocol::net::{server::ItemKickServerPacket, Item, PacketAction, PacketFamily};
+use eolib::protocol::net::{Item, PacketAction, PacketFamily, server::ItemKickServerPacket};
 
 use crate::SETTINGS;
 

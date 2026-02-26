@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::LockerBuyServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::LockerBuyServerPacket},
     r#pub::NpcType,
 };
 

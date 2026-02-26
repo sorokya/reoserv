@@ -1,19 +1,19 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::{
+        Coords,
         net::{
+            PacketAction, PacketFamily,
             client::{FileType, WarpAcceptClientPacket, WarpTakeClientPacket},
             server::{
                 SitState, WarpAgreeServerPacket, WarpAgreeServerPacketWarpTypeData,
                 WarpAgreeServerPacketWarpTypeDataMapSwitch, WarpEffect, WarpType,
             },
-            PacketAction, PacketFamily,
         },
-        Coords,
     },
 };
 
-use crate::{errors::WrongSessionIdError, SETTINGS};
+use crate::{SETTINGS, errors::WrongSessionIdError};
 
 use super::super::Player;
 

@@ -1,4 +1,4 @@
-use eolib::protocol::{map::MapWarp, Coords};
+use eolib::protocol::{Coords, map::MapWarp};
 
 use super::super::Map;
 

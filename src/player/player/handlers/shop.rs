@@ -1,10 +1,10 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             ShopBuyClientPacket, ShopCreateClientPacket, ShopOpenClientPacket, ShopSellClientPacket,
         },
-        PacketAction,
     },
 };
 

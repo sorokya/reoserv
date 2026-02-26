@@ -1,25 +1,25 @@
 use std::cmp;
 
 use eolib::protocol::{
+    Coords, Direction,
     net::{
+        PacketAction, PacketFamily,
         server::{
             NpcPlayerServerPacket, NpcUpdateAttack, NpcUpdateChat, NpcUpdatePosition,
             PlayerKilledState, SitState,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::{EnfRecord, NpcType},
-    Coords, Direction,
 };
 
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
-use rand::{seq::SliceRandom, Rng};
+use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
+use rand::{RngExt, seq::IndexedRandom};
 
 use crate::{
+    FORMULAS, NPC_DB, SETTINGS, TALK_DB,
     character::Character,
     map::Npc,
     utils::{get_distance, get_next_coords, in_range},
-    FORMULAS, NPC_DB, SETTINGS, TALK_DB,
 };
 
 use super::super::Map;
@@ -36,10 +36,10 @@ impl Map {
 
         npc.talk_ticks = 0;
 
-        let mut rng = rand::thread_rng();
-        let roll = rng.gen_range(0..=100);
+        let mut rng = rand::rng();
+        let roll = rng.random_range(0..=100);
         if roll <= talk_record.rate {
-            let message_index = rng.gen_range(0..talk_record.messages.len());
+            let message_index = rng.random_range(0..talk_record.messages.len());
             Some(NpcUpdateChat {
                 npc_index: index,
                 message: talk_record.messages[message_index].message.to_owned(),
@@ -123,8 +123,8 @@ impl Map {
                     direction: npc.direction,
                 })
             } else {
-                let mut rng = rand::thread_rng();
-                direction = Direction::from(rng.gen_range(0..=3));
+                let mut rng = rand::rng();
+                direction = Direction::from(rng.random_range(0..=3));
 
                 let new_coords =
                     get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
@@ -229,7 +229,7 @@ impl Map {
             // TODO: also attack adjacent players if blocking path to opponent(s)
             // Choose a random player if npc is aggressive
             if npc_data.r#type == NpcType::Aggressive {
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 adjacent_player_ids.choose(&mut rng).copied()
             } else {
                 None
@@ -247,19 +247,19 @@ impl Map {
         })?;
 
         // Logic ripped from EOServ..
-        let mut rng = rand::thread_rng();
-        let action = rng.gen_range(1..=10);
+        let mut rng = rand::rng();
+        let action = rng.random_range(1..=10);
 
         if action == 10 {
             self.npcs
                 .iter_mut()
                 .find(|npc| npc.index == index)?
-                .walk_idle_for = Some(rng.gen_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
+                .walk_idle_for = Some(rng.random_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
             return None;
         }
 
         let new_direction = if (7..=9).contains(&action) {
-            Direction::from(rng.gen_range(0..=3))
+            Direction::from(rng.random_range(0..=3))
         } else {
             direction
         };
@@ -564,10 +564,10 @@ impl Map {
 }
 
 fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> i32 {
-    let mut rng = rand::thread_rng();
-    let rand = rng.gen_range(0.0..=1.0);
+    let mut rng = rand::rng();
+    let rand = rng.random_range(0.0..=1.0);
 
-    let amount = rng.gen_range(npc_data.min_damage..=npc_data.max_damage);
+    let amount = rng.random_range(npc_data.min_damage..=npc_data.max_damage);
 
     let npc_facing_player_back_or_side =
         (i32::from(character.direction) - i32::from(npc.direction)).abs() != 2;

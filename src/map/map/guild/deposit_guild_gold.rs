@@ -1,11 +1,11 @@
 use std::cmp;
 
 use eolib::protocol::{
-    net::{server::GuildBuyServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::GuildBuyServerPacket},
     r#pub::NpcType,
 };
 
-use crate::{db::insert_params, NPC_DB, SETTINGS};
+use crate::{NPC_DB, SETTINGS, db::insert_params};
 
 use super::super::Map;
 

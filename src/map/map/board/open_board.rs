@@ -1,13 +1,13 @@
 use chrono::NaiveDateTime;
 use eolib::protocol::net::{
-    server::{BoardOpenServerPacket, BoardPostListing},
     PacketAction, PacketFamily,
+    server::{BoardOpenServerPacket, BoardPostListing},
 };
 
 use crate::{
+    SETTINGS,
     db::insert_params,
     utils::{format_duration, get_board_tile_spec},
-    SETTINGS,
 };
 
 use super::super::Map;

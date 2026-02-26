@@ -1,10 +1,10 @@
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             MarriageReply, MarriageReplyServerPacket, MarriageReplyServerPacketReplyCodeData,
             MarriageReplyServerPacketReplyCodeDataSuccess,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };

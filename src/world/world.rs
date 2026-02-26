@@ -2,7 +2,7 @@ use crate::{
     connection_log::ConnectionLog, errors::DataNotFoundError, map::MapHandle, player::PlayerHandle,
 };
 
-use super::{load_maps::load_maps, Command, Party};
+use super::{Command, Party, load_maps::load_maps};
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 

@@ -1,9 +1,9 @@
 use eolib::protocol::{
-    net::{
-        server::{MessageOpenServerPacket, MusicPlayerServerPacket},
-        PacketAction, PacketFamily,
-    },
     Coords,
+    net::{
+        PacketAction, PacketFamily,
+        server::{MessageOpenServerPacket, MusicPlayerServerPacket},
+    },
 };
 use eoplus::Arg;
 

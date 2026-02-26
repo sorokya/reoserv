@@ -1,17 +1,17 @@
 use eolib::{
     data::SHORT_MAX,
     protocol::{
+        Coords,
         net::{
+            PacketAction, PacketFamily,
             server::{
                 WarpEffect, WarpRequestServerPacket, WarpRequestServerPacketWarpTypeData,
                 WarpRequestServerPacketWarpTypeDataMapSwitch, WarpType,
             },
-            PacketAction, PacketFamily,
         },
-        Coords,
     },
 };
-use rand::Rng;
+use rand::RngExt;
 
 use crate::player::WarpSession;
 
@@ -26,8 +26,8 @@ impl Player {
         animation: Option<WarpEffect>,
     ) {
         let session_id = {
-            let mut rng = rand::thread_rng();
-            let session_id = rng.gen_range(10..SHORT_MAX) as i32;
+            let mut rng = rand::rng();
+            let session_id = rng.random_range(10..SHORT_MAX) as i32;
             self.session_id = Some(session_id);
             session_id
         };

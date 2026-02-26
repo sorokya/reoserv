@@ -3,7 +3,7 @@ use std::path::Path;
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use eolib::protocol::{Coords, Direction};
 
-use crate::map::{chest::ChestItem, npc::NpcOpponent, Item};
+use crate::map::{Item, chest::ChestItem, npc::NpcOpponent};
 
 use super::super::Map;
 
@@ -193,19 +193,15 @@ impl Map {
         for saved_chest_spawn in save_data.chest_spawns {
             if let Some(chest) = self.chests.iter_mut().find(|chest| {
                 chest.coords.x == saved_chest_spawn.x && chest.coords.y == saved_chest_spawn.y
-            }) {
-                if let Some(spawn) = chest
-                    .spawns
-                    .iter_mut()
-                    .find(|spawn| spawn.slot == saved_chest_spawn.slot)
-                {
-                    match Utc.from_local_datetime(&saved_chest_spawn.taken) {
-                        chrono::offset::LocalResult::Single(dt) => spawn.last_taken = dt,
-                        _ => {
-                            error!(
-                                "Failed to convert saved chest spawn last_taken to DateTime<Utc>"
-                            );
-                        }
+            }) && let Some(spawn) = chest
+                .spawns
+                .iter_mut()
+                .find(|spawn| spawn.slot == saved_chest_spawn.slot)
+            {
+                match Utc.from_local_datetime(&saved_chest_spawn.taken) {
+                    chrono::offset::LocalResult::Single(dt) => spawn.last_taken = dt,
+                    _ => {
+                        error!("Failed to convert saved chest spawn last_taken to DateTime<Utc>");
                     }
                 }
             }

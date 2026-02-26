@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
     PacketAction, PacketFamily,
+    server::{ChairCloseServerPacket, SitCloseServerPacket, SitState},
 };
 
 use crate::utils::get_next_coords;

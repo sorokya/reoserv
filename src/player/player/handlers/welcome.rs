@@ -1,11 +1,11 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             WelcomeAgreeClientPacket, WelcomeAgreeClientPacketFileTypeData, WelcomeMsgClientPacket,
             WelcomeRequestClientPacket,
         },
-        PacketAction,
     },
 };
 

@@ -1,4 +1,4 @@
-use eolib::protocol::{map::MapTileSpec, Coords};
+use eolib::protocol::{Coords, map::MapTileSpec};
 
 use crate::utils::in_client_range;
 

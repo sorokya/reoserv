@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{NearbyInfo, RefreshReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{NearbyInfo, RefreshReplyServerPacket},
 };
 
 use crate::{

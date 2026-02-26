@@ -1,12 +1,12 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{server::BarberOpenServerPacket, PacketAction, PacketFamily},
+        net::{PacketAction, PacketFamily, server::BarberOpenServerPacket},
         r#pub::NpcType,
     },
 };
 
-use crate::{utils::in_client_range, NPC_DB, SETTINGS};
+use crate::{NPC_DB, SETTINGS, utils::in_client_range};
 
 use super::super::Map;
 

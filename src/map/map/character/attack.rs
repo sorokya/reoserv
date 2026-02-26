@@ -1,22 +1,22 @@
 use eolib::protocol::{
+    Coords, Direction,
     map::MapType,
     net::{
+        PacketAction, PacketFamily,
         server::{
             ArenaAcceptServerPacket, ArenaSpecServerPacket, AttackPlayerServerPacket,
             AvatarReplyServerPacket, RecoverPlayerServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::{ItemSubtype, NpcType},
-    Coords, Direction,
 };
-use rand::Rng;
+use rand::RngExt;
 
 use crate::{
+    ITEM_DB, NPC_DB, SETTINGS,
     character::Character,
     map::map::ArenaPlayer,
     utils::{get_distance, get_next_coords},
-    ITEM_DB, NPC_DB, SETTINGS,
 };
 
 use super::super::Map;
@@ -188,8 +188,8 @@ impl Map {
                 0
             } else {
                 let amount = {
-                    let mut rng = rand::thread_rng();
-                    rng.gen_range(attacker.min_damage..=attacker.max_damage)
+                    let mut rng = rand::rng();
+                    rng.random_range(attacker.min_damage..=attacker.max_damage)
                 };
 
                 let attacking_back_or_side =
@@ -360,8 +360,8 @@ impl Map {
         }
 
         let amount = {
-            let mut rng = rand::thread_rng();
-            rng.gen_range(min_damage..=max_damage)
+            let mut rng = rand::rng();
+            rng.random_range(min_damage..=max_damage)
         };
 
         let attacking_back_or_side =

@@ -1,6 +1,6 @@
-use eolib::protocol::net::{server::TradeRequestServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::TradeRequestServerPacket};
 
-use crate::{utils::in_client_range, SETTINGS};
+use crate::{SETTINGS, utils::in_client_range};
 
 use super::super::Map;
 

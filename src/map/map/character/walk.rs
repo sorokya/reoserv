@@ -1,15 +1,15 @@
 use eolib::protocol::{
+    Coords, Direction,
     map::MapTileSpec,
     net::{
-        server::{WalkPlayerServerPacket, WalkReplyServerPacket},
         PacketAction, PacketFamily,
+        server::{WalkPlayerServerPacket, WalkReplyServerPacket},
     },
-    Coords, Direction,
 };
 
 use crate::{
-    utils::{get_next_coords, in_client_range},
     SETTINGS,
+    utils::{get_next_coords, in_client_range},
 };
 
 use super::super::Map;
@@ -134,10 +134,10 @@ impl Map {
                     &walk_packet,
                 );
 
-                if let Some(tile) = self.get_tile(&coords) {
-                    if matches!(tile, MapTileSpec::Spikes | MapTileSpec::HiddenSpikes) {
-                        self.spike_damage(player_id)
-                    }
+                if let Some(tile) = self.get_tile(&coords)
+                    && matches!(tile, MapTileSpec::Spikes | MapTileSpec::HiddenSpikes)
+                {
+                    self.spike_damage(player_id)
                 }
             }
 

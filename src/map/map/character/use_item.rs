@@ -1,7 +1,9 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
+        Coords,
         net::{
+            Item, PacketAction, PacketFamily,
             server::{
                 AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
                 AvatarChangeChangeTypeDataEquipment, AvatarChangeChangeTypeDataHairColor,
@@ -14,16 +16,14 @@ use eolib::{
                 NearbyInfo, PlayerEffect, PlayersAgreeServerPacket, RecoverAgreeServerPacket,
                 WarpEffect,
             },
-            Item, PacketAction, PacketFamily,
         },
         r#pub::{ItemSpecial, ItemType},
-        Coords,
     },
 };
 
 use crate::{
-    character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN, utils::in_client_range, INN_DB,
-    ITEM_DB, SETTINGS, SPELL_DB,
+    INN_DB, ITEM_DB, SETTINGS, SPELL_DB, character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN,
+    utils::in_client_range,
 };
 
 use super::super::Map;

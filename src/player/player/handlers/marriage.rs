@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{MarriageOpenClientPacket, MarriageRequestClientPacket, MarriageRequestType},
         PacketAction,
+        client::{MarriageOpenClientPacket, MarriageRequestClientPacket, MarriageRequestType},
     },
 };
 

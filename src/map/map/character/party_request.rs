@@ -1,13 +1,13 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily, PartyRequestType,
     server::{
         PartyReplyCode, PartyReplyServerPacket, PartyReplyServerPacketReplyCodeData,
         PartyReplyServerPacketReplyCodeDataAlreadyInAnotherParty,
         PartyReplyServerPacketReplyCodeDataAlreadyInYourParty, PartyRequestServerPacket,
     },
-    PacketAction, PacketFamily, PartyRequestType,
 };
 
-use crate::{player::PartyRequest, utils::in_client_range, SETTINGS};
+use crate::{SETTINGS, player::PartyRequest, utils::in_client_range};
 
 use super::super::Map;
 
@@ -108,17 +108,16 @@ impl Map {
                     _ => return,
                 })
                 .await
+                && party.members.len() as i32 >= SETTINGS.limits.max_party_size
             {
-                if party.members.len() as i32 >= SETTINGS.limits.max_party_size {
-                    let packet = PartyReplyServerPacket {
-                        reply_code: PartyReplyCode::PartyIsFull,
-                        reply_code_data: None,
-                    };
+                let packet = PartyReplyServerPacket {
+                    reply_code: PartyReplyCode::PartyIsFull,
+                    reply_code_data: None,
+                };
 
-                    player.send(PacketAction::Reply, PacketFamily::Party, &packet);
+                player.send(PacketAction::Reply, PacketFamily::Party, &packet);
 
-                    return;
-                }
+                return;
             }
 
             target.set_party_request(request);

@@ -1,12 +1,12 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             StatSkillAddClientPacket, StatSkillAddClientPacketActionTypeData,
             StatSkillJunkClientPacket, StatSkillOpenClientPacket, StatSkillRemoveClientPacket,
             StatSkillTakeClientPacket,
         },
-        PacketAction,
     },
 };
 

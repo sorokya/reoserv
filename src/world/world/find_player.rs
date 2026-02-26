@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{PlayersNet242ServerPacket, PlayersPingServerPacket},
     PacketAction, PacketFamily,
+    server::{PlayersNet242ServerPacket, PlayersPingServerPacket},
 };
 
 use super::World;

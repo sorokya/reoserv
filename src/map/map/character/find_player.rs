@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::PlayersPongServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::PlayersPongServerPacket};
 
 use super::super::Map;
 

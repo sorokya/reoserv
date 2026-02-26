@@ -1,13 +1,13 @@
-use eolib::protocol::{map::MapTileSpec, Coords};
+use eolib::protocol::{Coords, map::MapTileSpec};
 
 use super::super::Map;
 
 impl Map {
     pub fn is_tile_walkable_npc(&self, coords: &Coords) -> bool {
-        if let Some(row) = self.file.warp_rows.iter().find(|row| row.y == coords.y) {
-            if row.tiles.iter().any(|warp| warp.x == coords.x) {
-                return false;
-            }
+        if let Some(row) = self.file.warp_rows.iter().find(|row| row.y == coords.y)
+            && row.tiles.iter().any(|warp| warp.x == coords.x)
+        {
+            return false;
         }
 
         if let Some(tile) = self.get_tile(coords) {

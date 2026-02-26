@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{BarberBuyClientPacket, BarberOpenClientPacket},
         PacketAction,
+        client::{BarberBuyClientPacket, BarberOpenClientPacket},
     },
 };
 

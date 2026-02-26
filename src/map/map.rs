@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use eolib::protocol::{
-    map::{Emf, MapTileSpec},
     Coords,
+    map::{Emf, MapTileSpec},
 };
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, world::WorldHandle, SETTINGS};
+use crate::{SETTINGS, character::Character, world::WorldHandle};
 
 use super::{Chest, Command, Door, Item, Npc, Wedding};
 

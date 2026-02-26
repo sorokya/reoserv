@@ -2,7 +2,7 @@ use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
         map::MapTileSpec,
-        net::{server::EffectReportServerPacket, PacketAction, PacketFamily},
+        net::{PacketAction, PacketFamily, server::EffectReportServerPacket},
     },
 };
 

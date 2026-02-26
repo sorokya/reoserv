@@ -1,12 +1,12 @@
 use eolib::protocol::{
+    AdminLevel,
     net::{
+        PacketAction, PacketFamily,
         server::{
             AdminInteractAgreeServerPacket, AdminInteractRemoveServerPacket, NearbyInfo,
             PlayersAgreeServerPacket,
         },
-        PacketAction, PacketFamily,
     },
-    AdminLevel,
 };
 
 use super::super::Map;

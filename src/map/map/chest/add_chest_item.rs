@@ -4,15 +4,15 @@ use bytes::Bytes;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{ChestAgreeServerPacket, ChestReplyServerPacket},
         Item, PacketAction, PacketFamily, ThreeItem,
+        server::{ChestAgreeServerPacket, ChestReplyServerPacket},
     },
 };
 
 use crate::{
-    map::{chest::ChestItem, Chest},
-    utils::get_distance,
     SETTINGS,
+    map::{Chest, chest::ChestItem},
+    utils::get_distance,
 };
 
 use super::super::Map;

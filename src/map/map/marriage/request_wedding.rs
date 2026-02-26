@@ -1,15 +1,15 @@
 use eolib::protocol::{
     net::{
-        server::{PriestReply, PriestReplyServerPacket, PriestRequestServerPacket},
         PacketAction, PacketFamily,
+        server::{PriestReply, PriestReplyServerPacket, PriestRequestServerPacket},
     },
     r#pub::NpcType,
 };
 
 use crate::{
+    NPC_DB,
     map::{Wedding, WeddingState},
     utils::dressed_for_wedding,
-    NPC_DB,
 };
 
 use super::super::Map;

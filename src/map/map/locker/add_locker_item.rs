@@ -1,12 +1,12 @@
 use std::cmp;
 
 use eolib::protocol::{
+    Coords,
     map::MapTileSpec,
     net::{
-        server::{LockerReplyServerPacket, LockerSpecServerPacket},
         Item, PacketAction, PacketFamily, ThreeItem,
+        server::{LockerReplyServerPacket, LockerSpecServerPacket},
     },
-    Coords,
 };
 
 use crate::SETTINGS;

@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::NpcAgreeServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::NpcAgreeServerPacket};
 
 use crate::deep::{BossPingServerPacket, FAMILY_BOSS};
 

@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         InitInitServerPacket, InitInitServerPacketReplyCodeData,
         InitInitServerPacketReplyCodeDataPlayersList, InitReply, OnlinePlayer, PlayersList,
     },
-    PacketAction, PacketFamily,
 };
 
 use crate::utils::pad_string;

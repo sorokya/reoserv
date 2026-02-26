@@ -1,9 +1,9 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::TalkMsgServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::TalkMsgServerPacket},
 };
 
-use crate::{player::ClientState, LANG};
+use crate::{LANG, player::ClientState};
 
 use super::super::World;
 

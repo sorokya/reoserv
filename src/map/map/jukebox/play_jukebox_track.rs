@@ -1,8 +1,8 @@
 use eolib::protocol::{
     map::MapTileSpec,
     net::{
-        server::{JukeboxAgreeServerPacket, JukeboxReplyServerPacket, JukeboxUseServerPacket},
         PacketAction, PacketFamily,
+        server::{JukeboxAgreeServerPacket, JukeboxReplyServerPacket, JukeboxUseServerPacket},
     },
 };
 

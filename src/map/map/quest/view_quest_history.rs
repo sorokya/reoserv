@@ -1,8 +1,8 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily, QuestPage,
     server::{
         QuestListServerPacket, QuestListServerPacketPageData, QuestListServerPacketPageDataHistory,
     },
-    PacketAction, PacketFamily, QuestPage,
 };
 
 use crate::QUEST_DB;

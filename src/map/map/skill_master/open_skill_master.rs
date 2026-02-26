@@ -1,7 +1,7 @@
 use eolib::protocol::{
     net::{
-        server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
         PacketAction, PacketFamily,
+        server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
     },
     r#pub::NpcType,
 };

@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{ChestAddClientPacket, ChestOpenClientPacket, ChestTakeClientPacket},
         Item, PacketAction,
+        client::{ChestAddClientPacket, ChestOpenClientPacket, ChestTakeClientPacket},
     },
 };
 

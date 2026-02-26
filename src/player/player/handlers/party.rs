@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{PartyAcceptClientPacket, PartyRemoveClientPacket, PartyRequestClientPacket},
         PacketAction, PartyRequestType,
+        client::{PartyAcceptClientPacket, PartyRemoveClientPacket, PartyRequestClientPacket},
     },
 };
 

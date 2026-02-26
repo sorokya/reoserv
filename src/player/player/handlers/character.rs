@@ -1,6 +1,7 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction, PacketFamily,
         client::{
             CharacterCreateClientPacket, CharacterRemoveClientPacket, CharacterRequestClientPacket,
             CharacterTakeClientPacket,
@@ -13,19 +14,18 @@ use eolib::{
             CharacterReplyServerPacketReplyCodeDataExists,
             CharacterReplyServerPacketReplyCodeDataFull, CharacterReplyServerPacketReplyCodeDataOk,
         },
-        PacketAction, PacketFamily,
     },
 };
 
 use crate::{
+    SETTINGS,
     character::Character,
-    db::{insert_params, DbHandle},
+    db::{DbHandle, insert_params},
     errors::WrongSessionIdError,
     player::{
-        player::account::{get_character_list, get_num_of_characters},
         ClientState,
+        player::account::{get_character_list, get_num_of_characters},
     },
-    SETTINGS,
 };
 
 use super::super::Player;

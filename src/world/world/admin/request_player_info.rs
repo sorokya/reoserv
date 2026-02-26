@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         AdminInteractTellServerPacket, BigCoords, CharacterBaseStats, CharacterElementalStats,
         CharacterSecondaryStatsInfoLookup, CharacterStatsInfoLookup,
     },
-    PacketAction, PacketFamily,
 };
 
 use super::super::World;

@@ -1,5 +1,5 @@
 use eolib::protocol::net::{PacketAction, PacketFamily};
-use rand::Rng;
+use rand::RngExt;
 
 use crate::{
     deep::{CaptchaOpenServerPacket, FAMILY_CAPTCHA},
@@ -16,10 +16,10 @@ impl Player {
         }
 
         let captcha: String = {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             (0..5)
                 .map(|_| {
-                    rng.gen_range(65..=90) as u8 as char // ASCII codes for upper case letters
+                    rng.random_range(65..=90) as u8 as char // ASCII codes for upper case letters
                 })
                 .collect()
         };

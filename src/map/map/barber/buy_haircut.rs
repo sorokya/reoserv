@@ -2,11 +2,11 @@ use std::cmp;
 
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
             AvatarChangeChangeTypeDataHair, AvatarChangeType, BarberAgreeServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };

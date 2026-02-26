@@ -1,10 +1,10 @@
 use eolib::protocol::{
-    net::{server::DoorOpenServerPacket, PacketAction, PacketFamily},
-    r#pub::ItemType,
     Coords,
+    net::{PacketAction, PacketFamily, server::DoorOpenServerPacket},
+    r#pub::ItemType,
 };
 
-use crate::{utils::in_client_range, ITEM_DB};
+use crate::{ITEM_DB, utils::in_client_range};
 
 use super::super::Map;
 

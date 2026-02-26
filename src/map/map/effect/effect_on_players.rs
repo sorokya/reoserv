@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{EffectPlayerServerPacket, PlayerEffect},
         PacketAction, PacketFamily,
+        server::{EffectPlayerServerPacket, PlayerEffect},
     },
 };
 

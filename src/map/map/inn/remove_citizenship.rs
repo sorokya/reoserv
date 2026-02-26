@@ -1,7 +1,7 @@
 use eolib::protocol::{
     net::{
-        server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
         PacketAction, PacketFamily,
+        server::{CitizenRemoveServerPacket, InnUnsubscribeReply},
     },
     r#pub::NpcType,
 };

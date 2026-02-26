@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use chrono::Utc;
 
-use crate::db::{insert_params, DbHandle};
+use crate::db::{DbHandle, insert_params};
 
 pub async fn account_banned(db: &DbHandle, name: &str) -> anyhow::Result<bool> {
     let row = match db

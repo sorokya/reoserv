@@ -1,5 +1,5 @@
 use eolib::protocol::net::{
-    server::AdminInteractListServerPacket, PacketAction, PacketFamily, ThreeItem,
+    PacketAction, PacketFamily, ThreeItem, server::AdminInteractListServerPacket,
 };
 
 use super::super::World;

@@ -1,7 +1,7 @@
 use eolib::protocol::{
     net::{
-        server::{ShopCraftItem, ShopOpenServerPacket, ShopTradeItem},
         CharItem, PacketAction, PacketFamily,
+        server::{ShopCraftItem, ShopOpenServerPacket, ShopTradeItem},
     },
     r#pub::NpcType,
 };

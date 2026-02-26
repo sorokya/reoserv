@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
-    server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
     PacketAction, PacketFamily, ThreeItem,
+    server::{ItemAddServerPacket, ItemGetServerPacket, ItemRemoveServerPacket},
 };
 
-use crate::{utils::get_distance, SETTINGS};
+use crate::{SETTINGS, utils::get_distance};
 
 use super::super::Map;
 

@@ -1,14 +1,14 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             ItemDropClientPacket, ItemGetClientPacket, ItemJunkClientPacket, ItemUseClientPacket,
         },
-        PacketAction,
     },
 };
 
-use crate::{deep::ItemReportClientPacket, SETTINGS};
+use crate::{SETTINGS, deep::ItemReportClientPacket};
 
 use super::super::Player;
 

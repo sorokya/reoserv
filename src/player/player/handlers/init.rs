@@ -3,6 +3,7 @@ use eolib::{
     encrypt::{generate_swap_multiple, server_verification_hash},
     packet::{generate_sequence_start, get_init_sequence_bytes},
     protocol::net::{
+        PacketAction, PacketFamily, Version,
         client::InitInitClientPacket,
         server::{
             InitBanType, InitInitServerPacket, InitInitServerPacketReplyCodeData,
@@ -12,11 +13,10 @@ use eolib::{
             InitInitServerPacketReplyCodeDataOk, InitInitServerPacketReplyCodeDataOutOfDate,
             InitReply,
         },
-        PacketAction, PacketFamily, Version,
     },
 };
 
-use crate::{player::ClientState, SETTINGS};
+use crate::{SETTINGS, player::ClientState};
 
 use super::super::Player;
 

@@ -1,6 +1,7 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
+        PacketAction, PacketFamily,
         client::FileType,
         server::{
             InitInitServerPacket, InitInitServerPacketReplyCodeData,
@@ -9,12 +10,11 @@ use eolib::{
             InitInitServerPacketReplyCodeDataFileEsf, InitInitServerPacketReplyCodeDataWarpMap,
             InitReply, MapFile, PubFile,
         },
-        PacketAction, PacketFamily,
     },
 };
 
 use crate::{
-    errors::WrongSessionIdError, player::ClientState, CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB,
+    CLASS_DB, ITEM_DB, NPC_DB, SPELL_DB, errors::WrongSessionIdError, player::ClientState,
 };
 
 use super::Player;

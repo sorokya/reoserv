@@ -1,4 +1,4 @@
-use crate::{utils::get_distance, SETTINGS};
+use crate::{SETTINGS, utils::get_distance};
 
 use super::super::Map;
 

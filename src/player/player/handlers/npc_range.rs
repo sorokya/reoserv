@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{client::NpcRangeRequestClientPacket, PacketAction},
+    protocol::net::{PacketAction, client::NpcRangeRequestClientPacket},
 };
 
 use super::super::Player;

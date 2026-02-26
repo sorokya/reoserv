@@ -1,11 +1,11 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction, QuestPage,
         client::{
             QuestAcceptClientPacket, QuestAcceptClientPacketReplyTypeData, QuestListClientPacket,
             QuestUseClientPacket,
         },
-        PacketAction, QuestPage,
     },
 };
 

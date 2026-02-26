@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{client::FacePlayerClientPacket, PacketAction},
+    protocol::net::{PacketAction, client::FacePlayerClientPacket},
 };
 
 use super::super::Player;

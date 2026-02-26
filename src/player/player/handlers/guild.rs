@@ -2,6 +2,7 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::{
         net::{
+            PacketAction, PacketFamily,
             client::{
                 GuildAcceptClientPacket, GuildAgreeClientPacket,
                 GuildAgreeClientPacketInfoTypeData, GuildBuyClientPacket, GuildCreateClientPacket,
@@ -15,23 +16,22 @@ use eolib::{
                 GuildRankServerPacket, GuildReply, GuildReplyServerPacket, GuildReportServerPacket,
                 GuildSellServerPacket, GuildStaff, GuildTakeServerPacket, GuildTellServerPacket,
             },
-            PacketAction, PacketFamily,
         },
         r#pub::NpcType,
     },
 };
 
 use crate::{
-    db::{insert_params, DbHandle},
+    NPC_DB, SETTINGS,
+    db::{DbHandle, insert_params},
     player::{
+        PlayerHandle,
         player::guild::{
             guild_exists, validate_guild_description, validate_guild_name, validate_guild_rank,
             validate_guild_tag,
         },
-        PlayerHandle,
     },
     utils::{capitalize, get_guild_ranks},
-    NPC_DB, SETTINGS,
 };
 
 use super::super::Player;

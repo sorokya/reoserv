@@ -1,22 +1,22 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::{
+        AdminLevel,
         net::{
+            PacketAction,
             client::{
                 TalkAdminClientPacket, TalkAnnounceClientPacket, TalkMsgClientPacket,
                 TalkOpenClientPacket, TalkReportClientPacket, TalkRequestClientPacket,
                 TalkTellClientPacket,
             },
-            PacketAction,
         },
-        AdminLevel,
     },
 };
 
 use super::{
     super::Player,
     handle_command::handle_command,
-    handle_player_command::{handle_player_command, PlayerCommandResult},
+    handle_player_command::{PlayerCommandResult, handle_player_command},
 };
 
 impl Player {
@@ -39,10 +39,10 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            if let Ok(Some(character)) = map.get_character(player_id).await {
-                if i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian) {
-                    world.broadcast_admin_message(character.name, admin.message);
-                }
+            if let Ok(Some(character)) = map.get_character(player_id).await
+                && i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian)
+            {
+                world.broadcast_admin_message(character.name, admin.message);
             }
         });
     }
@@ -66,10 +66,10 @@ impl Player {
         let player_id = self.id;
 
         tokio::spawn(async move {
-            if let Ok(Some(character)) = map.get_character(player_id).await {
-                if i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian) {
-                    world.broadcast_announcement(character.name, announce.message);
-                }
+            if let Ok(Some(character)) = map.get_character(player_id).await
+                && i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian)
+            {
+                world.broadcast_announcement(character.name, announce.message);
             }
         });
     }

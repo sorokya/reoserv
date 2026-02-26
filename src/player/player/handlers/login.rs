@@ -2,6 +2,7 @@ use chrono::Utc;
 use eolib::{
     data::{EoReader, EoSerialize, EoWriter},
     protocol::net::{
+        PacketAction, PacketFamily,
         client::LoginRequestClientPacket,
         server::{
             LoginReply, LoginReplyServerPacket, LoginReplyServerPacketReplyCodeData,
@@ -10,28 +11,27 @@ use eolib::{
             LoginReplyServerPacketReplyCodeDataWrongUser,
             LoginReplyServerPacketReplyCodeDataWrongUserPassword,
         },
-        PacketAction, PacketFamily,
     },
 };
 use std::time::Duration;
 
 use crate::{
+    EMAILS, SETTINGS,
     db::insert_params,
     deep::{
-        AccountRecoverPinReply, AccountRecoverReply, AccountRecoverUpdateReply,
+        ACTION_CONFIG, AccountRecoverPinReply, AccountRecoverReply, AccountRecoverUpdateReply,
         LoginAcceptClientPacket, LoginAcceptServerPacket, LoginAgreeClientPacket,
         LoginAgreeServerPacket, LoginConfigServerPacket, LoginCreateClientPacket,
-        LoginCreateServerPacket, LoginTakeClientPacket, LoginTakeServerPacket, ACTION_CONFIG,
+        LoginCreateServerPacket, LoginTakeClientPacket, LoginTakeServerPacket,
     },
     player::{
+        Action, ClientState,
         player::account::{
             account_banned, account_exists, generate_password_hash, generate_session,
             get_character_list, validate_password,
         },
-        Action, ClientState,
     },
     utils::{is_deep, mask_email, send_email},
-    EMAILS, SETTINGS,
 };
 
 use super::super::Player;

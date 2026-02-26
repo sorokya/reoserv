@@ -2,11 +2,11 @@ use std::cmp::Ordering;
 
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             DialogEntry, DialogEntryEntryTypeData, DialogEntryEntryTypeDataLink, DialogEntryType,
             DialogQuestEntry, QuestDialogServerPacket, QuestReportServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };

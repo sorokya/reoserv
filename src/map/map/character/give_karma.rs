@@ -1,6 +1,6 @@
 use std::cmp;
 
-use eolib::protocol::net::{server::RecoverReplyServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::RecoverReplyServerPacket};
 
 use super::super::Map;
 

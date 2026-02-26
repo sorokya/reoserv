@@ -1,7 +1,7 @@
+use eolib::protocol::Coords;
 use eolib::protocol::net::server::{TalkServerServerPacket, WarpEffect};
 use eolib::protocol::net::{PacketAction, PacketFamily};
 use eolib::protocol::r#pub::EifRecord;
-use eolib::protocol::Coords;
 
 use crate::commands::{ArgType, Command};
 use crate::{character::Character, player::PlayerHandle, world::WorldHandle};

@@ -1,6 +1,6 @@
 use crate::{
-    db::{insert_params, DbHandle},
     SETTINGS,
+    db::{DbHandle, insert_params},
 };
 
 use super::Character;

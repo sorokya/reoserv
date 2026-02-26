@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::TalkRequestServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::TalkRequestServerPacket},
 };
 
 use super::super::World;

@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{PartyAddServerPacket, PartyCreateServerPacket, PartyMember},
         PacketAction, PacketFamily,
+        server::{PartyAddServerPacket, PartyCreateServerPacket, PartyMember},
     },
 };
 

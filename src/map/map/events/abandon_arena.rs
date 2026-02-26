@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{server::TalkServerServerPacket, PacketAction, PacketFamily},
         Coords,
+        net::{PacketAction, PacketFamily, server::TalkServerServerPacket},
     },
 };
 

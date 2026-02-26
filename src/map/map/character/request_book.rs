@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{BookReplyServerPacket, CharacterDetails},
     PacketAction, PacketFamily,
+    server::{BookReplyServerPacket, CharacterDetails},
 };
 
 use crate::QUEST_DB;

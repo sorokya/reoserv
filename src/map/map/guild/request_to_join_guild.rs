@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
         GuildReplyServerPacketReplyCodeDataJoinRequest,
     },
-    PacketAction, PacketFamily,
 };
 
 use crate::utils::capitalize;
@@ -58,11 +58,11 @@ impl Map {
                 return;
             }
 
-            if let Some(tag) = &recruiter.guild_tag {
-                if *tag != guild_tag {
-                    send_reply!(player, GuildReply::RecruiterWrongGuild);
-                    return;
-                }
+            if let Some(tag) = &recruiter.guild_tag
+                && *tag != guild_tag
+            {
+                send_reply!(player, GuildReply::RecruiterWrongGuild);
+                return;
             }
 
             if recruiter.guild_rank.unwrap_or(9) > 1 {

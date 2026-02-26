@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::RecoverListServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::RecoverListServerPacket};
 
 use super::super::Map;
 

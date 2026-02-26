@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::StatSkillAcceptServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::StatSkillAcceptServerPacket};
 
 use super::super::Map;
 

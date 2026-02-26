@@ -1,14 +1,14 @@
 use eolib::protocol::{
     map::MapTimedEffect,
     net::{
+        PacketAction, PacketFamily,
         server::{
             EffectUseServerPacket, EffectUseServerPacketEffectData,
             EffectUseServerPacketEffectDataQuake, MapEffect,
         },
-        PacketAction, PacketFamily,
     },
 };
-use rand::{thread_rng, Rng};
+use rand::RngExt;
 
 use crate::SETTINGS;
 
@@ -34,12 +34,12 @@ impl Map {
             _ => return,
         };
 
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
 
         let rate = match self.quake_rate {
             Some(rate) => rate,
             None => {
-                let rate = rng.gen_range(config.min_ticks..=config.max_ticks);
+                let rate = rng.random_range(config.min_ticks..=config.max_ticks);
                 self.quake_rate = Some(rate);
                 rate
             }
@@ -48,7 +48,7 @@ impl Map {
         let quake_strength = match self.quake_strength {
             Some(strength) => strength,
             None => {
-                let strength = rng.gen_range(config.min_strength..=config.max_strength);
+                let strength = rng.random_range(config.min_strength..=config.max_strength);
                 self.quake_strength = Some(strength);
                 strength
             }

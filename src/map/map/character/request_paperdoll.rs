@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{CharacterDetails, PaperdollReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{CharacterDetails, PaperdollReplyServerPacket},
 };
 
 use super::super::Map;

@@ -1,15 +1,15 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
+        Coords,
         map::{Emf, MapTileSpec},
         net::{
+            PacketAction, PacketFamily,
             server::{
                 InitInitServerPacket, InitInitServerPacketReplyCodeData,
                 InitInitServerPacketReplyCodeDataMapMutation, InitReply, MapFile,
             },
-            PacketAction, PacketFamily,
         },
-        Coords,
     },
 };
 

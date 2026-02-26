@@ -1,7 +1,9 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
+        Coords, Direction,
         net::{
+            PacketAction, PacketFamily,
             server::{
                 AttackPlayerServerPacket, CastAcceptServerPacket, CastReplyServerPacket,
                 CastSpecServerPacket, LevelUpStats, NpcAcceptServerPacket, NpcJunkServerPacket,
@@ -9,19 +11,17 @@ use eolib::{
                 NpcSpecServerPacket, PartyExpShare, PartyTargetGroupServerPacket,
                 RecoverReplyServerPacket, RecoverTargetGroupServerPacket,
             },
-            PacketAction, PacketFamily,
         },
-        Coords, Direction,
     },
 };
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
-use rand::Rng;
+use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
+use rand::RngExt;
 
 use crate::{
+    DROP_DB, FORMULAS, GLOBAL_DROPS, NPC_DB, SETTINGS,
     deep::{BossPingServerPacket, FAMILY_BOSS},
     map::Item,
     utils::in_client_range,
-    DROP_DB, FORMULAS, GLOBAL_DROPS, NPC_DB, SETTINGS,
 };
 
 use super::super::Map;
@@ -566,13 +566,13 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
     }
 
     if !drops.is_empty() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         drops.sort_by(|a, b| a.rate.cmp(&b.rate));
 
         for drop in drops {
-            let roll = rng.gen_range(0..=64000);
+            let roll = rng.random_range(0..=64000);
             if roll <= drop.rate {
-                let amount = rng.gen_range(drop.min_amount..=drop.max_amount);
+                let amount = rng.random_range(drop.min_amount..=drop.max_amount);
                 if amount > 0 {
                     return Some(Item {
                         index: -1,

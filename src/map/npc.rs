@@ -1,8 +1,8 @@
 use std::cmp;
 
-use eolib::protocol::{net::server::NpcMapInfo, Coords, Direction};
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
-use rand::Rng;
+use eolib::protocol::{Coords, Direction, net::server::NpcMapInfo};
+use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
+use rand::RngExt;
 
 use crate::{FORMULAS, NPC_DB};
 
@@ -80,8 +80,8 @@ impl Npc {
             }
         };
 
-        let mut rng = rand::thread_rng();
-        let rand = rng.gen_range(0.0..1.0);
+        let mut rng = rand::rng();
+        let rand = rng.random_range(0.0..1.0);
 
         let damage = if hit_rate < rand {
             0

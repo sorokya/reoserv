@@ -1,9 +1,9 @@
 use eolib::protocol::{
-    net::{server::MarriageOpenServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::MarriageOpenServerPacket},
     r#pub::NpcType,
 };
 
-use crate::{utils::in_client_range, NPC_DB};
+use crate::{NPC_DB, utils::in_client_range};
 
 use super::super::Map;
 

@@ -1,18 +1,18 @@
 use chrono::prelude::*;
 use eolib::protocol::{
+    AdminLevel, Coords, Direction, Gender,
     net::{
+        Item, Spell, Weight,
         client::CharacterCreateClientPacket,
         server::{CharacterIcon, EquipmentPaperdoll, SitState},
-        Item, Spell, Weight,
     },
-    AdminLevel, Coords, Direction, Gender,
 };
 use eoplus::Arg;
-use evalexpr::{context_map, eval_float_with_context, DefaultNumericTypes, HashMapContext};
-use rand::Rng;
+use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
+use rand::RngExt;
 use std::cmp;
 
-use crate::{db::DbHandle, player::PlayerHandle, EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS};
+use crate::{EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS, db::DbHandle, player::PlayerHandle};
 
 mod add_bank_item;
 mod add_item;
@@ -191,8 +191,8 @@ impl Character {
             }
         };
 
-        let mut rng = rand::thread_rng();
-        let rand = rng.gen_range(0.0..1.0);
+        let mut rng = rand::rng();
+        let rand = rng.random_range(0.0..1.0);
 
         let damage = if hit_rate < rand {
             0
@@ -574,46 +574,43 @@ impl Character {
             }
         }
 
-        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "Always") {
-            if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
-                if let Some(next_state) = quest
+        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "Always")
+            && let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id)
+            && let Some(next_state) = quest
+                .states
+                .iter()
+                .position(|state| state.name == rule.goto)
+        {
+            progress.state = next_state as i32;
+            self.do_quest_actions(quest_id);
+        }
+
+        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "GotItems")
+            && let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id)
+        {
+            let item_id = match rule.args[0] {
+                Arg::Int(item_id) => item_id,
+                _ => return,
+            };
+
+            let amount = match rule.args[1] {
+                Arg::Int(amount) => amount,
+                _ => return,
+            };
+
+            let item = match self.items.iter().find(|i| i.id == item_id) {
+                Some(item) => item,
+                None => return,
+            };
+
+            if item.amount >= amount
+                && let Some(next_state) = quest
                     .states
                     .iter()
                     .position(|state| state.name == rule.goto)
-                {
-                    progress.state = next_state as i32;
-                    self.do_quest_actions(quest_id);
-                }
-            }
-        }
-
-        if let Some(rule) = state.rules.iter().find(|rule| rule.name == "GotItems") {
-            if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
-                let item_id = match rule.args[0] {
-                    Arg::Int(item_id) => item_id,
-                    _ => return,
-                };
-
-                let amount = match rule.args[1] {
-                    Arg::Int(amount) => amount,
-                    _ => return,
-                };
-
-                let item = match self.items.iter().find(|i| i.id == item_id) {
-                    Some(item) => item,
-                    None => return,
-                };
-
-                if item.amount >= amount {
-                    if let Some(next_state) = quest
-                        .states
-                        .iter()
-                        .position(|state| state.name == rule.goto)
-                    {
-                        progress.state = next_state as i32;
-                        self.do_quest_actions(quest_id);
-                    }
-                }
+            {
+                progress.state = next_state as i32;
+                self.do_quest_actions(quest_id);
             }
         }
     }

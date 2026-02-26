@@ -2,17 +2,17 @@ use std::cmp::Ordering;
 
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             DialogEntry, DialogEntryEntryTypeData, DialogEntryEntryTypeDataLink, DialogEntryType,
             DialogQuestEntry, QuestDialogServerPacket, QuestReportServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };
 use eoplus::{Arg, Quest};
 
-use crate::{utils::in_client_range, NPC_DB, QUEST_DB};
+use crate::{NPC_DB, QUEST_DB, utils::in_client_range};
 
 use super::super::Map;
 

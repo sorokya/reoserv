@@ -1,6 +1,6 @@
 use eolib::protocol::{
-    net::{server::EmotePlayerServerPacket, PacketAction, PacketFamily},
     Emote,
+    net::{PacketAction, PacketFamily, server::EmotePlayerServerPacket},
 };
 
 use super::super::Map;

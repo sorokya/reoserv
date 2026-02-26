@@ -36,7 +36,7 @@ impl Row {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SqlValue {
     Null,
     String(String),

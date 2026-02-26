@@ -3,7 +3,22 @@ use crate::db::row::SqlValue;
 use super::super::{Db, Row};
 
 impl Db {
-    pub async fn query(&mut self, query: String) -> anyhow::Result<Vec<Row>> {
+    pub async fn query(&mut self, query: &str) -> anyhow::Result<Vec<Row>> {
+        match self.query_inner(query).await {
+            Ok(rows) => Ok(rows),
+            Err(e) => {
+                if self.transaction_active {
+                    if let Err(e) = self.execute_inner("ROLLBACK").await {
+                        error!("Failed to rollback transaction: {}", e);
+                    }
+                    self.transaction_active = false;
+                }
+                Err(e)
+            }
+        }
+    }
+
+    async fn query_inner(&mut self, query: &str) -> anyhow::Result<Vec<Row>> {
         let mut rows = Vec::new();
 
         match self.connection {
@@ -96,7 +111,7 @@ impl Db {
                     .await?;
             }
             crate::db::Connection::Sqlite(ref mut conn) => {
-                let mut stmt = conn.prepare(&query)?;
+                let mut stmt = conn.prepare(query)?;
                 let column_count = stmt.column_count();
                 let mut result = stmt.query([])?;
                 while let Some(row) = result.next()? {

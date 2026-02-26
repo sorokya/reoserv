@@ -8,17 +8,20 @@ use super::Command;
 pub struct Db {
     pub rx: UnboundedReceiver<Command>,
     connection: Connection,
+    transaction_active: bool,
     last_insert_id: Option<u64>,
 }
 
 mod execute;
 mod query;
+mod transaction;
 
 impl Db {
     pub fn new(rx: UnboundedReceiver<Command>, connection: Connection) -> Self {
         Self {
             rx,
             connection,
+            transaction_active: false,
             last_insert_id: None,
         }
     }
@@ -26,31 +29,103 @@ impl Db {
     pub async fn handle_command(&mut self, command: Command) {
         match command {
             Command::Execute(query, resp_tx) => {
-                let result = self.execute(query).await;
+                let result = self.execute(&query).await;
                 let _ = resp_tx.send(result);
             }
             Command::Query(query, resp_tx) => {
-                let result = self.query(query).await;
+                let result = self.query(&query).await;
                 let _ = resp_tx.send(result);
             }
             Command::GetLastInsertId(resp_tx) => {
                 let _ = resp_tx.send(self.last_insert_id);
             }
             Command::StartTransaction(resp_tx) => {
-                let result = match self.connection {
-                    Connection::Mysql(_) => self.execute("START TRANSACTION".to_string()).await,
-                    Connection::Sqlite(_) => self.execute("BEGIN TRANSACTION".to_string()).await,
-                };
+                let result = self.start_transaction().await;
                 let _ = resp_tx.send(result);
             }
             Command::CommitTransaction(resp_tx) => {
-                let result = self.execute("COMMIT".to_string()).await;
+                let result = self.commit_transaction().await;
                 let _ = resp_tx.send(result);
             }
             Command::RollbackTransaction(resp_tx) => {
-                let result = self.execute("ROLLBACK".to_string()).await;
+                let result = self.rollback_transaction().await;
                 let _ = resp_tx.send(result);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::db::{Connection, Db};
+
+    #[test]
+    fn test_db_creation() {
+        let (_, rx) = tokio::sync::mpsc::unbounded_channel();
+        let connection = Connection::Sqlite(rusqlite::Connection::open_in_memory().unwrap());
+        let db = Db::new(rx, connection);
+        assert!(!db.transaction_active);
+        assert!(db.last_insert_id.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_db_transaction_rollback() {
+        let (_, rx) = tokio::sync::mpsc::unbounded_channel();
+        let connection = Connection::Sqlite(rusqlite::Connection::open_in_memory().unwrap());
+        let mut db = Db::new(rx, connection);
+        db.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            .await
+            .unwrap();
+        db.execute("INSERT INTO test (id) VALUES (1)")
+            .await
+            .unwrap();
+        db.start_transaction().await.unwrap();
+        db.execute("INSERT INTO test (id) VALUES (2)")
+            .await
+            .unwrap();
+        db.rollback_transaction().await.unwrap();
+
+        let row = db.query("SELECT COUNT(1) FROM test").await.unwrap();
+        assert_eq!(row[0].columns[0], crate::db::row::SqlValue::Int(1));
+        assert!(!db.transaction_active);
+    }
+
+    #[tokio::test]
+    async fn test_db_transaction_commit() {
+        let (_, rx) = tokio::sync::mpsc::unbounded_channel();
+        let connection = Connection::Sqlite(rusqlite::Connection::open_in_memory().unwrap());
+        let mut db = Db::new(rx, connection);
+        db.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            .await
+            .unwrap();
+        db.execute("INSERT INTO test (id) VALUES (1)")
+            .await
+            .unwrap();
+        db.start_transaction().await.unwrap();
+        db.execute("INSERT INTO test (id) VALUES (2)")
+            .await
+            .unwrap();
+        db.commit_transaction().await.unwrap();
+
+        let row = db.query("SELECT COUNT(1) FROM test").await.unwrap();
+        assert_eq!(row[0].columns[0], crate::db::row::SqlValue::Int(2));
+        assert!(!db.transaction_active);
+    }
+
+    #[tokio::test]
+    async fn test_db_transaction_error_handling() {
+        let (_, rx) = tokio::sync::mpsc::unbounded_channel();
+        let connection = Connection::Sqlite(rusqlite::Connection::open_in_memory().unwrap());
+        let mut db = Db::new(rx, connection);
+        db.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            .await
+            .unwrap();
+        db.start_transaction().await.unwrap();
+        let result = db.execute("INSERT INTO test (id) VALUES ('invalid')").await;
+        assert!(result.is_err());
+        assert!(!db.transaction_active);
+
+        let row = db.query("SELECT COUNT(1) FROM test").await.unwrap();
+        assert_eq!(row[0].columns[0], crate::db::row::SqlValue::Int(0));
     }
 }

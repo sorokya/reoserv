@@ -123,7 +123,9 @@ async fn main() -> anyhow::Result<()> {
             .await
             .unwrap(),
         ),
-        "sqlite" => Connection::Sqlite(rusqlite::Connection::open("reoserv.db").unwrap()),
+        "sqlite" => Connection::Sqlite(
+            rusqlite::Connection::open(format!("{}.db", SETTINGS.database.name)).unwrap(),
+        ),
         other => panic!("Unsupported database driver: {}", other),
     });
 

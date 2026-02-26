@@ -40,4 +40,6 @@ EOzipped028
 EOzipped028.zip
 
 VERSION.txt
+
+# SQLite database files
 *.db

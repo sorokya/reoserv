@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::JukeboxMsgServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::JukeboxMsgServerPacket},
     r#pub::SkillType,
 };
 

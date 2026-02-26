@@ -4,7 +4,7 @@ use eolib::{
     protocol::net::{PacketAction, PacketFamily},
 };
 
-use crate::{deep::FAMILY_CAPTCHA, SETTINGS};
+use crate::{SETTINGS, deep::FAMILY_CAPTCHA};
 
 use super::{ClientState, Player};
 
@@ -12,19 +12,20 @@ impl Player {
     pub async fn handle_packet(&mut self, packet: Bytes) {
         let reader = EoReader::new(packet);
         let action = PacketAction::from(reader.get_byte());
-        if let PacketAction::Unrecognized(id) = action {
-            if id != 0xfe {
-                self.close("invalid packet action".to_string()).await;
-                return;
-            }
+        if let PacketAction::Unrecognized(id) = action
+            && id != 0xfe
+        {
+            self.close("invalid packet action".to_string()).await;
+            return;
         }
 
         let family = PacketFamily::from(reader.get_byte());
-        if let PacketFamily::Unrecognized(id) = family {
-            if id != 0xfe && id != FAMILY_CAPTCHA {
-                self.close("invalid packet family".to_string()).await;
-                return;
-            }
+        if let PacketFamily::Unrecognized(id) = family
+            && id != 0xfe
+            && id != FAMILY_CAPTCHA
+        {
+            self.close("invalid packet family".to_string()).await;
+            return;
         }
 
         if self.state != ClientState::Uninitialized {

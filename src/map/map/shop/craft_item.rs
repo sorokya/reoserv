@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::ShopCreateServerPacket, Item, PacketAction, PacketFamily},
+    net::{Item, PacketAction, PacketFamily, server::ShopCreateServerPacket},
     r#pub::NpcType,
 };
 

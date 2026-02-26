@@ -3,15 +3,15 @@ use std::cmp;
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             SpellRequestClientPacket, SpellTargetGroupClientPacket, SpellTargetOtherClientPacket,
             SpellTargetSelfClientPacket, SpellTargetType,
         },
-        PacketAction,
     },
 };
 
-use crate::{character::SpellTarget, utils::timestamp_diff, SPELL_DB};
+use crate::{SPELL_DB, character::SpellTarget, utils::timestamp_diff};
 
 use super::super::Player;
 

@@ -1,11 +1,11 @@
 use eolib::protocol::{
-    net::server::{CharacterSelectionListEntry, EquipmentCharacterSelect},
     AdminLevel, Gender,
+    net::server::{CharacterSelectionListEntry, EquipmentCharacterSelect},
 };
 
 use crate::{
-    db::{insert_params, DbHandle},
     ITEM_DB,
+    db::{DbHandle, insert_params},
 };
 
 pub async fn get_character_list(

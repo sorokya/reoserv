@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{TradeAgreeServerPacket, TradeSpecServerPacket},
     PacketAction, PacketFamily,
+    server::{TradeAgreeServerPacket, TradeSpecServerPacket},
 };
 
 use super::super::Map;

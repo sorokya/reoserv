@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::StatSkillJunkServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::StatSkillJunkServerPacket},
     r#pub::NpcType,
 };
 

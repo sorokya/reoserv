@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{MarriageReply, MarriageReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{MarriageReply, MarriageReplyServerPacket},
 };
 
 use super::super::Map;

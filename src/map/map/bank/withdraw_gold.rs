@@ -1,7 +1,7 @@
 use std::cmp;
 
 use eolib::protocol::{
-    net::{server::BankReplyServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::BankReplyServerPacket},
     r#pub::NpcType,
 };
 

@@ -1,7 +1,7 @@
 use crate::{
-    db::{insert_params, DbHandle},
-    utils::get_board_tile_spec,
     SETTINGS,
+    db::{DbHandle, insert_params},
+    utils::get_board_tile_spec,
 };
 use chrono::{Duration, Utc};
 

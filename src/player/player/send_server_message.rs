@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::TalkServerServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::TalkServerServerPacket};
 
 use super::Player;
 

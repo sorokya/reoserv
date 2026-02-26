@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{client::ConnectionAcceptClientPacket, PacketAction},
+    protocol::net::{PacketAction, client::ConnectionAcceptClientPacket},
 };
 
 use crate::player::ClientState;

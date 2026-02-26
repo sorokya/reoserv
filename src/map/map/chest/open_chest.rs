@@ -1,10 +1,10 @@
 use eolib::protocol::{
-    net::{server::ChestOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
-    r#pub::ItemType,
     Coords,
+    net::{PacketAction, PacketFamily, ThreeItem, server::ChestOpenServerPacket},
+    r#pub::ItemType,
 };
 
-use crate::{utils::in_client_range, ITEM_DB};
+use crate::{ITEM_DB, utils::in_client_range};
 
 use super::super::Map;
 
@@ -30,17 +30,17 @@ impl Map {
             return;
         }
 
-        if let Some(key) = chest.key {
-            if !character.items.iter().any(|item| {
+        if let Some(key) = chest.key
+            && !character.items.iter().any(|item| {
                 let item_data = match ITEM_DB.items.get(item.id as usize - 1) {
                     Some(item_data) => item_data,
                     None => return false,
                 };
 
                 item_data.r#type == ItemType::Key && item_data.spec1 == key
-            }) {
-                return;
-            }
+            })
+        {
+            return;
         }
 
         let player = match character.player.as_ref() {

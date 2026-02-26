@@ -3,11 +3,11 @@ use chrono::{DateTime, Utc};
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{
-            server::{GuildReply, WarpEffect},
-            PacketAction, PacketFamily,
-        },
         Coords,
+        net::{
+            PacketAction, PacketFamily,
+            server::{GuildReply, WarpEffect},
+        },
     },
 };
 use eoplus::Arg;
@@ -17,7 +17,7 @@ use tokio::time::timeout;
 
 use crate::{character::Character, map::MapHandle, world::WorldHandle};
 
-use super::{player::Player, ClientState, Command, PartyRequest, Socket};
+use super::{ClientState, Command, PartyRequest, Socket, player::Player};
 
 #[derive(Debug, Clone)]
 pub struct PlayerHandle {

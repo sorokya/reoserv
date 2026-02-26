@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::MessagePongServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::MessagePongServerPacket};
 
 use super::super::Player;
 

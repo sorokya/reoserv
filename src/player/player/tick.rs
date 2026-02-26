@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use crate::{player::ClientState, SETTINGS};
+use crate::{SETTINGS, player::ClientState};
 
 use super::Player;
 

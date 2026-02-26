@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{JukeboxMsgClientPacket, JukeboxUseClientPacket},
         PacketAction,
+        client::{JukeboxMsgClientPacket, JukeboxUseClientPacket},
     },
 };
 

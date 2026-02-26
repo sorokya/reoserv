@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::PaperdollPingServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::PaperdollPingServerPacket},
     r#pub::ItemType,
 };
 use eoplus::Arg;

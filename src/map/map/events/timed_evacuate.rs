@@ -1,9 +1,9 @@
 use eolib::protocol::{
-    net::{
-        server::{MusicPlayerServerPacket, TalkServerServerPacket},
-        PacketAction, PacketFamily,
-    },
     AdminLevel, Coords,
+    net::{
+        PacketAction, PacketFamily,
+        server::{MusicPlayerServerPacket, TalkServerServerPacket},
+    },
 };
 
 use crate::{LANG, SETTINGS};

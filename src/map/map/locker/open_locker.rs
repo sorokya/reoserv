@@ -1,7 +1,7 @@
 use eolib::protocol::{
-    map::MapTileSpec,
-    net::{server::LockerOpenServerPacket, PacketAction, PacketFamily, ThreeItem},
     Coords,
+    map::MapTileSpec,
+    net::{PacketAction, PacketFamily, ThreeItem, server::LockerOpenServerPacket},
 };
 
 use super::super::Map;

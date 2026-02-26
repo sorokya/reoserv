@@ -1,10 +1,10 @@
 use eolib::protocol::{
+    Coords, Direction,
     map::MapTileSpec,
     net::{
-        server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
         PacketAction, PacketFamily,
+        server::{ChairPlayerServerPacket, ChairReplyServerPacket, SitState},
     },
-    Coords, Direction,
 };
 
 use crate::utils::get_distance;

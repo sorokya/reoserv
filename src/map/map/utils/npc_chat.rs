@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::NpcDialogServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::NpcDialogServerPacket};
 
 use super::super::Map;
 

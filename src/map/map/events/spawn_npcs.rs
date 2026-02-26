@@ -90,12 +90,11 @@ impl Map {
                 }
             };
 
-            if child {
-                if let Some(boss) = self.npcs.iter().find(|npc| npc.boss) {
-                    if !boss.alive {
-                        continue;
-                    }
-                }
+            if child
+                && let Some(boss) = self.npcs.iter().find(|npc| npc.boss)
+                && !boss.alive
+            {
+                continue;
             }
 
             if alive || spawn_ticks > 0 {

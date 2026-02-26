@@ -1,15 +1,15 @@
 use eolib::protocol::{
     net::{
-        server::{PriestOpenServerPacket, PriestReply, PriestReplyServerPacket},
         PacketAction, PacketFamily,
+        server::{PriestOpenServerPacket, PriestReply, PriestReplyServerPacket},
     },
     r#pub::NpcType,
 };
 
 use crate::{
+    NPC_DB, SETTINGS,
     map::WeddingState,
     utils::{dressed_for_wedding, in_client_range},
-    NPC_DB, SETTINGS,
 };
 
 use super::super::Map;
@@ -30,17 +30,17 @@ impl Map {
             None => return,
         };
 
-        if let Some(wedding) = &self.wedding {
-            if !matches!(wedding.state, WeddingState::Requested | WeddingState::Done) {
-                player.send(
-                    PacketAction::Reply,
-                    PacketFamily::Priest,
-                    &PriestReplyServerPacket {
-                        reply_code: PriestReply::Busy,
-                    },
-                );
-                return;
-            }
+        if let Some(wedding) = &self.wedding
+            && !matches!(wedding.state, WeddingState::Requested | WeddingState::Done)
+        {
+            player.send(
+                PacketAction::Reply,
+                PacketFamily::Priest,
+                &PriestReplyServerPacket {
+                    reply_code: PriestReply::Busy,
+                },
+            );
+            return;
         }
 
         let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {

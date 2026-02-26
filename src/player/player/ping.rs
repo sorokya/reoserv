@@ -1,6 +1,6 @@
 use eolib::{
     packet::{generate_sequence_start, get_ping_sequence_bytes},
-    protocol::net::{server::ConnectionPlayerServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::ConnectionPlayerServerPacket},
 };
 
 use crate::player::ClientState;

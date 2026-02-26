@@ -3,16 +3,16 @@ use std::cmp;
 use eolib::protocol::{
     map::MapTimedEffect,
     net::{
+        PacketAction, PacketFamily,
         server::{
             EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
             EffectSpecServerPacketMapDamageTypeDataTpDrain, EffectTargetOtherServerPacket,
             MapDamageType, MapDrainDamageOther,
         },
-        PacketAction, PacketFamily,
     },
 };
 
-use crate::{utils::in_client_range, SETTINGS};
+use crate::{SETTINGS, utils::in_client_range};
 
 use super::super::Map;
 

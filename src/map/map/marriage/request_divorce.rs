@@ -1,15 +1,15 @@
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             MarriageReply, MarriageReplyServerPacket, MarriageReplyServerPacketReplyCodeData,
             MarriageReplyServerPacketReplyCodeDataSuccess,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };
 
-use crate::{db::insert_params, NPC_DB, SETTINGS};
+use crate::{NPC_DB, SETTINGS, db::insert_params};
 
 use super::super::Map;
 
@@ -108,11 +108,11 @@ impl Map {
         let db = self.db.clone();
 
         tokio::spawn(async move {
-            if let Ok(character) = world.get_character_by_name(&name).await {
-                if let Ok(map) = world.get_map(character.map_id).await {
-                    map.divorce_partner(character.player_id.unwrap());
-                    return;
-                }
+            if let Ok(character) = world.get_character_by_name(&name).await
+                && let Ok(map) = world.get_map(character.map_id).await
+            {
+                map.divorce_partner(character.player_id.unwrap());
+                return;
             }
 
             if let Err(e) = db

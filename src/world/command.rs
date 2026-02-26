@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
+use eolib::protocol::net::{PartyRequestType, server::PartyExpShare};
 use tokio::sync::oneshot;
 
 use crate::{character::Character, map::MapHandle, player::PlayerHandle};

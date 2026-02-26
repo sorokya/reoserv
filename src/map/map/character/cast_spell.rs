@@ -161,10 +161,10 @@ impl Map {
                 cmp::min(member_character.hp + spell.hp_heal, member_character.max_hp);
             let hp_percentage = member_character.get_hp_percentage();
 
-            if member_character.hp != original_hp {
-                if let Some(player) = member_character.player.as_ref() {
-                    player.update_party_hp(hp_percentage);
-                }
+            if member_character.hp != original_hp
+                && let Some(player) = member_character.player.as_ref()
+            {
+                player.update_party_hp(hp_percentage);
             }
 
             healed_players.push(GroupHealTargetPlayer {

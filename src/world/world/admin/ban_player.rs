@@ -1,5 +1,5 @@
 use super::super::World;
-use crate::{db::insert_params, LANG};
+use crate::{LANG, db::insert_params};
 
 impl World {
     pub async fn ban_player(
@@ -9,10 +9,10 @@ impl World {
         duration: String,
         silent: bool,
     ) {
-        if let Some(player_id) = self.characters.get(&victim_name) {
-            if let Some(player) = self.players.get(player_id) {
-                player.close("Player banned".to_string());
-            }
+        if let Some(player_id) = self.characters.get(&victim_name)
+            && let Some(player) = self.players.get(player_id)
+        {
+            player.close("Player banned".to_string());
         }
 
         if !silent {

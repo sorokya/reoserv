@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::GuildKickServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::GuildKickServerPacket};
 
 use super::super::Map;
 

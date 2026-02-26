@@ -1,12 +1,12 @@
 use bytes::Bytes;
 use eolib::protocol::{
+    Coords, Direction, Emote,
     map::Emf,
     net::{
+        Item, ThreeItem,
         client::{ByteCoords, StatId},
         server::{NearbyInfo, WarpEffect},
-        Item, ThreeItem,
     },
-    Coords, Direction, Emote,
 };
 use tokio::sync::oneshot;
 

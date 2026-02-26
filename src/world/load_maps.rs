@@ -1,8 +1,8 @@
 use std::{
     collections::HashMap,
     io::{
-        prelude::{Read, Seek},
         SeekFrom,
+        prelude::{Read, Seek},
     },
     path::PathBuf,
 };
@@ -12,7 +12,7 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::map::Emf,
 };
-use futures::{stream, StreamExt};
+use futures::{StreamExt, stream};
 use glob::glob;
 
 use crate::map::MapHandle;

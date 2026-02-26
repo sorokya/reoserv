@@ -1,10 +1,10 @@
 use bytes::Bytes;
 use eolib::protocol::{
-    net::{
-        server::{GuildReply, WarpEffect},
-        PacketAction, PacketFamily,
-    },
     Coords,
+    net::{
+        PacketAction, PacketFamily,
+        server::{GuildReply, WarpEffect},
+    },
 };
 use eoplus::Arg;
 use tokio::sync::oneshot;

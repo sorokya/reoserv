@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::ItemRemoveServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::ItemRemoveServerPacket};
 
 use super::super::Map;
 

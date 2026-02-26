@@ -1,10 +1,10 @@
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             SkillMasterReply, StatSkillReplyServerPacket, StatSkillReplyServerPacketReplyCodeData,
             StatSkillReplyServerPacketReplyCodeDataWrongClass, StatSkillTakeServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::NpcType,
 };

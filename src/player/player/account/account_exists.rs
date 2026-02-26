@@ -1,4 +1,4 @@
-use crate::db::{insert_params, DbHandle};
+use crate::db::{DbHandle, insert_params};
 
 pub async fn account_exists(
     db: &DbHandle,

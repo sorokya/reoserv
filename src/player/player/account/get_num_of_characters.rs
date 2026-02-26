@@ -1,4 +1,4 @@
-use crate::db::{insert_params, DbHandle};
+use crate::db::{DbHandle, insert_params};
 
 pub async fn get_num_of_characters(
     db: &DbHandle,

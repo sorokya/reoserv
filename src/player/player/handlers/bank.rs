@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{BankAddClientPacket, BankOpenClientPacket, BankTakeClientPacket},
         PacketAction,
+        client::{BankAddClientPacket, BankOpenClientPacket, BankTakeClientPacket},
     },
 };
 

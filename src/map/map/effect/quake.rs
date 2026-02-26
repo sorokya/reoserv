@@ -1,11 +1,11 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
+        PacketAction, PacketFamily,
         server::{
             EffectUseServerPacket, EffectUseServerPacketEffectData,
             EffectUseServerPacketEffectDataQuake, MapEffect,
         },
-        PacketAction, PacketFamily,
     },
 };
 

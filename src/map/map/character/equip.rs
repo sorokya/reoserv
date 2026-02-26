@@ -1,18 +1,18 @@
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             AvatarAgreeServerPacket, AvatarChange, AvatarChangeChangeTypeData,
             AvatarChangeChangeTypeDataEquipment, AvatarChangeType, PaperdollAgreeServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::ItemType,
 };
 
 use crate::{
-    character::EquipResult,
-    deep::{PaperdollSwapServerPacket, ACTION_SWAP},
     ITEM_DB,
+    character::EquipResult,
+    deep::{ACTION_SWAP, PaperdollSwapServerPacket},
 };
 
 use super::super::Map;

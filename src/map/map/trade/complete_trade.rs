@@ -1,11 +1,11 @@
 use std::cmp;
 
 use eolib::protocol::{
-    net::{
-        server::{TradeItemData, TradeUseServerPacket},
-        PacketAction, PacketFamily,
-    },
     Emote,
+    net::{
+        PacketAction, PacketFamily,
+        server::{TradeItemData, TradeUseServerPacket},
+    },
 };
 
 use crate::SETTINGS;

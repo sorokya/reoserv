@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         SitState, WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
         WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
     },
-    PacketAction, PacketFamily,
 };
 use std::{io::Cursor, path::Path};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};

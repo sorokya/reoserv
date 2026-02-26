@@ -1,12 +1,12 @@
 use eolib::protocol::{
+    Coords,
     net::server::{
         LoginMessageCode, ServerSettings, WelcomeReplyServerPacketWelcomeCodeDataSelectCharacter,
     },
-    Coords,
 };
 
 use crate::{
-    character::Character, utils::pad_string, CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB,
+    CLASS_DB, ITEM_DB, NPC_DB, SETTINGS, SPELL_DB, character::Character, utils::pad_string,
 };
 
 use super::Player;

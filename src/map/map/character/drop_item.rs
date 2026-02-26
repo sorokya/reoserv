@@ -1,16 +1,16 @@
 use std::cmp;
 
 use eolib::protocol::{
+    Coords,
     net::{
+        PacketAction, PacketFamily, ThreeItem,
         client::ByteCoords,
         server::{ItemAddServerPacket, ItemDropServerPacket},
-        PacketAction, PacketFamily, ThreeItem,
     },
     r#pub::ItemSpecial,
-    Coords,
 };
 
-use crate::{utils::get_distance, ITEM_DB, SETTINGS};
+use crate::{ITEM_DB, SETTINGS, utils::get_distance};
 
 use super::super::Map;
 

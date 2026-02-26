@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::WalkOpenServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::WalkOpenServerPacket};
 
 use crate::LANG;
 

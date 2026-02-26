@@ -1,5 +1,5 @@
 use eolib::{
-    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    data::{EoReader, EoSerialize, EoWriter, decode_number, encode_number},
     protocol::r#pub::{Element, Enf, EnfRecord, NpcType},
 };
 use glob::glob;
@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::{fs::File, io::Read};
 
 use bytes::Bytes;
-use crc::{Crc, CRC_32_CKSUM};
+use crc::{CRC_32_CKSUM, Crc};
 
 use crate::SETTINGS;
 

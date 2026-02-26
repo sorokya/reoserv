@@ -2,8 +2,8 @@ use chrono::Utc;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{ChestAgreeServerPacket, ChestGetServerPacket},
         PacketAction, PacketFamily, ThreeItem,
+        server::{ChestAgreeServerPacket, ChestGetServerPacket},
     },
 };
 

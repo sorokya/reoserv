@@ -1,11 +1,11 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{
-            server::{EffectAgreeServerPacket, TileEffect},
-            PacketAction, PacketFamily,
-        },
         Coords,
+        net::{
+            PacketAction, PacketFamily,
+            server::{EffectAgreeServerPacket, TileEffect},
+        },
     },
 };
 

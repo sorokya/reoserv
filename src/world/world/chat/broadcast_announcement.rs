@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::TalkAnnounceServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::TalkAnnounceServerPacket},
 };
 
 use super::super::World;
@@ -20,10 +20,10 @@ impl World {
 
         let buf = writer.to_byte_array();
         for player in self.players.values() {
-            if let Ok(character) = player.get_character().await {
-                if character.name != name {
-                    player.send_buf(PacketAction::Announce, PacketFamily::Talk, buf.clone());
-                }
+            if let Ok(character) = player.get_character().await
+                && character.name != name
+            {
+                player.send_buf(PacketAction::Announce, PacketFamily::Talk, buf.clone());
             }
         }
     }

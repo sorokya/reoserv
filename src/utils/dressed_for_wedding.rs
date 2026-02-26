@@ -1,6 +1,6 @@
 use eolib::protocol::Gender;
 
-use crate::{character::Character, SETTINGS};
+use crate::{SETTINGS, character::Character};
 
 pub fn dressed_for_wedding(character: &Character) -> bool {
     match character.gender {

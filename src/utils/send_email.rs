@@ -1,4 +1,4 @@
-use mail_send::{mail_builder::MessageBuilder, SmtpClientBuilder};
+use mail_send::{SmtpClientBuilder, mail_builder::MessageBuilder};
 
 use crate::SETTINGS;
 

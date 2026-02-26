@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoReader, EoSerialize},
-    protocol::net::{client::AttackUseClientPacket, PacketAction},
+    protocol::net::{PacketAction, client::AttackUseClientPacket},
 };
 
 use crate::utils::timestamp_diff;

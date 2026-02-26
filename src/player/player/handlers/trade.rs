@@ -1,11 +1,11 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
+        PacketAction,
         client::{
             TradeAcceptClientPacket, TradeAddClientPacket, TradeAgreeClientPacket,
             TradeRemoveClientPacket, TradeRequestClientPacket,
         },
-        PacketAction,
     },
 };
 
@@ -41,10 +41,10 @@ impl Player {
     }
 
     fn trade_close(&mut self) {
-        if let Some(map) = &self.map {
-            if let Some(interact_player_id) = self.interact_player_id {
-                map.cancel_trade(self.id, interact_player_id);
-            }
+        if let Some(map) = &self.map
+            && let Some(interact_player_id) = self.interact_player_id
+        {
+            map.cancel_trade(self.id, interact_player_id);
         }
     }
 

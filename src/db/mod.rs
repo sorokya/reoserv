@@ -12,5 +12,5 @@ pub use connection::Connection;
 mod params;
 #[allow(unused_imports)]
 pub use params::{
-    insert_params, DbRequest, IntoDbRequest, PreparedQuery, SqlParam, SqlParams, ToSqlParam,
+    DbRequest, IntoDbRequest, PreparedQuery, SqlParam, SqlParams, ToSqlParam, insert_params,
 };

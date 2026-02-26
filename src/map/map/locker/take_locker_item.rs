@@ -1,9 +1,9 @@
 use std::cmp;
 
 use eolib::protocol::{
-    map::MapTileSpec,
-    net::{server::LockerGetServerPacket, PacketAction, PacketFamily, ThreeItem},
     Coords,
+    map::MapTileSpec,
+    net::{PacketAction, PacketFamily, ThreeItem, server::LockerGetServerPacket},
 };
 
 use super::super::Map;

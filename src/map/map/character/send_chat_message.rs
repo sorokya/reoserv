@@ -1,4 +1,4 @@
-use eolib::protocol::net::{server::TalkPlayerServerPacket, PacketAction, PacketFamily};
+use eolib::protocol::net::{PacketAction, PacketFamily, server::TalkPlayerServerPacket};
 
 use super::super::Map;
 

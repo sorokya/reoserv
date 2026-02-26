@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{ItemAcceptServerPacket, RecoverReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{ItemAcceptServerPacket, RecoverReplyServerPacket},
 };
 
 use super::super::Map;

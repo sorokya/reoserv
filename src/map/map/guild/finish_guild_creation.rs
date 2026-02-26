@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{GuildAgreeServerPacket, GuildCreateServerPacket},
         PacketAction, PacketFamily,
+        server::{GuildAgreeServerPacket, GuildCreateServerPacket},
     },
 };
 

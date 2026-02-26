@@ -1,12 +1,12 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
-        server::{JukeboxPlayerServerPacket, PriestReply, PriestReplyServerPacket},
         PacketAction, PacketFamily,
+        server::{JukeboxPlayerServerPacket, PriestReply, PriestReplyServerPacket},
     },
 };
 
-use crate::{map::WeddingState, LANG, SETTINGS};
+use crate::{LANG, SETTINGS, map::WeddingState};
 
 use super::super::Map;
 

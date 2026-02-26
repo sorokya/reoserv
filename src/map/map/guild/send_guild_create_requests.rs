@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::GuildRequestServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::GuildRequestServerPacket},
 };
 
 use super::super::Map;

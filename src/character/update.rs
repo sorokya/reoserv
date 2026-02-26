@@ -1,6 +1,6 @@
 use eolib::protocol::net::{Item, Spell};
 
-use crate::db::{insert_params, DbHandle};
+use crate::db::{DbHandle, insert_params};
 
 use super::{Character, QuestProgress};
 

@@ -1,5 +1,5 @@
 use crate::{
-    db::{insert_params, DbHandle},
+    db::{DbHandle, insert_params},
     utils::get_board_tile_spec,
 };
 

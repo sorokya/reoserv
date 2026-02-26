@@ -1,4 +1,4 @@
-use crate::db::{insert_params, DbHandle};
+use crate::db::{DbHandle, insert_params};
 
 pub async fn guild_exists(db: &DbHandle, guild_tag: &str, guild_name: &str) -> bool {
     matches!(

@@ -1,14 +1,14 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{AdminInteractReportClientPacket, AdminInteractTellClientPacket},
         PacketAction, PacketFamily,
+        client::{AdminInteractReportClientPacket, AdminInteractTellClientPacket},
     },
 };
 
 use crate::{
-    deep::{AdminInteractAddServerPacket, AdminInteractTakeClientPacket, DialogLine, LookupType},
     DROP_DB, ITEM_DB, NPC_DB, SETTINGS,
+    deep::{AdminInteractAddServerPacket, AdminInteractTakeClientPacket, DialogLine, LookupType},
 };
 
 use super::super::Player;

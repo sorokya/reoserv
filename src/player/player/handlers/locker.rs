@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{LockerAddClientPacket, LockerTakeClientPacket},
         Item, PacketAction,
+        client::{LockerAddClientPacket, LockerTakeClientPacket},
     },
 };
 

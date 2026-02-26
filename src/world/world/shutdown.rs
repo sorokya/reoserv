@@ -1,6 +1,6 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::MessageCloseServerPacket, PacketAction, PacketFamily},
+    protocol::net::{PacketAction, PacketFamily, server::MessageCloseServerPacket},
 };
 use tokio::sync::oneshot;
 

@@ -1,6 +1,6 @@
-use crc::{Crc, CRC_32_CKSUM};
+use crc::{CRC_32_CKSUM, Crc};
 use eolib::{
-    data::{decode_number, encode_number, EoReader, EoSerialize, EoWriter},
+    data::{EoReader, EoSerialize, EoWriter, decode_number, encode_number},
     protocol::r#pub::{
         Element, Esf, EsfRecord, SkillNature, SkillTargetRestrict, SkillTargetType, SkillType,
     },

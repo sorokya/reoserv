@@ -1,6 +1,6 @@
 use eolib::{data::CHAR_MAX, protocol::Direction};
 
-use crate::{map::Npc, NPC_DB};
+use crate::{NPC_DB, map::Npc};
 
 use super::super::Map;
 

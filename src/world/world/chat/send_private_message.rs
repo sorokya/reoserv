@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{TalkReply, TalkReplyServerPacket, TalkTellServerPacket},
     PacketAction, PacketFamily,
+    server::{TalkReply, TalkReplyServerPacket, TalkTellServerPacket},
 };
 
 use crate::player::PlayerHandle;

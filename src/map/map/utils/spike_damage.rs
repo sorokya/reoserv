@@ -1,11 +1,11 @@
 use std::cmp;
 
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         EffectAdminServerPacket, EffectSpecServerPacket, EffectSpecServerPacketMapDamageTypeData,
         EffectSpecServerPacketMapDamageTypeDataSpikes, MapDamageType,
     },
-    PacketAction, PacketFamily,
 };
 
 use crate::SETTINGS;

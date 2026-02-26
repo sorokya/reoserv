@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{TradeAdminServerPacket, TradeItemData, TradeReplyServerPacket},
     PacketAction, PacketFamily,
+    server::{TradeAdminServerPacket, TradeItemData, TradeReplyServerPacket},
 };
 
 use super::super::Map;

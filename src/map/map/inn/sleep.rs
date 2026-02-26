@@ -1,7 +1,7 @@
 use eolib::protocol::{
-    net::{server::CitizenAcceptServerPacket, PacketAction, PacketFamily},
-    r#pub::NpcType,
     Coords,
+    net::{PacketAction, PacketFamily, server::CitizenAcceptServerPacket},
+    r#pub::NpcType,
 };
 
 use crate::{INN_DB, NPC_DB};

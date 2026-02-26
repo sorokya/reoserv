@@ -1,9 +1,9 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily, QuestPage,
     server::{
         QuestListServerPacket, QuestListServerPacketPageData,
         QuestListServerPacketPageDataProgress, QuestProgressEntry, QuestRequirementIcon,
     },
-    PacketAction, PacketFamily, QuestPage,
 };
 use eoplus::Arg;
 

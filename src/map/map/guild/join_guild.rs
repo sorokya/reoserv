@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{GuildAgreeServerPacket, GuildReply},
     PacketAction, PacketFamily,
+    server::{GuildAgreeServerPacket, GuildReply},
 };
 
 use super::super::Map;

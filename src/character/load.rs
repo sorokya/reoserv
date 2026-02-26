@@ -1,14 +1,14 @@
 use eolib::protocol::{
-    net::{
-        server::{EquipmentPaperdoll, SitState},
-        Item, Spell,
-    },
     AdminLevel, Coords, Direction, Gender,
+    net::{
+        Item, Spell,
+        server::{EquipmentPaperdoll, SitState},
+    },
 };
 
 use crate::{
-    db::{insert_params, DbHandle, Row},
     SETTINGS,
+    db::{DbHandle, Row, insert_params},
 };
 
 use super::{Character, QuestProgress};

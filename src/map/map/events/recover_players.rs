@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{RecoverPlayerServerPacket, SitState},
     PacketAction, PacketFamily,
+    server::{RecoverPlayerServerPacket, SitState},
 };
 
 use super::super::Map;

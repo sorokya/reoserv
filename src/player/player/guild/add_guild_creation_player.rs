@@ -1,10 +1,10 @@
 use eolib::protocol::net::{
+    PacketAction, PacketFamily,
     server::{
         GuildReply, GuildReplyServerPacket, GuildReplyServerPacketReplyCodeData,
         GuildReplyServerPacketReplyCodeDataCreateAdd,
         GuildReplyServerPacketReplyCodeDataCreateAddConfirm,
     },
-    PacketAction, PacketFamily,
 };
 
 use crate::SETTINGS;

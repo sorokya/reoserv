@@ -1,16 +1,16 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{
+        PacketAction, PacketFamily,
         server::{
             AdminInteractReplyServerPacket, AdminInteractReplyServerPacketMessageTypeData,
             AdminInteractReplyServerPacketMessageTypeDataReport, AdminMessageType,
         },
-        PacketAction, PacketFamily,
     },
 };
 
 use super::super::World;
-use crate::{db::insert_params, utils::capitalize, SETTINGS};
+use crate::{SETTINGS, db::insert_params, utils::capitalize};
 
 impl World {
     pub async fn report_player(&self, player_id: i32, reportee_name: String, message: String) {
@@ -65,14 +65,15 @@ impl World {
         let buf = writer.to_byte_array();
 
         for player in self.players.values() {
-            if let Ok(character) = player.get_character().await {
-                if character.name != player_name && i32::from(character.admin_level) >= 1 {
-                    player.send_buf(
-                        PacketAction::Reply,
-                        PacketFamily::AdminInteract,
-                        buf.clone(),
-                    );
-                }
+            if let Ok(character) = player.get_character().await
+                && character.name != player_name
+                && i32::from(character.admin_level) >= 1
+            {
+                player.send_buf(
+                    PacketAction::Reply,
+                    PacketFamily::AdminInteract,
+                    buf.clone(),
+                );
             }
         }
     }

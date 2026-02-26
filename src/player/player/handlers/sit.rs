@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
-        client::{SitAction, SitRequestClientPacket},
         PacketAction,
+        client::{SitAction, SitRequestClientPacket},
     },
 };
 

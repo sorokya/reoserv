@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
 
-use eoplus::{parse_quest, Quest};
+use eoplus::{Quest, parse_quest};
 use glob::glob;
 
 pub fn load_quests() -> HashMap<i32, Quest> {

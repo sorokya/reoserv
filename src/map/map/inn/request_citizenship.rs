@@ -1,5 +1,5 @@
 use eolib::protocol::{
-    net::{server::CitizenReplyServerPacket, PacketAction, PacketFamily},
+    net::{PacketAction, PacketFamily, server::CitizenReplyServerPacket},
     r#pub::NpcType,
 };
 

@@ -1,8 +1,8 @@
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
-        net::{server::TalkAdminServerPacket, PacketAction, PacketFamily},
         AdminLevel,
+        net::{PacketAction, PacketFamily, server::TalkAdminServerPacket},
     },
 };
 
@@ -23,12 +23,11 @@ impl World {
 
         let buf = writer.to_byte_array();
         for player in self.players.values() {
-            if let Ok(character) = player.get_character().await {
-                if character.name != name
-                    && i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian)
-                {
-                    player.send_buf(PacketAction::Admin, PacketFamily::Talk, buf.clone());
-                }
+            if let Ok(character) = player.get_character().await
+                && character.name != name
+                && i32::from(character.admin_level) >= i32::from(AdminLevel::Guardian)
+            {
+                player.send_buf(PacketAction::Admin, PacketFamily::Talk, buf.clone());
             }
         }
     }

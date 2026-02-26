@@ -1,5 +1,5 @@
 use eolib::protocol::net::{
-    client::StatId, server::StatSkillPlayerServerPacket, PacketAction, PacketFamily,
+    PacketAction, PacketFamily, client::StatId, server::StatSkillPlayerServerPacket,
 };
 
 use super::super::Map;

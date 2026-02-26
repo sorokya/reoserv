@@ -2,13 +2,13 @@ use std::{cell::RefCell, collections::VecDeque};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
-use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily, Version};
+use eolib::protocol::net::{PacketAction, PacketFamily, Version, server::GuildReplyServerPacket};
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
 
 use super::{
-    packet_bus::PacketBus, Captcha, ClientState, Command, PartyRequest, Socket, WarpSession,
+    Captcha, ClientState, Command, PartyRequest, Socket, WarpSession, packet_bus::PacketBus,
 };
 
 pub struct Player {

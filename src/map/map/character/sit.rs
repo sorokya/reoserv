@@ -1,6 +1,6 @@
 use eolib::protocol::net::{
-    server::{SitReplyServerPacket, SitState},
     PacketAction, PacketFamily,
+    server::{SitReplyServerPacket, SitState},
 };
 
 use super::super::Map;

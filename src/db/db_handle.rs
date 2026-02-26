@@ -35,6 +35,16 @@ impl DbHandle {
         Ok(rows.into_iter().map(map_fn).collect())
     }
 
+    pub async fn try_query_map<T, F>(&self, query: &str, map_fn: F) -> anyhow::Result<Vec<T>>
+    where
+        F: Fn(crate::db::Row) -> anyhow::Result<T>,
+    {
+        let rows = self.query(query).await?;
+        rows.into_iter()
+            .map(map_fn)
+            .collect::<anyhow::Result<Vec<T>>>()
+    }
+
     pub async fn query_one(&self, query: &str) -> anyhow::Result<Option<crate::db::Row>> {
         let rows = self.query(query).await?;
         Ok(rows.into_iter().next())

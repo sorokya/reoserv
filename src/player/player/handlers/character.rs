@@ -164,10 +164,10 @@ impl Player {
 
         let character = match Character::load(&self.db, remove.character_id).await {
             Ok(character) => character,
-            Err(_) => {
+            Err(e) => {
                 self.close(format!(
-                    "Tried to request character deletion for a character that doesn't exist: {}",
-                    remove.character_id
+                    "Failed to load character for deletion: {}\n\tcharacter_id: {}",
+                    e, remove.character_id
                 ))
                 .await;
                 return;
@@ -287,10 +287,10 @@ impl Player {
 
         let character = match Character::load(&self.db, take.character_id).await {
             Ok(character) => character,
-            Err(_) => {
+            Err(e) => {
                 self.close(format!(
-                    "Tried to request character deletion for a character that doesn't exist: {}",
-                    take.character_id
+                    "Failed to load character for deletion: {}\n\tcharacter_id: {}",
+                    e, take.character_id
                 ))
                 .await;
                 return;

@@ -2,7 +2,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::db::Connection;
 
-use super::Command;
+use super::{Command, DbRequest};
 
 #[derive(Debug)]
 pub struct Db {
@@ -29,11 +29,17 @@ impl Db {
     pub async fn handle_command(&mut self, command: Command) {
         match command {
             Command::Execute(query, resp_tx) => {
-                let result = self.execute(&query).await;
+                let result = match query {
+                    DbRequest::Raw(query) => self.execute(&query).await,
+                    DbRequest::Prepared(query) => self.execute_prepared(&query).await,
+                };
                 let _ = resp_tx.send(result);
             }
             Command::Query(query, resp_tx) => {
-                let result = self.query(&query).await;
+                let result = match query {
+                    DbRequest::Raw(query) => self.query(&query).await,
+                    DbRequest::Prepared(query) => self.query_prepared(&query).await,
+                };
                 let _ = resp_tx.send(result);
             }
             Command::GetLastInsertId(resp_tx) => {
@@ -51,6 +57,28 @@ impl Db {
                 let result = self.rollback_transaction().await;
                 let _ = resp_tx.send(result);
             }
+        }
+    }
+
+    pub(super) async fn with_transaction_rollback<T>(
+        &mut self,
+        result: anyhow::Result<T>,
+    ) -> anyhow::Result<T> {
+        match result {
+            Ok(value) => Ok(value),
+            Err(error) => {
+                self.rollback_if_transaction_active().await;
+                Err(error)
+            }
+        }
+    }
+
+    pub(super) async fn rollback_if_transaction_active(&mut self) {
+        if self.transaction_active {
+            if let Err(error) = self.execute_inner("ROLLBACK").await {
+                error!("Failed to rollback transaction: {}", error);
+            }
+            self.transaction_active = false;
         }
     }
 }

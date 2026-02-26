@@ -9,5 +9,8 @@ mod row;
 pub use row::Row;
 mod connection;
 pub use connection::Connection;
-mod insert_params;
-pub use insert_params::insert_params;
+mod params;
+#[allow(unused_imports)]
+pub use params::{
+    insert_params, DbRequest, IntoDbRequest, PreparedQuery, SqlParam, SqlParams, ToSqlParam,
+};

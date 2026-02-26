@@ -1,6 +1,6 @@
 use tokio::sync::mpsc::{self, UnboundedSender};
 
-use super::{Command, Connection, Db};
+use super::{Command, Connection, Db, IntoDbRequest};
 
 #[derive(Debug, Clone)]
 pub struct DbHandle {
@@ -15,28 +15,38 @@ impl DbHandle {
         Self { tx }
     }
 
-    pub async fn execute(&self, query: &str) -> anyhow::Result<()> {
-        let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
-        let _ = self.tx.send(Command::Execute(query.to_string(), resp_tx));
-        resp_rx.await?
-    }
-
-    pub async fn query(&self, query: &str) -> anyhow::Result<Vec<crate::db::Row>> {
-        let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
-        let _ = self.tx.send(Command::Query(query.to_string(), resp_tx));
-        resp_rx.await?
-    }
-
-    pub async fn query_map<T, F>(&self, query: &str, map_fn: F) -> anyhow::Result<Vec<T>>
+    pub async fn execute<Q>(&self, query: &Q) -> anyhow::Result<()>
     where
+        Q: IntoDbRequest + ?Sized,
+    {
+        let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
+        let _ = self
+            .tx
+            .send(Command::Execute(query.to_db_request(), resp_tx));
+        resp_rx.await?
+    }
+
+    pub async fn query<Q>(&self, query: &Q) -> anyhow::Result<Vec<crate::db::Row>>
+    where
+        Q: IntoDbRequest + ?Sized,
+    {
+        let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
+        let _ = self.tx.send(Command::Query(query.to_db_request(), resp_tx));
+        resp_rx.await?
+    }
+
+    pub async fn query_map<Q, T, F>(&self, query: &Q, map_fn: F) -> anyhow::Result<Vec<T>>
+    where
+        Q: IntoDbRequest + ?Sized,
         F: Fn(crate::db::Row) -> T,
     {
         let rows = self.query(query).await?;
         Ok(rows.into_iter().map(map_fn).collect())
     }
 
-    pub async fn try_query_map<T, F>(&self, query: &str, map_fn: F) -> anyhow::Result<Vec<T>>
+    pub async fn try_query_map<Q, T, F>(&self, query: &Q, map_fn: F) -> anyhow::Result<Vec<T>>
     where
+        Q: IntoDbRequest + ?Sized,
         F: Fn(crate::db::Row) -> anyhow::Result<T>,
     {
         let rows = self.query(query).await?;
@@ -45,23 +55,35 @@ impl DbHandle {
             .collect::<anyhow::Result<Vec<T>>>()
     }
 
-    pub async fn query_one(&self, query: &str) -> anyhow::Result<Option<crate::db::Row>> {
+    pub async fn query_one<Q>(&self, query: &Q) -> anyhow::Result<Option<crate::db::Row>>
+    where
+        Q: IntoDbRequest + ?Sized,
+    {
         let rows = self.query(query).await?;
         Ok(rows.into_iter().next())
     }
 
-    pub async fn query_string(&self, query: &str) -> anyhow::Result<Option<String>> {
+    pub async fn query_string<Q>(&self, query: &Q) -> anyhow::Result<Option<String>>
+    where
+        Q: IntoDbRequest + ?Sized,
+    {
         let row = self.query_one(query).await?;
         Ok(row.and_then(|r| r.get_string(0)))
     }
 
-    pub async fn query_int(&self, query: &str) -> anyhow::Result<Option<i32>> {
+    pub async fn query_int<Q>(&self, query: &Q) -> anyhow::Result<Option<i32>>
+    where
+        Q: IntoDbRequest + ?Sized,
+    {
         let row = self.query_one(query).await?;
         Ok(row.and_then(|r| r.get_int(0)))
     }
 
     #[allow(dead_code)]
-    pub async fn query_date(&self, query: &str) -> anyhow::Result<Option<chrono::NaiveDateTime>> {
+    pub async fn query_date<Q>(&self, query: &Q) -> anyhow::Result<Option<chrono::NaiveDateTime>>
+    where
+        Q: IntoDbRequest + ?Sized,
+    {
         let row = self.query_one(query).await?;
         Ok(row.and_then(|r| r.get_date(0)))
     }

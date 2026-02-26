@@ -1,10 +1,10 @@
 use tokio::sync::oneshot;
 
-use crate::db::Row;
+use crate::db::{DbRequest, Row};
 
 pub enum Command {
-    Execute(String, oneshot::Sender<anyhow::Result<()>>),
-    Query(String, oneshot::Sender<anyhow::Result<Vec<Row>>>),
+    Execute(DbRequest, oneshot::Sender<anyhow::Result<()>>),
+    Query(DbRequest, oneshot::Sender<anyhow::Result<Vec<Row>>>),
     StartTransaction(oneshot::Sender<anyhow::Result<()>>),
     CommitTransaction(oneshot::Sender<anyhow::Result<()>>),
     #[allow(dead_code)]

@@ -3,6 +3,7 @@ use crate::{
     utils::get_board_tile_spec,
     SETTINGS,
 };
+use chrono::{Duration, Utc};
 
 use super::super::Map;
 
@@ -92,13 +93,16 @@ async fn get_board_post_counts(
         SETTINGS.board.max_posts
     };
 
+    let cutoff_time =
+        Utc::now().naive_utc() - Duration::minutes(SETTINGS.board.recent_post_time as i64);
+
     let recent_posts = db
         .query_int(&insert_params(
             include_str!("../../../sql/get_recent_post_count.sql"),
             &[
                 ("board_id", &board_id),
                 ("character_id", &character_id),
-                ("post_time", &SETTINGS.board.recent_post_time),
+                ("cutoff_time", &cutoff_time),
             ],
         ))
         .await?
@@ -110,7 +114,7 @@ async fn get_board_post_counts(
             &[
                 ("board_id", &board_id),
                 ("character_id", &character_id),
-                ("post_time", &limit),
+                ("limit", &limit),
             ],
         ))
         .await?

@@ -1,3 +1,4 @@
+use chrono::Utc;
 use eolib::{
     data::{EoReader, EoSerialize, EoWriter},
     protocol::net::{
@@ -12,6 +13,7 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
+use std::time::Duration;
 
 use crate::{
     db::insert_params,
@@ -514,6 +516,28 @@ impl Player {
 
         match row {
             Some(row) => {
+                let created_at = row.get_date(1).unwrap();
+                let ttl = row.get_int(2).unwrap_or_default();
+                let expires_at = created_at + Duration::from_mins(ttl as u64);
+                if Utc::now().naive_utc() >= expires_at {
+                    let _ = self
+                        .bus
+                        .send(
+                            PacketAction::Reply,
+                            PacketFamily::Login,
+                            LoginReplyServerPacket {
+                                reply_code: LoginReply::WrongUserPassword,
+                                reply_code_data: Some(
+                                    LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                        LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                                    ),
+                                ),
+                            },
+                        )
+                        .await;
+                    return;
+                }
+
                 let account_id = row.get_int(0).unwrap();
                 let logged_in = self
                     .world

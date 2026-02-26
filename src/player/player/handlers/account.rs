@@ -131,7 +131,13 @@ impl Player {
                 info!("New account: {}", create.username);
 
                 self.account_id = match self.db.get_last_insert_id().await {
-                    Some(account_id) => account_id as i32,
+                    Some(account_id) => {
+                        if account_id > i32::MAX as u64 {
+                            self.close("Account ID overflow".to_string()).await;
+                            return;
+                        }
+                        account_id as i32
+                    }
                     None => {
                         self.close("Error getting last insert id".to_string()).await;
                         return;

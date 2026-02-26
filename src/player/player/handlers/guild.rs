@@ -1263,7 +1263,7 @@ async fn update_guild_description(
 
     match db
         .execute(&insert_params(
-            "UPDATE Guild SET `description` = :description WHERE `tag` = :tag",
+            "UPDATE `guilds` SET `description` = :description WHERE `tag` = :tag",
             &[
                 ("description", &description.to_string()),
                 ("tag", &tag.to_string()),
@@ -1341,7 +1341,7 @@ async fn get_guild_description(db: &DbHandle, tag: &str) -> String {
 async fn get_guild_bank(db: &DbHandle, tag: &str) -> i32 {
     match db
         .query_int(&insert_params(
-            "SELECT `bank` FROM Guild WHERE `tag` = :tag",
+            "SELECT `bank` FROM `guilds` WHERE `tag` = :tag",
             &[("tag", &tag.to_string())],
         ))
         .await
@@ -1357,7 +1357,7 @@ async fn get_guild_bank(db: &DbHandle, tag: &str) -> i32 {
 
 async fn set_guild_bank(db: &DbHandle, tag: &str, bank: i32) -> anyhow::Result<()> {
     db.execute(&insert_params(
-        "UPDATE Guild SET `bank` = :bank WHERE `tag` = :tag",
+        "UPDATE `guilds` SET `bank` = :bank WHERE `tag` = :tag",
         &[("bank", &bank.to_string()), ("tag", &tag.to_string())],
     ))
     .await
@@ -1366,7 +1366,7 @@ async fn set_guild_bank(db: &DbHandle, tag: &str, bank: i32) -> anyhow::Result<(
 async fn get_guild_name(db: &DbHandle, tag: &str) -> Option<String> {
     match db
         .query_string(&insert_params(
-            "SELECT `name` FROM Guild WHERE `tag` = :tag",
+            "SELECT `name` FROM `guilds` WHERE `tag` = :tag",
             &[("tag", &tag.to_string())],
         ))
         .await
@@ -1383,7 +1383,7 @@ async fn get_guild_name(db: &DbHandle, tag: &str) -> Option<String> {
 async fn get_new_member_guild_rank(db: &DbHandle, tag: &str) -> Option<String> {
     match db
         .query_string(&insert_params(
-            "SELECT `rank` FROM Guild INNER JOIN GuildRank ON GuildRank.`guild_id` = Guild.`id` AND GuildRank.`index` = 8 WHERE `tag` = :tag",
+            "SELECT `rank` FROM `guilds` INNER JOIN `guilds_ranks` ON `guilds_ranks`.`guild_id` = `guilds`.`id` AND `guilds_ranks`.`index` = 8 WHERE `tag` = :tag",
             &[("tag", &tag.to_string())],
         ))
         .await

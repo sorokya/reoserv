@@ -73,7 +73,7 @@ impl Map {
 
             if let Err(e) = db
                 .execute(&insert_params(
-                    "UPDATE Guild SET `bank` = `bank` + :amount WHERE `tag` = :tag",
+                    "UPDATE `guilds` SET `bank` = `bank` + :amount WHERE `tag` = :tag",
                     &[("amount", &amount), ("tag", &tag)],
                 ))
                 .await

@@ -2552,7 +2552,7 @@ dependencies = [
  "mysql_async",
  "num-traits",
  "pretty_env_logger",
- "rand 0.8.5",
+ "rand 0.9.2",
  "reqwest",
  "rusqlite",
  "serde",

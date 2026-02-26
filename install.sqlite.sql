@@ -1,6 +1,6 @@
 CREATE TABLE
     IF NOT EXISTS `accounts` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `id` INTEGER PRIMARY KEY,
         `name` TEXT NOT NULL UNIQUE,
         `password_hash` TEXT NOT NULL,
         `email` TEXT NOT NULL,
@@ -14,7 +14,8 @@ CREATE TABLE
 
 CREATE TABLE
     IF NOT EXISTS `account_sessions` (
-        `account_id` INTEGER NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
+        `id` INTEGER PRIMARY KEY,
+        `account_id` INTEGER NOT NULL,
         `token` VARCHAR(100) NOT NULL,
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `ttl` INTEGER NOT NULL DEFAULT 60,
@@ -31,8 +32,29 @@ CREATE TABLE
     );
 
 CREATE TABLE
+    IF NOT EXISTS `guilds` (
+        `id` INTEGER PRIMARY KEY,
+        `tag` VARCHAR(3) NOT NULL,
+        `name` VARCHAR(32) NOT NULL,
+        `description` TEXT,
+        `bank` INTEGER NOT NULL DEFAULT 0,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT `guilds_tag_unique` UNIQUE (`tag`),
+        CONSTRAINT `guilds_name_unique` UNIQUE (`name`)
+    );
+
+CREATE TABLE
+    IF NOT EXISTS `guild_ranks` (
+        `id` INTEGER PRIMARY KEY,
+        `guild_id` INTEGER NOT NULL,
+        `index` TINYINT NOT NULL,
+        `rank` VARCHAR(64) NOT NULL,
+        FOREIGN KEY (`guild_id`) REFERENCES `guilds` (`id`) ON DELETE CASCADE
+    );
+
+CREATE TABLE
     IF NOT EXISTS `characters` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `id` INTEGER PRIMARY KEY,
         `account_id` INTEGER NOT NULL,
         `name` VARCHAR(16) NOT NULL,
         `map` INTEGER NOT NULL DEFAULT 192,
@@ -132,7 +154,7 @@ CREATE TABLE
 
 CREATE TABLE
     IF NOT EXISTS `board_posts` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `id` INTEGER PRIMARY KEY,
         `board_id` TINYINT NOT NULL,
         `character_id` INTEGER NOT NULL,
         `subject` VARCHAR(32) NOT NULL,
@@ -142,50 +164,16 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    IF NOT EXISTS `guilds` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        `tag` VARCHAR(3) NOT NULL,
-        `name` VARCHAR(32) NOT NULL,
-        `description` TEXT,
-        `bank` INTEGER NOT NULL DEFAULT 0,
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT `guilds_tag_unique` UNIQUE (`tag`),
-        CONSTRAINT `guilds_name_unique` UNIQUE (`name`)
-    );
-
-CREATE TABLE
-    IF NOT EXISTS `guild_ranks` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        `guild_id` INTEGER NOT NULL,
-        `index` TINYINT NOT NULL,
-        `rank` VARCHAR(64) NOT NULL,
-        FOREIGN KEY (`guild_id`) REFERENCES `guilds` (`id`) ON DELETE CASCADE
-    );
-
-CREATE TABLE
     IF NOT EXISTS `character_auto_pickup` (
         `character_id` int NOT NULL,
         `item_id` int NOT NULL,
         PRIMARY KEY (`character_id`, `item_id`),
-        CONSTRAINT `autopickup_character_id` FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE
+        FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE
     );
-
-CREATE TABLE
-    IF NOT EXISTS `history_actions` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        `action` VARCHAR(64) NOT NULL UNIQUE ON CONFLICT IGNORE
-    );
-
-INSERT INTO
-    `history_actions` (`action`)
-VALUES
-    ('account_created'),
-    ('account_logged_in'),
-    ('account_password_changed');
 
 CREATE TABLE
     IF NOT EXISTS `history` (
-        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `id` INTEGER PRIMARY KEY,
         `account_id` INTEGER NOT NULL,
         `character_id` INTEGER,
         `action_id` INTEGER NOT NULL,
@@ -193,8 +181,7 @@ CREATE TABLE
         `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `details` TEXT,
         FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
-        FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`),
-        FOREIGN KEY (`action_id`) REFERENCES `history_actions` (`id`)
+        FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`)
     );
 
 CREATE INDEX IF NOT EXISTS `idx_characters_account_id` ON `characters` (`account_id`);

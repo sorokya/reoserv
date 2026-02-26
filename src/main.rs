@@ -9,7 +9,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, env, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
@@ -127,8 +127,34 @@ async fn main() -> anyhow::Result<()> {
         other => panic!("Unsupported database driver: {}", other),
     });
 
-    if let Err(e) = db.execute(include_str!("../install.sql")).await {
-        error!("Failed to execute database query: {}", e);
+    let args: Vec<String> = env::args().collect();
+
+    if args.iter().any(|arg| arg == "--migrate") {
+        info!("Migrating database...");
+
+        let script = std::fs::read_to_string("migrate-schema.sql")
+            .unwrap_or_else(|_| panic!("Failed to read migrate SQL file at migrate-schema.sql"));
+
+        if let Err(e) = db.execute(&script).await {
+            error!("Failed to execute database query: {}", e);
+        }
+    }
+
+    if args.iter().any(|arg| arg == "--install") {
+        info!("Installing database...");
+
+        let install_sql_path = match SETTINGS.database.driver.as_str() {
+            "mysql" => "install.mysql.sql",
+            "sqlite" => "install.sqlite.sql",
+            other => panic!("Unsupported database driver: {}", other),
+        };
+
+        let script = std::fs::read_to_string(install_sql_path)
+            .unwrap_or_else(|_| panic!("Failed to read install SQL file at {}", install_sql_path));
+
+        if let Err(e) = db.execute(&script).await {
+            error!("Failed to execute database query: {}", e);
+        }
     }
 
     if let Some(row) = db

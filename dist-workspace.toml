@@ -10,7 +10,15 @@ ci = "github"
 # The installers to generate for each app
 installers = []
 # Extra static files to include in each App (path relative to this Cargo.toml's dir)
-include = ["config", "data", "db-init"]
+include = [
+    "config",
+    "data",
+    "README.md",
+    "LICENSE.txt",
+    "install.mysql.sql",
+    "install.sqlite.sql",
+    "migrate-schema.sql",
+]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = [
     "aarch64-apple-darwin",

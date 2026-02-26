@@ -77,7 +77,6 @@ impl Character {
             include_str!("../sql/update_character.sql"),
             &[
                 ("character_id", &self.id),
-                ("name", &self.name),
                 ("title", &self.title),
                 ("home", &self.home),
                 ("fiance", &self.fiance),

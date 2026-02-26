@@ -1,3 +1,3 @@
 SELECT `id`, `email`
-FROM `Account`
+FROM `accounts`
 WHERE `name` = :name;

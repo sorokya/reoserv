@@ -9,7 +9,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, env, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
@@ -23,6 +23,7 @@ use lazy_static::lazy_static;
 mod utils;
 mod arenas;
 mod character;
+mod db;
 mod deep;
 use arenas::Arenas;
 mod commands;
@@ -47,13 +48,13 @@ use global_drops::GlobalDrops;
 mod sln;
 use sln::ping_sln;
 mod world;
-use mysql_async::prelude::*;
 
 use tokio::{net::TcpListener, signal, time};
 use tokio_tungstenite::accept_async;
 use world::WorldHandle;
 
 use crate::{
+    db::{Connection, DbHandle},
     emails::Emails,
     lang::Lang,
     player::PlayerHandle,
@@ -91,7 +92,7 @@ lazy_static! {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "console")]
     console_subscriber::init();
 
@@ -109,42 +110,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         include_str!("../VERSION.txt")
     );
 
-    let database_url = format!(
-        "mysql://{}:{}@{}:{}/{}",
-        SETTINGS.database.username,
-        SETTINGS.database.password,
-        SETTINGS.database.host,
-        SETTINGS.database.port,
-        SETTINGS.database.name
-    );
+    let db = DbHandle::new(match SETTINGS.database.driver.as_str() {
+        "mysql" => Connection::Mysql(
+            mysql_async::Conn::from_url(format!(
+                "mysql://{}:{}@{}:{}/{}",
+                SETTINGS.database.username,
+                SETTINGS.database.password,
+                SETTINGS.database.host,
+                SETTINGS.database.port,
+                SETTINGS.database.name
+            ))
+            .await
+            .unwrap(),
+        ),
+        "sqlite" => Connection::Sqlite(
+            rusqlite::Connection::open(format!("{}.db", SETTINGS.database.name)).unwrap(),
+        ),
+        other => panic!("Unsupported database driver: {}", other),
+    });
 
-    let pool = mysql_async::Pool::new(mysql_async::Opts::from_url(&database_url).unwrap());
+    let args: Vec<String> = env::args().collect();
+
+    if args.iter().any(|arg| arg == "--migrate") {
+        info!("Migrating database...");
+        let script = std::fs::read_to_string("migrate-schema.sql")?;
+        db.execute(&script).await?;
+    }
+
+    if args.iter().any(|arg| arg == "--install") {
+        info!("Installing database...");
+
+        let install_sql_path = match SETTINGS.database.driver.as_str() {
+            "mysql" => "install.mysql.sql",
+            "sqlite" => "install.sqlite.sql",
+            other => panic!("Unsupported database driver: {}", other),
+        };
+
+        let script = std::fs::read_to_string(install_sql_path)?;
+        db.execute(&script).await?;
+    }
+
+    if let Some(row) = db
+        .query_one(
+            "SELECT (SELECT COUNT(1) FROM accounts),
+	   (SELECT COUNT(1) FROM characters),
+	   (SELECT COUNT(1) FROM characters WHERE admin_level > 0),
+	   (SELECT COUNT(1) FROM guilds);",
+        )
+        .await?
     {
-        let conn = pool
-            .get_conn()
-            .await
-            .expect("Failed to get connection from pool! Is MySQL running?");
-        let mut results = r"SELECT
-        (SELECT COUNT(*) FROM `Account`) 'accounts',
-        (SELECT COUNT(*) FROM `Character`) 'characters',
-        (SELECT COUNT(*) FROM `Guild`) 'guilds',
-        (SELECT COUNT(*) FROM `Character` WHERE `admin_level` > 0) 'admins'"
-            .with(())
-            .run(conn)
-            .await?;
-
-        results
-            .for_each(|row| {
-                info!("Accounts: {}", row.get::<i64, usize>(0).unwrap());
-                info!(
-                    "Characters: {} (Admins: {})",
-                    row.get::<i64, usize>(1).unwrap(),
-                    row.get::<i64, usize>(3).unwrap()
-                );
-                info!("Guilds: {}", row.get::<i64, usize>(2).unwrap());
-            })
-            .await
-            .unwrap();
+        info!("Accounts: {}", row.get_int(0).unwrap_or(0));
+        info!(
+            "Characters: {} (Admins: {})",
+            row.get_int(1).unwrap_or(0),
+            row.get_int(2).unwrap_or(0)
+        );
+        info!("Guilds: {}", row.get_int(3).unwrap_or(0));
     }
 
     info!("Classes: {}", CLASS_DB.classes.len());
@@ -153,7 +174,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Skills: {}", SPELL_DB.skills.len());
     info!("Quests: {}", QUEST_DB.len());
 
-    let world = WorldHandle::new(pool.clone());
+    let world = WorldHandle::new(db.clone());
     {
         let world = world.clone();
         world
@@ -220,7 +241,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut server_world = world.clone();
-    let server_pool = pool.clone();
+    let server_db = db.clone();
     tokio::spawn(async move {
         while server_world.is_alive {
             let (socket, addr) = tcp_listener.accept().await.unwrap();
@@ -290,7 +311,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ip,
                 now,
                 server_world.clone(),
-                server_pool.clone(),
+                server_db.clone(),
             );
             server_world
                 .add_player(player_id, player)
@@ -388,7 +409,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ip,
                     now,
                     websocket_world.clone(),
-                    pool.clone(),
+                    db.clone(),
                 );
                 websocket_world
                     .add_player(player_id, player)
@@ -409,17 +430,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     tokio::select! {
-        ctrl_c = signal::ctrl_c() => match ctrl_c {
-            Ok(()) => {},
-            Err(err) => {
-                error!("Unable to listen for shutdown signal: {}", err);
-            }
+        ctrl_c = signal::ctrl_c() => if let Err(err) = ctrl_c {
+            error!("Unable to listen for shutdown signal: {}", err);
         },
-        close = close() => match close {
-            Ok(()) => {},
-            Err(err) => {
-                error!("Unable to listen for shutdown signal: {}", err);
-            }
+        close = close() => if let Err(err) = close {
+            error!("Unable to listen for shutdown signal: {}", err);
         }
     }
 
@@ -430,14 +445,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(windows)]
-async fn close() -> Result<(), Box<dyn std::error::Error>> {
+async fn close() -> anyhow::Result<()> {
     let mut close_stream = signal::windows::ctrl_close()?;
     close_stream.recv().await;
     Ok(())
 }
 
 #[cfg(unix)]
-async fn close() -> Result<(), Box<dyn std::error::Error>> {
+async fn close() -> anyhow::Result<()> {
     let mut stream = signal::unix::signal(signal::unix::SignalKind::terminate())?;
     let _ = stream.recv().await;
     Ok(())

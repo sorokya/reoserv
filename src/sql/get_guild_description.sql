@@ -1,3 +1,3 @@
 SELECT `description`
-FROM `Guild`
+FROM `guilds`
 WHERE `tag` = :tag

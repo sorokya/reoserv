@@ -1,2 +1,2 @@
-INSERT INTO `Ban` (account_id, ip, duration, created_by)
-VALUES (:account_id, :ip, :duration, (SELECT id FROM `Character` WHERE `name` = :admin_name));
+INSERT INTO `bans` (account_id, ip, duration)
+VALUES (:account_id, :ip, :duration);

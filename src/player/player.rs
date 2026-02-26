@@ -3,7 +3,6 @@ use std::{cell::RefCell, collections::VecDeque};
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::GuildReplyServerPacket, PacketAction, PacketFamily, Version};
-use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
@@ -20,13 +19,14 @@ pub struct Player {
     pub world: WorldHandle,
     pub map: Option<MapHandle>,
     account_id: i32,
-    pool: Pool,
+    db: crate::db::DbHandle,
     pub state: ClientState,
     ip: String,
     pub connected_at: DateTime<Utc>,
     pub closed: bool,
     login_attempts: i32,
     character: Option<Character>,
+    character_id: Option<i32>,
     session_id: Option<i32>,
     interact_npc_index: Option<i32>,
     interact_player_id: Option<i32>,
@@ -60,6 +60,7 @@ mod handlers;
 #[macro_use]
 mod guild;
 mod generate_email_pin;
+mod history;
 mod ping;
 mod quest_action;
 mod request_warp;
@@ -78,7 +79,7 @@ impl Player {
         connected_at: DateTime<Utc>,
         rx: UnboundedReceiver<Command>,
         world: WorldHandle,
-        pool: Pool,
+        db: crate::db::DbHandle,
     ) -> Self {
         Self {
             id,
@@ -86,7 +87,7 @@ impl Player {
             connected_at,
             rx,
             world,
-            pool,
+            db,
             queue: RefCell::new(VecDeque::new()),
             map: None,
             closed: false,
@@ -95,6 +96,7 @@ impl Player {
             login_attempts: 0,
             ip,
             character: None,
+            character_id: None,
             warp_session: None,
             session_id: None,
             interact_npc_index: None,

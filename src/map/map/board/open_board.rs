@@ -3,9 +3,9 @@ use eolib::protocol::net::{
     server::{BoardOpenServerPacket, BoardPostListing},
     PacketAction, PacketFamily,
 };
-use mysql_async::{params, prelude::Queryable, Row};
 
 use crate::{
+    db::insert_params,
     utils::{format_duration, get_board_tile_spec},
     SETTINGS,
 };
@@ -46,34 +46,25 @@ impl Map {
 
         player.set_board_id(board_id);
 
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get connection from pool: {}", e);
-                    return;
-                }
-            };
-
             let limit = if board_id == SETTINGS.board.admin_board {
                 SETTINGS.board.admin_max_posts
             } else {
                 SETTINGS.board.max_posts
             };
 
-            let posts = match conn
-                .exec_map(
-                    include_str!("../../../sql/get_board_posts.sql"),
-                    params! {
-                        "board_id" => board_id,
-                        "limit" => limit,
-                    },
-                    |mut row: Row| BoardPost {
-                        id: row.take("id").unwrap(),
-                        author: row.take("author").unwrap(),
-                        subject: row.take("subject").unwrap(),
-                        created_at: row.take("created_at").unwrap(),
+            let posts = match db
+                .query_map(
+                    &insert_params(
+                        include_str!("../../../sql/get_board_posts.sql"),
+                        &[("board_id", &board_id), ("limit", &limit)],
+                    ),
+                    |row| BoardPost {
+                        id: row.get_int(0).unwrap(),
+                        author: row.get_string(1).unwrap(),
+                        subject: row.get_string(2).unwrap(),
+                        created_at: row.get_date(3).unwrap(),
                     },
                 )
                 .await

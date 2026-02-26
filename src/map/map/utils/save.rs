@@ -9,14 +9,6 @@ use super::super::Map;
 
 impl Map {
     pub async fn save(&mut self) {
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Failed to get connection from pool: {}", e);
-                return;
-            }
-        };
-
         let now = chrono::Utc::now();
 
         for character in self.characters.values_mut() {
@@ -24,7 +16,7 @@ impl Map {
                 character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
             }
 
-            if let Err(e) = character.save(&mut conn).await {
+            if let Err(e) = character.save(&self.db).await {
                 error!("Failed to update character: {}", e);
                 continue;
             }

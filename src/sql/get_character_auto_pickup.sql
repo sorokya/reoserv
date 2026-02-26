@@ -1,3 +1,3 @@
 SELECT item_id
-FROM AutoPickup
+FROM `character_auto_pickup`
 WHERE character_id = :character_id;

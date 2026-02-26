@@ -1,3 +1,6 @@
-UPDATE `Character`
-SET `guild_rank` = NULL, `guild_rank_string` = NULL
-WHERE `guild_id` IS NULL;
+UPDATE `characters`
+SET
+    `guild_rank` = NULL,
+    `guild_rank_string` = NULL
+WHERE
+    `guild_id` IS NULL;

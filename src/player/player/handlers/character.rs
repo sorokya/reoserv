@@ -16,10 +16,10 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
 
 use crate::{
     character::Character,
+    db::{insert_params, DbHandle},
     errors::WrongSessionIdError,
     player::{
         player::account::{get_character_list, get_num_of_characters},
@@ -52,15 +52,6 @@ impl Player {
             return;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
         let session_id = match self.session_id {
             Some(session_id) => session_id,
             None => return,
@@ -77,7 +68,7 @@ impl Player {
 
         // TODO: validate name
 
-        let exists = match character_exists(&mut conn, &create.name).await {
+        let exists = match character_exists(&self.db, &create.name).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if character exists: {}", e))
@@ -106,7 +97,7 @@ impl Player {
         }
 
         let mut character = Character::from_creation(self.account_id, &create);
-        if let Err(e) = character.save(&mut conn).await {
+        if let Err(e) = character.save(&self.db).await {
             self.close(format!(
                 "Error creating character: {}\n\taccount_id: {}\n\tdetails: {:?}",
                 e, self.account_id, create
@@ -117,7 +108,7 @@ impl Player {
 
         info!("New character: {}", create.name);
 
-        let characters = match get_character_list(&mut conn, self.account_id).await {
+        let characters = match get_character_list(&self.db, self.account_id).await {
             Ok(characters) => characters,
             Err(e) => {
                 self.close(format!("Error getting character list: {}", e))
@@ -154,17 +145,6 @@ impl Player {
             return;
         }
 
-        let conn = self.pool.get_conn();
-
-        let mut conn = match conn.await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
         let actual_session_id = match self.take_session_id() {
             Ok(session_id) => session_id,
             Err(e) => {
@@ -182,12 +162,12 @@ impl Player {
             return;
         }
 
-        let character = match Character::load(&mut conn, remove.character_id).await {
+        let character = match Character::load(&self.db, remove.character_id).await {
             Ok(character) => character,
-            Err(_) => {
+            Err(e) => {
                 self.close(format!(
-                    "Tried to request character deletion for a character that doesn't exist: {}",
-                    remove.character_id
+                    "Failed to load character for deletion: {}\n\tcharacter_id: {}",
+                    e, remove.character_id
                 ))
                 .await;
                 return;
@@ -203,12 +183,12 @@ impl Player {
             return;
         }
 
-        if let Err(e) = character.delete(&mut conn).await {
+        if let Err(e) = character.delete(&self.db).await {
             self.close(format!("Error deleting character: {}", e)).await;
             return;
         }
 
-        let characters = match get_character_list(&mut conn, self.account_id).await {
+        let characters = match get_character_list(&self.db, self.account_id).await {
             Ok(characters) => characters,
             Err(e) => {
                 self.close(format!("Error getting character list: {}", e))
@@ -249,16 +229,7 @@ impl Player {
             return;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let num_of_characters = match get_num_of_characters(&mut conn, self.account_id).await {
+        let num_of_characters = match get_num_of_characters(&self.db, self.account_id).await {
             Ok(num_of_characters) => num_of_characters,
             Err(e) => {
                 self.close(format!("Error getting number of characters: {}", e))
@@ -314,21 +285,12 @@ impl Player {
             return;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let character = match Character::load(&mut conn, take.character_id).await {
+        let character = match Character::load(&self.db, take.character_id).await {
             Ok(character) => character,
-            Err(_) => {
+            Err(e) => {
                 self.close(format!(
-                    "Tried to request character deletion for a character that doesn't exist: {}",
-                    take.character_id
+                    "Failed to load character for deletion: {}\n\tcharacter_id: {}",
+                    e, take.character_id
                 ))
                 .await;
                 return;
@@ -371,16 +333,14 @@ impl Player {
 }
 
 pub async fn character_exists(
-    conn: &mut Conn,
+    db: &DbHandle,
     name: &str,
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-    match conn
-        .exec_first::<Row, &str, Params>(
-            r"SELECT id FROM `Character` WHERE `name` = :name",
-            params! {
-                "name" => name.to_lowercase(),
-            },
-        )
+    match db
+        .query_one(&insert_params(
+            r"SELECT id FROM `characters` WHERE `name` = :name",
+            &[("name", &name.to_lowercase())],
+        ))
         .await?
     {
         Some(_) => Ok(true),

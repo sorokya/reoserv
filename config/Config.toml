@@ -53,6 +53,7 @@ generate_pub = false
 lang = "en"
 
 [database]
+driver = "sqlite"
 host = "127.0.0.1"
 port = "3306"
 name = "reoserv"

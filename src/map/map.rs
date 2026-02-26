@@ -4,7 +4,6 @@ use eolib::protocol::{
     map::{Emf, MapTileSpec},
     Coords,
 };
-use mysql_async::Pool;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{character::Character, world::WorldHandle, SETTINGS};
@@ -24,7 +23,7 @@ pub struct Map {
     npcs: Vec<Npc>,
     npcs_initialized: bool,
     characters: HashMap<i32, Character>,
-    pool: Pool,
+    db: crate::db::DbHandle,
     quake_ticks: i32,
     arena_ticks: i32,
     arena_players: Vec<ArenaPlayer>,
@@ -70,7 +69,7 @@ impl Map {
         id: i32,
         file_size: i32,
         file: Emf,
-        pool: Pool,
+        db: crate::db::DbHandle,
         world: WorldHandle,
         rx: UnboundedReceiver<Command>,
     ) -> Self {
@@ -116,7 +115,7 @@ impl Map {
             npcs: Vec::new(),
             npcs_initialized: false,
             characters: HashMap::new(),
-            pool,
+            db,
             arena_ticks: 0,
             arena_players: Vec::new(),
             quake_ticks: 0,

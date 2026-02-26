@@ -1,3 +1,4 @@
+use chrono::Utc;
 use eolib::{
     data::{EoReader, EoSerialize, EoWriter},
     protocol::net::{
@@ -12,9 +13,10 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable, Conn, Params, Row};
+use std::time::Duration;
 
 use crate::{
+    db::insert_params,
     deep::{
         AccountRecoverPinReply, AccountRecoverReply, AccountRecoverUpdateReply,
         LoginAcceptClientPacket, LoginAcceptServerPacket, LoginAgreeClientPacket,
@@ -24,9 +26,9 @@ use crate::{
     player::{
         player::account::{
             account_banned, account_exists, generate_password_hash, generate_session,
-            get_character_list, update_last_login_ip, validate_password,
+            get_character_list, validate_password,
         },
-        ClientState,
+        Action, ClientState,
     },
     utils::{is_deep, mask_email, send_email},
     EMAILS, SETTINGS,
@@ -81,17 +83,7 @@ impl Player {
             return;
         }
 
-        let conn = self.pool.get_conn();
-        let mut conn = match conn.await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let exists = match account_exists(&mut conn, &request.username).await {
+        let exists = match account_exists(&self.db, &request.username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -124,7 +116,7 @@ impl Player {
             return;
         }
 
-        let banned = match account_banned(&mut conn, &request.username).await {
+        let banned = match account_banned(&self.db, &request.username).await {
             Ok(banned) => banned,
             Err(e) => {
                 self.close(format!("Error checking if account is banned: {}", e))
@@ -151,13 +143,12 @@ impl Player {
             return;
         }
 
-        let row = match conn
-            .exec_first::<Row, &str, Params>(
+        let row = match self
+            .db
+            .query_one(&insert_params(
                 include_str!("../../../sql/get_password_hash.sql"),
-                params! {
-                    "name" => &request.username,
-                },
-            )
+                &[("name", &request.username)],
+            ))
             .await
         {
             Ok(row) => row,
@@ -169,14 +160,15 @@ impl Player {
         }
         .unwrap();
 
-        let username: String = row.get("name").unwrap();
-        let password_hash: String = row.get("password_hash").unwrap();
-        let account_id: i32 = row.get("id").unwrap();
+        let username: String = row.get_string(1).unwrap();
+        let password_hash: String = row.get_string(2).unwrap();
+        let account_id: i32 = row.get_int(0).unwrap();
         let logged_in = self
             .world
             .is_logged_in(account_id)
             .await
             .expect("Failed to check if logged in. Timeout");
+
         self.world.add_pending_login(account_id);
 
         if !validate_password(&username, &request.password, &password_hash) {
@@ -227,12 +219,12 @@ impl Player {
             return;
         }
 
-        self.finish_login(&mut conn, account_id, remember_me).await;
+        self.finish_login(account_id, remember_me).await;
     }
 
-    async fn finish_login(&mut self, conn: &mut Conn, account_id: i32, remember_me: bool) {
+    async fn finish_login(&mut self, account_id: i32, remember_me: bool) {
         let session_token = if remember_me {
-            match generate_session(conn, account_id).await {
+            match generate_session(&self.db, account_id).await {
                 Ok(token) => Some(token),
                 Err(e) => {
                     self.world.remove_pending_login(account_id);
@@ -244,14 +236,7 @@ impl Player {
             None
         };
 
-        if let Err(e) = update_last_login_ip(conn, account_id, &self.ip).await {
-            self.world.remove_pending_login(account_id);
-            self.close(format!("Error updating last login IP: {}", e))
-                .await;
-            return;
-        }
-
-        let characters = match get_character_list(conn, account_id).await {
+        let characters = match get_character_list(&self.db, account_id).await {
             Ok(characters) => characters,
             Err(e) => {
                 self.close(format!("Error getting character list: {}", e))
@@ -261,6 +246,7 @@ impl Player {
         };
 
         self.account_id = account_id;
+        self.record_action(Action::AccountLoggedIn);
         self.world.add_logged_in_account(account_id);
         self.state = ClientState::LoggedIn;
 
@@ -339,21 +325,12 @@ impl Player {
             }
         };
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Failed to get SQL connection: {}", e);
-                return;
-            }
-        };
-
-        let mut row: Row = match conn
-            .exec_first(
+        let row = match self
+            .db
+            .query_one(&insert_params(
                 include_str!("../../../sql/get_account_email.sql"),
-                params! {
-                    "name" => &create.account_name,
-                },
-            )
+                &[("name", &create.account_name)],
+            ))
             .await
         {
             Ok(Some(row)) => row,
@@ -377,12 +354,12 @@ impl Player {
             }
         };
 
-        self.account_id = match row.take(0) {
+        self.account_id = match row.get_int(0) {
             Some(id) => id,
             None => return,
         };
 
-        let email: String = match row.take(1) {
+        let email: String = match row.get_string(1) {
             Some(email) => email,
             None => return,
         };
@@ -476,25 +453,14 @@ impl Player {
             return;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Failed to get SQL connection: {}", e);
-                self.send_login_agree_error().await;
-                return;
-            }
-        };
-
         let password_hash = generate_password_hash(&agree.account_name, &agree.password);
 
-        if let Err(e) = conn
-            .exec_drop(
+        if let Err(e) = self
+            .db
+            .execute(&insert_params(
                 include_str!("../../../sql/update_password_hash.sql"),
-                params! {
-                    "id" => self.account_id,
-                    "password_hash" => &password_hash,
-                },
-            )
+                &[("id", &self.account_id), ("password_hash", &password_hash)],
+            ))
             .await
         {
             error!("Error updating password hash: {}", e);
@@ -533,22 +499,12 @@ impl Player {
             return;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return;
-            }
-        };
-
-        let row = match conn
-            .exec_first::<Row, &str, Params>(
+        let row = match self
+            .db
+            .query_one(&insert_params(
                 include_str!("../../../sql/get_session.sql"),
-                params! {
-                    "token" => &token,
-                },
-            )
+                &[("token", &token)],
+            ))
             .await
         {
             Ok(row) => row,
@@ -560,7 +516,29 @@ impl Player {
 
         match row {
             Some(row) => {
-                let account_id: i32 = row.get("account_id").unwrap();
+                let created_at = row.get_date(1).unwrap();
+                let ttl = row.get_int(2).unwrap_or_default();
+                let expires_at = created_at + Duration::from_mins(ttl as u64);
+                if Utc::now().naive_utc() >= expires_at {
+                    let _ = self
+                        .bus
+                        .send(
+                            PacketAction::Reply,
+                            PacketFamily::Login,
+                            LoginReplyServerPacket {
+                                reply_code: LoginReply::WrongUserPassword,
+                                reply_code_data: Some(
+                                    LoginReplyServerPacketReplyCodeData::WrongUserPassword(
+                                        LoginReplyServerPacketReplyCodeDataWrongUserPassword::new(),
+                                    ),
+                                ),
+                            },
+                        )
+                        .await;
+                    return;
+                }
+
+                let account_id = row.get_int(0).unwrap();
                 let logged_in = self
                     .world
                     .is_logged_in(account_id)
@@ -585,7 +563,7 @@ impl Player {
                         .await;
                     return;
                 }
-                self.finish_login(&mut conn, account_id, true).await;
+                self.finish_login(account_id, true).await;
             }
             None => {
                 let _ = self

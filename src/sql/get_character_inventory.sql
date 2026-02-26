@@ -1,3 +1,3 @@
 SELECT item_id, quantity
-FROM Inventory
+FROM `character_inventory`
 WHERE character_id = :character_id;

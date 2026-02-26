@@ -14,14 +14,13 @@ use eolib::{
 };
 use futures::{stream, StreamExt};
 use glob::glob;
-use mysql_async::Pool;
 
 use crate::map::MapHandle;
 
 use super::WorldHandle;
 
 pub async fn load_maps(
-    pool: Pool,
+    db: crate::db::DbHandle,
     world: WorldHandle,
 ) -> Result<HashMap<i32, MapHandle>, Box<dyn std::error::Error + Send + Sync>> {
     let entries = glob("data/maps/*.emf")?;
@@ -38,7 +37,7 @@ pub async fn load_maps(
 
         load_handles.push(load_map(
             path.to_path_buf(),
-            pool.to_owned(),
+            db.to_owned(),
             world.to_owned(),
         ));
     }
@@ -54,13 +53,17 @@ pub async fn load_maps(
 
     map_files.insert(
         0,
-        MapHandle::new(0, 0, pool.to_owned(), Emf::default(), world.to_owned()),
+        MapHandle::new(0, 0, db.to_owned(), Emf::default(), world.to_owned()),
     );
 
     Ok(map_files)
 }
 
-async fn load_map(path: PathBuf, pool: Pool, world: WorldHandle) -> Option<(i32, MapHandle)> {
+async fn load_map(
+    path: PathBuf,
+    db: crate::db::DbHandle,
+    world: WorldHandle,
+) -> Option<(i32, MapHandle)> {
     let file_name = match path.file_name() {
         Some(file_name) => match file_name.to_str() {
             Some(file_name) => file_name,
@@ -116,7 +119,7 @@ async fn load_map(path: PathBuf, pool: Pool, world: WorldHandle) -> Option<(i32,
         }
     };
 
-    let map_handle = MapHandle::new(id, file_size as i32, pool, file, world);
+    let map_handle = MapHandle::new(id, file_size as i32, db, file, world);
     map_handle
         .load()
         .await

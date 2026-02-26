@@ -2,36 +2,38 @@ use eolib::protocol::{
     net::server::{CharacterSelectionListEntry, EquipmentCharacterSelect},
     AdminLevel, Gender,
 };
-use mysql_async::{prelude::*, Conn, Row};
 
-use crate::ITEM_DB;
+use crate::{
+    db::{insert_params, DbHandle},
+    ITEM_DB,
+};
 
 pub async fn get_character_list(
-    conn: &mut Conn,
+    db: &DbHandle,
     account_id: i32,
 ) -> Result<Vec<CharacterSelectionListEntry>, Box<dyn std::error::Error + Send + Sync>> {
-    let characters = conn
-        .exec_map(
-            include_str!("../../../sql/get_character_list.sql"),
-            params! {
-                "account_id" => &account_id,
-            },
-            |row: Row| {
-                let boots: i32 = row.get(8).unwrap();
-                let armor: i32 = row.get(9).unwrap();
-                let hat: i32 = row.get(10).unwrap();
-                let shield: i32 = row.get(11).unwrap();
-                let weapon: i32 = row.get(12).unwrap();
+    let characters = db
+        .query_map(
+            &insert_params(
+                include_str!("../../../sql/get_character_list.sql"),
+                &[("account_id", &account_id)],
+            ),
+            |row| {
+                let boots = row.get_int(8).unwrap();
+                let armor = row.get_int(9).unwrap();
+                let hat = row.get_int(10).unwrap();
+                let shield = row.get_int(11).unwrap();
+                let weapon = row.get_int(12).unwrap();
 
                 CharacterSelectionListEntry {
-                    id: row.get(0).unwrap(),
-                    name: row.get(1).unwrap(),
-                    level: row.get(2).unwrap(),
-                    gender: Gender::from(row.get::<i32, usize>(3).unwrap()),
-                    hair_style: row.get(4).unwrap(),
-                    hair_color: row.get(5).unwrap(),
-                    skin: row.get(6).unwrap(),
-                    admin: AdminLevel::from(row.get::<i32, usize>(7).unwrap()),
+                    id: row.get_int(0).unwrap(),
+                    name: row.get_string(1).unwrap(),
+                    level: row.get_int(2).unwrap(),
+                    gender: Gender::from(row.get_int(3).unwrap()),
+                    hair_style: row.get_int(4).unwrap(),
+                    hair_color: row.get_int(5).unwrap(),
+                    skin: row.get_int(6).unwrap(),
+                    admin: AdminLevel::from(row.get_int(7).unwrap()),
                     equipment: EquipmentCharacterSelect {
                         boots: match boots {
                             0 => 0,

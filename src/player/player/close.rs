@@ -7,22 +7,14 @@ impl Player {
             let mut character = map.leave(self.id, None, self.interact_player_id).await;
             let character_name = character.name.clone();
             let guild_tag = character.guild_tag.clone();
-            let pool = self.pool.clone();
+            let db = self.db.clone();
             tokio::spawn(async move {
-                let mut conn = match pool.get_conn().await {
-                    Ok(conn) => conn,
-                    Err(e) => {
-                        error!("Failed to get connection from pool: {}", e);
-                        return;
-                    }
-                };
-
                 if let Some(logged_in_at) = character.logged_in_at {
                     let now = chrono::Utc::now();
                     character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
                 }
 
-                if let Err(e) = character.save(&mut conn).await {
+                if let Err(e) = character.save(&db).await {
                     error!("Failed to update character: {}", e);
                 }
             });

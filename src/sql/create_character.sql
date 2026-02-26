@@ -1,4 +1,4 @@
-INSERT INTO `Character` (
+INSERT INTO `characters` (
 	`account_id`,
     `name`,
     `home`,
@@ -6,7 +6,10 @@ INSERT INTO `Character` (
     `race`,
     `hair_style`,
     `hair_color`,
-    `created_at`
+    `map`,
+    `x`,
+    `y`,
+    `direction`
 ) VALUES (
 	:account_id,
     :name,
@@ -15,5 +18,8 @@ INSERT INTO `Character` (
     :race,
     :hair_style,
     :hair_color,
-    UTC_TIMESTAMP()
+    :map,
+    :x,
+    :y,
+    :direction
 );

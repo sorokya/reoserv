@@ -1,2 +1,2 @@
-INSERT INTO `Guild` (`tag`, `name`, `description`)
+INSERT INTO `guilds` (`tag`, `name`, `description`)
 VALUES (:tag, :name, :description);

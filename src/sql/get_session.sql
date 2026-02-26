@@ -1,3 +1,5 @@
-SELECT `account_id`
-FROM `Session`
-WHERE `token` = :token AND NOW() < DATE_ADD(`created_at`, INTERVAL `ttl` MINUTE);
+SELECT `account_id`, `created_at`, `ttl`
+FROM `account_sessions`
+WHERE `token` = :token
+ORDER BY `created_at` DESC
+LIMIT 1;

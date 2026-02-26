@@ -1,7 +1,6 @@
 use eolib::protocol::{net::server::WarpEffect, Coords};
-use mysql_async::{params, prelude::Queryable};
 
-use crate::{LANG, SETTINGS};
+use crate::{db::insert_params, LANG, SETTINGS};
 
 use super::super::World;
 
@@ -30,27 +29,19 @@ impl World {
             method = "jailed"
         ));
 
-        let pool = self.pool.clone();
         if !player_online {
+            let db = self.db.clone();
             tokio::spawn(async move {
-                let mut conn = match pool.get_conn().await {
-                    Ok(conn) => conn,
-                    Err(err) => {
-                        error!("Failed to get connection from pool: {}", err);
-                        return;
-                    }
-                };
-
-                if let Err(e) = conn
-                    .exec_drop(
+                if let Err(e) = db
+                    .execute(&insert_params(
                         include_str!("../../../sql/offline_jail.sql"),
-                        params! {
-                            "map" => SETTINGS.jail.map,
-                            "x" => SETTINGS.jail.x,
-                            "y" => SETTINGS.jail.y,
-                            "name" => &victim_name,
-                        },
-                    )
+                        &[
+                            ("map", &SETTINGS.jail.map),
+                            ("x", &SETTINGS.jail.x),
+                            ("y", &SETTINGS.jail.y),
+                            ("name", &victim_name),
+                        ],
+                    ))
                     .await
                 {
                     error!("Failed to jail player: {}", e);

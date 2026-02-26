@@ -48,16 +48,7 @@ impl Player {
             return true;
         }
 
-        let mut conn = match self.pool.get_conn().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.close(format!("Error getting connection from pool: {}", e))
-                    .await;
-                return false;
-            }
-        };
-
-        let mut character = match Character::load(&mut conn, character_id).await {
+        let mut character = match Character::load(&self.db, character_id).await {
             Ok(character) => character,
             Err(e) => {
                 self.close(format!("Failed to load character {}: {}", character_id, e))
@@ -75,6 +66,7 @@ impl Player {
             return false;
         }
 
+        self.character_id = Some(character_id);
         character.player_id = Some(self.id);
         character.player = Some(player);
         character.logged_in_at = Some(chrono::Utc::now());

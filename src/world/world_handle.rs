@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{server::PartyExpShare, PartyRequestType};
-use mysql_async::Pool;
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::timeout;
@@ -16,9 +15,9 @@ pub struct WorldHandle {
 }
 
 impl WorldHandle {
-    pub fn new(pool: Pool) -> Self {
+    pub fn new(db: crate::db::DbHandle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let world = World::new(rx, pool);
+        let world = World::new(rx, db);
         tokio::spawn(run_world(world));
 
         Self { tx, is_alive: true }

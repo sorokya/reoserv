@@ -11,7 +11,6 @@ use eolib::{
     },
 };
 use eoplus::Arg;
-use mysql_async::Pool;
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::timeout;
@@ -32,10 +31,10 @@ impl PlayerHandle {
         ip: String,
         connected_at: DateTime<Utc>,
         world: WorldHandle,
-        pool: Pool,
+        db: crate::db::DbHandle,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let player = Player::new(id, socket, ip, connected_at, rx, world, pool);
+        let player = Player::new(id, socket, ip, connected_at, rx, world, db);
         tokio::spawn(run_player(player));
 
         Self { tx }

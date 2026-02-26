@@ -28,29 +28,69 @@ cargo build --release
 ```
 
 > [!NOTE]
-> Set up and configure a MySQL database before starting the server. See the section below for instructions.
+> Set up and configure your database before starting the server. You can use either MySQL/MariaDB or SQLite.
 > Edit `config/Config.toml` to match your production database before creating a release build.
 
 ## Database setup and configuration
 
-We use a MySQL database to store game data.
+Reoserv supports both MySQL/MariaDB and SQLite.
 
-1. If you don't have a MySQL database set up, you can run this Docker command to create one:
+1. Choose a database driver in `config/Config.toml` (or `config/Config.local.toml`):
+    - `driver = "mysql"` for MySQL/MariaDB
+    - `driver = "sqlite"` for SQLite
+
+2. Configure database connection settings:
+    - For MySQL/MariaDB, set `host`, `port`, `name`, `username`, and `password`.
+    - For SQLite, set `name` (the server will use `<name>.db` in the working directory).
+
+3. Install the database schema:
     ```sh
-    docker run --name reoserv-db \
-        -e MYSQL_ROOT_PASSWORD="CHANGEME" \
-        -e MYSQL_PASSWORD="CHANGEME" \
-        -e MYSQL_USER="reoserv" \
-        -e MYSQL_DATABASE="reoserv" \
-        -e TZ="UTC" \
-        -p "3306:3306" \
-        -v ./db-init/:/docker-entrypoint-initdb.d/ \
-        --restart unless-stopped \
-        -d mariadb:latest
+    ./reoserv --install
     ```
-    Replace `CHANGEME` with your own secure passwords.
 
-2. Edit the database connection settings in `config/Config.toml` or in a copy of it (`config/Config.local.toml`) accordingly before building / running the server.
+> [!WARNING]
+> If you are upgrading from an older schema version, run migrations before starting the server:
+> ```sh
+> ./reoserv --migrate
+> ```
+> Back up your database first. This is especially important if your schema still uses legacy tables such as `Bank` instead of `character_bank`.
+
+4. If you choose MySQL/MariaDB and are using the provided Compose setup, start only the database service with:
+    ```sh
+    docker compose up -d db
+    ```
+
+## Docker Compose (Reoserv + MariaDB)
+
+The provided `compose.yml` starts both services:
+
+- `db`: MariaDB database
+- `reoserv`: Reoserv server container
+
+Before starting, make sure your `config/Config.toml` (or mounted `config/Config.local.toml`) uses:
+
+- `driver = "mysql"`
+- `host = "db"`
+- `port = "3306"`
+- Matching `name`, `username`, and `password` values
+
+Build/start the stack:
+
+```sh
+docker compose up -d --build
+```
+
+Install schema in the container:
+
+```sh
+docker compose run --rm reoserv ./reoserv --install
+```
+
+For upgrades, run migrations in the container:
+
+```sh
+docker compose run --rm reoserv ./reoserv --migrate
+```
 
 ## Start the server
 

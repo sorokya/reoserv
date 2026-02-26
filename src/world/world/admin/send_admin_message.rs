@@ -8,9 +8,8 @@ use eolib::{
         PacketAction, PacketFamily,
     },
 };
-use mysql_async::{params, prelude::Queryable};
 
-use crate::{utils::capitalize, SETTINGS};
+use crate::{db::insert_params, utils::capitalize, SETTINGS};
 
 use super::super::World;
 
@@ -69,26 +68,21 @@ impl World {
     }
 
     fn add_message_to_admin_board(&self, character_id: i32, player_name: String, message: String) {
-        let pool = self.pool.clone();
+        let db = self.db.clone();
         tokio::spawn(async move {
-            let mut conn = match pool.get_conn().await {
-                Ok(conn) => conn,
-                Err(e) => {
-                    error!("Failed to get connection from pool: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) = conn
-                .exec_drop(
+            if let Err(e) = db
+                .execute(&insert_params(
                     include_str!("../../../sql/create_board_post.sql"),
-                    params! {
-                        "board_id" => SETTINGS.board.admin_board,
-                        "character_id" => character_id,
-                        "subject" => format!("[Request] {} needs help", capitalize(&player_name)),
-                        "body" => message,
-                    },
-                )
+                    &[
+                        ("board_id", &SETTINGS.board.admin_board),
+                        ("character_id", &character_id),
+                        (
+                            "subject",
+                            &format!("[Request] {} needs help", capitalize(&player_name)),
+                        ),
+                        ("body", &message),
+                    ],
+                ))
                 .await
             {
                 error!("Failed to add message to admin board: {}", e);

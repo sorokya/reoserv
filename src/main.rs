@@ -133,13 +133,8 @@ async fn main() -> anyhow::Result<()> {
 
     if args.iter().any(|arg| arg == "--migrate") {
         info!("Migrating database...");
-
-        let script = std::fs::read_to_string("migrate-schema.sql")
-            .unwrap_or_else(|_| panic!("Failed to read migrate SQL file at migrate-schema.sql"));
-
-        if let Err(e) = db.execute(&script).await {
-            error!("Failed to execute database query: {}", e);
-        }
+        let script = std::fs::read_to_string("migrate-schema.sql")?;
+        db.execute(&script).await?;
     }
 
     if args.iter().any(|arg| arg == "--install") {
@@ -151,12 +146,8 @@ async fn main() -> anyhow::Result<()> {
             other => panic!("Unsupported database driver: {}", other),
         };
 
-        let script = std::fs::read_to_string(install_sql_path)
-            .unwrap_or_else(|_| panic!("Failed to read install SQL file at {}", install_sql_path));
-
-        if let Err(e) = db.execute(&script).await {
-            error!("Failed to execute database query: {}", e);
-        }
+        let script = std::fs::read_to_string(install_sql_path)?;
+        db.execute(&script).await?;
     }
 
     if let Some(row) = db

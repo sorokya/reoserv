@@ -17,7 +17,20 @@ impl Db {
                                 Some(mysql_async::Value::NULL) => r.columns.push(SqlValue::Null),
                                 Some(mysql_async::Value::Bytes(buf)) => {
                                     match String::from_utf8(buf.clone()) {
-                                        Ok(s) => r.columns.push(SqlValue::String(s)),
+                                        Ok(s) => {
+                                            if let Ok(int) = s.parse::<i32>() {
+                                                r.columns.push(SqlValue::Int(int));
+                                            } else if let Ok(date) =
+                                                chrono::NaiveDateTime::parse_from_str(
+                                                    &s,
+                                                    "%Y-%m-%d %H:%M:%S",
+                                                )
+                                            {
+                                                r.columns.push(SqlValue::Date(date));
+                                            } else {
+                                                r.columns.push(SqlValue::String(s));
+                                            }
+                                        }
                                         Err(_) => {
                                             error!(
                                                 "Failed to parse bytes as UTF-8 string: {:?}",

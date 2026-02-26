@@ -1,18 +1,10 @@
 INSERT INTO
-    `account_sessions` (`account_id`, `token`, `created_at`, `ttl`)
-SELECT
-    `account_id`,
-    `token`,
-    `created_at`,
-    `ttl`
-FROM
-    `Session`;
-
-INSERT INTO
     `accounts` (
         `id`,
         `name`,
         `password_hash`,
+        `real_name`,
+        `location`,
         `email`,
         `computer`,
         `hdid`,
@@ -22,12 +14,24 @@ SELECT
     `id`,
     `name`,
     `password_hash`,
+    `real_name`,
+    `location`,
     `email`,
     `computer`,
     `hdid`,
     `created_at`
 FROM
     `Account`;
+
+INSERT INTO
+    `account_sessions` (`account_id`, `token`, `created_at`, `ttl`)
+SELECT
+    `account_id`,
+    `token`,
+    `created_at`,
+    `ttl`
+FROM
+    `Session`;
 
 INSERT INTO
     `bans` (`account_id`, `ip`, `duration`, `created_at`)

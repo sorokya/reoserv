@@ -3,18 +3,18 @@ use std::cmp;
 use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
 use eolib::protocol::{
     net::{
+        PacketAction, PacketFamily,
         server::{
             AvatarAdminServerPacket, RecoverPlayerServerPacket, SpellTargetOtherServerPacket,
             SpellTargetSelfServerPacket,
         },
-        PacketAction, PacketFamily,
     },
     r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
 };
-use rand::Rng;
+use rand::RngExt;
 
 use crate::utils::in_client_range;
-use crate::{character::SpellTarget, NPC_DB, SPELL_DB};
+use crate::{NPC_DB, SPELL_DB, character::SpellTarget};
 
 use super::super::Map;
 
@@ -381,8 +381,8 @@ impl Map {
             0
         } else {
             let amount = {
-                let mut rng = rand::thread_rng();
-                rng.gen_range(
+                let mut rng = rand::rng();
+                rng.random_range(
                     character.min_damage + spell_data.min_damage
                         ..=character.max_damage + spell_data.max_damage,
                 )
@@ -443,8 +443,10 @@ impl Map {
         }
 
         let amount = {
-            let mut rng = rand::thread_rng();
-            rng.gen_range(min_damage + spell_data.min_damage..=max_damage + spell_data.max_damage)
+            let mut rng = rand::rng();
+            rng.random_range(
+                min_damage + spell_data.min_damage..=max_damage + spell_data.max_damage,
+            )
         };
 
         let damage_dealt = {

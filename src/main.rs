@@ -13,8 +13,8 @@ use std::{collections::HashMap, env, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
-    server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
     Ecf, Eif, Enf, Esf,
+    server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
 };
 use eoplus::Quest;
 use lazy_static::lazy_static;
@@ -97,7 +97,9 @@ async fn main() -> anyhow::Result<()> {
     console_subscriber::init();
 
     if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
+        unsafe {
+            std::env::set_var("RUST_LOG", "info");
+        }
     }
     pretty_env_logger::init();
     println!(

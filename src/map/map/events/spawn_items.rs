@@ -1,9 +1,9 @@
 use chrono::{Duration, Utc};
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{server::ChestAgreeServerPacket, ThreeItem},
+    protocol::net::{ThreeItem, server::ChestAgreeServerPacket},
 };
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 use crate::{map::chest::ChestItem, utils::get_distance};
 
@@ -41,7 +41,7 @@ impl Map {
                         continue;
                     }
 
-                    let spawn = match possible_spawns.choose(&mut rand::thread_rng()) {
+                    let spawn = match possible_spawns.choose(&mut rand::rng()) {
                         Some(spawn) => spawn,
                         None => {
                             error!("Failed to choose spawn");

@@ -1,9 +1,9 @@
 use std::cmp;
 
-use eolib::protocol::{r#pub::NpcType, Coords, Direction};
-use rand::Rng;
+use eolib::protocol::{Coords, Direction, r#pub::NpcType};
+use rand::RngExt;
 
-use crate::{map::NPCBuilder, NPC_DB, SETTINGS};
+use crate::{NPC_DB, SETTINGS, map::NPCBuilder};
 
 use super::super::Map;
 
@@ -57,7 +57,7 @@ impl Map {
             }
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let indexes = self.npcs.iter().map(|npc| npc.index).collect::<Vec<i32>>();
 
         for index in indexes {
@@ -111,11 +111,11 @@ impl Map {
             } else {
                 Coords {
                     x: cmp::max(
-                        cmp::min(spawn_coords.x + rng.gen_range(-2..=2), self.file.width),
+                        cmp::min(spawn_coords.x + rng.random_range(-2..=2), self.file.width),
                         0,
                     ) as i32,
                     y: cmp::max(
-                        cmp::min(spawn_coords.y + rng.gen_range(-2..=2), self.file.height),
+                        cmp::min(spawn_coords.y + rng.random_range(-2..=2), self.file.height),
                         0,
                     ) as i32,
                 }
@@ -126,12 +126,15 @@ impl Map {
                 && (i > 100 || !self.is_tile_occupied(&spawn_coords))
             {
                 let x = cmp::max(
-                    cmp::min(file_spawn_coords.x + rng.gen_range(-2..=2), self.file.width),
+                    cmp::min(
+                        file_spawn_coords.x + rng.random_range(-2..=2),
+                        self.file.width,
+                    ),
                     0,
                 );
                 let y = cmp::max(
                     cmp::min(
-                        file_spawn_coords.y + rng.gen_range(-2..=2),
+                        file_spawn_coords.y + rng.random_range(-2..=2),
                         self.file.height,
                     ),
                     0,

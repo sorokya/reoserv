@@ -1,5 +1,7 @@
-use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use rand::rngs::OsRng;
+use argon2::{
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    password_hash::{SaltString, rand_core::OsRng},
+};
 
 pub fn generate_password_hash(username: &str, password: &str) -> String {
     let hash_input = format!("{}{}", username, password);

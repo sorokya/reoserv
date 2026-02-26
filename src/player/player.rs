@@ -26,6 +26,7 @@ pub struct Player {
     pub closed: bool,
     login_attempts: i32,
     character: Option<Character>,
+    character_id: Option<i32>,
     session_id: Option<i32>,
     interact_npc_index: Option<i32>,
     interact_player_id: Option<i32>,
@@ -59,6 +60,7 @@ mod handlers;
 #[macro_use]
 mod guild;
 mod generate_email_pin;
+mod history;
 mod ping;
 mod quest_action;
 mod request_warp;
@@ -94,6 +96,7 @@ impl Player {
             login_attempts: 0,
             ip,
             character: None,
+            character_id: None,
             warp_session: None,
             session_id: None,
             interact_npc_index: None,

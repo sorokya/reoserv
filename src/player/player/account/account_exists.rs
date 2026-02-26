@@ -6,7 +6,7 @@ pub async fn account_exists(
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
     match db
         .query_one(&insert_params(
-            r"SELECT id FROM `Account` WHERE `name` = :name",
+            r"SELECT id FROM `accounts` WHERE `name` = :name",
             &[("name", &name)],
         ))
         .await?

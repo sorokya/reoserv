@@ -66,6 +66,7 @@ impl Player {
             return false;
         }
 
+        self.character_id = Some(character_id);
         character.player_id = Some(self.id);
         character.player = Some(player);
         character.logged_in_at = Some(chrono::Utc::now());

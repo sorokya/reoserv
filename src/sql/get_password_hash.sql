@@ -1,3 +1,3 @@
 SELECT id, name, password_hash
-FROM Account
+FROM `accounts`
 WHERE name = :name

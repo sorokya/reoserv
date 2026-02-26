@@ -1,4 +1,4 @@
-INSERT INTO `GuildRank` (`guild_id`, `index`, `rank`)
+INSERT INTO `guild_ranks` (`guild_id`, `index`, `rank`)
 VALUES (:guild_id, 0, :leader_rank_name),
      (:guild_id, 1, :recruiter_rank_name),
      (:guild_id, 2, ''),

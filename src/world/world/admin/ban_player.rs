@@ -58,7 +58,6 @@ impl World {
                     include_str!("../../../sql/create_ban.sql"),
                     &[
                         ("account_id", &account_id),
-                        ("admin_name", &admin_name),
                         ("ip", &ip),
                         (
                             "duration",

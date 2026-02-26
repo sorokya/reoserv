@@ -338,7 +338,7 @@ pub async fn character_exists(
 ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
     match db
         .query_one(&insert_params(
-            r"SELECT id FROM `Character` WHERE `name` = :name",
+            r"SELECT id FROM `characters` WHERE `name` = :name",
             &[("name", &name.to_lowercase())],
         ))
         .await?

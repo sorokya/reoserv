@@ -1,4 +1,4 @@
-UPDATE `QuestProgress`
+UPDATE `character_quest_progress`
 SET `state` = :state,
     `npc_kills` = :npc_kills,
     `player_kills` = :player_kills,

@@ -1,2 +1,2 @@
-DELETE FROM BoardPost
+DELETE FROM `board_posts`
 WHERE id = :id;

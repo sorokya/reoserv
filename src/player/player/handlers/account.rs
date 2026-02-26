@@ -23,7 +23,7 @@ use crate::{
     errors::WrongSessionIdError,
     player::{
         player::account::{account_exists, generate_password_hash, validate_password},
-        ClientState,
+        Action, ClientState,
     },
     utils::{is_deep, send_email},
     EMAILS, SETTINGS,
@@ -123,13 +123,22 @@ impl Player {
                     ("email", &create.email),
                     ("computer", &create.computer),
                     ("hdid", &create.hdid),
-                    ("register_ip", &self.ip),
                 ],
             ))
             .await
         {
             Ok(_) => {
                 info!("New account: {}", create.username);
+
+                self.account_id = match self.db.get_last_insert_id().await {
+                    Some(account_id) => account_id as i32,
+                    None => {
+                        self.close("Error getting last insert id".to_string()).await;
+                        return;
+                    }
+                };
+
+                self.record_action(Action::AccountCreated);
 
                 let _ = self
                     .bus

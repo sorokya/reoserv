@@ -91,16 +91,8 @@ impl Character {
                 ("bank_level", &self.bank_level),
                 ("gold_bank", &self.gold_bank),
                 ("guild_tag", &self.guild_tag),
-                ("guild_rank", &self.guild_rank),
                 ("guild_rank_string", &self.guild_rank_string),
-            ],
-        ))
-        .await?;
-
-        db.execute(&insert_params(
-            include_str!("../sql/update_paperdoll.sql"),
-            &[
-                ("character_id", &self.id),
+                ("guild_rank", &self.guild_rank),
                 ("boots", &(self.equipment.boots as u32)),
                 ("accessory", &(self.equipment.accessory as u32)),
                 ("gloves", &(self.equipment.gloves as u32)),
@@ -110,34 +102,18 @@ impl Character {
                 ("hat", &(self.equipment.hat as u32)),
                 ("shield", &(self.equipment.shield as u32)),
                 ("weapon", &(self.equipment.weapon as u32)),
-                ("ring", &(self.equipment.ring[0] as u32)),
                 ("ring2", &(self.equipment.ring[1] as u32)),
-                ("armlet", &(self.equipment.armlet[0] as u32)),
+                ("ring", &(self.equipment.ring[0] as u32)),
                 ("armlet2", &(self.equipment.armlet[1] as u32)),
-                ("bracer", &(self.equipment.bracer[0] as u32)),
+                ("armlet", &(self.equipment.armlet[0] as u32)),
                 ("bracer2", &(self.equipment.bracer[1] as u32)),
-            ],
-        ))
-        .await?;
-
-        db.execute(&insert_params(
-            include_str!("../sql/update_position.sql"),
-            &[
-                ("character_id", &self.id),
+                ("bracer", &(self.equipment.bracer[0] as u32)),
                 ("map_id", &(self.map_id as u32)),
                 ("x", &(self.coords.x as u32)),
                 ("y", &(self.coords.y as u32)),
                 ("direction", &i32::from(self.direction)),
                 ("sitting", &i32::from(self.sit_state)),
                 ("hidden", &i32::from(self.hidden)),
-            ],
-        ))
-        .await?;
-
-        db.execute(&insert_params(
-            include_str!("../sql/update_stats.sql"),
-            &[
-                ("character_id", &self.id),
                 ("level", &(self.level as u32)),
                 ("experience", &self.experience),
                 ("hp", &(self.hp as u32)),

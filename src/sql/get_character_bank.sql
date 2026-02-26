@@ -1,3 +1,3 @@
 SELECT item_id, quantity
-FROM Bank
+FROM `character_bank`
 WHERE character_id = :character_id;

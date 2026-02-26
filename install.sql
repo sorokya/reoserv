@@ -1,19 +1,20 @@
 CREATE TABLE
     IF NOT EXISTS `accounts` (
         `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        `username` TEXT NOT NULL UNIQUE,
-        `password` TEXT NOT NULL,
+        `name` TEXT NOT NULL UNIQUE,
+        `password_hash` TEXT NOT NULL,
         `email` TEXT NOT NULL,
-        `name` TEXT NOT NULL,
+        `real_name` TEXT NOT NULL,
         `location` TEXT NOT NULL,
+        `computer` TEXT NOT NULL,
         `hdid` INTEGER UNSIGNED NOT NULL,
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT `accounts_username_unique` UNIQUE (`username`)
+        CONSTRAINT `accounts_name_unique` UNIQUE (`name`)
     );
 
 CREATE TABLE
     IF NOT EXISTS `account_sessions` (
-        `account_id` INTEGER NOT NULL PRIMARY KEY,
+        `account_id` INTEGER NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
         `token` VARCHAR(100) NOT NULL,
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `ttl` INTEGER NOT NULL DEFAULT 60,
@@ -167,6 +168,33 @@ CREATE TABLE
         `item_id` int NOT NULL,
         PRIMARY KEY (`character_id`, `item_id`),
         CONSTRAINT `autopickup_character_id` FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`) ON DELETE CASCADE
+    );
+
+CREATE TABLE
+    IF NOT EXISTS `history_actions` (
+        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `action` VARCHAR(64) NOT NULL UNIQUE ON CONFLICT IGNORE
+    );
+
+INSERT INTO
+    `history_actions` (`action`)
+VALUES
+    ('account_created'),
+    ('account_logged_in'),
+    ('account_password_changed');
+
+CREATE TABLE
+    IF NOT EXISTS `history` (
+        `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        `account_id` INTEGER NOT NULL,
+        `character_id` INTEGER,
+        `action_id` INTEGER NOT NULL,
+        `ip` VARCHAR(15) NOT NULL,
+        `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `details` TEXT,
+        FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
+        FOREIGN KEY (`character_id`) REFERENCES `characters` (`id`),
+        FOREIGN KEY (`action_id`) REFERENCES `history_actions` (`id`)
     );
 
 CREATE INDEX IF NOT EXISTS `idx_characters_account_id` ON `characters` (`account_id`);

@@ -1,14 +1,12 @@
 INSERT INTO
-    `Account` (
+    `accounts` (
         `name`,
         `password_hash`,
         `real_name`,
         `location`,
         `email`,
         `computer`,
-        `hdid`,
-        `register_ip`,
-        `created_at`
+        `hdid`
     )
 VALUES
     (
@@ -18,7 +16,5 @@ VALUES
         :location,
         :email,
         :computer,
-        :hdid,
-        :register_ip,
-        NOW()
+        :hdid
     );

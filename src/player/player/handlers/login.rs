@@ -24,9 +24,9 @@ use crate::{
     player::{
         player::account::{
             account_banned, account_exists, generate_password_hash, generate_session,
-            get_character_list, update_last_login_ip, validate_password,
+            get_character_list, validate_password,
         },
-        ClientState,
+        Action, ClientState,
     },
     utils::{is_deep, mask_email, send_email},
     EMAILS, SETTINGS,
@@ -234,13 +234,6 @@ impl Player {
             None
         };
 
-        if let Err(e) = update_last_login_ip(&self.db, account_id, &self.ip).await {
-            self.world.remove_pending_login(account_id);
-            self.close(format!("Error updating last login IP: {}", e))
-                .await;
-            return;
-        }
-
         let characters = match get_character_list(&self.db, account_id).await {
             Ok(characters) => characters,
             Err(e) => {
@@ -251,6 +244,7 @@ impl Player {
         };
 
         self.account_id = account_id;
+        self.record_action(Action::AccountLoggedIn);
         self.world.add_logged_in_account(account_id);
         self.state = ClientState::LoggedIn;
 

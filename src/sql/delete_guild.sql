@@ -1,2 +1,2 @@
-DELETE FROM `Guild`
+DELETE FROM `guilds`
 WHERE `tag` = :tag;

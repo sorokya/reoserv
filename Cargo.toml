@@ -39,8 +39,8 @@ serde_derive = "1.0"
 serde = "1.0"
 console-subscriber = { version = "0.5", optional = true }
 mysql_async = { version = "0.36.1", features = ["chrono"] }
-argon2 = "0.5.3"
-eolib = { version = "2.1.1", features = ["use_serde"] }
+argon2 = "0.6.0-rc.7"
+eolib = { version = "3.0.0", features = ["serde"] }
 eoplus = "1.0.0-RC1"
 rand = "0.10"
 evalexpr = "13.1"

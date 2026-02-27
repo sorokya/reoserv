@@ -1,7 +1,7 @@
 use eolib::protocol::{
     net::{
         PacketAction, PacketFamily,
-        server::{CharacterBaseStats, SkillLearn, StatSkillOpenServerPacket},
+        server::{SkillLearn, SkillStatRequirements, StatSkillOpenServerPacket},
     },
     r#pub::NpcType,
 };
@@ -62,7 +62,7 @@ impl Map {
                         class_requirement: skill.class_requirement,
                         cost: skill.price,
                         skill_requirements: skill.skill_requirements,
-                        stat_requirements: CharacterBaseStats {
+                        stat_requirements: SkillStatRequirements {
                             str: skill.str_requirement,
                             intl: skill.int_requirement,
                             wis: skill.wis_requirement,

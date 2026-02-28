@@ -52,6 +52,9 @@ generate_pub = false
 # Server language. Should match a ron file in the lang directory
 lang = "en"
 
+# Should the first character created on the server be given admin (level 5) privileges?
+auto_admin = true
+
 [database]
 driver = "sqlite"
 host = "127.0.0.1"

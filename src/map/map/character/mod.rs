@@ -25,6 +25,7 @@ mod request_players;
 mod request_players_and_npcs;
 mod request_refresh;
 mod send_chat_message;
+mod set_character_property;
 mod set_class;
 mod sit;
 mod sit_chair;

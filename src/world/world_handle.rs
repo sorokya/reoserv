@@ -439,6 +439,14 @@ impl WorldHandle {
         });
     }
 
+    pub fn set_character_property(&self, property: String, name: String, value: String) {
+        let _ = self.tx.send(Command::SetCharacterProperty {
+            name,
+            property,
+            value,
+        });
+    }
+
     pub fn show_captcha(&self, victim_name: String, experience: i32) {
         let _ = self.tx.send(Command::ShowCaptcha {
             victim_name,

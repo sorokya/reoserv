@@ -336,6 +336,30 @@
                     required: true,
                 )
             ]
-        )
+        ),
+        (
+            name: "set",
+            alias: "s",
+            description: "Set property of a character",
+            usage: "$s title goron The Great",
+            admin_level: "GameMaster",
+            args: [
+                (
+                    name: "property",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "player",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "value",
+                    type: "String",
+                    required: true,
+                ),
+            ],
+        ),
     ]
 )

@@ -313,6 +313,14 @@ impl World {
                 message,
             } => self.send_private_message(player_id, &to, &message).await,
 
+            Command::SetCharacterProperty {
+                name,
+                property,
+                value,
+            } => {
+                self.set_character_property(name, property, value);
+            }
+
             Command::ShowCaptcha {
                 victim_name,
                 experience,

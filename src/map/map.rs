@@ -608,6 +608,12 @@ impl Map {
                 class_id,
             } => self.set_class(player_id, class_id),
 
+            Command::SetCharacterProperty {
+                player_id,
+                property,
+                value,
+            } => self.set_character_property(player_id, property, value),
+
             Command::Sit { player_id } => self.sit(player_id),
 
             Command::SitChair { player_id, coords } => self.sit_chair(player_id, coords),

@@ -801,6 +801,14 @@ impl MapHandle {
         });
     }
 
+    pub fn set_character_property(&self, player_id: i32, property: String, value: String) {
+        let _ = self.tx.send(Command::SetCharacterProperty {
+            player_id,
+            property,
+            value,
+        });
+    }
+
     pub fn spawn_items(&self) {
         let _ = self.tx.send(Command::SpawnItems);
     }

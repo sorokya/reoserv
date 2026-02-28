@@ -195,6 +195,11 @@ pub enum Command {
         to: String,
         message: String,
     },
+    SetCharacterProperty {
+        name: String,
+        property: String,
+        value: String,
+    },
     ShowCaptcha {
         victim_name: String,
         experience: i32,

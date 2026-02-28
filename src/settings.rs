@@ -18,6 +18,7 @@ pub struct Server {
     pub save_rate: i32,
     pub generate_pub: bool,
     pub lang: String,
+    pub auto_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]

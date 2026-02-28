@@ -3,6 +3,8 @@ use crate::{
     db::{DbHandle, insert_params},
 };
 
+use eolib::protocol::AdminLevel;
+
 use super::Character;
 
 impl Character {
@@ -10,6 +12,15 @@ impl Character {
         &mut self,
         db: &DbHandle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let admin_level = if SETTINGS.server.auto_admin {
+            match db.query_int("SELECT COUNT(1) FROM characters").await? {
+                Some(0) => AdminLevel::HighGameMaster,
+                _ => AdminLevel::Player,
+            }
+        } else {
+            AdminLevel::Player
+        };
+
         db.execute(&insert_params(
             include_str!("../sql/create_character.sql"),
             &[
@@ -24,6 +35,7 @@ impl Character {
                 ("x", &SETTINGS.new_character.spawn_x),
                 ("y", &SETTINGS.new_character.spawn_y),
                 ("direction", &SETTINGS.new_character.spawn_direction),
+                ("admin_level", &i32::from(admin_level)),
             ],
         ))
         .await?;

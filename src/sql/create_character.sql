@@ -9,7 +9,8 @@ INSERT INTO `characters` (
     `map`,
     `x`,
     `y`,
-    `direction`
+    `direction`,
+    `admin_level`
 ) VALUES (
 	:account_id,
     :name,
@@ -21,5 +22,6 @@ INSERT INTO `characters` (
     :map,
     :x,
     :y,
-    :direction
+    :direction,
+    :admin_level
 );

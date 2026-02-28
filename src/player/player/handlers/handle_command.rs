@@ -352,6 +352,15 @@ pub async fn handle_command(
                 }
             }
 
+            if command.name.as_str() == "set" {
+                if args.len() > 3 {
+                    let value = args[2..].join(" ");
+                    args = vec![args[0].clone(), args[1].clone(), value];
+                } else if args.len() < 3 {
+                    args.push("".to_string());
+                }
+            }
+
             if i32::from(character.admin_level) >= i32::from(command.admin_level)
                 && validate_args(&args, command, &player)
             {
@@ -412,6 +421,11 @@ pub async fn handle_command(
                     "captcha" => {
                         world.show_captcha(args[0].to_owned(), args[1].parse::<i32>().unwrap())
                     }
+                    "set" => world.set_character_property(
+                        args[0].to_owned(),
+                        args[1].to_owned(),
+                        args[2].to_owned(),
+                    ),
                     _ => {
                         send_error_message(
                             &player,

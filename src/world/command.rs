@@ -125,6 +125,9 @@ pub enum Command {
         player_id: i32,
         respond_to: oneshot::Sender<Option<Party>>,
     },
+    GetStartTime {
+        respond_to: oneshot::Sender<i64>,
+    },
     IsLoggedIn {
         account_id: i32,
         respond_to: oneshot::Sender<bool>,
@@ -191,6 +194,11 @@ pub enum Command {
         player_id: i32,
         to: String,
         message: String,
+    },
+    SetCharacterProperty {
+        name: String,
+        property: String,
+        value: String,
     },
     ShowCaptcha {
         victim_name: String,

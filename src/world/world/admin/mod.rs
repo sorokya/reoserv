@@ -9,6 +9,7 @@ mod report_player;
 mod request_player_info;
 mod request_player_inventory;
 mod send_admin_message;
+mod set_character_property;
 mod show_captcha;
 mod toggle_global;
 mod unfreeze_player;

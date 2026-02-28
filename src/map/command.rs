@@ -434,6 +434,11 @@ pub enum Command {
         player_id: i32,
         class_id: i32,
     },
+    SetCharacterProperty {
+        player_id: i32,
+        property: String,
+        value: String,
+    },
     Sit {
         player_id: i32,
     },

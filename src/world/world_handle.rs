@@ -277,6 +277,15 @@ impl WorldHandle {
             .map_err(|_| "Failed to get IP last connect. Channel closed".to_string())
     }
 
+    pub async fn get_start_time(&self) -> Result<i64, String> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::GetStartTime { respond_to: tx });
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to get start time. Timeout".to_string())?
+            .map_err(|_| "Failed to get start time. Channel closed".to_string())
+    }
+
     pub async fn get_player(&self, player_id: i32) -> Result<Option<PlayerHandle>, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::GetPlayer {
@@ -427,6 +436,14 @@ impl WorldHandle {
             player_id,
             to,
             message,
+        });
+    }
+
+    pub fn set_character_property(&self, property: String, name: String, value: String) {
+        let _ = self.tx.send(Command::SetCharacterProperty {
+            name,
+            property,
+            value,
         });
     }
 

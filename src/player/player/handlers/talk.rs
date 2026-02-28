@@ -160,7 +160,8 @@ impl Player {
                         None => return,
                     };
 
-                    if handle_player_command(player_id, args.as_slice(), &player, &map).await
+                    if handle_player_command(player_id, args.as_slice(), &player, &map, &world)
+                        .await
                         == PlayerCommandResult::NotFound
                     {
                         map.send_chat_message(player_id, report.message);

@@ -5,6 +5,7 @@ use crate::map::MapHandle;
 use crate::player::PlayerHandle;
 use crate::player_commands::{ArgType, Command};
 
+use crate::world::WorldHandle;
 use crate::{ITEM_DB, PLAYER_COMMANDS, SETTINGS};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -34,7 +35,7 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
     }
 
     if args.len() < 2 {
-        send_error_message(
+        send_server_message(
             player,
             "Invalid argument. Must be \"list\", \"add\", or \"remove\".".to_string(),
         );
@@ -54,7 +55,7 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
             {
                 Some(index) => index as i32 + 1,
                 None => {
-                    send_error_message(
+                    send_server_message(
                         player,
                         format!("No item found with name \"{}\".", identifier),
                     );
@@ -68,7 +69,7 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
         "add" => map.add_auto_pickup_item(player_id, item_id),
         "remove" => map.remove_auto_pickup_item(player_id, item_id),
         _ => {
-            send_error_message(
+            send_server_message(
                 player,
                 "Invalid argument. Must be \"list\", \"add\", or \"remove\".".to_string(),
             );
@@ -76,10 +77,38 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
     }
 }
 
+async fn uptime(player: &PlayerHandle, world: &WorldHandle) {
+    let start_time = match world.get_start_time().await {
+        Ok(time) => time,
+        Err(err) => {
+            send_server_message(player, format!("Failed to get uptime: {}", err));
+            return;
+        }
+    };
+
+    let uptime_seconds = chrono::Utc::now().timestamp() - start_time;
+    let uptime_duration = chrono::Duration::seconds(uptime_seconds);
+    let uptime_string = format!(
+        "{}d {}h {}m {}s",
+        uptime_duration.num_days(),
+        uptime_duration.num_hours() % 24,
+        uptime_duration.num_minutes() % 60,
+        uptime_duration.num_seconds() % 60
+    );
+
+    player.send(
+        PacketAction::Server,
+        PacketFamily::Talk,
+        &TalkServerServerPacket {
+            message: format!("Server uptime: {}", uptime_string),
+        },
+    );
+}
+
 fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> bool {
     let required_args_length = command.args.iter().filter(|arg| arg.required).count();
     if args.len() < required_args_length {
-        send_error_message(
+        send_server_message(
             player,
             format!(
                 "Wrong number of args. Got {}, expected: {}. (usage: \"{}\")",
@@ -92,7 +121,7 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
     }
 
     if args.len() > command.args.len() {
-        send_error_message(
+        send_server_message(
             player,
             format!(
                 "Too many args. Got {}, expected: {}. (usage: \"{}\")",
@@ -112,7 +141,7 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
             ArgType::Bool => raw_arg.parse::<bool>().is_ok(),
         };
         if !valid_type {
-            send_error_message(
+            send_server_message(
                 player,
                 format!(
                     "Invalid arg type. Got {}, expected: {:?}. (usage: \"{}\")",
@@ -125,7 +154,7 @@ fn validate_args(args: &[String], command: &Command, player: &PlayerHandle) -> b
     true
 }
 
-fn send_error_message(player: &PlayerHandle, message: String) {
+fn send_server_message(player: &PlayerHandle, message: String) {
     player.send(
         PacketAction::Server,
         PacketFamily::Talk,
@@ -138,6 +167,7 @@ pub async fn handle_player_command(
     args: &[&str],
     player: &PlayerHandle,
     map: &MapHandle,
+    world: &WorldHandle,
 ) -> PlayerCommandResult {
     let command = (*args[0]).to_string();
     let mut args: Vec<String> = args[1..].iter().map(|s| s.to_string()).collect();
@@ -157,6 +187,7 @@ pub async fn handle_player_command(
             if validate_args(&args, command, player) {
                 match command.name.as_str() {
                     "autopickup" => autopickup(player_id, &args, player, map).await,
+                    "uptime" => uptime(player, world).await,
                     _ => {
                         return PlayerCommandResult::NotFound;
                     }

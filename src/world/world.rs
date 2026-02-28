@@ -3,6 +3,7 @@ use crate::{
 };
 
 use super::{Command, Party, load_maps::load_maps};
+use chrono::Utc;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -28,6 +29,7 @@ pub struct World {
     auto_pickup_ticks: i32,
     global_locked: bool,
     connection_log: ConnectionLog,
+    start_time: i64,
 }
 
 mod add_player;
@@ -69,6 +71,7 @@ impl World {
             auto_pickup_ticks: 0,
             global_locked: false,
             connection_log: ConnectionLog::new(),
+            start_time: Utc::now().timestamp(),
         }
     }
 
@@ -230,6 +233,10 @@ impl World {
 
             Command::GetPlayerCount { respond_to } => {
                 let _ = respond_to.send(self.characters.len() as i32);
+            }
+
+            Command::GetStartTime { respond_to } => {
+                let _ = respond_to.send(self.start_time);
             }
 
             Command::GetPlayerParty {

@@ -16,5 +16,12 @@
                 ),
             ],
         ),
+        (
+            name: "uptime",
+            alias: "u",
+            description: "Get the server uptime",
+            usage: "#uptime",
+            args: [],
+        ),
     ]
 )

@@ -44,7 +44,7 @@ eolib = { version = "3.0.0", features = ["serde"] }
 eoplus = "1.0.0-RC1"
 rand = "0.10"
 evalexpr = "13.1"
-duration-str = "0.20"
+duration-str = "0.21"
 version-compare = "0.2"
 mail-send = "0.5"
 tokio-tungstenite = "0.28"

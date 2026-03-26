@@ -1,5 +1,5 @@
 use super::super::{Db, PreparedQuery};
-use crate::db::params::sqlite_named_params;
+use crate::db::{db::is_mysql_connection_closed, params::sqlite_named_params};
 
 impl Db {
     pub async fn execute(&mut self, query: &str) -> anyhow::Result<()> {
@@ -13,10 +13,20 @@ impl Db {
     }
 
     pub(super) async fn execute_inner(&mut self, query: &str) -> anyhow::Result<()> {
+        match self.try_execute_inner(query).await {
+            Err(e) if is_mysql_connection_closed(&e) => {
+                self.reconnect_mysql().await?;
+                self.try_execute_inner(query).await
+            }
+            result => result,
+        }
+    }
+
+    async fn try_execute_inner(&mut self, query: &str) -> anyhow::Result<()> {
         let last_insert_id_update = match self.connection {
-            crate::db::Connection::Mysql(ref mut conn) => {
-                Self::execute_mysql_raw(conn, query).await?;
-                Some(conn.last_insert_id())
+            crate::db::Connection::Mysql(ref mut mysql) => {
+                Self::execute_mysql_raw(&mut mysql.conn, query).await?;
+                Some(mysql.conn.last_insert_id())
             }
             crate::db::Connection::Sqlite(ref mut conn) => {
                 Self::execute_sqlite_raw(conn, query)?;
@@ -37,10 +47,20 @@ impl Db {
     }
 
     async fn execute_prepared_inner(&mut self, query: &PreparedQuery) -> anyhow::Result<()> {
+        match self.try_execute_prepared_inner(query).await {
+            Err(e) if is_mysql_connection_closed(&e) => {
+                self.reconnect_mysql().await?;
+                self.try_execute_prepared_inner(query).await
+            }
+            result => result,
+        }
+    }
+
+    async fn try_execute_prepared_inner(&mut self, query: &PreparedQuery) -> anyhow::Result<()> {
         let last_insert_id_update = match self.connection {
-            crate::db::Connection::Mysql(ref mut conn) => {
-                Self::execute_mysql_prepared(conn, query).await?;
-                Some(conn.last_insert_id())
+            crate::db::Connection::Mysql(ref mut mysql) => {
+                Self::execute_mysql_prepared(&mut mysql.conn, query).await?;
+                Some(mysql.conn.last_insert_id())
             }
             crate::db::Connection::Sqlite(ref mut conn) => {
                 Self::execute_sqlite_prepared(conn, query)?;

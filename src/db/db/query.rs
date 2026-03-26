@@ -1,7 +1,7 @@
 use crate::db::row::SqlValue;
 
 use super::super::{Db, PreparedQuery, Row};
-use crate::db::params::sqlite_named_params;
+use crate::db::{db::is_mysql_connection_closed, params::sqlite_named_params};
 
 impl Db {
     pub async fn query(&mut self, query: &str) -> anyhow::Result<Vec<Row>> {
@@ -15,11 +15,22 @@ impl Db {
     }
 
     async fn query_inner(&mut self, query: &str) -> anyhow::Result<Vec<Row>> {
+        match self.try_query_inner(query).await {
+            Err(e) if is_mysql_connection_closed(&e) => {
+                self.reconnect_mysql().await?;
+                self.try_query_inner(query).await
+            }
+            result => result,
+        }
+    }
+
+    async fn try_query_inner(&mut self, query: &str) -> anyhow::Result<Vec<Row>> {
         let mut rows = Vec::new();
 
         match self.connection {
-            crate::db::Connection::Mysql(ref mut conn) => {
-                let result = mysql_async::prelude::Queryable::query_iter(conn, query).await?;
+            crate::db::Connection::Mysql(ref mut mysql) => {
+                let result =
+                    mysql_async::prelude::Queryable::query_iter(&mut mysql.conn, query).await?;
                 result
                     .for_each_and_drop(|row| rows.push(map_mysql_row(row)))
                     .await?;
@@ -36,12 +47,25 @@ impl Db {
     }
 
     async fn query_prepared_inner(&mut self, query: &PreparedQuery) -> anyhow::Result<Vec<Row>> {
+        match self.try_query_prepared_inner(query).await {
+            Err(e) if is_mysql_connection_closed(&e) => {
+                self.reconnect_mysql().await?;
+                self.try_query_prepared_inner(query).await
+            }
+            result => result,
+        }
+    }
+
+    async fn try_query_prepared_inner(
+        &mut self,
+        query: &PreparedQuery,
+    ) -> anyhow::Result<Vec<Row>> {
         let mut rows = Vec::new();
 
         match self.connection {
-            crate::db::Connection::Mysql(ref mut conn) => {
+            crate::db::Connection::Mysql(ref mut mysql) => {
                 let result = mysql_async::prelude::Queryable::exec_iter(
-                    conn,
+                    &mut mysql.conn,
                     &query.query,
                     query.params.to_mysql_params(),
                 )

@@ -81,6 +81,28 @@ impl Db {
             self.transaction_active = false;
         }
     }
+
+    pub(super) async fn reconnect_mysql(&mut self) -> anyhow::Result<()> {
+        if let crate::db::Connection::Mysql(ref mut mysql) = self.connection {
+            warn!("MySQL connection closed, reconnecting...");
+            mysql.conn = mysql_async::Conn::from_url(mysql.url.clone()).await?;
+        }
+        Ok(())
+    }
+}
+
+pub(super) fn is_mysql_connection_closed(e: &anyhow::Error) -> bool {
+    if let Some(mysql_err) = e.downcast_ref::<mysql_async::Error>() {
+        match mysql_err {
+            mysql_async::Error::Driver(mysql_async::DriverError::ConnectionClosed) => true,
+            mysql_async::Error::Io(io_err) => {
+                io_err.to_string().to_lowercase().contains("connection closed")
+            }
+            _ => false,
+        }
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]

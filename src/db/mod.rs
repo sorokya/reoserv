@@ -8,7 +8,7 @@ pub use db_handle::DbHandle;
 mod row;
 pub use row::Row;
 mod connection;
-pub use connection::Connection;
+pub use connection::{Connection, MysqlConnection};
 mod params;
 #[allow(unused_imports)]
 pub use params::{

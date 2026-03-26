@@ -113,18 +113,18 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let db = DbHandle::new(match SETTINGS.database.driver.as_str() {
-        "mysql" => Connection::Mysql(
-            mysql_async::Conn::from_url(format!(
+        "mysql" => {
+            let url = format!(
                 "mysql://{}:{}@{}:{}/{}",
                 SETTINGS.database.username,
                 SETTINGS.database.password,
                 SETTINGS.database.host,
                 SETTINGS.database.port,
                 SETTINGS.database.name
-            ))
-            .await
-            .unwrap(),
-        ),
+            );
+            let conn = mysql_async::Conn::from_url(&url).await.unwrap();
+            Connection::Mysql(crate::db::MysqlConnection { conn, url })
+        }
         "sqlite" => Connection::Sqlite(
             rusqlite::Connection::open(format!("{}.db", SETTINGS.database.name)).unwrap(),
         ),

@@ -1383,7 +1383,7 @@ async fn get_guild_name(db: &DbHandle, tag: &str) -> Option<String> {
 async fn get_new_member_guild_rank(db: &DbHandle, tag: &str) -> Option<String> {
     match db
         .query_string(&insert_params(
-            "SELECT `rank` FROM `guilds` INNER JOIN `guilds_ranks` ON `guilds_ranks`.`guild_id` = `guilds`.`id` AND `guilds_ranks`.`index` = 8 WHERE `tag` = :tag",
+            "SELECT `rank` FROM `guilds` INNER JOIN `guild_ranks` ON `guild_ranks`.`guild_id` = `guilds`.`id` AND `guild_ranks`.`index` = 8 WHERE `tag` = :tag",
             &[("tag", &tag.to_string())],
         ))
         .await

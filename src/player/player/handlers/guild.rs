@@ -1037,8 +1037,8 @@ impl Player {
                         &[("guild_identity", &tell.guild_identity)],
                     ),
                     |row| GuildMember {
-                        rank: row.get_int(0).unwrap(),
-                        name: row.get_string(1).unwrap(),
+                        rank: row.get_int(1).unwrap(),
+                        name: row.get_string(0).unwrap(),
                         rank_name: row.get_string(2).unwrap(),
                     },
                 )

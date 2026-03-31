@@ -95,10 +95,11 @@ pub(super) fn is_mysql_connection_closed(e: &anyhow::Error) -> bool {
     if let Some(mysql_err) = e.downcast_ref::<mysql_async::Error>() {
         match mysql_err {
             mysql_async::Error::Driver(mysql_async::DriverError::ConnectionClosed) => true,
-            mysql_async::Error::Io(io_err) => io_err
-                .to_string()
-                .to_lowercase()
-                .contains("connection closed"),
+            mysql_async::Error::Io(io_err) => {
+                let msg = io_err.to_string().to_lowercase();
+                msg.contains("connection closed")
+                    || msg.contains("connection to the server is closed")
+            }
             _ => false,
         }
     } else {

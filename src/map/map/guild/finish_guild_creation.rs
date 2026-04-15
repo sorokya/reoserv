@@ -28,6 +28,9 @@ impl Map {
         character.guild_name = Some(guild_name.clone());
         character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
         character.guild_rank = Some(1);
+        if let Some(player) = character.player.as_ref() {
+            player.update_guild_tag(&character.guild_tag);
+        }
 
         self.world.add_guild_member(player_id, guild_tag.clone());
 
@@ -75,6 +78,9 @@ impl Map {
             character.guild_name = Some(guild_name.clone());
             character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
             character.guild_rank = Some(9);
+            if let Some(player) = character.player.as_ref() {
+                player.update_guild_tag(&character.guild_tag);
+            }
 
             self.world.add_guild_member(*player_id, guild_tag.clone());
 

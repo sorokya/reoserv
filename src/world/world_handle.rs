@@ -162,8 +162,8 @@ impl WorldHandle {
         player_id: i32,
         ip: String,
         account_id: i32,
-        character_name: String,
-        guild_tag: Option<String>,
+        character_name: &Option<String>,
+        guild_tag: &Option<String>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::DropPlayer {
@@ -171,8 +171,8 @@ impl WorldHandle {
             player_id,
             ip,
             account_id,
-            character_name,
-            guild_tag,
+            character_name: character_name.clone(),
+            guild_tag: guild_tag.clone(),
         });
         timeout(Duration::from_secs(5), rx)
             .await

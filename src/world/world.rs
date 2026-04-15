@@ -183,7 +183,7 @@ impl World {
                 player_id,
                 ip,
                 account_id,
-                &character_name,
+                character_name,
                 guild_tag,
                 respond_to,
             ),

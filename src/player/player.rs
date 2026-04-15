@@ -27,6 +27,8 @@ pub struct Player {
     login_attempts: i32,
     character: Option<Character>,
     character_id: Option<i32>,
+    character_name: Option<String>,
+    guild_tag: Option<String>,
     session_id: Option<i32>,
     interact_npc_index: Option<i32>,
     interact_player_id: Option<i32>,
@@ -97,6 +99,8 @@ impl Player {
             ip,
             character: None,
             character_id: None,
+            character_name: None,
+            guild_tag: None,
             warp_session: None,
             session_id: None,
             interact_npc_index: None,
@@ -225,6 +229,9 @@ impl Player {
                 if self.state == ClientState::InGame {
                     self.world.update_party_hp(self.id, hp_percentage);
                 }
+            }
+            Command::UpdateGuildTag(guild_tag) => {
+                self.guild_tag = guild_tag;
             }
         }
     }

@@ -267,6 +267,10 @@ impl PlayerHandle {
     pub fn update_party_hp(&self, hp_percentage: i32) {
         let _ = self.tx.send(Command::UpdatePartyHP { hp_percentage });
     }
+
+    pub fn update_guild_tag(&self, guild_tag: &Option<String>) {
+        let _ = self.tx.send(Command::UpdateGuildTag(guild_tag.clone()));
+    }
 }
 
 async fn run_player(mut player: Player) {

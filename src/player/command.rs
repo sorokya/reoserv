@@ -82,4 +82,5 @@ pub enum Command {
         chest_index: usize,
         buf: Bytes,
     },
+    UpdateGuildTag(Option<String>),
 }

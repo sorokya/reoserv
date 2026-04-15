@@ -103,7 +103,7 @@ pub struct Character {
     pub bank: Vec<Item>,
     pub trade_items: Vec<Item>,
     pub spells: Vec<Spell>,
-    pub logged_in_at: Option<DateTime<Utc>>,
+    pub last_save_at: Option<DateTime<Utc>>,
     pub quests: Vec<QuestProgress>,
     pub captcha_open: bool,
     pub warp_suck_ticks: i32,
@@ -305,6 +305,17 @@ impl Character {
         db: &DbHandle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if self.id > 0 {
+            let now = Utc::now();
+            let last_save_at = match self.last_save_at {
+                Some(last_save_at) => last_save_at,
+                None => now,
+            };
+
+            let diff = now.signed_duration_since(last_save_at).num_minutes() as i32;
+            if diff > 0 {
+                self.usage += diff;
+            }
+            self.last_save_at = Some(now);
             self.update(db).await
         } else {
             self.create(db).await

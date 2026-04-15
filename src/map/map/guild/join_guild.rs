@@ -23,6 +23,9 @@ impl Map {
         character.guild_name = Some(guild_name.clone());
         character.guild_rank_string = Some(guild_rank_string.clone());
         character.guild_rank = Some(9);
+        if let Some(player) = character.player.as_ref() {
+            player.update_guild_tag(&character.guild_tag);
+        }
 
         self.world.add_guild_member(player_id, guild_tag.clone());
 

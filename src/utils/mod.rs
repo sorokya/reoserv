@@ -48,3 +48,5 @@ mod mask_email;
 pub use mask_email::mask_email;
 mod timestamp_diff;
 pub use timestamp_diff::timestamp_diff;
+mod truncate_to_chars;
+pub use truncate_to_chars::truncate_to_chars;

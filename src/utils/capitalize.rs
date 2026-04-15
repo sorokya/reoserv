@@ -1,9 +1,18 @@
 pub fn capitalize(word: &str) -> String {
-    if word.is_empty() {
+    let mut chars = word.chars();
+    let Some(first_letter) = chars.next() else {
         return String::new();
+    };
+
+    first_letter.to_uppercase().chain(chars).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::capitalize;
+
+    #[test]
+    fn capitalizes_multibyte_first_character() {
+        assert_eq!(capitalize("éclair"), "Éclair");
     }
-
-    let first_letter_upper_case = word.chars().next().unwrap().to_uppercase();
-
-    format!("{}{}", first_letter_upper_case, &word[1..])
 }

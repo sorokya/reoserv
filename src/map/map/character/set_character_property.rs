@@ -20,7 +20,8 @@ impl Map {
 
             match property.as_str() {
                 "title" => {
-                    if (1..={ SETTINGS.character.max_title_length }).contains(&value.len()) {
+                    let title_length = value.chars().count();
+                    if (1..={ SETTINGS.character.max_title_length }).contains(&title_length) {
                         character.title = Some(value);
                     } else {
                         character.title = None;
@@ -28,7 +29,8 @@ impl Map {
                     false
                 }
                 "fiance" => {
-                    if (1..={ SETTINGS.character.max_name_length }).contains(&value.len()) {
+                    let name_length = value.chars().count();
+                    if (1..={ SETTINGS.character.max_name_length }).contains(&name_length) {
                         character.fiance = Some(value);
                     } else {
                         character.fiance = None;
@@ -36,7 +38,8 @@ impl Map {
                     false
                 }
                 "partner" => {
-                    if (1..={ SETTINGS.character.max_name_length }).contains(&value.len()) {
+                    let name_length = value.chars().count();
+                    if (1..={ SETTINGS.character.max_name_length }).contains(&name_length) {
                         character.partner = Some(value);
                     } else {
                         character.partner = None;

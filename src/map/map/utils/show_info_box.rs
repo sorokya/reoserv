@@ -33,22 +33,47 @@ fn text_width(string: &str) -> i32 {
 }
 
 fn text_cap(string: &str, width: i32, ellipses: &str) -> String {
+    let ellipses_length = text_width(ellipses);
     let mut length = 0;
+    let mut fitting_end = string.len();
+    let mut overflowed = false;
 
-    for (i, c) in string.chars().enumerate() {
+    for (byte_index, c) in string.char_indices() {
         length += SIZES[c as usize & 0xFF];
+        let char_end = byte_index + c.len_utf8();
 
         if length > width {
-            let ellipses_length = text_width(ellipses);
+            overflowed = true;
+            break;
+        }
 
-            let mut i = i;
-            while length > (width + ellipses_length) && i > 0 {
-                length -= SIZES[string.chars().nth(i).unwrap() as usize & 0xFF];
-                i -= 1;
+        if length + ellipses_length <= width {
+            fitting_end = char_end;
+        } else if fitting_end == string.len() {
+            fitting_end = byte_index;
+        }
+    }
+
+    if overflowed {
+        if fitting_end == string.len() {
+            fitting_end = 0;
+            length = 0;
+            for (byte_index, c) in string.char_indices() {
+                let next_length = length + SIZES[c as usize & 0xFF];
+                if next_length + ellipses_length > width {
+                    break;
+                }
+
+                length = next_length;
+                fitting_end = byte_index + c.len_utf8();
             }
 
-            return format!("{}{}", &string[..i], ellipses);
+            if fitting_end == string.len() {
+                return string.to_string();
+            }
         }
+
+        return format!("{}{}", &string[..fitting_end], ellipses);
     }
 
     string.to_string()
@@ -161,5 +186,18 @@ impl Map {
         let buf = writer.to_byte_array();
 
         player.send_buf(PacketAction::Accept, PacketFamily::Message, buf);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::text_cap;
+
+    #[test]
+    fn caps_multibyte_text_without_panicking() {
+        let result = text_cap("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé", 96, "..");
+
+        assert!(result.ends_with(".."));
+        assert_eq!(result.strip_suffix("..").unwrap(), "AAAAAAAAAAAA");
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
     SETTINGS,
     db::{DbHandle, insert_params},
-    utils::get_board_tile_spec,
+    utils::{get_board_tile_spec, truncate_to_chars},
 };
 use chrono::{Duration, Utc};
 
@@ -34,14 +34,14 @@ impl Map {
             return self.open_board(player_id, board_id);
         }
 
-        let subject = if subject.len() > SETTINGS.board.max_subject_length as usize {
-            String::from(&subject[..SETTINGS.board.max_subject_length as usize])
+        let subject = if subject.chars().count() > SETTINGS.board.max_subject_length as usize {
+            truncate_to_chars(&subject, SETTINGS.board.max_subject_length as usize)
         } else {
             subject
         };
 
-        let body = if body.len() > SETTINGS.board.max_post_length as usize {
-            String::from(&body[..SETTINGS.board.max_post_length as usize])
+        let body = if body.chars().count() > SETTINGS.board.max_post_length as usize {
+            truncate_to_chars(&body, SETTINGS.board.max_post_length as usize)
         } else {
             body
         };

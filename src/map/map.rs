@@ -574,8 +574,6 @@ impl Map {
                 npc_index,
             } => self.reset_character(player_id, npc_index),
 
-            Command::Save => self.save().await,
-
             Command::SaveAsync { respond_to } => {
                 self.save().await;
                 let _ = respond_to.send(());
@@ -692,6 +690,8 @@ impl Map {
             Command::TimedAutoPickup => self.timed_auto_pickup(),
 
             Command::TimedCleanup => self.timed_cleanup(),
+
+            Command::TimedUsage => self.timed_usage(),
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 

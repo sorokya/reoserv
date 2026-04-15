@@ -119,6 +119,10 @@ impl PacketBus {
         match &mut self.socket {
             Socket::Web(socket) => match socket.next().await {
                 Some(Ok(Message::Binary(buf))) => {
+                    if buf.len() < 4 {
+                        return None;
+                    }
+
                     let mut data_buf = buf[2..].to_vec();
 
                     if self.client_enryption_multiple != 0 {
@@ -140,7 +144,10 @@ impl PacketBus {
                             let mut buf = BytesMut::new();
                             buf.put_u8(0xfe);
                             buf.put_u8(0xfe);
-                            buf.put_u8(data_buf[2]);
+
+                            if data_buf.len() > 2 {
+                                buf.put_u8(data_buf[2]);
+                            }
 
                             return Some(Ok(buf.freeze()));
                         }
@@ -190,7 +197,9 @@ impl PacketBus {
                                             let mut buf = BytesMut::new();
                                             buf.put_u8(0xfe);
                                             buf.put_u8(0xfe);
-                                            buf.put_u8(data_buf[2]);
+                                            if data_buf.len() > 2 {
+                                                buf.put_u8(data_buf[2]);
+                                            }
 
                                             return Some(Ok(buf.freeze()));
                                         }

@@ -76,7 +76,7 @@ pub enum Command {
         player_id: i32,
         ip: String,
         account_id: i32,
-        character_name: String,
+        character_name: Option<String>,
         guild_tag: Option<String>,
         respond_to: oneshot::Sender<()>,
     },

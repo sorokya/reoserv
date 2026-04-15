@@ -10,6 +10,7 @@ use eolib::{
             AccountReplyServerPacketReplyCodeDataCreated,
             AccountReplyServerPacketReplyCodeDataDefault,
             AccountReplyServerPacketReplyCodeDataExists,
+            AccountReplyServerPacketReplyCodeDataNotApproved,
         },
     },
 };
@@ -26,7 +27,7 @@ use crate::{
         Action, ClientState,
         player::account::{account_exists, generate_password_hash, validate_password},
     },
-    utils::{is_deep, send_email},
+    utils::{is_deep, normalize_email, send_email, validate_account_name},
 };
 
 use super::super::Player;
@@ -81,9 +82,47 @@ impl Player {
             return;
         }
 
-        // TODO: validate name
+        let email = match normalize_email(&create.email) {
+            Ok(email) => email,
+            Err(_) => {
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Reply,
+                        PacketFamily::Account,
+                        AccountReplyServerPacket {
+                            reply_code: AccountReply::NotApproved,
+                            reply_code_data: Some(
+                                AccountReplyServerPacketReplyCodeData::NotApproved(
+                                    AccountReplyServerPacketReplyCodeDataNotApproved::new(),
+                                ),
+                            ),
+                        },
+                    )
+                    .await;
+                return;
+            }
+        };
 
-        let exists = match account_exists(&self.db, &create.username).await {
+        let username = create.username.to_lowercase();
+        if !validate_account_name(&username) {
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::NotApproved,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::NotApproved(
+                            AccountReplyServerPacketReplyCodeDataNotApproved::new(),
+                        )),
+                    },
+                )
+                .await;
+            return;
+        }
+
+        let exists = match account_exists(&self.db, &username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -109,18 +148,18 @@ impl Player {
             return;
         }
 
-        let password_hash = generate_password_hash(&create.username, &create.password);
+        let password_hash = generate_password_hash(&username, &create.password);
 
         match self
             .db
             .execute(&insert_params(
                 include_str!("../../../sql/create_account.sql"),
                 &[
-                    ("name", &create.username),
+                    ("name", &username.to_string()),
                     ("password_hash", &password_hash),
                     ("real_name", &create.full_name),
                     ("location", &create.location),
-                    ("email", &create.email),
+                    ("email", &email),
                     ("computer", &create.computer),
                     ("hdid", &create.hdid),
                 ],
@@ -128,7 +167,7 @@ impl Player {
             .await
         {
             Ok(_) => {
-                info!("New account: {}", create.username);
+                info!("New account: {}", username);
 
                 self.account_id = match self.db.get_last_insert_id().await {
                     Some(account_id) => {
@@ -179,9 +218,25 @@ impl Player {
             return;
         }
 
-        // TODO: validate name
+        let username = request.username.to_lowercase();
+        if !validate_account_name(&username) {
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Account,
+                    AccountReplyServerPacket {
+                        reply_code: AccountReply::NotApproved,
+                        reply_code_data: Some(AccountReplyServerPacketReplyCodeData::NotApproved(
+                            AccountReplyServerPacketReplyCodeDataNotApproved::new(),
+                        )),
+                    },
+                )
+                .await;
+            return;
+        }
 
-        let exists = match account_exists(&self.db, &request.username).await {
+        let exists = match account_exists(&self.db, &username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -252,7 +307,13 @@ impl Player {
             return;
         }
 
-        let exists = match account_exists(&self.db, &agree.username).await {
+        let username = agree.username.to_lowercase();
+        if !validate_account_name(&username) {
+            self.close("Invalid account name".to_string()).await;
+            return;
+        }
+
+        let exists = match account_exists(&self.db, &username).await {
             Ok(exists) => exists,
             Err(e) => {
                 self.close(format!("Error checking if account exists: {}", e))
@@ -290,7 +351,7 @@ impl Player {
             .db
             .query_one(&insert_params(
                 include_str!("../../../sql/get_password_hash.sql"),
-                &[("name", &agree.username)],
+                &[("name", &username.to_string())],
             ))
             .await
         {
@@ -402,8 +463,25 @@ impl Player {
 
         let code = self.generate_email_pin();
 
+        let email = match normalize_email(&accept.email_address) {
+            Ok(email) => email,
+            Err(_) => {
+                let _ = self
+                    .bus
+                    .send(
+                        PacketAction::Accept,
+                        PacketFamily::Account,
+                        AccountAcceptServerPacket {
+                            reply_code: crate::deep::AccountValidationReply::Busy,
+                        },
+                    )
+                    .await;
+                return;
+            }
+        };
+
         if let Err(e) = send_email(
-            &accept.email_address,
+            &email,
             &accept.account_name,
             &get_lang_string!(&EMAILS.validation.subject, name = accept.account_name),
             &get_lang_string!(

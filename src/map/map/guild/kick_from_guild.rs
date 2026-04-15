@@ -18,6 +18,9 @@ impl Map {
         character.guild_name = None;
         character.guild_rank = None;
         character.guild_rank_string = None;
+        if let Some(player) = character.player.as_ref() {
+            player.update_guild_tag(&character.guild_tag);
+        }
 
         self.world.remove_guild_member(player_id, guild_tag);
 

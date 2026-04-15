@@ -9,6 +9,8 @@ mod row;
 pub use row::Row;
 mod connection;
 pub use connection::{Connection, MysqlConnection};
+mod migrations;
+pub use migrations::run_startup_migrations;
 mod params;
 #[allow(unused_imports)]
 pub use params::{

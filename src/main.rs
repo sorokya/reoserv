@@ -9,7 +9,7 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-use std::{collections::HashMap, env, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use chrono::Utc;
 use eolib::protocol::r#pub::{
@@ -131,26 +131,7 @@ async fn main() -> anyhow::Result<()> {
         other => panic!("Unsupported database driver: {}", other),
     });
 
-    let args: Vec<String> = env::args().collect();
-
-    if args.iter().any(|arg| arg == "--migrate") {
-        info!("Migrating database...");
-        let script = std::fs::read_to_string("migrate-schema.sql")?;
-        db.execute(&script).await?;
-    }
-
-    if args.iter().any(|arg| arg == "--install") {
-        info!("Installing database...");
-
-        let install_sql_path = match SETTINGS.database.driver.as_str() {
-            "mysql" => "install.mysql.sql",
-            "sqlite" => "install.sqlite.sql",
-            other => panic!("Unsupported database driver: {}", other),
-        };
-
-        let script = std::fs::read_to_string(install_sql_path)?;
-        db.execute(&script).await?;
-    }
+    crate::db::run_startup_migrations(&db, SETTINGS.database.driver.as_str()).await?;
 
     if let Some(row) = db
         .query_one(

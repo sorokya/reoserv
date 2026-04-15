@@ -183,7 +183,7 @@ impl World {
                 player_id,
                 ip,
                 account_id,
-                &character_name,
+                character_name,
                 guild_tag,
                 respond_to,
             ),
@@ -301,7 +301,7 @@ impl World {
 
             Command::ReloadMap { map_id } => self.reload_map(map_id).await,
 
-            Command::Save => self.save(),
+            Command::Save => self.save_async().await,
 
             Command::SendAdminMessage { player_id, message } => {
                 self.send_admin_message(player_id, message).await

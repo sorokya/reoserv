@@ -8,7 +8,7 @@ impl World {
         player_id: i32,
         ip: String,
         account_id: i32,
-        character_name: &str,
+        character_name: Option<String>,
         guild_tag: Option<String>,
         respond_to: oneshot::Sender<()>,
     ) {
@@ -25,8 +25,10 @@ impl World {
             self.accounts.retain(|id| *id != account_id);
         }
 
-        if self.characters.contains_key(character_name) {
-            self.characters.remove(character_name);
+        if let Some(character_name) = character_name
+            && self.characters.contains_key(&character_name)
+        {
+            self.characters.remove(&character_name);
         }
 
         if let Some(guild_tag) = guild_tag {

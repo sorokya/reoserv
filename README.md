@@ -43,17 +43,13 @@ Reoserv supports both MySQL/MariaDB and SQLite.
     - For MySQL/MariaDB, set `host`, `port`, `name`, `username`, and `password`.
     - For SQLite, set `name` (the server will use `<name>.db` in the working directory).
 
-3. Install the database schema:
+3. Start the server normally. It will create the migration log table and apply any missing migrations from `data/migrations/` automatically:
     ```sh
-    ./reoserv --install
+    cargo run
     ```
 
 > [!WARNING]
-> If you are upgrading from an older schema version, run migrations before starting the server:
-> ```sh
-> ./reoserv --migrate
-> ```
-> Back up your database first. This is especially important if your schema still uses legacy tables such as `Bank` instead of `character_bank`.
+> Back up your database first before upgrading an older installation. Startup now applies pending migrations automatically, including legacy schema transitions.
 
 4. If you choose MySQL/MariaDB and are using the provided Compose setup, start only the database service with:
     ```sh
@@ -80,16 +76,10 @@ Build/start the stack:
 docker compose up -d --build
 ```
 
-Install schema in the container:
+Start the server in the container to let startup migrations create or upgrade the schema:
 
 ```sh
-docker compose run --rm reoserv ./reoserv --install
-```
-
-For upgrades, run migrations in the container:
-
-```sh
-docker compose run --rm reoserv ./reoserv --migrate
+docker compose run --rm reoserv ./reoserv
 ```
 
 ## Start the server

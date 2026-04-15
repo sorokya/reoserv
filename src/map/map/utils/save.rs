@@ -9,13 +9,7 @@ use super::super::Map;
 
 impl Map {
     pub async fn save(&mut self) {
-        let now = chrono::Utc::now();
-
         for character in self.characters.values_mut() {
-            if let Some(logged_in_at) = character.logged_in_at {
-                character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
-            }
-
             if let Err(e) = character.save(&self.db).await {
                 error!("Failed to update character: {}", e);
                 continue;

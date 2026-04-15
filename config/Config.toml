@@ -191,6 +191,9 @@ spike_damage = 0.2
 # Show drops to deep client players when using #item and #npc command
 info_reveals_drops = true
 
+# How often character usage increments in seconds
+usage_rate = 60
+
 [bard]
 
 # Graphic IDs of weapons that are valid instruments
@@ -231,6 +234,8 @@ door_close_rate = 3
 max_items = 250
 
 [character]
+
+min_name_length = 3
 
 # Should be between 12 and 14
 max_name_length = 12

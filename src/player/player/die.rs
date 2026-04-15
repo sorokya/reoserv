@@ -4,12 +4,19 @@ use super::Player;
 
 impl Player {
     pub async fn die(&mut self) {
-        let mut character = self
+        let mut character = match self
             .map
             .as_ref()
             .unwrap()
             .leave(self.id, None, self.interact_player_id)
-            .await;
+            .await
+        {
+            Ok(character) => character,
+            Err(e) => {
+                self.close(format!("Failed to leave map: {}", e)).await;
+                return;
+            }
+        };
 
         character.map_id = 0;
         character.coords = Coords { x: 0, y: 0 };

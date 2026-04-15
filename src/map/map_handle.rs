@@ -424,7 +424,7 @@ impl MapHandle {
         player_id: i32,
         warp_animation: Option<WarpEffect>,
         interact_player_id: Option<i32>,
-    ) -> Character {
+    ) -> anyhow::Result<Character> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::Leave {
             player_id,
@@ -432,7 +432,10 @@ impl MapHandle {
             respond_to: tx,
             interact_player_id,
         });
-        rx.await.unwrap()
+        match rx.await {
+            Ok(character) => Ok(character),
+            Err(_) => Err(anyhow::anyhow!("Failed to leave map. Channel closed")),
+        }
     }
 
     pub fn leave_guild(&self, player_id: i32) {
@@ -755,10 +758,6 @@ impl MapHandle {
         let _ = self.tx.send(Command::StartEvacuate);
     }
 
-    pub fn save(&self) {
-        let _ = self.tx.send(Command::Save);
-    }
-
     pub async fn save_async(&self) -> Result<(), String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::SaveAsync { respond_to: tx });
@@ -903,6 +902,10 @@ impl MapHandle {
 
     pub fn timed_cleanup(&self) {
         let _ = self.tx.send(Command::TimedCleanup);
+    }
+
+    pub fn timed_usage(&self) {
+        let _ = self.tx.send(Command::TimedUsage);
     }
 
     pub fn toggle_hidden(&self, player_id: i32) {

@@ -12,7 +12,9 @@ use eolib::{
             CharacterReplyServerPacketReplyCodeDataDefault,
             CharacterReplyServerPacketReplyCodeDataDeleted,
             CharacterReplyServerPacketReplyCodeDataExists,
-            CharacterReplyServerPacketReplyCodeDataFull, CharacterReplyServerPacketReplyCodeDataOk,
+            CharacterReplyServerPacketReplyCodeDataFull,
+            CharacterReplyServerPacketReplyCodeDataNotApproved,
+            CharacterReplyServerPacketReplyCodeDataOk,
         },
     },
 };
@@ -26,6 +28,7 @@ use crate::{
         ClientState,
         player::account::{get_character_list, get_num_of_characters},
     },
+    utils::validate_character_name,
 };
 
 use super::super::Player;
@@ -66,7 +69,24 @@ impl Player {
             return;
         }
 
-        // TODO: validate name
+        if !validate_character_name(&create.name.to_lowercase()) {
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Character,
+                    CharacterReplyServerPacket {
+                        reply_code: CharacterReply::NotApproved,
+                        reply_code_data: Some(
+                            CharacterReplyServerPacketReplyCodeData::NotApproved(
+                                CharacterReplyServerPacketReplyCodeDataNotApproved::new(),
+                            ),
+                        ),
+                    },
+                )
+                .await;
+            return;
+        }
 
         let exists = match character_exists(&self.db, &create.name).await {
             Ok(exists) => exists,

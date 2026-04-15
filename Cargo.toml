@@ -1,6 +1,6 @@
 [package]
 name = "reoserv"
-version = "1.15.0"
+version = "1.16.0"
 authors = ["Richard Leek <richard@richardleek.com>"]
 edition = "2024"
 description = "The rust powered endless online server emulator"
@@ -47,9 +47,10 @@ evalexpr = "13.1"
 duration-str = "0.21"
 version-compare = "0.2"
 mail-send = "0.5"
-tokio-tungstenite = "0.28"
+tokio-tungstenite = "0.29"
 hex = "0.4"
-rusqlite = { version = "0.38.0", features = ["bundled"] }
+rusqlite = { version = "0.39", features = ["bundled"] }
+regex = "1.12.3"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

@@ -48,9 +48,17 @@ impl Player {
         }
 
         if let Some(current_map) = &self.map {
-            let character = current_map
+            let character = match current_map
                 .leave(self.id, warp_session.animation, self.interact_player_id)
-                .await;
+                .await
+            {
+                Ok(character) => character,
+                Err(e) => {
+                    self.close(format!("Failed to leave map: {}", e)).await;
+                    return;
+                }
+            };
+
             self.interact_npc_index = None;
             self.chest_index = None;
             self.board_id = None;

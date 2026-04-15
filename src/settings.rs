@@ -42,6 +42,7 @@ pub struct NewCharacter {
 
 #[derive(Debug, Deserialize)]
 pub struct Character {
+    pub min_name_length: usize,
     pub max_name_length: usize,
     pub max_title_length: usize,
     pub max_skin: i32,
@@ -87,6 +88,7 @@ pub struct World {
     pub warp_suck_rate: i32,
     pub ghost_rate: i32,
     pub info_reveals_drops: bool,
+    pub usage_rate: i32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -302,6 +304,8 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
+            .set_default("world.usage_rate", "60")
+            .unwrap()
             .add_source(File::with_name("config/Config.toml"))
             .add_source(File::with_name("config/Config.local.toml").required(false))
             .build()?;

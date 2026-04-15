@@ -37,7 +37,8 @@ impl Player {
                 }
             };
 
-            if !validate_character_name(&request.name) {
+            let name = request.name.to_lowercase();
+            if !validate_character_name(&name) {
                 return;
             }
 
@@ -57,11 +58,9 @@ impl Player {
 
             match request.request_type {
                 MarriageRequestType::MarriageApproval => {
-                    map.request_marriage_approval(self.id, npc_index, request.name)
+                    map.request_marriage_approval(self.id, npc_index, name)
                 }
-                MarriageRequestType::Divorce => {
-                    map.request_divorce(self.id, npc_index, request.name)
-                }
+                MarriageRequestType::Divorce => map.request_divorce(self.id, npc_index, name),
                 _ => {}
             }
         }

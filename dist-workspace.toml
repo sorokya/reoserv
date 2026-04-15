@@ -15,9 +15,6 @@ include = [
     "data",
     "README.md",
     "LICENSE.txt",
-    "install.mysql.sql",
-    "install.sqlite.sql",
-    "migrate-schema.sql",
 ]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = [

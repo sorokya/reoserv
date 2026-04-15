@@ -67,9 +67,11 @@ impl Player {
         }
 
         self.character_id = Some(character_id);
+        self.character_name = Some(character.name.clone());
+        self.guild_tag = character.guild_tag.clone();
         character.player_id = Some(self.id);
         character.player = Some(player);
-        character.logged_in_at = Some(chrono::Utc::now());
+        character.usage_ticks = SETTINGS.world.usage_rate;
 
         character.calculate_stats();
 

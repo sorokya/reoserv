@@ -103,7 +103,7 @@ pub struct Character {
     pub bank: Vec<Item>,
     pub trade_items: Vec<Item>,
     pub spells: Vec<Spell>,
-    pub logged_in_at: Option<DateTime<Utc>>,
+    pub usage_ticks: i32,
     pub quests: Vec<QuestProgress>,
     pub captcha_open: bool,
     pub warp_suck_ticks: i32,

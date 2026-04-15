@@ -3,41 +3,39 @@ use super::Player;
 impl Player {
     pub async fn close(&mut self, reason: String) {
         self.queue.borrow_mut().clear();
-        let (character_name, guild_tag) = if let Some(map) = self.map.as_ref() {
-            let mut character = map.leave(self.id, None, self.interact_player_id).await;
-            let character_name = character.name.clone();
-            let guild_tag = character.guild_tag.clone();
-            let db = self.db.clone();
-            tokio::spawn(async move {
-                if let Some(logged_in_at) = character.logged_in_at {
-                    let now = chrono::Utc::now();
-                    character.usage += (now.timestamp() - logged_in_at.timestamp()) as i32 / 60;
-                }
 
-                if let Err(e) = character.save(&db).await {
-                    error!("Failed to update character: {}", e);
+        if let Some(map) = self.map.as_ref() {
+            match map.leave(self.id, None, self.interact_player_id).await {
+                Ok(character) => {
+                    self.character = Some(character);
                 }
-            });
-            (character_name, guild_tag)
-        } else {
-            self.character
-                .as_ref()
-                .map(|c| (c.name.clone(), c.guild_tag.clone()))
-                .unwrap_or_default()
-        };
+                Err(e) => {
+                    error!("Failed to leave map: {}", e);
+                }
+            }
+        }
+
+        if let Some(character) = self.character.as_mut()
+            && let Err(e) = character.save(&self.db).await
+        {
+            error!("Failed to save character: {}", e);
+        }
 
         self.world.remove_party_member(self.id, self.id);
 
-        self.world
+        if let Err(e) = self
+            .world
             .drop_player(
                 self.id,
                 self.ip.clone(),
                 self.account_id,
-                character_name,
-                guild_tag,
+                &self.character_name,
+                &self.guild_tag,
             )
             .await
-            .unwrap();
+        {
+            error!("Failed to drop player: {}", e);
+        }
 
         self.closed = true;
 

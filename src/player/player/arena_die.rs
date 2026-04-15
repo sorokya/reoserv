@@ -4,12 +4,19 @@ use super::Player;
 
 impl Player {
     pub async fn arena_die(&mut self, spawn_coords: Coords) {
-        let mut character = self
+        let mut character = match self
             .map
             .as_ref()
             .unwrap()
             .leave(self.id, None, self.interact_player_id)
-            .await;
+            .await
+        {
+            Ok(character) => character,
+            Err(e) => {
+                self.close(format!("Failed to leave map: {}", e)).await;
+                return;
+            }
+        };
 
         let current_map = character.map_id;
 

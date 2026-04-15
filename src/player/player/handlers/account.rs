@@ -155,7 +155,7 @@ impl Player {
             .execute(&insert_params(
                 include_str!("../../../sql/create_account.sql"),
                 &[
-                    ("name", &username),
+                    ("name", &username.to_string()),
                     ("password_hash", &password_hash),
                     ("real_name", &create.full_name),
                     ("location", &create.location),
@@ -351,7 +351,7 @@ impl Player {
             .db
             .query_one(&insert_params(
                 include_str!("../../../sql/get_password_hash.sql"),
-                &[("name", &username)],
+                &[("name", &username.to_string())],
             ))
             .await
         {

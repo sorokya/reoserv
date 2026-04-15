@@ -50,7 +50,7 @@ mail-send = "0.5"
 tokio-tungstenite = "0.28"
 hex = "0.4"
 rusqlite = { version = "0.38.0", features = ["bundled"] }
-emval = "0.1.12"
+regex = "1.12.3"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

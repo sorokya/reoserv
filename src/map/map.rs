@@ -574,8 +574,6 @@ impl Map {
                 npc_index,
             } => self.reset_character(player_id, npc_index),
 
-            Command::Save => self.save().await,
-
             Command::SaveAsync { respond_to } => {
                 self.save().await;
                 let _ = respond_to.send(());

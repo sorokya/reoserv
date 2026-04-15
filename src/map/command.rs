@@ -407,7 +407,6 @@ pub enum Command {
         player_id: i32,
         npc_index: i32,
     },
-    Save,
     SaveAsync {
         respond_to: oneshot::Sender<()>,
     },

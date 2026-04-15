@@ -1,3 +1,5 @@
+-- reoserv: skip-if-table-exists=accounts
+
 CREATE TABLE
     IF NOT EXISTS `accounts` (
         `id` INTEGER PRIMARY KEY,

@@ -1,3 +1,5 @@
+-- reoserv: skip-if-table-missing=Account
+
 INSERT INTO
     `accounts` (
         `id`,

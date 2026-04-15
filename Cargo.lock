@@ -2600,7 +2600,7 @@ checksum = "a96887878f22d7bad8a3b6dc5b7440e0ada9a245242924394987b21cf2210a4c"
 
 [[package]]
 name = "reoserv"
-version = "1.15.0"
+version = "1.16.0"
 dependencies = [
  "anyhow",
  "argon2",

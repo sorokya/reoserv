@@ -119,6 +119,10 @@ impl PacketBus {
         match &mut self.socket {
             Socket::Web(socket) => match socket.next().await {
                 Some(Ok(Message::Binary(buf))) => {
+                    if buf.len() < 2 {
+                        return None;
+                    }
+
                     let mut data_buf = buf[2..].to_vec();
 
                     if self.client_enryption_multiple != 0 {

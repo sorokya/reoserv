@@ -30,7 +30,7 @@ RUN addgroup --gid 1000 reoserv && \
 WORKDIR /reoserv
 
 COPY --from=builder /app/target/release/reoserv ./
-COPY README.md LICENSE.txt install.mysql.sql install.sqlite.sql migrate-schema.sql ./
+COPY README.md LICENSE.txt ./
 COPY config ./config
 COPY data ./data
 

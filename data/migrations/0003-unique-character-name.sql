@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS `characters_name_unique` ON `characters` (`name`);

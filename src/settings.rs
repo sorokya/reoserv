@@ -42,6 +42,7 @@ pub struct NewCharacter {
 
 #[derive(Debug, Deserialize)]
 pub struct Character {
+    pub min_name_length: usize,
     pub max_name_length: usize,
     pub max_title_length: usize,
     pub max_skin: i32,

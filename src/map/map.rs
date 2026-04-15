@@ -691,6 +691,8 @@ impl Map {
 
             Command::TimedCleanup => self.timed_cleanup(),
 
+            Command::TimedUsage => self.timed_usage(),
+
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
             Command::ActNpcs => self.act_npcs(),

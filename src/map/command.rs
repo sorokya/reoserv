@@ -485,6 +485,7 @@ pub enum Command {
     TimedGhost,
     TimedAutoPickup,
     TimedCleanup,
+    TimedUsage,
     ToggleHidden {
         player_id: i32,
     },

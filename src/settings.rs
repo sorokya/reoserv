@@ -88,6 +88,7 @@ pub struct World {
     pub warp_suck_rate: i32,
     pub ghost_rate: i32,
     pub info_reveals_drops: bool,
+    pub usage_rate: i32,
 }
 
 #[derive(Debug, Deserialize)]

@@ -904,6 +904,10 @@ impl MapHandle {
         let _ = self.tx.send(Command::TimedCleanup);
     }
 
+    pub fn timed_usage(&self) {
+        let _ = self.tx.send(Command::TimedUsage);
+    }
+
     pub fn toggle_hidden(&self, player_id: i32) {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }

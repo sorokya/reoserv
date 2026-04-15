@@ -14,5 +14,6 @@ mod timed_evacuate;
 mod timed_ghost;
 mod timed_quake;
 mod timed_spikes;
+mod timed_usage;
 mod timed_warp_suck;
 mod timed_wedding;

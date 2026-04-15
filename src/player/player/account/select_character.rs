@@ -71,7 +71,7 @@ impl Player {
         self.guild_tag = character.guild_tag.clone();
         character.player_id = Some(self.id);
         character.player = Some(player);
-        character.last_save_at = Some(chrono::Utc::now());
+        character.usage_ticks = SETTINGS.world.usage_rate;
 
         character.calculate_stats();
 

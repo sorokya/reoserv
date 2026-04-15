@@ -304,6 +304,8 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let s = Config::builder()
+            .set_default("world.usage_rate", "60")
+            .unwrap()
             .add_source(File::with_name("config/Config.toml"))
             .add_source(File::with_name("config/Config.local.toml").required(false))
             .build()?;

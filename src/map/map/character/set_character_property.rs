@@ -6,7 +6,7 @@ use eolib::protocol::{
     },
 };
 
-use crate::{CLASS_DB, SETTINGS};
+use crate::{CLASS_DB, SETTINGS, utils::validate_character_name};
 
 use super::super::Map;
 
@@ -21,7 +21,7 @@ impl Map {
             match property.as_str() {
                 "title" => {
                     let title_length = value.chars().count();
-                    if (1..={ SETTINGS.character.max_title_length }).contains(&title_length) {
+                    if title_length > 0 && title_length <= SETTINGS.character.max_title_length {
                         character.title = Some(value);
                     } else {
                         character.title = None;
@@ -29,18 +29,18 @@ impl Map {
                     false
                 }
                 "fiance" => {
-                    let name_length = value.chars().count();
-                    if (1..={ SETTINGS.character.max_name_length }).contains(&name_length) {
-                        character.fiance = Some(value);
+                    let name = value.to_lowercase();
+                    if validate_character_name(&name) {
+                        character.fiance = Some(name);
                     } else {
                         character.fiance = None;
                     }
                     false
                 }
                 "partner" => {
-                    let name_length = value.chars().count();
-                    if (1..={ SETTINGS.character.max_name_length }).contains(&name_length) {
-                        character.partner = Some(value);
+                    let name = value.to_lowercase();
+                    if validate_character_name(&name) {
+                        character.partner = Some(name);
                     } else {
                         character.partner = None;
                     }

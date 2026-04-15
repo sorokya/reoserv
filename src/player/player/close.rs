@@ -4,7 +4,14 @@ impl Player {
     pub async fn close(&mut self, reason: String) {
         self.queue.borrow_mut().clear();
         let (character_name, guild_tag) = if let Some(map) = self.map.as_ref() {
-            let mut character = map.leave(self.id, None, self.interact_player_id).await;
+            let mut character = match map.leave(self.id, None, self.interact_player_id).await {
+                Ok(character) => character,
+                Err(e) => {
+                    error!("Failed to leave map: {}", e);
+                    return;
+                }
+            };
+
             let character_name = character.name.clone();
             let guild_tag = character.guild_tag.clone();
             let db = self.db.clone();

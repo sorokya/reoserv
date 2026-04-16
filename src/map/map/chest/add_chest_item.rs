@@ -3,14 +3,17 @@ use std::cmp;
 use bytes::Bytes;
 use eolib::{
     data::{EoSerialize, EoWriter},
-    protocol::net::{
-        Item, PacketAction, PacketFamily, ThreeItem,
-        server::{ChestAgreeServerPacket, ChestReplyServerPacket},
+    protocol::{
+        net::{
+            Item, PacketAction, PacketFamily, ThreeItem,
+            server::{ChestAgreeServerPacket, ChestReplyServerPacket},
+        },
+        r#pub::ItemSpecial,
     },
 };
 
 use crate::{
-    SETTINGS,
+    ITEM_DB, SETTINGS,
     map::{Chest, chest::ChestItem},
     utils::get_distance,
 };
@@ -35,6 +38,15 @@ impl Map {
 
         let amount = cmp::min(item.amount, character.get_item_amount(item.id));
         if amount == 0 {
+            return;
+        }
+
+        let record = match ITEM_DB.items.get(item.id as usize - 1) {
+            Some(record) => record,
+            None => return,
+        };
+
+        if record.special == ItemSpecial::Lore {
             return;
         }
 

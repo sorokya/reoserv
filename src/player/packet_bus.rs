@@ -120,7 +120,10 @@ impl PacketBus {
             Socket::Web(socket) => match socket.next().await {
                 Some(Ok(Message::Binary(buf))) => {
                     if buf.len() < 4 {
-                        return None;
+                        return Some(Err(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!("Received packet is too short: {}", buf.len()),
+                        )));
                     }
 
                     let mut data_buf = buf[2..].to_vec();
@@ -172,6 +175,16 @@ impl PacketBus {
                             match read.await {
                                 Some(Ok(buf)) => {
                                     let mut data_buf = buf;
+                                    if data_buf.len() < 3 {
+                                        return Some(Err(std::io::Error::new(
+                                            std::io::ErrorKind::InvalidData,
+                                            format!(
+                                                "Received packet is too short: {}",
+                                                data_buf.len()
+                                            ),
+                                        )));
+                                    }
+
                                     if self.client_enryption_multiple != 0 {
                                         decrypt_packet(
                                             &mut data_buf,

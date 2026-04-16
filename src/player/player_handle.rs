@@ -288,7 +288,7 @@ async fn run_player(mut player: Player) {
                             break;
                         },
                         _ => {
-                            player.close(format!("Due to unknown error: {:?}", e)).await;
+                            player.close(format!("{}", e)).await;
                             break;
                         }
                     }

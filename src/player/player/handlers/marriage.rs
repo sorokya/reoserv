@@ -28,6 +28,10 @@ impl Player {
     }
 
     fn marriage_request(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let request = match MarriageRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,

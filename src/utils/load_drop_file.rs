@@ -23,8 +23,7 @@ pub fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
 fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut drop_file = DropFile::default();
 
-    let mut npc_id = 1;
-    for entry in glob("data/pub/npcs/*.json")? {
+    for (npc_id, entry) in (1..).zip(glob("data/pub/npcs/*.json")?) {
         let path = entry?;
         let mut file = File::open(path)?;
         let mut json = String::new();
@@ -47,7 +46,6 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
                     .collect(),
             });
         }
-        npc_id += 1;
     }
 
     save_pub_file(&drop_file, "data/pub/dtd001.edf")?;

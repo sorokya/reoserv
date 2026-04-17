@@ -23,9 +23,20 @@ pub fn load_drop_file() -> Result<DropFile, Box<dyn std::error::Error>> {
 fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
     let mut drop_file = DropFile::default();
 
-    let mut npc_id = 1;
     for entry in glob("data/pub/npcs/*.json")? {
         let path = entry?;
+        
+        // Extract NPC ID from filename (e.g., "1.json" -> 1)
+        let npc_id = path
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .and_then(|stem| stem.parse::<i32>().ok())
+            .unwrap_or(0);
+        
+        if npc_id == 0 {
+            continue; // Skip files that don't have numeric names
+        }
+        
         let mut file = File::open(path)?;
         let mut json = String::new();
         file.read_to_string(&mut json)?;
@@ -47,7 +58,6 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
                     .collect(),
             });
         }
-        npc_id += 1;
     }
 
     save_pub_file(&drop_file, "data/pub/dtd001.edf")?;

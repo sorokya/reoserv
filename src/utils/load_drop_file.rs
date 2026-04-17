@@ -6,6 +6,7 @@ use eolib::{
     protocol::r#pub::server::{DropFile, DropNpcRecord, DropRecord},
 };
 use glob::glob;
+use log::warn;
 use serde_json::Value;
 
 use crate::SETTINGS;
@@ -27,15 +28,20 @@ fn load_json() -> Result<DropFile, Box<dyn std::error::Error>> {
         let path = entry?;
         
         // Extract NPC ID from filename (e.g., "1.json" -> 1)
-        let npc_id = path
+        let npc_id = match path
             .file_stem()
             .and_then(|stem| stem.to_str())
             .and_then(|stem| stem.parse::<i32>().ok())
-            .unwrap_or(0);
-        
-        if npc_id == 0 {
-            continue; // Skip files that don't have numeric names
-        }
+        {
+            Some(id) if id > 0 => id,
+            _ => {
+                warn!(
+                    "Skipping drop file with non-numeric or invalid name: {}",
+                    path.display()
+                );
+                continue;
+            }
+        };
         
         let mut file = File::open(path)?;
         let mut json = String::new();

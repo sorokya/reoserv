@@ -16,6 +16,10 @@ impl Player {
     }
 
     fn jukebox_msg(&mut self, reader: EoReader) {
+        if self.trading {
+            return;
+        }
+
         if let Some(map) = &self.map {
             let msg = match JukeboxMsgClientPacket::deserialize(&reader) {
                 Ok(msg) => msg,

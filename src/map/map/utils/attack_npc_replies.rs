@@ -567,7 +567,7 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
 
     if !drops.is_empty() {
         let mut rng = rand::rng();
-        drops.sort_by(|a, b| a.rate.cmp(&b.rate));
+        drops.sort_by_key(|a| a.rate);
 
         for drop in drops {
             let roll = rng.random_range(0..=64000);

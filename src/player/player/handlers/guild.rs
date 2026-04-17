@@ -576,6 +576,10 @@ impl Player {
             }
         };
 
+        if self.trading {
+            return;
+        }
+
         if packet.gold_amount < SETTINGS.guild.min_deposit {
             return;
         }

@@ -23,4 +23,22 @@ impl Map {
             &EmotePlayerServerPacket { player_id, emote },
         );
     }
+
+    pub fn emote_include_player(&self, player_id: i32, emote: Emote) {
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
+        if character.hidden {
+            return;
+        }
+
+        self.send_packet_near(
+            &character.coords,
+            PacketAction::Player,
+            PacketFamily::Emote,
+            EmotePlayerServerPacket { player_id, emote },
+        );
+    }
 }

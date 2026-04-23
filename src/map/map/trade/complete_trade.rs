@@ -128,7 +128,7 @@ impl Map {
             );
         }
 
-        self.emote(player_id, Emote::Trade);
-        self.emote(partner_id, Emote::Trade);
+        self.emote_include_player(player_id, Emote::Trade);
+        self.emote_include_player(partner_id, Emote::Trade);
     }
 }

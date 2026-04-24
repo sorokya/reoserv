@@ -51,14 +51,13 @@ impl Map {
             );
         }
 
-        let party_player_ids = match self
-            .world
-            .get_player_party(player_id)
-            .await
-            .expect("Failed to get player party. Timeout")
-        {
-            Some(party) => party.members,
-            None => Vec::new(),
+        let party_player_ids = match self.world.get_player_party(player_id).await {
+            Ok(Some(party)) => party.members,
+            Ok(None) => Vec::new(),
+            Err(e) => {
+                error!("Failed to get player party: {}", e);
+                Vec::new()
+            }
         };
 
         match self.get_attack_target(player_id, direction, &party_player_ids) {

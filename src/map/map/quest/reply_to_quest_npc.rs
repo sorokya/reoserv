@@ -162,18 +162,25 @@ impl Map {
             None => return,
         };
 
-        player.send(
-            PacketAction::Dialog,
-            PacketFamily::Quest,
-            &QuestDialogServerPacket {
-                behavior_id: npc_data.behavior_id,
-                quest_id,
-                session_id,
-                dialog_id: 0,
-                quest_entries,
-                dialog_entries,
-            },
-        );
+        let warped = quest.states[progress.state as usize]
+            .actions
+            .iter()
+            .any(|action| action.name == "SetMap");
+
+        if !warped {
+            player.send(
+                PacketAction::Dialog,
+                PacketFamily::Quest,
+                &QuestDialogServerPacket {
+                    behavior_id: npc_data.behavior_id,
+                    quest_id,
+                    session_id,
+                    dialog_id: 0,
+                    quest_entries,
+                    dialog_entries,
+                },
+            );
+        }
 
         let messages = quest.states[progress.state as usize]
             .actions

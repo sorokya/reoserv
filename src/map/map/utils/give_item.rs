@@ -1,6 +1,6 @@
 use std::cmp;
 
-use eolib::protocol::net::{PacketAction, PacketFamily, ThreeItem, server::ItemGetServerPacket};
+use eolib::protocol::net::{PacketAction, PacketFamily, ThreeItem, server::ItemObtainServerPacket};
 
 use crate::SETTINGS;
 
@@ -18,15 +18,14 @@ impl Map {
 
             if let Some(player) = character.player.as_ref() {
                 player.send(
-                    PacketAction::Get,
+                    PacketAction::Obtain,
                     PacketFamily::Item,
-                    &ItemGetServerPacket {
-                        taken_item_index: 0,
-                        taken_item: ThreeItem {
+                    &ItemObtainServerPacket {
+                        item: ThreeItem {
                             id: item_id,
                             amount,
                         },
-                        weight: character.get_weight(),
+                        current_weight: character.get_weight().current,
                     },
                 );
             }

@@ -12,7 +12,15 @@ pub async fn send_email(to: &str, to_name: &str, subject: &str, body: &str) -> a
         .subject(subject)
         .text_body(body);
 
-    SmtpClientBuilder::new(SETTINGS.smtp.host.to_owned(), SETTINGS.smtp.port)
+    let builder = match SmtpClientBuilder::new(SETTINGS.smtp.host.to_owned(), SETTINGS.smtp.port) {
+        Ok(builder) => builder,
+        Err(e) => {
+            error!("Failed to get SmtpClientBuilder: {}", e);
+            return Ok(());
+        }
+    };
+
+    builder
         .implicit_tls(false)
         .credentials((
             SETTINGS.smtp.username.to_owned(),

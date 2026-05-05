@@ -9,7 +9,7 @@ impl Map {
         let mut writer = EoWriter::with_capacity(self.file_size as usize);
 
         if let Err(e) = self.file.serialize(&mut writer) {
-            error!("Failed to serialize map file: {}", e);
+            tracing::error!("Failed to serialize map file: {}", e);
             return;
         }
 

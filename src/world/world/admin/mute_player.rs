@@ -27,7 +27,7 @@ impl World {
         );
 
         self.broadcast_server_message(&get_lang_string!(
-            &LANG.announce_mute,
+            &LANG.load().announce_mute,
             victim = victim_name,
             name = admin_name
         ));

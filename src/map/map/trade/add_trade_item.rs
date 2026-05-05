@@ -9,8 +9,8 @@ const MAX_TRADE_SLOTS: usize = 10;
 impl Map {
     pub fn add_trade_item(&mut self, player_id: i32, partner_id: i32, item: Item) {
         if item.amount <= 0
-            || item.amount > SETTINGS.limits.max_trade
-            || SETTINGS.items.protected_items.contains(&item.id)
+            || item.amount > SETTINGS.load().limits.max_trade
+            || SETTINGS.load().items.protected_items.contains(&item.id)
         {
             return;
         }
@@ -30,7 +30,8 @@ impl Map {
             return;
         }
 
-        let item_data = match ITEM_DB.items.get(item.id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let item_data = match item_db.items.get(item.id as usize - 1) {
             Some(item_data) => item_data,
             None => return,
         };

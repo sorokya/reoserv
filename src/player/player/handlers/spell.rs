@@ -21,7 +21,7 @@ impl Player {
             let request = match SpellRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing SpellRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing SpellRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -41,7 +41,7 @@ impl Player {
         let target_self = match SpellTargetSelfClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing SpellTargetSelfClientPacket {}", e);
+                tracing::error!("Error deserializing SpellTargetSelfClientPacket {}", e);
                 return;
             }
         };
@@ -71,7 +71,7 @@ impl Player {
         let target_other = match SpellTargetOtherClientPacket::deserialize(&reader) {
             Ok(target_other) => target_other,
             Err(e) => {
-                error!("Error deserializing SpellTargetOtherClientPacket {}", e);
+                tracing::error!("Error deserializing SpellTargetOtherClientPacket {}", e);
                 return;
             }
         };
@@ -113,7 +113,7 @@ impl Player {
         let target_group = match SpellTargetGroupClientPacket::deserialize(&reader) {
             Ok(target_other) => target_other,
             Err(e) => {
-                error!("Error deserializing SpellTargetGroupClientPacket {}", e);
+                tracing::error!("Error deserializing SpellTargetGroupClientPacket {}", e);
                 return;
             }
         };
@@ -140,7 +140,8 @@ impl Player {
     }
 
     fn check_timestamp(&mut self, spell_id: i32, timestamp: i32) -> bool {
-        let spell = match SPELL_DB.skills.get(spell_id as usize - 1) {
+        let spell_db = SPELL_DB.load();
+        let spell = match spell_db.skills.get(spell_id as usize - 1) {
             Some(spell) => spell,
             None => return false,
         };
@@ -156,7 +157,7 @@ impl Player {
             PacketAction::TargetSelf => self.spell_target_self(reader),
             PacketAction::TargetOther => self.spell_target_other(reader),
             PacketAction::TargetGroup => self.spell_target_group(reader),
-            _ => error!("Unhandled packet Spell_{:?}", action),
+            _ => tracing::error!("Unhandled packet Spell_{:?}", action),
         }
     }
 }

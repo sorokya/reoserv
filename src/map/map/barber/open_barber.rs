@@ -22,7 +22,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -47,14 +48,18 @@ impl Map {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing BarberOpenServerPacket: {}", e);
+            tracing::error!("Error serializing BarberOpenServerPacket: {}", e);
             return;
         }
 
         if character.is_deep {
-            writer.add_short(SETTINGS.character.max_hair_style).unwrap();
-            writer.add_short(SETTINGS.barber.base_cost).unwrap();
-            writer.add_short(SETTINGS.barber.cost_per_level).unwrap();
+            writer
+                .add_short(SETTINGS.load().character.max_hair_style)
+                .unwrap();
+            writer.add_short(SETTINGS.load().barber.base_cost).unwrap();
+            writer
+                .add_short(SETTINGS.load().barber.cost_per_level)
+                .unwrap();
         }
 
         player.send_buf(

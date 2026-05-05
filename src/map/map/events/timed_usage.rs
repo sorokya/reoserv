@@ -10,7 +10,7 @@ impl Map {
             character.usage_ticks = cmp::max(0, character.usage_ticks - 1);
             if character.usage_ticks == 0 {
                 character.usage += 1;
-                character.usage_ticks = SETTINGS.world.usage_rate;
+                character.usage_ticks = SETTINGS.load().world.usage_rate;
             }
         }
     }

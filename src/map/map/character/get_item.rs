@@ -31,7 +31,7 @@ impl Map {
         };
 
         let distance = get_distance(&item_coords, &character.coords);
-        if distance > SETTINGS.world.drop_distance {
+        if distance > SETTINGS.load().world.drop_distance {
             return;
         }
 
@@ -63,7 +63,7 @@ impl Map {
             match self.items.iter_mut().find(|i| i.index == item_index) {
                 Some(item) => item.amount -= amount_picked_up,
                 None => {
-                    error!("Failed to get item {}", item_index);
+                    tracing::error!("Failed to get item {}", item_index);
                     return;
                 }
             }

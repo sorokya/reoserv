@@ -6,7 +6,7 @@ use super::super::Map;
 
 impl Map {
     pub fn request_trade(&self, player_id: i32, target_player_id: i32) {
-        if self.id == SETTINGS.jail.map {
+        if self.id == SETTINGS.load().jail.map {
             return;
         }
 

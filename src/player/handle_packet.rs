@@ -39,7 +39,7 @@ impl Player {
                 let server_sequence = self.bus.sequencer.next_sequence();
                 let client_sequence = reader.get_char();
 
-                if SETTINGS.server.enforce_sequence && server_sequence != client_sequence {
+                if SETTINGS.load().server.enforce_sequence && server_sequence != client_sequence {
                     self.close(format!(
                         "sending invalid sequence: Got {}, expected {}.",
                         client_sequence, server_sequence
@@ -98,7 +98,7 @@ impl Player {
             PacketFamily::Unrecognized(FAMILY_CAPTCHA) => self.handle_captcha(action, reader).await,
             PacketFamily::Welcome => self.handle_welcome(action, reader).await,
             _ => {
-                error!("Unhandled packet {:?}_{:?}", action, family);
+                tracing::error!("Unhandled packet {:?}_{:?}", action, family);
             }
         }
     }

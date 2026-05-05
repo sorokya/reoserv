@@ -6,7 +6,7 @@ use super::Character;
 
 impl Character {
     pub fn get_spawn_coords(&self) -> Coords {
-        match INN_DB.inns.iter().find(|inn| inn.name == self.home) {
+        match INN_DB.load().inns.iter().find(|inn| inn.name == self.home) {
             Some(inn) => {
                 if inn.alternate_spawn_enabled && self.level > 0 {
                     Coords {
@@ -21,8 +21,8 @@ impl Character {
                 }
             }
             None => Coords {
-                x: SETTINGS.rescue.x,
-                y: SETTINGS.rescue.y,
+                x: SETTINGS.load().rescue.x,
+                y: SETTINGS.load().rescue.y,
             },
         }
     }

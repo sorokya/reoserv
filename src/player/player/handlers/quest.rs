@@ -19,7 +19,7 @@ impl Player {
             let r#use = match QuestUseClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing QuestUseClientPacket: {}", e);
+                    tracing::error!("Error deserializing QuestUseClientPacket: {}", e);
                     return;
                 }
             };
@@ -40,7 +40,7 @@ impl Player {
             let accept = match QuestAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing QuestAcceptClientPacket: {}", e);
+                    tracing::error!("Error deserializing QuestAcceptClientPacket: {}", e);
                     return;
                 }
             };
@@ -70,7 +70,7 @@ impl Player {
             let list = match QuestListClientPacket::deserialize(&reader) {
                 Ok(list) => list,
                 Err(e) => {
-                    error!("Error deserializing QuestListClientPacket: {}", e);
+                    tracing::error!("Error deserializing QuestListClientPacket: {}", e);
                     return;
                 }
             };
@@ -88,7 +88,7 @@ impl Player {
             PacketAction::Use => self.quest_use(reader),
             PacketAction::Accept => self.quest_accept(reader),
             PacketAction::List => self.quest_list(reader),
-            _ => error!("Unhandled packet Quest_{:?}", action),
+            _ => tracing::error!("Unhandled packet Quest_{:?}", action),
         }
     }
 }

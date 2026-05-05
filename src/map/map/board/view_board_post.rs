@@ -37,7 +37,7 @@ impl Map {
                 Ok(Some(body)) => body,
                 Ok(None) => "".to_string(),
                 Err(e) => {
-                    error!("Failed to query board post: {}", e);
+                    tracing::error!("Failed to query board post: {}", e);
                     return;
                 }
             };

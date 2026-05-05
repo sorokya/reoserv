@@ -17,7 +17,8 @@ impl Map {
     pub fn request_marriage_approval(&mut self, player_id: i32, npc_index: i32, name: String) {
         match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => {
-                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                let npc_db = NPC_DB.load();
+                let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                     Some(npc_data) => npc_data,
                     None => return,
                 };
@@ -51,7 +52,7 @@ impl Map {
             return;
         }
 
-        if character.get_item_amount(1) < SETTINGS.marriage.approval_cost {
+        if character.get_item_amount(1) < SETTINGS.load().marriage.approval_cost {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Marriage,
@@ -63,7 +64,7 @@ impl Map {
             return;
         }
 
-        character.remove_item(1, SETTINGS.marriage.approval_cost);
+        character.remove_item(1, SETTINGS.load().marriage.approval_cost);
         character.fiance = Some(name);
 
         player.send(

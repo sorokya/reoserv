@@ -12,10 +12,10 @@ impl World {
         {
             player_online = true;
             player.request_warp(
-                SETTINGS.jail.map,
+                SETTINGS.load().jail.map,
                 Coords {
-                    x: SETTINGS.jail.x,
-                    y: SETTINGS.jail.y,
+                    x: SETTINGS.load().jail.x,
+                    y: SETTINGS.load().jail.y,
                 },
                 false,
                 Some(WarpEffect::Admin),
@@ -23,7 +23,7 @@ impl World {
         }
 
         self.broadcast_server_message(&get_lang_string!(
-            &LANG.announce_remove,
+            &LANG.load().announce_remove,
             victim = victim_name,
             name = admin_name,
             method = "jailed"
@@ -36,15 +36,15 @@ impl World {
                     .execute(&insert_params(
                         include_str!("../../../sql/offline_jail.sql"),
                         &[
-                            ("map", &SETTINGS.jail.map),
-                            ("x", &SETTINGS.jail.x),
-                            ("y", &SETTINGS.jail.y),
+                            ("map", &SETTINGS.load().jail.map),
+                            ("x", &SETTINGS.load().jail.x),
+                            ("y", &SETTINGS.load().jail.y),
                             ("name", &victim_name),
                         ],
                     ))
                     .await
                 {
-                    error!("Failed to jail player: {}", e);
+                    tracing::error!("Failed to jail player: {}", e);
                 }
             });
         }

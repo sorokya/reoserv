@@ -76,7 +76,7 @@ impl Db {
     pub(super) async fn rollback_if_transaction_active(&mut self) {
         if self.transaction_active {
             if let Err(error) = self.execute_inner("ROLLBACK").await {
-                error!("Failed to rollback transaction: {}", error);
+                tracing::error!("Failed to rollback transaction: {}", error);
             }
             self.transaction_active = false;
         }
@@ -84,7 +84,7 @@ impl Db {
 
     pub(super) async fn reconnect_mysql(&mut self) -> anyhow::Result<()> {
         if let crate::db::Connection::Mysql(ref mut mysql) = self.connection {
-            warn!("MySQL connection closed, reconnecting...");
+            tracing::warn!("MySQL connection closed, reconnecting...");
             mysql.conn = mysql_async::Conn::from_url(mysql.url.clone()).await?;
         }
         Ok(())

@@ -26,7 +26,7 @@ impl World {
             let character = match target.get_character().await {
                 Ok(character) => character,
                 Err(e) => {
-                    error!("Failed to get character: {}", e);
+                    tracing::error!("Failed to get character: {}", e);
                     return;
                 }
             };

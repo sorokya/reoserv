@@ -17,7 +17,8 @@ impl Map {
     pub fn request_divorce(&mut self, player_id: i32, npc_index: i32, name: String) {
         match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => {
-                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                let npc_db = NPC_DB.load();
+                let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                     Some(npc_data) => npc_data,
                     None => return,
                 };
@@ -60,7 +61,7 @@ impl Map {
             return;
         }
 
-        if character.get_item_amount(1) < SETTINGS.marriage.divorce_cost {
+        if character.get_item_amount(1) < SETTINGS.load().marriage.divorce_cost {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Marriage,
@@ -72,7 +73,7 @@ impl Map {
             return;
         }
 
-        character.remove_item(1, SETTINGS.marriage.divorce_cost);
+        character.remove_item(1, SETTINGS.load().marriage.divorce_cost);
         character.partner = None;
 
         player.send(
@@ -122,7 +123,7 @@ impl Map {
                 ))
                 .await
             {
-                error!("Failed to divorce character: {}", e);
+                tracing::error!("Failed to divorce character: {}", e);
             }
         });
     }

@@ -119,15 +119,21 @@ fn map_mysql_value(value: Option<&mysql_async::Value>) -> SqlValue {
             if let Some(date) = parsed {
                 SqlValue::Date(date)
             } else {
-                error!(
+                tracing::error!(
                     "Failed to parse date: {}-{}-{} {}:{}:{}.{}",
-                    year, month, day, hour, minutes, seconds, micro_seconds
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minutes,
+                    seconds,
+                    micro_seconds
                 );
                 SqlValue::Null
             }
         }
         _ => {
-            error!("Unsupported MySQL value type: {:?}", value);
+            tracing::error!("Unsupported MySQL value type: {:?}", value);
             SqlValue::Null
         }
     }
@@ -159,7 +165,7 @@ fn map_sqlite_value(value: rusqlite::types::ValueRef<'_>) -> SqlValue {
         rusqlite::types::ValueRef::Integer(value) => SqlValue::Int(value as i32),
         rusqlite::types::ValueRef::Blob(buffer) => map_blob_as_string(buffer),
         unsupported => {
-            error!("Unsupported SQLite value type: {:?}", unsupported);
+            tracing::error!("Unsupported SQLite value type: {:?}", unsupported);
             SqlValue::Null
         }
     }
@@ -179,7 +185,7 @@ fn map_utf8_buffer(buffer: &[u8]) -> SqlValue {
             }
         }
         Err(_) => {
-            error!("Failed to parse bytes as UTF-8 string: {:?}", buffer);
+            tracing::error!("Failed to parse bytes as UTF-8 string: {:?}", buffer);
             SqlValue::Null
         }
     }
@@ -189,7 +195,7 @@ fn map_blob_as_string(buffer: &[u8]) -> SqlValue {
     match String::from_utf8(buffer.to_vec()) {
         Ok(value) => SqlValue::String(value),
         Err(_) => {
-            error!("Failed to parse bytes as UTF-8 string: {:?}", buffer);
+            tracing::error!("Failed to parse bytes as UTF-8 string: {:?}", buffer);
             SqlValue::Null
         }
     }

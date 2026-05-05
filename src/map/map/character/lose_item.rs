@@ -8,7 +8,7 @@ use super::super::Map;
 
 impl Map {
     pub fn lose_item(&mut self, player_id: i32, item_id: i32, amount: i32) {
-        if item_id < 1 || amount <= 0 || amount > SETTINGS.limits.max_item {
+        if item_id < 1 || amount <= 0 || amount > SETTINGS.load().limits.max_item {
             return;
         }
 

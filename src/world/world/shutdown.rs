@@ -12,7 +12,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize MessageCloseServerPacket: {}", e);
+            tracing::error!("Failed to serialize MessageCloseServerPacket: {}", e);
             return;
         }
 
@@ -23,7 +23,7 @@ impl World {
         let results = futures::future::join_all(sends).await;
         for result in results {
             if let Err(e) = result {
-                error!("Failed to send shutdown packet to player: {}", e);
+                tracing::error!("Failed to send shutdown packet to player: {}", e);
             }
         }
 

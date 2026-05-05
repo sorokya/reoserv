@@ -18,7 +18,7 @@ impl Character {
             });
         }
 
-        if let Some(item) = ITEM_DB.items.get(item_id as usize - 1) {
+        if let Some(item) = ITEM_DB.load().items.get(item_id as usize - 1) {
             self.weight += item.weight * amount;
         }
     }
@@ -30,7 +30,8 @@ impl Character {
 
         let mut quests_progressed = Vec::new();
         for progress in self.quests.iter_mut() {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest_db = QUEST_DB.load();
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => continue,
             };

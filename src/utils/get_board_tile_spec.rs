@@ -11,7 +11,7 @@ pub fn get_board_tile_spec(board_id: i32) -> Option<MapTileSpec> {
         7 => Some(MapTileSpec::Board7),
         8 => Some(MapTileSpec::Board8),
         _ => {
-            warn!("{} is not a valid board id", board_id);
+            tracing::warn!("{} is not a valid board id", board_id);
             None
         }
     }

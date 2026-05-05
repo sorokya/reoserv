@@ -24,7 +24,7 @@ impl Player {
             .send(
                 PacketAction::Reply,
                 PacketFamily::Guild,
-                if self.guild_create_members.len() + 1 >= SETTINGS.guild.min_players {
+                if self.guild_create_members.len() + 1 >= SETTINGS.load().guild.min_players {
                     GuildReplyServerPacket {
                         reply_code: GuildReply::CreateAddConfirm,
                         reply_code_data: Some(

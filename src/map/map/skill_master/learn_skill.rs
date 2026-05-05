@@ -29,7 +29,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -38,7 +39,8 @@ impl Map {
             return;
         }
 
-        let skill_master = match SKILL_MASTER_DB
+        let skill_master_db = SKILL_MASTER_DB.load();
+        let skill_master = match skill_master_db
             .skill_masters
             .iter()
             .find(|skill_master| skill_master.behavior_id == npc_data.behavior_id)

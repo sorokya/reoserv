@@ -15,7 +15,7 @@ pub enum PlayerCommandResult {
 }
 
 async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map: &MapHandle) {
-    if !SETTINGS.auto_pickup.enabled {
+    if !SETTINGS.load().auto_pickup.enabled {
         return;
     }
 
@@ -49,6 +49,7 @@ async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map:
         Err(_) => {
             // find matches from item db where name starts with identifier
             match ITEM_DB
+                .load()
                 .items
                 .iter()
                 .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
@@ -173,6 +174,7 @@ pub async fn handle_player_command(
     let mut args: Vec<String> = args[1..].iter().map(|s| s.to_string()).collect();
 
     match PLAYER_COMMANDS
+        .load()
         .commands
         .iter()
         .find(|c| c.name == command || c.alias == command)

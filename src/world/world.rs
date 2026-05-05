@@ -211,7 +211,7 @@ impl World {
                         let _ = respond_to.send(Ok(map.to_owned()));
                     }
                     None => {
-                        warn!("Map not found: {}", map_id);
+                        tracing::warn!("Map not found: {}", map_id);
                         let _ = respond_to.send(Err(Box::new(DataNotFoundError::new(
                             "Map".to_string(),
                             map_id,
@@ -263,7 +263,7 @@ impl World {
                         let _ = respond_to.send(());
                     }
                     Err(err) => {
-                        warn!("Failed to load maps: {}", err);
+                        tracing::warn!("Failed to load maps: {}", err);
                         let _ = respond_to.send(());
                     }
                 }

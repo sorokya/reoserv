@@ -208,8 +208,8 @@ impl Character {
             hidden: row.get_int(50)? == 1,
             guild_name: row.get_string(51),
             guild_tag: row.get_string(52),
-            warp_suck_ticks: SETTINGS.world.warp_suck_rate,
-            ghost_ticks: SETTINGS.world.ghost_rate,
+            warp_suck_ticks: SETTINGS.load().world.warp_suck_rate,
+            ghost_ticks: SETTINGS.load().world.ghost_rate,
             ..Default::default()
         })
     }

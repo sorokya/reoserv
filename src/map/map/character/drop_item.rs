@@ -17,13 +17,14 @@ use super::super::Map;
 impl Map {
     pub fn drop_item(&mut self, player_id: i32, item: ThreeItem, coords: ByteCoords) {
         if item.amount <= 0
-            || item.amount > SETTINGS.limits.max_item
-            || SETTINGS.items.protected_items.contains(&item.id)
+            || item.amount > SETTINGS.load().limits.max_item
+            || SETTINGS.load().items.protected_items.contains(&item.id)
         {
             return;
         }
 
-        let item_record = match ITEM_DB.items.get(item.id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let item_record = match item_db.items.get(item.id as usize - 1) {
             Some(item) => item,
             None => return,
         };
@@ -38,7 +39,7 @@ impl Map {
                 None => return,
             };
 
-            if character.map_id == SETTINGS.jail.map {
+            if character.map_id == SETTINGS.load().jail.map {
                 return;
             }
 
@@ -51,7 +52,7 @@ impl Map {
             };
 
             let distance = get_distance(&coords, &character.coords);
-            if distance > SETTINGS.world.drop_distance {
+            if distance > SETTINGS.load().world.drop_distance {
                 return;
             }
 
@@ -83,11 +84,11 @@ impl Map {
             amount_to_drop,
             coords,
             player_id,
-            SETTINGS.world.drop_protect_player,
+            SETTINGS.load().world.drop_protect_player,
         ) {
             Ok(index) => index,
             Err(e) => {
-                error!("Failed to add dropped item to map: {}", e);
+                tracing::error!("Failed to add dropped item to map: {}", e);
                 return;
             }
         };

@@ -12,7 +12,7 @@ impl Player {
     pub fn handle_refresh(&mut self, action: PacketAction) {
         match action {
             PacketAction::Request => self.refresh_request(),
-            _ => error!("Unhandled packet Refresh_{:?}", action),
+            _ => tracing::error!("Unhandled packet Refresh_{:?}", action),
         }
     }
 }

@@ -23,7 +23,8 @@ impl Map {
             return;
         }
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -32,7 +33,8 @@ impl Map {
             return;
         }
 
-        let inn_data = match INN_DB
+        let inn_db = INN_DB.load();
+        let inn_data = match inn_db
             .inns
             .iter()
             .find(|inn| inn.behavior_id == npc_data.behavior_id)
@@ -41,7 +43,7 @@ impl Map {
             None => return,
         };
 
-        let current_inn_data = match INN_DB.inns.iter().find(|inn| inn.name == character.home) {
+        let current_inn_data = match inn_db.inns.iter().find(|inn| inn.name == character.home) {
             Some(inn_data) => inn_data,
             None => return,
         };

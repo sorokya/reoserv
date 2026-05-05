@@ -50,7 +50,9 @@ impl Npc {
     }
 
     pub fn damage(&mut self, player_id: i32, amount: i32, accuracy: i32, critical: bool) -> i32 {
-        let npc_data = match NPC_DB.npcs.get(self.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let formulas = FORMULAS.load();
+        let npc_data = match npc_db.npcs.get(self.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => {
                 return 0;
@@ -67,15 +69,15 @@ impl Npc {
         } {
             Ok(context) => context,
             Err(e) => {
-                error!("Failed to generate formula context: {}", e);
+                tracing::error!("Failed to generate formula context: {}", e);
                 return 0;
             }
         };
 
-        let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+        let hit_rate = match eval_float_with_context(&formulas.hit_rate, &context) {
             Ok(hit_rate) => hit_rate,
             Err(e) => {
-                error!("Failed to calculate hit rate: {}", e);
+                tracing::error!("Failed to calculate hit rate: {}", e);
                 0.0
             }
         };
@@ -86,10 +88,10 @@ impl Npc {
         let damage = if hit_rate < rand {
             0
         } else {
-            match eval_float_with_context(&FORMULAS.damage, &context) {
+            match eval_float_with_context(&formulas.damage, &context) {
                 Ok(amount) => amount.floor() as i32,
                 Err(e) => {
-                    error!("Failed to calculate damage: {}", e);
+                    tracing::error!("Failed to calculate damage: {}", e);
                     0
                 }
             }

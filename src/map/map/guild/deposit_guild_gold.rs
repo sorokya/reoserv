@@ -22,7 +22,7 @@ impl Map {
         };
 
         match self.npcs.iter().find(|npc| npc.index == npc_index) {
-            Some(npc) => match NPC_DB.npcs.get(npc.id as usize - 1) {
+            Some(npc) => match NPC_DB.load().npcs.get(npc.id as usize - 1) {
                 Some(npc_data) => {
                     if npc_data.r#type != NpcType::Guild {
                         return;
@@ -60,16 +60,19 @@ impl Map {
                 Ok(Some(amount)) => amount,
                 Ok(None) => return,
                 Err(e) => {
-                    error!("Error getting guild bank amount: {}", e);
+                    tracing::error!("Error getting guild bank amount: {}", e);
                     return;
                 }
             };
 
-            if current_bank_amount >= SETTINGS.guild.bank_max_gold {
+            if current_bank_amount >= SETTINGS.load().guild.bank_max_gold {
                 return;
             }
 
-            let amount = cmp::min(SETTINGS.guild.bank_max_gold - current_bank_amount, amount);
+            let amount = cmp::min(
+                SETTINGS.load().guild.bank_max_gold - current_bank_amount,
+                amount,
+            );
 
             if let Err(e) = db
                 .execute(&insert_params(
@@ -78,7 +81,7 @@ impl Map {
                 ))
                 .await
             {
-                error!("Error updating guild bank: {}", e);
+                tracing::error!("Error updating guild bank: {}", e);
             }
         });
     }

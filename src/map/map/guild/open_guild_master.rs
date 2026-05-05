@@ -19,7 +19,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -41,7 +42,7 @@ impl Map {
             let session_id = match player.generate_session_id().await {
                 Ok(session_id) => session_id,
                 Err(e) => {
-                    error!("Error generating session id: {}", e);
+                    tracing::error!("Error generating session id: {}", e);
                     return;
                 }
             };

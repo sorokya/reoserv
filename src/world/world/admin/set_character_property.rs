@@ -14,7 +14,7 @@ impl World {
             let map = match player.get_map().await {
                 Ok(map) => map,
                 Err(e) => {
-                    error!("Error getting map for set_character_property: {}", e);
+                    tracing::error!("Error getting map for set_character_property: {}", e);
                     return;
                 }
             };

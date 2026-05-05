@@ -55,7 +55,7 @@ impl Map {
             Ok(Some(party)) => party.members,
             Ok(None) => Vec::new(),
             Err(e) => {
-                error!("Failed to get player party: {}", e);
+                tracing::error!("Failed to get player party: {}", e);
                 Vec::new()
             }
         };
@@ -167,7 +167,8 @@ impl Map {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -406,7 +407,7 @@ impl Map {
 }
 
 fn can_attack(character: &Character) -> bool {
-    if SETTINGS.combat.enforce_weight && character.weight > character.max_weight {
+    if SETTINGS.load().combat.enforce_weight && character.weight > character.max_weight {
         return false;
     }
 
@@ -418,6 +419,7 @@ fn can_attack(character: &Character) -> bool {
     }
 
     if let Some(config) = SETTINGS
+        .load()
         .combat
         .weapon_ranges
         .iter()
@@ -427,7 +429,8 @@ fn can_attack(character: &Character) -> bool {
             return true;
         }
 
-        let shield_data = match ITEM_DB.items.get(shield as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let shield_data = match item_db.items.get(shield as usize - 1) {
             Some(data) => data,
             None => return false,
         };
@@ -445,6 +448,7 @@ fn get_weapon_range(character: &Character) -> i32 {
     }
 
     if let Some(config) = SETTINGS
+        .load()
         .combat
         .weapon_ranges
         .iter()

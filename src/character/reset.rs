@@ -12,8 +12,8 @@ impl Character {
         self.base_charisma = 0;
 
         self.spells.clear();
-        self.stat_points = self.level * SETTINGS.world.stat_points_per_level;
-        self.skill_points = self.level * SETTINGS.world.skill_points_per_level;
+        self.stat_points = self.level * SETTINGS.load().world.stat_points_per_level;
+        self.skill_points = self.level * SETTINGS.load().world.skill_points_per_level;
 
         self.calculate_stats();
     }

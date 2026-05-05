@@ -16,7 +16,7 @@ impl Player {
         let agree = match WelcomeAgreeClientPacket::deserialize(&reader) {
             Ok(agree) => agree,
             Err(e) => {
-                error!("Error deserializing WelcomeAgreeClientPacket {}", e);
+                tracing::error!("Error deserializing WelcomeAgreeClientPacket {}", e);
                 return;
             }
         };
@@ -49,7 +49,7 @@ impl Player {
         let msg = match WelcomeMsgClientPacket::deserialize(&reader) {
             Ok(msg) => msg,
             Err(e) => {
-                error!("Error deserializing WelcomeMsgClientPacket {}", e);
+                tracing::error!("Error deserializing WelcomeMsgClientPacket {}", e);
                 return;
             }
         };
@@ -61,7 +61,7 @@ impl Player {
         let request = match WelcomeRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing WelcomeRequestClientPacket {}", e);
+                tracing::error!("Error deserializing WelcomeRequestClientPacket {}", e);
                 return;
             }
         };
@@ -74,7 +74,7 @@ impl Player {
             PacketAction::Agree => self.welcome_agree(reader).await,
             PacketAction::Msg => self.welcome_msg(reader).await,
             PacketAction::Request => self.welcome_request(reader).await,
-            _ => error!("Unhandled packet Welcome_{:?}", action),
+            _ => tracing::error!("Unhandled packet Welcome_{:?}", action),
         }
     }
 }

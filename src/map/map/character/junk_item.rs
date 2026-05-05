@@ -10,8 +10,8 @@ impl Map {
     pub fn junk_item(&mut self, player_id: i32, item_id: i32, amount: i32) {
         if item_id < 1
             || amount <= 0
-            || amount > SETTINGS.limits.max_item
-            || SETTINGS.items.protected_items.contains(&item_id)
+            || amount > SETTINGS.load().limits.max_item
+            || SETTINGS.load().items.protected_items.contains(&item_id)
         {
             return;
         }

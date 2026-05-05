@@ -406,7 +406,7 @@ impl Map {
 }
 
 fn can_attack(character: &Character) -> bool {
-    if SETTINGS.combat.enforce_weight && character.weight > character.max_weight {
+    if SETTINGS.load().combat.enforce_weight && character.weight > character.max_weight {
         return false;
     }
 
@@ -418,6 +418,7 @@ fn can_attack(character: &Character) -> bool {
     }
 
     if let Some(config) = SETTINGS
+        .load()
         .combat
         .weapon_ranges
         .iter()
@@ -445,6 +446,7 @@ fn get_weapon_range(character: &Character) -> i32 {
     }
 
     if let Some(config) = SETTINGS
+        .load()
         .combat
         .weapon_ranges
         .iter()

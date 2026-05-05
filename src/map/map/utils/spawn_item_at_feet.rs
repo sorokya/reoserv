@@ -17,7 +17,7 @@ impl Map {
             return;
         }
 
-        let amount = cmp::min(SETTINGS.limits.max_item, amount);
+        let amount = cmp::min(SETTINGS.load().limits.max_item, amount);
 
         let item_index = match self.add_item(item_id, amount, coords, 0, 0) {
             Ok(index) => index,

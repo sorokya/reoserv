@@ -33,7 +33,7 @@ impl Player {
         let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.skills.len() as i32) };
 
         let settings = ServerSettings {
-            jail_map: SETTINGS.jail.map,
+            jail_map: SETTINGS.load().jail.map,
             rescue_map: 4,
             rescue_coords: Coords { x: 24, y: 24 },
             spy_and_light_guide_flood_rate: 10,

@@ -9,12 +9,14 @@ extern crate serde_derive;
 
 use std::{collections::HashMap, time::Duration};
 
+use arc_swap::ArcSwap;
 use chrono::Utc;
 use eolib::protocol::r#pub::{
     Ecf, Eif, Enf, Esf,
     server::{DropFile, InnFile, ShopFile, SkillMasterFile, TalkFile},
 };
 use eoplus::Quest;
+use once_cell::sync::Lazy;
 use lazy_static::lazy_static;
 
 #[macro_use]
@@ -63,8 +65,12 @@ use crate::{
     },
 };
 
+static SETTINGS: Lazy<ArcSwap<Settings>> = Lazy::new(|| {
+    ArcSwap::from_pointee(Settings::new().expect("Failed to load settings"))
+});
+
 lazy_static! {
-    static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
+    //static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
     static ref ARENAS: Arenas = Arenas::new().expect("Failed to load arenas!");
     static ref PACKET_RATE_LIMITS: PacketRateLimits =
         PacketRateLimits::new().expect("Failed to load packet rate limits!");
@@ -116,26 +122,26 @@ async fn main() -> anyhow::Result<()> {
         include_str!("../VERSION.txt")
     );
 
-    let db = DbHandle::new(match SETTINGS.database.driver.as_str() {
+    let db = DbHandle::new(match SETTINGS.load().database.driver.as_str() {
         "mysql" => {
             let url = format!(
                 "mysql://{}:{}@{}:{}/{}",
-                SETTINGS.database.username,
-                SETTINGS.database.password,
-                SETTINGS.database.host,
-                SETTINGS.database.port,
-                SETTINGS.database.name
+                SETTINGS.load().database.username,
+                SETTINGS.load().database.password,
+                SETTINGS.load().database.host,
+                SETTINGS.load().database.port,
+                SETTINGS.load().database.name
             );
             let conn = mysql_async::Conn::from_url(&url).await.unwrap();
             Connection::Mysql(crate::db::MysqlConnection { conn, url })
         }
         "sqlite" => Connection::Sqlite(
-            rusqlite::Connection::open(format!("{}.db", SETTINGS.database.name)).unwrap(),
+            rusqlite::Connection::open(format!("{}.db", SETTINGS.load().database.name)).unwrap(),
         ),
         other => panic!("Unsupported database driver: {}", other),
     });
 
-    crate::db::run_startup_migrations(&db, SETTINGS.database.driver.as_str()).await?;
+    crate::db::run_startup_migrations(&db, SETTINGS.load().database.driver.as_str()).await?;
 
     if let Some(row) = db
         .query_one(
@@ -170,7 +176,7 @@ async fn main() -> anyhow::Result<()> {
             .expect("Failed to load maps. Timeout");
     }
 
-    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.world.tick_rate as u64));
+    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.load().world.tick_rate as u64));
     let tick_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -179,9 +185,9 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    if SETTINGS.server.save_rate > 0 {
+    if SETTINGS.load().server.save_rate > 0 {
         let mut save_interval =
-            time::interval(Duration::from_secs(SETTINGS.server.save_rate as u64 * 60));
+            time::interval(Duration::from_secs(SETTINGS.load().server.save_rate as u64 * 60));
         let save_world = world.clone();
         tokio::spawn(async move {
             loop {
@@ -191,8 +197,8 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    if SETTINGS.sln.enabled {
-        let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.sln.rate as u64 * 60));
+    if SETTINGS.load().sln.enabled {
+        let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.load().sln.rate as u64 * 60));
         tokio::spawn(async move {
             loop {
                 sln_interval.tick().await;
@@ -202,20 +208,20 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let tcp_listener =
-        TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))
+        TcpListener::bind(format!("{}:{}", SETTINGS.load().server.host, SETTINGS.load().server.port))
             .await
             .unwrap();
     tracing::info!(
         "listening at {}:{}",
-        SETTINGS.server.host, SETTINGS.server.port
+        SETTINGS.load().server.host, SETTINGS.load().server.port
     );
 
     let mut websocket_listener = None;
-    if !SETTINGS.server.websocket_port.is_empty() {
+    if !SETTINGS.load().server.websocket_port.is_empty() {
         websocket_listener = Some(
             TcpListener::bind(format!(
                 "{}:{}",
-                SETTINGS.server.host, SETTINGS.server.websocket_port
+                SETTINGS.load().server.host, SETTINGS.load().server.websocket_port
             ))
             .await
             .unwrap(),
@@ -223,7 +229,7 @@ async fn main() -> anyhow::Result<()> {
 
         tracing::info!(
             "listening for websockets at {}:{}",
-            SETTINGS.server.host, SETTINGS.server.websocket_port
+            SETTINGS.load().server.host, SETTINGS.load().server.websocket_port
         );
     }
 
@@ -239,7 +245,7 @@ async fn main() -> anyhow::Result<()> {
                 .get_connection_count()
                 .await
                 .expect("Failed to get connection count. Timeout");
-            if player_count >= SETTINGS.server.max_connections {
+            if player_count >= SETTINGS.load().server.max_connections {
                 tracing::warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
@@ -248,9 +254,9 @@ async fn main() -> anyhow::Result<()> {
             match server_world.get_ip_last_connect(&ip).await {
                 Ok(Some(last_connect)) => {
                     let time_since_last_connect = now - last_connect;
-                    if SETTINGS.server.ip_reconnect_limit != 0
+                    if SETTINGS.load().server.ip_reconnect_limit != 0
                         && time_since_last_connect.num_seconds()
-                            < SETTINGS.server.ip_reconnect_limit.into()
+                            < SETTINGS.load().server.ip_reconnect_limit.into()
                     {
                         tracing::warn!(
                             "{} has been disconnected because it reconnected too quickly",
@@ -272,8 +278,8 @@ async fn main() -> anyhow::Result<()> {
                 .get_ip_connection_count(&ip)
                 .await
                 .expect("Failed to get IP connection count. Timeout");
-            if SETTINGS.server.max_connections_per_ip != 0
-                && num_of_connections >= SETTINGS.server.max_connections_per_ip
+            if SETTINGS.load().server.max_connections_per_ip != 0
+                && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
             {
                 tracing::warn!(
                     "{} has been disconnected because there are already {} connections from {}",
@@ -312,7 +318,7 @@ async fn main() -> anyhow::Result<()> {
                     .get_connection_count()
                     .await
                     .expect("Failed to get connection count. Timeout"),
-                SETTINGS.server.max_connections
+                SETTINGS.load().server.max_connections
             );
         }
     });
@@ -337,7 +343,7 @@ async fn main() -> anyhow::Result<()> {
                     .get_connection_count()
                     .await
                     .expect("Failed to get connection count. Timeout");
-                if player_count >= SETTINGS.server.max_connections {
+                if player_count >= SETTINGS.load().server.max_connections {
                     tracing::warn!("{} has been disconnected because the server is full", addr);
                     continue;
                 }
@@ -346,9 +352,9 @@ async fn main() -> anyhow::Result<()> {
                 match websocket_world.get_ip_last_connect(&ip).await {
                     Ok(Some(last_connect)) => {
                         let time_since_last_connect = now - last_connect;
-                        if SETTINGS.server.ip_reconnect_limit != 0
+                        if SETTINGS.load().server.ip_reconnect_limit != 0
                             && time_since_last_connect.num_seconds()
-                                < SETTINGS.server.ip_reconnect_limit.into()
+                                < SETTINGS.load().server.ip_reconnect_limit.into()
                         {
                             tracing::warn!(
                                 "{} has been disconnected because it reconnected too quickly",
@@ -370,8 +376,8 @@ async fn main() -> anyhow::Result<()> {
                     .get_ip_connection_count(&ip)
                     .await
                     .expect("Failed to get IP connection count. Timeout");
-                if SETTINGS.server.max_connections_per_ip != 0
-                    && num_of_connections >= SETTINGS.server.max_connections_per_ip
+                if SETTINGS.load().server.max_connections_per_ip != 0
+                    && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
                 {
                     tracing::warn!(
                         "{} has been disconnected because there are already {} connections from {}",
@@ -410,7 +416,7 @@ async fn main() -> anyhow::Result<()> {
                         .get_connection_count()
                         .await
                         .expect("Failed to get connection count. Timeout"),
-                    SETTINGS.server.max_connections
+                    SETTINGS.load().server.max_connections
                 );
             }
         });

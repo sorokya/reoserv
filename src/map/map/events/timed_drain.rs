@@ -45,7 +45,7 @@ impl Map {
                 continue;
             }
 
-            let damage = (character.max_hp as f32 * SETTINGS.world.drain_hp_damage).floor() as i32;
+            let damage = (character.max_hp as f32 * SETTINGS.load().world.drain_hp_damage).floor() as i32;
             let damage = cmp::min(damage, character.hp - 1);
             let damage = cmp::max(damage, 0);
 
@@ -125,7 +125,7 @@ impl Map {
                 continue;
             }
 
-            let damage = (character.max_tp as f32 * SETTINGS.world.drain_tp_damage).floor() as i32;
+            let damage = (character.max_tp as f32 * SETTINGS.load().world.drain_tp_damage).floor() as i32;
             let damage = cmp::min(damage, character.tp - 1);
             let damage = cmp::max(damage, 0);
 

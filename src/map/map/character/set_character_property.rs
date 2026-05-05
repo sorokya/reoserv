@@ -21,7 +21,7 @@ impl Map {
             match property.as_str() {
                 "title" => {
                     let title_length = value.chars().count();
-                    if title_length > 0 && title_length <= SETTINGS.character.max_title_length {
+                    if title_length > 0 && title_length <= SETTINGS.load().character.max_title_length {
                         character.title = Some(value);
                     } else {
                         character.title = None;
@@ -72,7 +72,7 @@ impl Map {
                 }
                 "hairstyle" => {
                     if let Ok(hair_style) = value.parse::<i32>()
-                        && (0..=SETTINGS.character.max_hair_style).contains(&hair_style)
+                        && (0..=SETTINGS.load().character.max_hair_style).contains(&hair_style)
                         && character.hair_style != hair_style
                     {
                         character.hair_style = hair_style;
@@ -83,7 +83,7 @@ impl Map {
                 }
                 "haircolor" => {
                     if let Ok(hair_color) = value.parse::<i32>()
-                        && (0..=SETTINGS.character.max_hair_color).contains(&hair_color)
+                        && (0..=SETTINGS.load().character.max_hair_color).contains(&hair_color)
                         && character.hair_color != hair_color
                     {
                         character.hair_color = hair_color;
@@ -94,7 +94,7 @@ impl Map {
                 }
                 "skin" => {
                     if let Ok(skin) = value.parse::<i32>()
-                        && (0..=SETTINGS.character.max_skin).contains(&skin)
+                        && (0..=SETTINGS.load().character.max_skin).contains(&skin)
                         && character.skin != skin
                     {
                         character.skin = skin;

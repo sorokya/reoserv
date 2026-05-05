@@ -75,7 +75,7 @@ impl World {
                 .execute(&insert_params(
                     include_str!("../../../sql/create_board_post.sql"),
                     &[
-                        ("board_id", &SETTINGS.board.admin_board),
+                        ("board_id", &SETTINGS.load().board.admin_board),
                         ("character_id", &character_id),
                         (
                             "subject",

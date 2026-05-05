@@ -82,7 +82,7 @@ impl Player {
         let player_id = self.id;
         let db = self.db.clone();
 
-        self.guild_create_members = Vec::with_capacity(SETTINGS.guild.min_players);
+        self.guild_create_members = Vec::with_capacity(SETTINGS.load().guild.min_players);
 
         tokio::spawn(async move {
             let character = match map
@@ -124,7 +124,7 @@ impl Player {
             }
 
             if character.guild_tag.is_some()
-                || character.get_item_amount(1) < SETTINGS.guild.create_cost
+                || character.get_item_amount(1) < SETTINGS.load().guild.create_cost
             {
                 return;
             }
@@ -134,14 +134,14 @@ impl Player {
                 return;
             }
 
-            if SETTINGS.guild.min_players == 1 {
+            if SETTINGS.load().guild.min_players == 1 {
                 player.send_guild_reply(GuildReply::CreateAddConfirm);
             } else {
                 let player_count = map
                     .get_player_count(|c| c.guild_tag.is_none())
                     .await
                     .expect("Failed to get player count. Timeout");
-                if player_count < SETTINGS.guild.min_players {
+                if player_count < SETTINGS.load().guild.min_players {
                     player.send_guild_reply(GuildReply::NoCandidates);
                     return;
                 }
@@ -182,7 +182,7 @@ impl Player {
             }
         };
 
-        if self.guild_create_members.len() + 1 < SETTINGS.guild.min_players {
+        if self.guild_create_members.len() + 1 < SETTINGS.load().guild.min_players {
             return;
         }
 
@@ -229,7 +229,7 @@ impl Player {
             }
 
             if character.guild_tag.is_some()
-                || character.get_item_amount(1) < SETTINGS.guild.create_cost
+                || character.get_item_amount(1) < SETTINGS.load().guild.create_cost
             {
                 return;
             }
@@ -334,7 +334,7 @@ impl Player {
             };
 
             let guild_bank = get_guild_bank(&db, character.guild_tag.as_ref().unwrap()).await;
-            if guild_bank < SETTINGS.guild.recruit_cost {
+            if guild_bank < SETTINGS.load().guild.recruit_cost {
                 player.send(
                     PacketAction::Reply,
                     PacketFamily::Guild,
@@ -346,7 +346,7 @@ impl Player {
                 return;
             }
 
-            if let Err(e) = set_guild_bank(&db, tag, guild_bank - SETTINGS.guild.recruit_cost).await
+            if let Err(e) = set_guild_bank(&db, tag, guild_bank - SETTINGS.load().guild.recruit_cost).await
             {
                 tracing::error!("Error setting guild bank: {}", e);
                 return;
@@ -580,7 +580,7 @@ impl Player {
             return;
         }
 
-        if packet.gold_amount < SETTINGS.guild.min_deposit {
+        if packet.gold_amount < SETTINGS.load().guild.min_deposit {
             return;
         }
 
@@ -1425,15 +1425,15 @@ async fn create_guild(
             ("guild_id", &guild_id.to_string()),
             (
                 "leader_rank_name",
-                &SETTINGS.guild.default_leader_rank_name.clone(),
+                &SETTINGS.load().guild.default_leader_rank_name.clone(),
             ),
             (
                 "recruiter_rank_name",
-                &SETTINGS.guild.default_recruiter_rank_name.clone(),
+                &SETTINGS.load().guild.default_recruiter_rank_name.clone(),
             ),
             (
                 "new_member_rank_name",
-                &SETTINGS.guild.default_new_member_rank_name.clone(),
+                &SETTINGS.load().guild.default_new_member_rank_name.clone(),
             ),
         ],
     ))

@@ -27,10 +27,10 @@ impl Map {
         }
 
         let config = match self.file.timed_effect {
-            MapTimedEffect::Quake1 => &SETTINGS.map.quakes[0],
-            MapTimedEffect::Quake2 => &SETTINGS.map.quakes[1],
-            MapTimedEffect::Quake3 => &SETTINGS.map.quakes[2],
-            MapTimedEffect::Quake4 => &SETTINGS.map.quakes[3],
+            MapTimedEffect::Quake1 => &SETTINGS.load().map.quakes[0],
+            MapTimedEffect::Quake2 => &SETTINGS.load().map.quakes[1],
+            MapTimedEffect::Quake3 => &SETTINGS.load().map.quakes[2],
+            MapTimedEffect::Quake4 => &SETTINGS.load().map.quakes[3],
             _ => return,
         };
 

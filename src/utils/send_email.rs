@@ -5,14 +5,14 @@ use crate::SETTINGS;
 pub async fn send_email(to: &str, to_name: &str, subject: &str, body: &str) -> anyhow::Result<()> {
     let message = MessageBuilder::new()
         .from((
-            SETTINGS.smtp.from_name.to_owned(),
-            SETTINGS.smtp.from_address.to_owned(),
+            SETTINGS.load().smtp.from_name.to_owned(),
+            SETTINGS.load().smtp.from_address.to_owned(),
         ))
         .to((to_name, to))
         .subject(subject)
         .text_body(body);
 
-    let builder = match SmtpClientBuilder::new(SETTINGS.smtp.host.to_owned(), SETTINGS.smtp.port) {
+    let builder = match SmtpClientBuilder::new(SETTINGS.load().smtp.host.to_owned(), SETTINGS.load().smtp.port) {
         Ok(builder) => builder,
         Err(e) => {
             tracing::error!("Failed to get SmtpClientBuilder: {}", e);
@@ -23,8 +23,8 @@ pub async fn send_email(to: &str, to_name: &str, subject: &str, body: &str) -> a
     builder
         .implicit_tls(false)
         .credentials((
-            SETTINGS.smtp.username.to_owned(),
-            SETTINGS.smtp.password.to_owned(),
+            SETTINGS.load().smtp.username.to_owned(),
+            SETTINGS.load().smtp.password.to_owned(),
         ))
         .connect()
         .await?

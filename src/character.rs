@@ -320,8 +320,8 @@ impl Character {
         // http://archive.today/brypq
         while self.experience > EXP_TABLE[self.level as usize + 1] {
             self.level += 1;
-            self.stat_points += SETTINGS.world.stat_points_per_level;
-            self.skill_points += SETTINGS.world.skill_points_per_level;
+            self.stat_points += SETTINGS.load().world.stat_points_per_level;
+            self.skill_points += SETTINGS.load().world.skill_points_per_level;
             leveled_up = true;
         }
 

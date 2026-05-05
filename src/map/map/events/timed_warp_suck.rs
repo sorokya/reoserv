@@ -26,7 +26,7 @@ impl Map {
                     continue;
                 }
 
-                character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
+                character.warp_suck_ticks = SETTINGS.load().world.warp_suck_rate;
 
                 (character.coords, character.level, player)
             };

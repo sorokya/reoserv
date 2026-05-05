@@ -87,7 +87,7 @@ impl Player {
                 }
             };
 
-            if packet.title.chars().count() > SETTINGS.character.max_title_length {
+            if packet.title.chars().count() > SETTINGS.load().character.max_title_length {
                 return;
             }
 

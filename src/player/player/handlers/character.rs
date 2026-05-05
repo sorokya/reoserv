@@ -48,9 +48,9 @@ impl Player {
         }
 
         if create.hair_color < 0
-            || create.hair_color > SETTINGS.character.max_hair_color
+            || create.hair_color > SETTINGS.load().character.max_hair_color
             || create.hair_style < 0
-            || create.hair_style > SETTINGS.character.max_hair_style
+            || create.hair_style > SETTINGS.load().character.max_hair_style
         {
             return;
         }
@@ -258,7 +258,7 @@ impl Player {
             }
         };
 
-        if num_of_characters >= SETTINGS.account.max_characters {
+        if num_of_characters >= SETTINGS.load().account.max_characters {
             let _ = self
                 .bus
                 .send(

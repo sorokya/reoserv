@@ -12,7 +12,7 @@ impl Character {
                     inn.spawn_map
                 }
             }
-            None => SETTINGS.rescue.map,
+            None => SETTINGS.load().rescue.map,
         }
     }
 }

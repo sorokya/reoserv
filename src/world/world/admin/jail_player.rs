@@ -12,10 +12,10 @@ impl World {
         {
             player_online = true;
             player.request_warp(
-                SETTINGS.jail.map,
+                SETTINGS.load().jail.map,
                 Coords {
-                    x: SETTINGS.jail.x,
-                    y: SETTINGS.jail.y,
+                    x: SETTINGS.load().jail.x,
+                    y: SETTINGS.load().jail.y,
                 },
                 false,
                 Some(WarpEffect::Admin),
@@ -36,9 +36,9 @@ impl World {
                     .execute(&insert_params(
                         include_str!("../../../sql/offline_jail.sql"),
                         &[
-                            ("map", &SETTINGS.jail.map),
-                            ("x", &SETTINGS.jail.x),
-                            ("y", &SETTINGS.jail.y),
+                            ("map", &SETTINGS.load().jail.map),
+                            ("x", &SETTINGS.load().jail.x),
+                            ("y", &SETTINGS.load().jail.y),
                             ("name", &victim_name),
                         ],
                     ))

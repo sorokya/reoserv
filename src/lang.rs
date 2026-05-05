@@ -29,7 +29,7 @@ impl Lang {
         let s = Config::builder()
             .add_source(File::with_name(&format!(
                 "config/lang/{}.ron",
-                SETTINGS.server.lang
+                SETTINGS.load().server.lang
             )))
             .build()?;
 

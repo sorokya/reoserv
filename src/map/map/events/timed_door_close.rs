@@ -11,7 +11,7 @@ impl Map {
 
             door.open_ticks += 1;
 
-            if door.open_ticks >= SETTINGS.map.door_close_rate {
+            if door.open_ticks >= SETTINGS.load().map.door_close_rate {
                 door.open = false;
                 door.open_ticks = 0;
             }

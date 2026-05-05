@@ -21,8 +21,8 @@ impl Character {
                 }
             }
             None => Coords {
-                x: SETTINGS.rescue.x,
-                y: SETTINGS.rescue.y,
+                x: SETTINGS.load().rescue.x,
+                y: SETTINGS.load().rescue.y,
             },
         }
     }

@@ -11,7 +11,7 @@ impl World {
             None => return,
         };
 
-        if SETTINGS.auto_pickup.enabled {
+        if SETTINGS.load().auto_pickup.enabled {
             self.auto_pickup_ticks += 1;
         }
 
@@ -31,11 +31,11 @@ impl World {
         }
 
         for map in maps {
-            if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
+            if self.npc_act_ticks >= SETTINGS.load().npcs.act_rate {
                 map.act_npcs();
             }
 
-            if self.auto_pickup_ticks >= SETTINGS.auto_pickup.rate && SETTINGS.auto_pickup.enabled {
+            if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate && SETTINGS.load().auto_pickup.enabled {
                 map.timed_auto_pickup();
             }
 
@@ -46,7 +46,7 @@ impl World {
                 map.timed_wedding();
                 map.timed_evacuate();
                 map.timed_arena();
-                if SETTINGS.jukebox.track_timer > 0 {
+                if SETTINGS.load().jukebox.track_timer > 0 {
                     map.jukebox_timer();
                 }
                 map.timed_drop_protection();
@@ -55,27 +55,27 @@ impl World {
                 map.timed_usage();
             }
 
-            if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {
+            if self.item_spawn_ticks >= SETTINGS.load().world.chest_spawn_rate {
                 map.spawn_items();
             }
 
-            if self.player_recover_ticks >= SETTINGS.world.recover_rate {
+            if self.player_recover_ticks >= SETTINGS.load().world.recover_rate {
                 map.recover_players();
             }
 
-            if self.npc_recover_ticks >= SETTINGS.world.npc_recover_rate {
+            if self.npc_recover_ticks >= SETTINGS.load().world.npc_recover_rate {
                 map.recover_npcs();
             }
 
-            if self.quake_ticks >= SETTINGS.world.quake_rate {
+            if self.quake_ticks >= SETTINGS.load().world.quake_rate {
                 map.timed_quake();
             }
 
-            if self.spike_ticks >= SETTINGS.world.spike_rate {
+            if self.spike_ticks >= SETTINGS.load().world.spike_rate {
                 map.timed_spikes();
             }
 
-            if self.drain_ticks >= SETTINGS.world.drain_rate {
+            if self.drain_ticks >= SETTINGS.load().world.drain_rate {
                 map.timed_drain();
             }
         }
@@ -84,35 +84,35 @@ impl World {
             self.second_ticks = 0;
         }
 
-        if self.auto_pickup_ticks >= SETTINGS.auto_pickup.rate && SETTINGS.auto_pickup.enabled {
+        if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate && SETTINGS.load().auto_pickup.enabled {
             self.auto_pickup_ticks = 0;
         }
 
-        if self.npc_act_ticks >= SETTINGS.npcs.act_rate {
+        if self.npc_act_ticks >= SETTINGS.load().npcs.act_rate {
             self.npc_act_ticks = 0;
         }
 
-        if self.item_spawn_ticks >= SETTINGS.world.chest_spawn_rate {
+        if self.item_spawn_ticks >= SETTINGS.load().world.chest_spawn_rate {
             self.item_spawn_ticks = 0;
         }
 
-        if self.player_recover_ticks >= SETTINGS.world.recover_rate {
+        if self.player_recover_ticks >= SETTINGS.load().world.recover_rate {
             self.player_recover_ticks = 0;
         }
 
-        if self.npc_recover_ticks >= SETTINGS.world.npc_recover_rate {
+        if self.npc_recover_ticks >= SETTINGS.load().world.npc_recover_rate {
             self.npc_recover_ticks = 0;
         }
 
-        if self.quake_ticks >= SETTINGS.world.quake_rate {
+        if self.quake_ticks >= SETTINGS.load().world.quake_rate {
             self.quake_ticks = 0;
         }
 
-        if self.spike_ticks >= SETTINGS.world.spike_rate {
+        if self.spike_ticks >= SETTINGS.load().world.spike_rate {
             self.spike_ticks = 0;
         }
 
-        if self.drain_ticks >= SETTINGS.world.drain_rate {
+        if self.drain_ticks >= SETTINGS.load().world.drain_rate {
             self.drain_ticks = 0;
         }
     }

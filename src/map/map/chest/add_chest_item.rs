@@ -71,13 +71,13 @@ impl Map {
 
         let mut chest_full = false;
         if let Some(existing_item) = chest.items.iter_mut().find(|i| i.item_id == item.id) {
-            if existing_item.amount + amount > SETTINGS.limits.max_chest {
+            if existing_item.amount + amount > SETTINGS.load().limits.max_chest {
                 chest_full = true;
             } else {
                 character.remove_item(item.id, amount);
                 existing_item.amount += amount;
             }
-        } else if chest_slots.len() + user_items < SETTINGS.chest.slots as usize {
+        } else if chest_slots.len() + user_items < SETTINGS.load().chest.slots as usize {
             let slot = chest
                 .spawns
                 .iter()

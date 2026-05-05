@@ -31,7 +31,7 @@ impl Map {
         };
 
         let distance = get_distance(&item_coords, &character.coords);
-        if distance > SETTINGS.world.drop_distance {
+        if distance > SETTINGS.load().world.drop_distance {
             return;
         }
 

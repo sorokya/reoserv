@@ -93,7 +93,7 @@ impl Map {
                                     link_id: match action.args[1] {
                                         Arg::Int(link_id) => link_id,
                                         _ => {
-                                            error!("Invalid argument for AddNpcText");
+                                            tracing::error!("Invalid argument for AddNpcText");
                                             return None;
                                         }
                                     },
@@ -103,7 +103,7 @@ impl Map {
                         line: match &action.args[if action.name == "AddNpcText" { 1 } else { 2 }] {
                             Arg::Str(line) => line.to_owned(),
                             _ => {
-                                error!("Could not find NPC dialog line");
+                                tracing::error!("Could not find NPC dialog line");
                                 return None;
                             }
                         },
@@ -175,7 +175,7 @@ impl Map {
                     Some(match &action.args[1] {
                         Arg::Str(message) => message.to_owned(),
                         _ => {
-                            error!("Invalid argument for AddNpcChat");
+                            tracing::error!("Invalid argument for AddNpcChat");
                             return None;
                         }
                     })

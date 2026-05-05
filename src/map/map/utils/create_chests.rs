@@ -30,7 +30,7 @@ pub fn create_chests(map_id: i32, file: &Emf) -> Vec<Chest> {
             }
 
             if item.chest_slot + 1 > SETTINGS.chest.slots {
-                warn!(
+                tracing::warn!(
                     "Chest at map {} ({:?}) has too many slots",
                     map_id, item.coords
                 );

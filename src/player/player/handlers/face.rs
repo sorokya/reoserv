@@ -11,7 +11,7 @@ impl Player {
             let packet = match FacePlayerClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,
                 Err(e) => {
-                    error!("Error deserializing FacePlayerClientPacket {}", e);
+                    tracing::error!("Error deserializing FacePlayerClientPacket {}", e);
                     return;
                 }
             };
@@ -27,7 +27,7 @@ impl Player {
 
         match action {
             PacketAction::Player => self.face_player(reader),
-            _ => error!("Unhandled packet Face_{:?}", action),
+            _ => tracing::error!("Unhandled packet Face_{:?}", action),
         }
     }
 }

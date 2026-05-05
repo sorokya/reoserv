@@ -54,7 +54,7 @@ impl Map {
                 match get_board_post_counts(&db, board_id, character_id).await {
                     Ok((recent_posts, total_posts)) => (recent_posts, total_posts),
                     Err(e) => {
-                        error!("Failed to get board post counts: {}", e);
+                        tracing::error!("Failed to get board post counts: {}", e);
                         return;
                     }
                 };
@@ -62,7 +62,7 @@ impl Map {
             let map = match player.get_map().await {
                 Ok(map) => map,
                 Err(e) => {
-                    error!("Failed to get map: {}", e);
+                    tracing::error!("Failed to get map: {}", e);
                     return;
                 }
             };
@@ -74,7 +74,7 @@ impl Map {
             }
 
             if let Err(e) = insert_post(&db, board_id, character_id, subject, body).await {
-                error!("Failed to insert post: {}", e);
+                tracing::error!("Failed to insert post: {}", e);
             }
 
             map.open_board(player_id, board_id);

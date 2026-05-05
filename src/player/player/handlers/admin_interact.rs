@@ -18,7 +18,7 @@ impl Player {
         let report = match AdminInteractReportClientPacket::deserialize(&reader) {
             Ok(report) => report,
             Err(e) => {
-                error!("Error deserializing AdminInteractReportClientPacket {}", e);
+                tracing::error!("Error deserializing AdminInteractReportClientPacket {}", e);
                 return;
             }
         };
@@ -35,7 +35,7 @@ impl Player {
         let tell = match AdminInteractTellClientPacket::deserialize(&reader) {
             Ok(tell) => tell,
             Err(e) => {
-                error!("Error deserializing AdminInteractTellClientPacket {}", e);
+                tracing::error!("Error deserializing AdminInteractTellClientPacket {}", e);
                 return;
             }
         };
@@ -56,7 +56,7 @@ impl Player {
         let take = match AdminInteractTakeClientPacket::deserialize(&reader) {
             Ok(take) => take,
             Err(e) => {
-                error!("Error deserializing AdminInteractTakeClientPacket: {}", e);
+                tracing::error!("Error deserializing AdminInteractTakeClientPacket: {}", e);
                 return;
             }
         };
@@ -208,7 +208,7 @@ impl Player {
             PacketAction::Report => self.admin_interact_report(reader),
             PacketAction::Tell => self.admin_interact_tell(reader),
             PacketAction::Take => self.admin_interact_take(reader),
-            _ => error!("Unhandled packet AdminInteract_{:?}", action),
+            _ => tracing::error!("Unhandled packet AdminInteract_{:?}", action),
         }
     }
 }

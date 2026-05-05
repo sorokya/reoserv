@@ -5,8 +5,6 @@
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[macro_use]
-extern crate log;
-#[macro_use]
 extern crate serde_derive;
 
 use std::{collections::HashMap, time::Duration};
@@ -51,6 +49,7 @@ mod world;
 
 use tokio::{net::TcpListener, signal, time};
 use tokio_tungstenite::accept_async;
+use tracing_subscriber::{EnvFilter, fmt::time::ChronoLocal};
 use world::WorldHandle;
 
 use crate::{
@@ -101,7 +100,12 @@ async fn main() -> anyhow::Result<()> {
             std::env::set_var("RUST_LOG", "info");
         }
     }
-    pretty_env_logger::init();
+
+    tracing_subscriber::fmt()
+        .with_timer(ChronoLocal::new(String::from("%Y-%m-%d %I:%M:%S%.3f %p")))
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
+
     println!(
         "__________
 \\______   \\ ____  ____  ______ ______________  __
@@ -142,20 +146,20 @@ async fn main() -> anyhow::Result<()> {
         )
         .await?
     {
-        info!("Accounts: {}", row.get_int(0).unwrap_or(0));
-        info!(
+        tracing::info!("Accounts: {}", row.get_int(0).unwrap_or(0));
+        tracing::info!(
             "Characters: {} (Admins: {})",
             row.get_int(1).unwrap_or(0),
             row.get_int(2).unwrap_or(0)
         );
-        info!("Guilds: {}", row.get_int(3).unwrap_or(0));
+        tracing::info!("Guilds: {}", row.get_int(3).unwrap_or(0));
     }
 
-    info!("Classes: {}", CLASS_DB.classes.len());
-    info!("Items: {}", ITEM_DB.items.len());
-    info!("NPCs: {}", NPC_DB.npcs.len());
-    info!("Skills: {}", SPELL_DB.skills.len());
-    info!("Quests: {}", QUEST_DB.len());
+    tracing::info!("Classes: {}", CLASS_DB.classes.len());
+    tracing::info!("Items: {}", ITEM_DB.items.len());
+    tracing::info!("NPCs: {}", NPC_DB.npcs.len());
+    tracing::info!("Skills: {}", SPELL_DB.skills.len());
+    tracing::info!("Quests: {}", QUEST_DB.len());
 
     let world = WorldHandle::new(db.clone());
     {
@@ -201,7 +205,7 @@ async fn main() -> anyhow::Result<()> {
         TcpListener::bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))
             .await
             .unwrap();
-    info!(
+    tracing::info!(
         "listening at {}:{}",
         SETTINGS.server.host, SETTINGS.server.port
     );
@@ -217,7 +221,7 @@ async fn main() -> anyhow::Result<()> {
             .unwrap(),
         );
 
-        info!(
+        tracing::info!(
             "listening for websockets at {}:{}",
             SETTINGS.server.host, SETTINGS.server.websocket_port
         );
@@ -236,7 +240,7 @@ async fn main() -> anyhow::Result<()> {
                 .await
                 .expect("Failed to get connection count. Timeout");
             if player_count >= SETTINGS.server.max_connections {
-                warn!("{} has been disconnected because the server is full", addr);
+                tracing::warn!("{} has been disconnected because the server is full", addr);
                 continue;
             }
 
@@ -248,7 +252,7 @@ async fn main() -> anyhow::Result<()> {
                         && time_since_last_connect.num_seconds()
                             < SETTINGS.server.ip_reconnect_limit.into()
                     {
-                        warn!(
+                        tracing::warn!(
                             "{} has been disconnected because it reconnected too quickly",
                             addr
                         );
@@ -259,7 +263,7 @@ async fn main() -> anyhow::Result<()> {
                     // First connection from this IP, allow it
                 }
                 Err(e) => {
-                    warn!("Failed to check last connect time for {}: {}", ip, e);
+                    tracing::warn!("Failed to check last connect time for {}: {}", ip, e);
                     // Continue anyway - we have other rate limiting checks
                 }
             }
@@ -271,7 +275,7 @@ async fn main() -> anyhow::Result<()> {
             if SETTINGS.server.max_connections_per_ip != 0
                 && num_of_connections >= SETTINGS.server.max_connections_per_ip
             {
-                warn!(
+                tracing::warn!(
                     "{} has been disconnected because there are already {} connections from {}",
                     addr, num_of_connections, ip
                 );
@@ -301,7 +305,7 @@ async fn main() -> anyhow::Result<()> {
                 .await
                 .expect("Failed to add player. Timeout");
 
-            info!(
+            tracing::info!(
                 "connection accepted ({}) {}/{}",
                 addr,
                 server_world
@@ -321,7 +325,7 @@ async fn main() -> anyhow::Result<()> {
                 let websocket = match accept_async(socket).await {
                     Ok(ws) => ws,
                     Err(e) => {
-                        error!("Failed to accept websocket: {}", e);
+                        tracing::error!("Failed to accept websocket: {}", e);
                         continue;
                     }
                 };
@@ -334,7 +338,7 @@ async fn main() -> anyhow::Result<()> {
                     .await
                     .expect("Failed to get connection count. Timeout");
                 if player_count >= SETTINGS.server.max_connections {
-                    warn!("{} has been disconnected because the server is full", addr);
+                    tracing::warn!("{} has been disconnected because the server is full", addr);
                     continue;
                 }
 
@@ -346,7 +350,7 @@ async fn main() -> anyhow::Result<()> {
                             && time_since_last_connect.num_seconds()
                                 < SETTINGS.server.ip_reconnect_limit.into()
                         {
-                            warn!(
+                            tracing::warn!(
                                 "{} has been disconnected because it reconnected too quickly",
                                 addr
                             );
@@ -357,7 +361,7 @@ async fn main() -> anyhow::Result<()> {
                         // First connection from this IP, allow it
                     }
                     Err(e) => {
-                        warn!("Failed to check last connect time for {}: {}", ip, e);
+                        tracing::warn!("Failed to check last connect time for {}: {}", ip, e);
                         // Continue anyway - we have other rate limiting checks
                     }
                 }
@@ -369,7 +373,7 @@ async fn main() -> anyhow::Result<()> {
                 if SETTINGS.server.max_connections_per_ip != 0
                     && num_of_connections >= SETTINGS.server.max_connections_per_ip
                 {
-                    warn!(
+                    tracing::warn!(
                         "{} has been disconnected because there are already {} connections from {}",
                         addr, num_of_connections, ip
                     );
@@ -399,7 +403,7 @@ async fn main() -> anyhow::Result<()> {
                     .await
                     .expect("Failed to add player. Timeout");
 
-                info!(
+                tracing::info!(
                     "websocket connection accepted ({}) {}/{}",
                     addr,
                     websocket_world
@@ -414,14 +418,14 @@ async fn main() -> anyhow::Result<()> {
 
     tokio::select! {
         ctrl_c = signal::ctrl_c() => if let Err(err) = ctrl_c {
-            error!("Unable to listen for shutdown signal: {}", err);
+            tracing::error!("Unable to listen for shutdown signal: {}", err);
         },
         close = close() => if let Err(err) = close {
-            error!("Unable to listen for shutdown signal: {}", err);
+            tracing::error!("Unable to listen for shutdown signal: {}", err);
         }
     }
 
-    info!("Shutting down server...");
+    tracing::info!("Shutting down server...");
     world.shutdown().await.expect("Failed to shutdown. Timeout");
 
     Ok(())

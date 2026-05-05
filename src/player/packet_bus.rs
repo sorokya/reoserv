@@ -71,7 +71,7 @@ impl PacketBus {
         let length_bytes = match encode_number(packet_size as i32) {
             Ok(bytes) => bytes,
             Err(e) => {
-                error!("Packet send aborted! Error encoding packet size: {}", e);
+                tracing::error!("Packet send aborted! Error encoding packet size: {}", e);
                 return Ok(());
             }
         };
@@ -82,7 +82,7 @@ impl PacketBus {
         buf.put_u8(u8::from(family));
         buf.put(data);
 
-        trace!("Send: {:?}", &buf[..]);
+        tracing::trace!("Send: {:?}", &buf[..]);
 
         let mut data_buf = buf.split_off(2);
         if self.server_enryption_multiple != 0 {

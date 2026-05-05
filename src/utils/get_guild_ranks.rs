@@ -13,7 +13,7 @@ pub async fn get_guild_ranks(db: &DbHandle, tag: &str) -> Vec<String> {
     {
         Ok(ranks) => ranks,
         Err(e) => {
-            error!("Error getting guild ranks: {}", e);
+            tracing::error!("Error getting guild ranks: {}", e);
             vec!["".to_owned(); 9]
         }
     }

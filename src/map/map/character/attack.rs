@@ -55,7 +55,7 @@ impl Map {
             Ok(Some(party)) => party.members,
             Ok(None) => Vec::new(),
             Err(e) => {
-                error!("Failed to get player party: {}", e);
+                tracing::error!("Failed to get player party: {}", e);
                 Vec::new()
             }
         };

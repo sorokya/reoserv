@@ -27,9 +27,7 @@ config = { version = "0.15", features = ["toml", "ron"] }
 crc = "3.4"
 chrono = "0.4"
 lazy_static = "1.5"
-log = "0.4"
 num-traits = "0.2"
-pretty_env_logger = "0.5"
 futures = "0.3"
 tokio = { version = "1", features = ["full", "tracing"] }
 reqwest = "0.13"
@@ -51,6 +49,8 @@ tokio-tungstenite = "0.29"
 hex = "0.4"
 rusqlite = { version = "0.39", features = ["bundled"] }
 regex = "1.12.3"
+tracing = "0.1"
+tracing-subscriber = {version = "0.3", features = ["env-filter", "chrono", "fmt"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

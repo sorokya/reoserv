@@ -20,7 +20,7 @@ impl Player {
             let add = match PaperdollAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing PaperdollAddClientPacket {}", e);
+                    tracing::error!("Error deserializing PaperdollAddClientPacket {}", e);
                     return;
                 }
             };
@@ -38,7 +38,7 @@ impl Player {
             let remove = match PaperdollRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,
                 Err(e) => {
-                    error!("Error deserializing PaperdollRemoveClientPacket {}", e);
+                    tracing::error!("Error deserializing PaperdollRemoveClientPacket {}", e);
                     return;
                 }
             };
@@ -52,7 +52,7 @@ impl Player {
             let request = match PaperdollRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing PaperdollRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing PaperdollRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -66,7 +66,7 @@ impl Player {
             PacketAction::Add => self.paperdoll_add(reader),
             PacketAction::Remove => self.paperdoll_remove(reader),
             PacketAction::Request => self.paperdoll_request(reader),
-            _ => error!("Unhandled packet Paperdoll_{:?}", action),
+            _ => tracing::error!("Unhandled packet Paperdoll_{:?}", action),
         }
     }
 }

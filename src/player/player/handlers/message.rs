@@ -17,7 +17,7 @@ impl Player {
     pub async fn handle_message(&mut self, action: PacketAction) {
         match action {
             PacketAction::Ping => self.message_ping().await,
-            _ => error!("Unhandled packet Message_{:?}", action),
+            _ => tracing::error!("Unhandled packet Message_{:?}", action),
         }
     }
 }

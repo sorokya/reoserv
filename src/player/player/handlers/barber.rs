@@ -16,7 +16,7 @@ impl Player {
             let open = match BarberOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing BarberOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing BarberOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -30,7 +30,7 @@ impl Player {
             let buy = match BarberBuyClientPacket::deserialize(&reader) {
                 Ok(buy) => buy,
                 Err(e) => {
-                    error!("Error deserializing BarberBuyClientPacket {}", e);
+                    tracing::error!("Error deserializing BarberBuyClientPacket {}", e);
                     return;
                 }
             };
@@ -62,7 +62,7 @@ impl Player {
         match action {
             PacketAction::Open => self.barber_open(reader),
             PacketAction::Buy => self.barber_buy(reader),
-            _ => error!("Unhandled packet Barber_{:?}", action),
+            _ => tracing::error!("Unhandled packet Barber_{:?}", action),
         }
     }
 }

@@ -63,7 +63,7 @@ impl Map {
             match self.items.iter_mut().find(|i| i.index == item_index) {
                 Some(item) => item.amount -= amount_picked_up,
                 None => {
-                    error!("Failed to get item {}", item_index);
+                    tracing::error!("Failed to get item {}", item_index);
                     return;
                 }
             }

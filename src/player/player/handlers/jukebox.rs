@@ -24,7 +24,7 @@ impl Player {
             let msg = match JukeboxMsgClientPacket::deserialize(&reader) {
                 Ok(msg) => msg,
                 Err(e) => {
-                    error!("Error deserializing JukeboxMsgClientPacket {}", e);
+                    tracing::error!("Error deserializing JukeboxMsgClientPacket {}", e);
                     return;
                 }
             };
@@ -38,7 +38,7 @@ impl Player {
             let r#use = match JukeboxUseClientPacket::deserialize(&reader) {
                 Ok(r#use) => r#use,
                 Err(e) => {
-                    error!("Error deserializing JukeboxUseClientPacket {}", e);
+                    tracing::error!("Error deserializing JukeboxUseClientPacket {}", e);
                     return;
                 }
             };
@@ -52,7 +52,7 @@ impl Player {
             PacketAction::Open => self.jukebox_open(),
             PacketAction::Msg => self.jukebox_msg(reader),
             PacketAction::Use => self.jukebox_use(reader),
-            _ => error!("Unhandled packet Jukebox_{:?}", action),
+            _ => tracing::error!("Unhandled packet Jukebox_{:?}", action),
         }
     }
 }

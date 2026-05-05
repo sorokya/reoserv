@@ -16,7 +16,7 @@ impl Player {
             let reply = match CaptchaReplyClientPacket::deserialize(&reader) {
                 Ok(reply) => reply,
                 Err(e) => {
-                    error!("Failed to deserialize CaptchaReplyClientPacket: {}", e);
+                    tracing::error!("Failed to deserialize CaptchaReplyClientPacket: {}", e);
                     return;
                 }
             };
@@ -49,7 +49,7 @@ impl Player {
 
     async fn captcha_request(&mut self, reader: EoReader) {
         if let Err(e) = CaptchaRequestClientPacket::deserialize(&reader) {
-            error!("Failed to deserialize CaptchaRequestClientPacket: {}", e);
+            tracing::error!("Failed to deserialize CaptchaRequestClientPacket: {}", e);
             return;
         }
 
@@ -68,7 +68,7 @@ impl Player {
         match action {
             PacketAction::Reply => self.captcha_reply(reader).await,
             PacketAction::Request => self.captcha_request(reader).await,
-            _ => error!("Unhandled packet Captcha_{:?}", action),
+            _ => tracing::error!("Unhandled packet Captcha_{:?}", action),
         }
     }
 }

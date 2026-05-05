@@ -42,7 +42,7 @@ impl Player {
             let open = match GuildOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing GuildOpenClientPacket: {}", e);
+                    tracing::error!("Error deserializing GuildOpenClientPacket: {}", e);
                     return;
                 }
             };
@@ -55,7 +55,7 @@ impl Player {
         let request = match GuildRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing GuildRequestClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildRequestClientPacket: {}", e);
                 return;
             }
         };
@@ -164,7 +164,7 @@ impl Player {
             let accept = match GuildAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing GuildAcceptClientPacket: {}", e);
+                    tracing::error!("Error deserializing GuildAcceptClientPacket: {}", e);
                     return;
                 }
             };
@@ -177,7 +177,7 @@ impl Player {
         let create = match GuildCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Error deserializing GuildCreateClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildCreateClientPacket: {}", e);
                 return;
             }
         };
@@ -244,7 +244,7 @@ impl Player {
             if let Err(e) =
                 create_guild(&db, &guild_tag, &create.guild_name, &create.description).await
             {
-                error!("Error creating guild: {}", e);
+                tracing::error!("Error creating guild: {}", e);
                 return;
             }
 
@@ -261,7 +261,7 @@ impl Player {
         let packet = match GuildPlayerClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildPlayerClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildPlayerClientPacket: {}", e);
                 return;
             }
         };
@@ -284,7 +284,7 @@ impl Player {
         let packet = match GuildUseClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildUseClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildUseClientPacket: {}", e);
                 return;
             }
         };
@@ -348,7 +348,7 @@ impl Player {
 
             if let Err(e) = set_guild_bank(&db, tag, guild_bank - SETTINGS.guild.recruit_cost).await
             {
-                error!("Error setting guild bank: {}", e);
+                tracing::error!("Error setting guild bank: {}", e);
                 return;
             }
 
@@ -376,7 +376,7 @@ impl Player {
         let packet = match GuildKickClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildKickClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildKickClientPacket: {}", e);
                 return;
             }
         };
@@ -432,7 +432,7 @@ impl Player {
                     let member_map = match world.get_map(member.map_id).await {
                         Ok(map) => map,
                         Err(_) => {
-                            error!("Error getting map {}", member.map_id);
+                            tracing::error!("Error getting map {}", member.map_id);
                             return;
                         }
                     };
@@ -456,7 +456,7 @@ impl Player {
         let packet = match GuildTakeClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildTakeClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildTakeClientPacket: {}", e);
                 return;
             }
         };
@@ -571,7 +571,7 @@ impl Player {
         let packet = match GuildBuyClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildBuyClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildBuyClientPacket: {}", e);
                 return;
             }
         };
@@ -612,7 +612,7 @@ impl Player {
         let packet = match GuildAgreeClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildAgreeClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildAgreeClientPacket: {}", e);
                 return;
             }
         };
@@ -716,7 +716,7 @@ impl Player {
         let packet = match GuildRankClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildRankClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildRankClientPacket: {}", e);
                 return;
             }
         };
@@ -830,7 +830,7 @@ impl Player {
             let map = match world.get_map(target_character.map_id).await {
                 Ok(map) => map,
                 Err(e) => {
-                    error!("Error getting map: {}", e);
+                    tracing::error!("Error getting map: {}", e);
                     return;
                 }
             };
@@ -845,7 +845,7 @@ impl Player {
         let report = match GuildReportClientPacket::deserialize(&reader) {
             Ok(report) => report,
             Err(e) => {
-                error!("Error deserializing GuildReportClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildReportClientPacket: {}", e);
                 return;
             }
         };
@@ -911,7 +911,7 @@ impl Player {
                     return;
                 }
                 Err(e) => {
-                    error!("Error getting guild details: {}", e);
+                    tracing::error!("Error getting guild details: {}", e);
                     return;
                 }
             };
@@ -931,7 +931,7 @@ impl Player {
             ).await {
                 Ok(staff) => staff,
                 Err(e) => {
-                    error!("Error getting guild staff: {}", e);
+                    tracing::error!("Error getting guild staff: {}", e);
                     return;
                 }
             };
@@ -975,7 +975,7 @@ impl Player {
         let tell = match GuildTellClientPacket::deserialize(&reader) {
             Ok(tell) => tell,
             Err(e) => {
-                error!("Error deserializing GuildTellClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildTellClientPacket: {}", e);
                 return;
             }
         };
@@ -1050,7 +1050,7 @@ impl Player {
             {
                 Ok(members) => members,
                 Err(e) => {
-                    error!("Error getting guild memberlist: {}", e);
+                    tracing::error!("Error getting guild memberlist: {}", e);
                     return;
                 }
             };
@@ -1072,7 +1072,7 @@ impl Player {
         let remove = match GuildRemoveClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildRemoveClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildRemoveClientPacket: {}", e);
                 return;
             }
         };
@@ -1125,7 +1125,7 @@ impl Player {
                 {
                     Ok(count) => count.unwrap_or(1),
                     Err(e) => {
-                        error!("Error getting leader count: {}", e);
+                        tracing::error!("Error getting leader count: {}", e);
                         return;
                     }
                 };
@@ -1163,7 +1163,7 @@ impl Player {
         let junk = match GuildJunkClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
-                error!("Error deserializing GuildJunkClientPacket: {}", e);
+                tracing::error!("Error deserializing GuildJunkClientPacket: {}", e);
                 return;
             }
         };
@@ -1250,7 +1250,7 @@ impl Player {
             PacketAction::Tell => self.guild_tell(reader),
             PacketAction::Remove => self.guild_remove(reader),
             PacketAction::Junk => self.guild_junk(reader),
-            _ => error!("Unhandled packet Guild_{:?}", action),
+            _ => tracing::error!("Unhandled packet Guild_{:?}", action),
         }
     }
 }
@@ -1279,7 +1279,7 @@ async fn update_guild_description(
             player.send_guild_reply(GuildReply::Updated);
         }
         Err(e) => {
-            error!("Error updating guild description: {}", e);
+            tracing::error!("Error updating guild description: {}", e);
         }
     };
 }
@@ -1307,7 +1307,7 @@ async fn update_guild_ranks(player: &PlayerHandle, tag: &str, ranks: [String; 9]
             ))
             .await
         {
-            error!("Error updating guild rank: {}", e);
+            tracing::error!("Error updating guild rank: {}", e);
             return;
         }
     }
@@ -1325,7 +1325,7 @@ async fn get_guild_description(db: &DbHandle, tag: &str) -> String {
     {
         Ok(description) => description,
         Err(e) => {
-            error!("Error getting guild description: {}", e);
+            tracing::error!("Error getting guild description: {}", e);
             None
         }
     };
@@ -1352,7 +1352,7 @@ async fn get_guild_bank(db: &DbHandle, tag: &str) -> i32 {
     {
         Ok(Some(amount)) => amount,
         Err(e) => {
-            error!("Error getting guild bank: {}", e);
+            tracing::error!("Error getting guild bank: {}", e);
             0
         }
         _ => 0,
@@ -1377,7 +1377,7 @@ async fn get_guild_name(db: &DbHandle, tag: &str) -> Option<String> {
     {
         Ok(Some(name)) => Some(name),
         Err(e) => {
-            error!("Error getting guild name: {}", e);
+            tracing::error!("Error getting guild name: {}", e);
             None
         }
         _ => None,
@@ -1394,7 +1394,7 @@ async fn get_new_member_guild_rank(db: &DbHandle, tag: &str) -> Option<String> {
     {
         Ok(Some(rank)) => Some(rank),
         Err(e) => {
-            error!("Error getting guild rank: {}", e);
+            tracing::error!("Error getting guild rank: {}", e);
             None
         }
         _ => None,

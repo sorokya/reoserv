@@ -22,7 +22,7 @@ impl Player {
         let accept = match WarpAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Error deserializing WarpAcceptClientPacket {}", e);
+                tracing::error!("Error deserializing WarpAcceptClientPacket {}", e);
                 return;
             }
         };
@@ -40,7 +40,7 @@ impl Player {
         };
 
         if actual_session_id != accept.session_id {
-            error!(
+            tracing::error!(
                 "Warp error: {}",
                 WrongSessionIdError::new(actual_session_id, accept.session_id,)
             );
@@ -71,7 +71,7 @@ impl Player {
         let mut character = match &self.character {
             Some(character) => character.to_owned(),
             None => {
-                error!("Warp error: expected character to be Some!");
+                tracing::error!("Warp error: expected character to be Some!");
                 return;
             }
         };
@@ -86,7 +86,7 @@ impl Player {
             let current_map = match self.map.as_ref() {
                 Some(current_map) => current_map,
                 None => {
-                    error!("Warp error: expected map to be Some!");
+                    tracing::error!("Warp error: expected map to be Some!");
                     return;
                 }
             };
@@ -137,7 +137,7 @@ impl Player {
             let map = match self.world.get_map(SETTINGS.rescue.map).await {
                 Ok(map) => map,
                 Err(err) => {
-                    error!("Rescue map not found! {}", err);
+                    tracing::error!("Rescue map not found! {}", err);
                     return;
                 }
             };
@@ -174,7 +174,7 @@ impl Player {
         let take = match WarpTakeClientPacket::deserialize(&reader) {
             Ok(take) => take,
             Err(e) => {
-                error!("Error deserializing WarpTakeClientPacket {}", e);
+                tracing::error!("Error deserializing WarpTakeClientPacket {}", e);
                 return;
             }
         };
@@ -187,7 +187,7 @@ impl Player {
         match action {
             PacketAction::Accept => self.warp_accept(reader).await,
             PacketAction::Take => self.warp_take(reader).await,
-            _ => error!("Unhandled packet Warp_{:?}", action),
+            _ => tracing::error!("Unhandled packet Warp_{:?}", action),
         }
     }
 }

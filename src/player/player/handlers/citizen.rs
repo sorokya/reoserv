@@ -19,7 +19,7 @@ impl Player {
             let open = match CitizenOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing CitizenOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing CitizenOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -33,7 +33,7 @@ impl Player {
             let reply = match CitizenReplyClientPacket::deserialize(&reader) {
                 Ok(reply) => reply,
                 Err(e) => {
-                    error!("Error deserializing CitizenReplyClientPacket {}", e);
+                    tracing::error!("Error deserializing CitizenReplyClientPacket {}", e);
                     return;
                 }
             };
@@ -72,7 +72,7 @@ impl Player {
             let request = match CitizenRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing CitizenRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing CitizenRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -100,7 +100,7 @@ impl Player {
             let accept = match CitizenAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing CitizenAcceptClientPacket {}", e);
+                    tracing::error!("Error deserializing CitizenAcceptClientPacket {}", e);
                     return;
                 }
             };
@@ -140,7 +140,7 @@ impl Player {
             PacketAction::Remove => self.citizen_remove(),
             PacketAction::Request => self.citizen_request(reader),
             PacketAction::Accept => self.citizen_accept(reader),
-            _ => error!("Unhandled packet Citizen_{:?}", action),
+            _ => tracing::error!("Unhandled packet Citizen_{:?}", action),
         }
     }
 }

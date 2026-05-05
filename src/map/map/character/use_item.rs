@@ -293,7 +293,7 @@ impl Map {
                     let mut writer = EoWriter::new();
 
                     if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize AvatarAgreeServerPacket: {}", e);
+                        tracing::error!("Failed to serialize AvatarAgreeServerPacket: {}", e);
                         return;
                     }
 
@@ -313,7 +313,7 @@ impl Map {
                     let mut writer = EoWriter::new();
 
                     if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize AvatarRemoveServerPacket: {}", e);
+                        tracing::error!("Failed to serialize AvatarRemoveServerPacket: {}", e);
                         return;
                     }
 
@@ -330,7 +330,7 @@ impl Map {
                     let mut writer = EoWriter::new();
 
                     if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize PlayersAgreeServerPacket: {}", e);
+                        tracing::error!("Failed to serialize PlayersAgreeServerPacket: {}", e);
                         return;
                     }
 
@@ -392,7 +392,7 @@ impl Map {
             let mut writer = EoWriter::new();
 
             if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize ItemReplyServerPacket: {}", e);
+                tracing::error!("Failed to serialize ItemReplyServerPacket: {}", e);
                 return;
             }
 

@@ -22,7 +22,7 @@ impl Map {
         let item_index = match self.add_item(item_id, amount, coords, 0, 0) {
             Ok(index) => index,
             Err(e) => {
-                error!("Failed to add item to map: {}", e);
+                tracing::error!("Failed to add item to map: {}", e);
                 return;
             }
         };

@@ -96,7 +96,7 @@ impl Character {
         } {
             Ok(context) => context,
             Err(e) => {
-                error!("Failed to generate formula context: {}", e);
+                tracing::error!("Failed to generate formula context: {}", e);
                 return;
             }
         };
@@ -104,7 +104,7 @@ impl Character {
         self.max_hp += match eval_float_with_context(&FORMULAS.hp, &context) {
             Ok(max_hp) => cmp::min(max_hp.floor() as i32, 64000),
             Err(e) => {
-                error!("Failed to calculate max_hp: {}", e);
+                tracing::error!("Failed to calculate max_hp: {}", e);
                 10
             }
         };
@@ -112,7 +112,7 @@ impl Character {
         self.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
             Ok(max_tp) => cmp::min(max_tp.floor() as i32, 64000),
             Err(e) => {
-                error!("Failed to calculate max_tp: {}", e);
+                tracing::error!("Failed to calculate max_tp: {}", e);
                 10
             }
         };
@@ -120,7 +120,7 @@ impl Character {
         self.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
             Ok(max_sp) => cmp::min(max_sp.floor() as i32, 64000),
             Err(e) => {
-                error!("Failed to calculate max_sp: {}", e);
+                tracing::error!("Failed to calculate max_sp: {}", e);
                 20
             }
         };
@@ -128,7 +128,7 @@ impl Character {
         self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
             Ok(max_weight) => cmp::min(max_weight.floor() as i32, 250),
             Err(e) => {
-                error!("Failed to calculate max_weight: {}", e);
+                tracing::error!("Failed to calculate max_weight: {}", e);
                 70
             }
         };
@@ -137,7 +137,7 @@ impl Character {
         let damage = match eval_float_with_context(&class_formulas.damage, &context) {
             Ok(damage) => damage.floor() as i32,
             Err(e) => {
-                error!("Failed to calculate damage: {}", e);
+                tracing::error!("Failed to calculate damage: {}", e);
                 1
             }
         };
@@ -148,7 +148,7 @@ impl Character {
         self.accuracy += match eval_float_with_context(&class_formulas.accuracy, &context) {
             Ok(accuracy) => accuracy.floor() as i32,
             Err(e) => {
-                error!("Failed to calculate accuracy: {}", e);
+                tracing::error!("Failed to calculate accuracy: {}", e);
                 0
             }
         };
@@ -156,7 +156,7 @@ impl Character {
         self.armor += match eval_float_with_context(&class_formulas.defense, &context) {
             Ok(armor) => armor.floor() as i32,
             Err(e) => {
-                error!("Failed to calculate armor: {}", e);
+                tracing::error!("Failed to calculate armor: {}", e);
                 0
             }
         };
@@ -164,7 +164,7 @@ impl Character {
         self.evasion += match eval_float_with_context(&class_formulas.evade, &context) {
             Ok(evasion) => evasion.floor() as i32,
             Err(e) => {
-                error!("Failed to calculate evasion: {}", e);
+                tracing::error!("Failed to calculate evasion: {}", e);
                 0
             }
         };

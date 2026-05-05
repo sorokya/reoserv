@@ -16,7 +16,7 @@ impl Player {
             let request = match PartyRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing PartyRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing PartyRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -37,7 +37,7 @@ impl Player {
         let accept = match PartyAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Error deserializing PartyAcceptClientPacket {}", e);
+                tracing::error!("Error deserializing PartyAcceptClientPacket {}", e);
                 return;
             }
         };
@@ -50,7 +50,7 @@ impl Player {
         let remove = match PartyRemoveClientPacket::deserialize(&reader) {
             Ok(remove) => remove,
             Err(e) => {
-                error!("Error deserializing PartyRemoveClientPacket {}", e);
+                tracing::error!("Error deserializing PartyRemoveClientPacket {}", e);
                 return;
             }
         };
@@ -68,7 +68,7 @@ impl Player {
             PacketAction::Accept => self.party_accept(reader),
             PacketAction::Remove => self.party_remove(reader),
             PacketAction::Take => self.party_take(),
-            _ => error!("Unhandled packet Party_{:?}", action),
+            _ => tracing::error!("Unhandled packet Party_{:?}", action),
         }
     }
 }

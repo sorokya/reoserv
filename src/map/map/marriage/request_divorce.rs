@@ -122,7 +122,7 @@ impl Map {
                 ))
                 .await
             {
-                error!("Failed to divorce character: {}", e);
+                tracing::error!("Failed to divorce character: {}", e);
             }
         });
     }

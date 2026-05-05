@@ -18,7 +18,7 @@ impl Player {
             let add = match StatSkillAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing StatSkillAddClientPacket {}", e);
+                    tracing::error!("Error deserializing StatSkillAddClientPacket {}", e);
                     return;
                 }
             };
@@ -40,7 +40,7 @@ impl Player {
             let junk = match StatSkillJunkClientPacket::deserialize(&reader) {
                 Ok(junk) => junk,
                 Err(e) => {
-                    error!("Error deserializing StatSkillJunkClientPacket {}", e);
+                    tracing::error!("Error deserializing StatSkillJunkClientPacket {}", e);
                     return;
                 }
             };
@@ -70,7 +70,7 @@ impl Player {
             let open = match StatSkillOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing StatSkillOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing StatSkillOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -84,7 +84,7 @@ impl Player {
             let remove = match StatSkillRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,
                 Err(e) => {
-                    error!("Error deserializing StatSkillRemoveClientPacket {}", e);
+                    tracing::error!("Error deserializing StatSkillRemoveClientPacket {}", e);
                     return;
                 }
             };
@@ -112,7 +112,7 @@ impl Player {
             let take = match StatSkillTakeClientPacket::deserialize(&reader) {
                 Ok(take) => take,
                 Err(e) => {
-                    error!("Error deserializing StatSkillTakeClientPacket {}", e);
+                    tracing::error!("Error deserializing StatSkillTakeClientPacket {}", e);
                     return;
                 }
             };
@@ -147,7 +147,7 @@ impl Player {
             PacketAction::Open => self.stat_skill_open(reader),
             PacketAction::Remove => self.stat_skill_remove(reader),
             PacketAction::Take => self.stat_skill_take(reader),
-            _ => error!("Unhandled packet StatSkill_{:?}", action),
+            _ => tracing::error!("Unhandled packet StatSkill_{:?}", action),
         }
     }
 }

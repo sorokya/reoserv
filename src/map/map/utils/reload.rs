@@ -67,7 +67,7 @@ impl Map {
         let file = *file;
 
         if let Err(e) = file.serialize(&mut writer) {
-            error!("Failed to serialize Emf: {}", e);
+            tracing::error!("Failed to serialize Emf: {}", e);
             return;
         }
 
@@ -85,7 +85,7 @@ impl Map {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize InitInitServerPacket: {}", e);
+            tracing::error!("Failed to serialize InitInitServerPacket: {}", e);
             return;
         }
 

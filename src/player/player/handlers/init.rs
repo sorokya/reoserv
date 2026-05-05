@@ -181,7 +181,7 @@ impl Player {
     pub async fn handle_init(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Init => self.init_request(reader).await,
-            _ => error!("Unhandled packet Init_{:?}", action),
+            _ => tracing::error!("Unhandled packet Init_{:?}", action),
         }
     }
 }

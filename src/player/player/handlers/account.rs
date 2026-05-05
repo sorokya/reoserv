@@ -269,8 +269,8 @@ impl Player {
                     PacketAction::Unrecognized(ACTION_CONFIG),
                     PacketFamily::Account,
                     AccountConfigServerPacket {
-                        delay_time: SETTINGS.account.delay_time,
-                        email_validation: SETTINGS.account.email_validation,
+                        delay_time: SETTINGS.load().account.delay_time,
+                        email_validation: SETTINGS.load().account.email_validation,
                     },
                 )
                 .await;
@@ -325,7 +325,7 @@ impl Player {
         self.login_attempts += 1;
 
         if !exists {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many password change attempts".to_string())
                     .await;
                 return;
@@ -385,7 +385,7 @@ impl Player {
         let username: String = row.get_string(1).unwrap();
         let password_hash: String = row.get_string(2).unwrap();
         if !validate_password(&username, &agree.old_password, &password_hash) {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many password change attempts".to_string())
                     .await;
                 return;

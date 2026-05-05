@@ -61,7 +61,7 @@ impl Map {
             return;
         }
 
-        if character.level < SETTINGS.marriage.min_level {
+        if character.level < SETTINGS.load().marriage.min_level {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Priest,

@@ -16,7 +16,7 @@ use super::save_pub_file;
 pub const CRC32: Crc<u32> = Crc::<u32>::new(&CRC_32_CKSUM);
 
 pub fn load_npc_file() -> Result<Enf, Box<dyn std::error::Error>> {
-    if SETTINGS.server.generate_pub {
+    if SETTINGS.load().server.generate_pub {
         load_json()
     } else {
         load_pub()

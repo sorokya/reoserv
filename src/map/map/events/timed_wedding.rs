@@ -29,7 +29,7 @@ impl Map {
         let wait_for = match state {
             WeddingState::Accepted | WeddingState::PlayerAgrees | WeddingState::PartnerAgrees => 0,
             WeddingState::PriestDialog5AndConfetti => 2,
-            WeddingState::PriestDialog1 => SETTINGS.marriage.ceremony_start_delay_seconds,
+            WeddingState::PriestDialog1 => SETTINGS.load().marriage.ceremony_start_delay_seconds,
             WeddingState::AskPlayer | WeddingState::AskPartner | WeddingState::PriestDialog3 => 3,
             WeddingState::WaitingForPlayer | WeddingState::WaitingForPartner => 20,
             _ => 9,
@@ -64,12 +64,12 @@ impl Map {
                         npc_index,
                         &get_lang_string!(
                             &LANG.wedding_start,
-                            delay = SETTINGS.marriage.ceremony_start_delay_seconds
+                            delay = SETTINGS.load().marriage.ceremony_start_delay_seconds
                         ),
                     );
 
                     let packet = JukeboxPlayerServerPacket {
-                        mfx_id: SETTINGS.marriage.mfx_id,
+                        mfx_id: SETTINGS.load().marriage.mfx_id,
                     };
 
                     let mut writer = EoWriter::new();
@@ -185,8 +185,8 @@ impl Map {
                     let partner_name = partner.name.to_owned();
                     let character_name = character.name.to_owned();
 
-                    self.give_item(player_id, SETTINGS.marriage.ring_item_id, 1);
-                    self.give_item(partner_id, SETTINGS.marriage.ring_item_id, 1);
+                    self.give_item(player_id, SETTINGS.load().marriage.ring_item_id, 1);
+                    self.give_item(partner_id, SETTINGS.load().marriage.ring_item_id, 1);
                     self.set_partner(player_id, partner_name);
                     self.set_partner(partner_id, character_name);
                     WeddingState::PriestDialog4
@@ -198,7 +198,7 @@ impl Map {
                 WeddingState::Hearts => {
                     self.effect_on_players(
                         &[player_id, partner_id],
-                        SETTINGS.marriage.celebration_effect_id,
+                        SETTINGS.load().marriage.celebration_effect_id,
                     );
                     WeddingState::PriestDialog5AndConfetti
                 }

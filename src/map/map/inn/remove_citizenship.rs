@@ -49,12 +49,12 @@ impl Map {
             PacketAction::Remove,
             PacketFamily::Citizen,
             &CitizenRemoveServerPacket {
-                reply_code: if character.home == SETTINGS.new_character.home
+                reply_code: if character.home == SETTINGS.load().new_character.home
                     || character.home != inn_data.name
                 {
                     InnUnsubscribeReply::NotCitizen
                 } else {
-                    character.home = SETTINGS.new_character.home.to_owned();
+                    character.home = SETTINGS.load().new_character.home.to_owned();
                     InnUnsubscribeReply::Unsubscribed
                 },
             },

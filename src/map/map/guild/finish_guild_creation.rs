@@ -23,10 +23,10 @@ impl Map {
             None => return,
         };
 
-        character.remove_item(1, SETTINGS.guild.create_cost);
+        character.remove_item(1, SETTINGS.load().guild.create_cost);
         character.guild_tag = Some(guild_tag.clone());
         character.guild_name = Some(guild_name.clone());
-        character.guild_rank_string = Some(SETTINGS.guild.default_leader_rank_name.clone());
+        character.guild_rank_string = Some(SETTINGS.load().guild.default_leader_rank_name.clone());
         character.guild_rank = Some(1);
         if let Some(player) = character.player.as_ref() {
             player.update_guild_tag(&character.guild_tag);
@@ -42,7 +42,7 @@ impl Map {
                     leader_player_id: player_id,
                     guild_tag: guild_tag.clone(),
                     guild_name: guild_name.clone(),
-                    rank_name: SETTINGS.guild.default_leader_rank_name.clone(),
+                    rank_name: SETTINGS.load().guild.default_leader_rank_name.clone(),
                     gold_amount: character.get_item_amount(1),
                 },
             );
@@ -52,7 +52,7 @@ impl Map {
             recruiter_id: player_id,
             guild_tag: guild_tag.clone(),
             guild_name: guild_name.clone(),
-            rank_name: SETTINGS.guild.default_new_member_rank_name.clone(),
+            rank_name: SETTINGS.load().guild.default_new_member_rank_name.clone(),
         };
 
         let mut writer = EoWriter::new();
@@ -76,7 +76,7 @@ impl Map {
 
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
-            character.guild_rank_string = Some(SETTINGS.guild.default_new_member_rank_name.clone());
+            character.guild_rank_string = Some(SETTINGS.load().guild.default_new_member_rank_name.clone());
             character.guild_rank = Some(9);
             if let Some(player) = character.player.as_ref() {
                 player.update_guild_tag(&character.guild_tag);

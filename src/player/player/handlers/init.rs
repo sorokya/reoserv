@@ -71,9 +71,10 @@ impl Player {
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),
-            &SETTINGS.server.max_version,
+            &SETTINGS.load().server.max_version,
         ) {
             let versions = SETTINGS
+                .load()
                 .server
                 .max_version
                 .split('.')
@@ -110,9 +111,10 @@ impl Player {
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),
-            &SETTINGS.server.min_version,
+            &SETTINGS.load().server.min_version,
         ) {
             let versions = SETTINGS
+                .load()
                 .server
                 .min_version
                 .split('.')

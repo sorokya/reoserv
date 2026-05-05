@@ -128,13 +128,13 @@ impl Player {
                 nearby: nearby_info,
             }
         } else {
-            character.map_id = SETTINGS.rescue.map;
+            character.map_id = SETTINGS.load().rescue.map;
             character.coords = Coords {
-                x: SETTINGS.rescue.x,
-                y: SETTINGS.rescue.y,
+                x: SETTINGS.load().rescue.x,
+                y: SETTINGS.load().rescue.y,
             };
 
-            let map = match self.world.get_map(SETTINGS.rescue.map).await {
+            let map = match self.world.get_map(SETTINGS.load().rescue.map).await {
                 Ok(map) => map,
                 Err(err) => {
                     tracing::error!("Rescue map not found! {}", err);
@@ -156,7 +156,7 @@ impl Player {
                 warp_type: WarpType::MapSwitch,
                 warp_type_data: Some(WarpAgreeServerPacketWarpTypeData::MapSwitch(
                     WarpAgreeServerPacketWarpTypeDataMapSwitch {
-                        map_id: SETTINGS.rescue.map,
+                        map_id: SETTINGS.load().rescue.map,
                         warp_effect: warp_session.animation.unwrap_or(WarpEffect::None),
                     },
                 )),

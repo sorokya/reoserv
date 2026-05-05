@@ -15,7 +15,7 @@ pub enum PlayerCommandResult {
 }
 
 async fn autopickup(player_id: i32, args: &[String], player: &PlayerHandle, map: &MapHandle) {
-    if !SETTINGS.auto_pickup.enabled {
+    if !SETTINGS.load().auto_pickup.enabled {
         return;
     }
 

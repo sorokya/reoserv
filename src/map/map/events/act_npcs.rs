@@ -30,7 +30,7 @@ impl Map {
 
         let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
 
-        if !npc.alive || npc.talk_ticks < SETTINGS.npcs.talk_rate {
+        if !npc.alive || npc.talk_ticks < SETTINGS.load().npcs.talk_rate {
             return None;
         }
 
@@ -171,7 +171,7 @@ impl Map {
                 let distance = get_distance(&npc.coords, &character.coords);
                 !character.hidden
                     && !character.captcha_open
-                    && distance <= SETTINGS.npcs.chase_distance
+                    && distance <= SETTINGS.load().npcs.chase_distance
             });
 
             // get opponent with max damage dealt
@@ -186,7 +186,7 @@ impl Map {
                     let distance = get_distance(&npc.coords, &character.coords);
                     !character.hidden
                         && !character.captcha_open
-                        && distance <= SETTINGS.npcs.chase_distance
+                        && distance <= SETTINGS.load().npcs.chase_distance
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&npc.coords, &a.coords);
@@ -254,7 +254,7 @@ impl Map {
             self.npcs
                 .iter_mut()
                 .find(|npc| npc.index == index)?
-                .walk_idle_for = Some(rng.random_range(1..=4) * 1000 / SETTINGS.world.tick_rate);
+                .walk_idle_for = Some(rng.random_range(1..=4) * 1000 / SETTINGS.load().world.tick_rate);
             return None;
         }
 
@@ -398,11 +398,11 @@ impl Map {
                         return (None, None, None);
                     } else {
                         for opponent in npc.opponents.iter_mut() {
-                            opponent.bored_ticks += SETTINGS.npcs.act_rate;
+                            opponent.bored_ticks += SETTINGS.load().npcs.act_rate;
                         }
 
-                        npc.act_ticks += SETTINGS.npcs.act_rate;
-                        npc.talk_ticks += SETTINGS.npcs.act_rate;
+                        npc.act_ticks += SETTINGS.load().npcs.act_rate;
+                        npc.talk_ticks += SETTINGS.load().npcs.act_rate;
                         (npc.id, npc.spawn_type, npc.act_ticks)
                     }
                 }
@@ -410,13 +410,13 @@ impl Map {
             };
 
         let act_rate = match spawn_type {
-            0 => SETTINGS.npcs.speed_0,
-            1 => SETTINGS.npcs.speed_1,
-            2 => SETTINGS.npcs.speed_2,
-            3 => SETTINGS.npcs.speed_3,
-            4 => SETTINGS.npcs.speed_4,
-            5 => SETTINGS.npcs.speed_5,
-            6 => SETTINGS.npcs.speed_6,
+            0 => SETTINGS.load().npcs.speed_0,
+            1 => SETTINGS.load().npcs.speed_1,
+            2 => SETTINGS.load().npcs.speed_2,
+            3 => SETTINGS.load().npcs.speed_3,
+            4 => SETTINGS.load().npcs.speed_4,
+            5 => SETTINGS.load().npcs.speed_5,
+            6 => SETTINGS.load().npcs.speed_6,
             7 => 0,
             _ => unreachable!("Invalid act rate {} for NPC {}", spawn_type, npc_id),
         };
@@ -444,11 +444,11 @@ impl Map {
         };
 
         npc.opponents
-            .retain(|o| o.bored_ticks < SETTINGS.npcs.bored_timer);
+            .retain(|o| o.bored_ticks < SETTINGS.load().npcs.bored_timer);
     }
 
     pub fn act_npcs(&mut self) {
-        if self.npcs.is_empty() || SETTINGS.npcs.freeze_on_empty_map && self.characters.is_empty() {
+        if self.npcs.is_empty() || SETTINGS.load().npcs.freeze_on_empty_map && self.characters.is_empty() {
             return;
         }
 

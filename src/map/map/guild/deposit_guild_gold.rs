@@ -65,11 +65,11 @@ impl Map {
                 }
             };
 
-            if current_bank_amount >= SETTINGS.guild.bank_max_gold {
+            if current_bank_amount >= SETTINGS.load().guild.bank_max_gold {
                 return;
             }
 
-            let amount = cmp::min(SETTINGS.guild.bank_max_gold - current_bank_amount, amount);
+            let amount = cmp::min(SETTINGS.load().guild.bank_max_gold - current_bank_amount, amount);
 
             if let Err(e) = db
                 .execute(&insert_params(

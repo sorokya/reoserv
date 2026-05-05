@@ -60,7 +60,7 @@ impl Map {
             return;
         }
 
-        if character.get_item_amount(1) < SETTINGS.marriage.divorce_cost {
+        if character.get_item_amount(1) < SETTINGS.load().marriage.divorce_cost {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Marriage,
@@ -72,7 +72,7 @@ impl Map {
             return;
         }
 
-        character.remove_item(1, SETTINGS.marriage.divorce_cost);
+        character.remove_item(1, SETTINGS.load().marriage.divorce_cost);
         character.partner = None;
 
         player.send(

@@ -49,7 +49,7 @@ impl Player {
     }
 
     fn admin_interact_take(&mut self, reader: EoReader) {
-        if !SETTINGS.world.info_reveals_drops {
+        if !SETTINGS.load().world.info_reveals_drops {
             return;
         }
 

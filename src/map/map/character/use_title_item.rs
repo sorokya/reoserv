@@ -33,7 +33,7 @@ impl Map {
 
         character.title = Some(title);
 
-        if !SETTINGS.items.infinite_use_items.contains(&item_id) {
+        if !SETTINGS.load().items.infinite_use_items.contains(&item_id) {
             character.remove_item(item_id, 1);
         }
 

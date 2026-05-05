@@ -108,10 +108,10 @@ impl Map {
                                 },
                             ),
                             None => (
-                                SETTINGS.rescue.map,
+                                SETTINGS.load().rescue.map,
                                 Coords {
-                                    x: SETTINGS.rescue.x,
-                                    y: SETTINGS.rescue.y,
+                                    x: SETTINGS.load().rescue.x,
+                                    y: SETTINGS.load().rescue.y,
                                 },
                             ),
                         },
@@ -374,7 +374,7 @@ impl Map {
             None => return,
         };
 
-        if !SETTINGS.items.infinite_use_items.contains(&item_id) {
+        if !SETTINGS.load().items.infinite_use_items.contains(&item_id) {
             character.remove_item(item_id, 1);
         }
 

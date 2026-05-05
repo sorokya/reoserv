@@ -52,9 +52,9 @@ impl Map {
         }
 
         if character.is_deep {
-            writer.add_short(SETTINGS.character.max_hair_style).unwrap();
-            writer.add_short(SETTINGS.barber.base_cost).unwrap();
-            writer.add_short(SETTINGS.barber.cost_per_level).unwrap();
+            writer.add_short(SETTINGS.load().character.max_hair_style).unwrap();
+            writer.add_short(SETTINGS.load().barber.base_cost).unwrap();
+            writer.add_short(SETTINGS.load().barber.cost_per_level).unwrap();
         }
 
         player.send_buf(

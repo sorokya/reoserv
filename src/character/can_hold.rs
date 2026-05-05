@@ -25,14 +25,14 @@ impl Character {
         let current_amount = self.get_item_amount(item_id);
 
         let amount = cmp::min(max_items, max_amount);
-        cmp::min(SETTINGS.limits.max_item - current_amount, amount)
+        cmp::min(SETTINGS.load().limits.max_item - current_amount, amount)
     }
 
     pub fn can_bank_hold(&self, item_id: i32, amount: i32) -> i32 {
         if let Some(item) = self.bank.iter().find(|item| item.id == item_id) {
-            return cmp::min(SETTINGS.bank.max_item_amount - item.amount, amount);
+            return cmp::min(SETTINGS.load().bank.max_item_amount - item.amount, amount);
         }
 
-        cmp::min(SETTINGS.bank.max_item_amount, amount)
+        cmp::min(SETTINGS.load().bank.max_item_amount, amount)
     }
 }

@@ -108,7 +108,7 @@ impl Map {
                     _ => return,
                 })
                 .await
-                && party.members.len() as i32 >= SETTINGS.limits.max_party_size
+                && party.members.len() as i32 >= SETTINGS.load().limits.max_party_size
             {
                 let packet = PartyReplyServerPacket {
                     reply_code: PartyReplyCode::PartyIsFull,

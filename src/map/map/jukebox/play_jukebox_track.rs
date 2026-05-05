@@ -22,9 +22,9 @@ impl Map {
         }
 
         if self.jukebox_ticks > 0
-            || character.get_item_amount(1) < SETTINGS.jukebox.cost
+            || character.get_item_amount(1) < SETTINGS.load().jukebox.cost
             || track_id < 1
-            || track_id > SETTINGS.jukebox.max_track_id
+            || track_id > SETTINGS.load().jukebox.max_track_id
         {
             if let Some(player) = character.player.as_ref() {
                 player.send(
@@ -42,9 +42,9 @@ impl Map {
             None => return,
         };
 
-        character.remove_item(1, SETTINGS.jukebox.cost);
+        character.remove_item(1, SETTINGS.load().jukebox.cost);
         self.jukebox_player = Some(character.name.clone());
-        self.jukebox_ticks = SETTINGS.jukebox.track_timer;
+        self.jukebox_ticks = SETTINGS.load().jukebox.track_timer;
 
         if let Some(player) = character.player.as_ref() {
             player.send(

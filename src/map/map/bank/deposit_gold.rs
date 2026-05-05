@@ -21,7 +21,7 @@ impl Map {
             return;
         }
 
-        let amount = cmp::min(SETTINGS.limits.max_bank_gold - character.gold_bank, amount);
+        let amount = cmp::min(SETTINGS.load().limits.max_bank_gold - character.gold_bank, amount);
         if amount <= 0 {
             return;
         }

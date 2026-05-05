@@ -32,7 +32,7 @@ impl Player {
             .get_player_count()
             .await
             .expect("Failed to get player count. Timeout");
-        if player_count >= SETTINGS.server.max_players {
+        if player_count >= SETTINGS.load().server.max_players {
             let _ = self
                 .bus
                 .send(
@@ -71,7 +71,7 @@ impl Player {
         self.guild_tag = character.guild_tag.clone();
         character.player_id = Some(self.id);
         character.player = Some(player);
-        character.usage_ticks = SETTINGS.world.usage_rate;
+        character.usage_ticks = SETTINGS.load().world.usage_rate;
 
         character.calculate_stats();
 
@@ -81,16 +81,16 @@ impl Player {
         }
 
         if self.world.get_map(character.map_id).await.is_err() {
-            if self.world.get_map(SETTINGS.rescue.map).await.is_ok() {
-                character.map_id = SETTINGS.rescue.map;
+            if self.world.get_map(SETTINGS.load().rescue.map).await.is_ok() {
+                character.map_id = SETTINGS.load().rescue.map;
                 character.coords = Coords {
-                    x: SETTINGS.rescue.x,
-                    y: SETTINGS.rescue.y,
+                    x: SETTINGS.load().rescue.x,
+                    y: SETTINGS.load().rescue.y,
                 };
             } else {
                 self.close(format!(
                     "Rescue map not found! {}",
-                    DataNotFoundError::new("map".to_string(), SETTINGS.rescue.map,)
+                    DataNotFoundError::new("map".to_string(), SETTINGS.load().rescue.map,)
                 ))
                 .await;
                 return false;

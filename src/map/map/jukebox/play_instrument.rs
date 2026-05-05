@@ -9,7 +9,7 @@ use super::super::Map;
 
 impl Map {
     pub fn play_instrument(&mut self, player_id: i32, instrument_id: i32, note_id: i32) {
-        if instrument_id <= 0 || note_id <= 0 || note_id > SETTINGS.bard.max_note_id {
+        if instrument_id <= 0 || note_id <= 0 || note_id > SETTINGS.load().bard.max_note_id {
             return;
         }
 
@@ -22,7 +22,7 @@ impl Map {
             return;
         }
 
-        if !SETTINGS.bard.instrument_items.contains(&instrument_id) {
+        if !SETTINGS.load().bard.instrument_items.contains(&instrument_id) {
             return;
         }
 

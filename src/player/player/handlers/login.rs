@@ -63,7 +63,7 @@ impl Player {
             .get_player_count()
             .await
             .expect("Failed to get player count. Timeout");
-        if player_count >= SETTINGS.server.max_players {
+        if player_count >= SETTINGS.load().server.max_players {
             let _ = self
                 .bus
                 .send(
@@ -95,7 +95,7 @@ impl Player {
         self.login_attempts += 1;
 
         if !exists {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -173,7 +173,7 @@ impl Player {
 
         if !validate_password(&username, &request.password, &password_hash) {
             self.world.remove_pending_login(account_id);
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -198,7 +198,7 @@ impl Player {
 
         if logged_in {
             self.world.remove_pending_login(account_id);
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -257,9 +257,9 @@ impl Player {
                     PacketAction::Unrecognized(ACTION_CONFIG),
                     PacketFamily::Login,
                     LoginConfigServerPacket {
-                        max_skins: SETTINGS.character.max_skin + 1,
-                        max_hair_modals: SETTINGS.character.max_hair_style,
-                        max_character_name: SETTINGS.character.max_name_length as i32,
+                        max_skins: SETTINGS.load().character.max_skin + 1,
+                        max_hair_modals: SETTINGS.load().character.max_hair_style,
+                        max_character_name: SETTINGS.load().character.max_name_length as i32,
                     },
                 )
                 .await;
@@ -306,7 +306,7 @@ impl Player {
                 PacketAction::Take,
                 PacketFamily::Login,
                 LoginTakeServerPacket {
-                    reply_code: if SETTINGS.account.recovery {
+                    reply_code: if SETTINGS.load().account.recovery {
                         AccountRecoverReply::RequestAccepted
                     } else {
                         AccountRecoverReply::RecoveryDisabled
@@ -389,13 +389,13 @@ impl Player {
                 PacketAction::Create,
                 PacketFamily::Login,
                 LoginCreateServerPacket {
-                    reply_code: if SETTINGS.account.recovery_show_email {
+                    reply_code: if SETTINGS.load().account.recovery_show_email {
                         AccountRecoverReply::RequestAcceptedShowEmail
                     } else {
                         AccountRecoverReply::RequestAccepted
                     },
-                    email_address: if SETTINGS.account.recovery_show_email {
-                        Some(if SETTINGS.account.recovery_mask_email {
+                    email_address: if SETTINGS.load().account.recovery_show_email {
+                        Some(if SETTINGS.load().account.recovery_mask_email {
                             mask_email(&email)
                         } else {
                             email

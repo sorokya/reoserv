@@ -41,7 +41,7 @@ impl Map {
                             .spawn_type(spawn.spawn_type)
                             .spawn_time(spawn.spawn_time)
                             .alive(false)
-                            .spawn_ticks(if SETTINGS.npcs.instant_spawn {
+                            .spawn_ticks(if SETTINGS.load().npcs.instant_spawn {
                                 0
                             } else {
                                 spawn.spawn_time

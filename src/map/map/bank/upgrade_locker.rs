@@ -14,12 +14,12 @@ impl Map {
             None => return,
         };
 
-        if character.bank_level >= SETTINGS.bank.max_upgrades {
+        if character.bank_level >= SETTINGS.load().bank.max_upgrades {
             return;
         }
 
-        let cost = SETTINGS.bank.upgrade_base_cost
-            + SETTINGS.bank.upgrade_cost_step * character.bank_level;
+        let cost = SETTINGS.load().bank.upgrade_base_cost
+            + SETTINGS.load().bank.upgrade_cost_step * character.bank_level;
 
         if character.get_item_amount(1) < cost {
             return;

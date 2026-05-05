@@ -18,7 +18,7 @@ impl Map {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
-                error!("Failed to get character");
+                tracing::error!("Failed to get character");
                 return;
             }
         };

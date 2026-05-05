@@ -44,7 +44,7 @@ impl World {
                     ))
                     .await
                 {
-                    error!("Failed to jail player: {}", e);
+                    tracing::error!("Failed to jail player: {}", e);
                 }
             });
         }

@@ -23,7 +23,7 @@ impl World {
                 let map = match player.get_map().await {
                     Ok(map) => map,
                     Err(e) => {
-                        error!("Error getting map: {}", e);
+                        tracing::error!("Error getting map: {}", e);
                         continue;
                     }
                 };
@@ -38,14 +38,14 @@ impl World {
                 ))
                 .await
             {
-                error!("Error deleting guild: {}", e);
+                tracing::error!("Error deleting guild: {}", e);
             }
 
             if let Err(e) = db
                 .execute(include_str!("../../sql/cleanup_guildless_characters.sql"))
                 .await
             {
-                error!("Error cleaning up guildless characters: {}", e);
+                tracing::error!("Error cleaning up guildless characters: {}", e);
             }
         });
     }

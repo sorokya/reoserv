@@ -35,7 +35,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TalkMsgServerPacket: {}", e);
+            tracing::error!("Failed to serialize TalkMsgServerPacket: {}", e);
             return;
         }
 
@@ -44,7 +44,7 @@ impl World {
             let state = match player.get_state().await {
                 Ok(state) => state,
                 Err(e) => {
-                    error!("Failed to get state: {}", e);
+                    tracing::error!("Failed to get state: {}", e);
                     continue;
                 }
             };
@@ -52,7 +52,7 @@ impl World {
             let other_player_id = match player.get_player_id().await {
                 Ok(id) => id,
                 Err(e) => {
-                    error!("Failed to get player_id: {}", e);
+                    tracing::error!("Failed to get player_id: {}", e);
                     continue;
                 }
             };

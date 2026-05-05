@@ -76,7 +76,7 @@ async fn evacuate(character: &Character, world: &WorldHandle) {
     let map = match world.get_map(character.map_id).await {
         Ok(map) => map,
         Err(e) => {
-            error!("Failed to get map: {}", e);
+            tracing::error!("Failed to get map: {}", e);
             return;
         }
     };
@@ -160,7 +160,7 @@ async fn spawn_item(args: &[String], character: &Character) {
         let player_id = match player.get_player_id().await {
             Ok(player_id) => player_id,
             Err(e) => {
-                error!("Failed to get player id: {}", e);
+                tracing::error!("Failed to get player id: {}", e);
                 return;
             }
         };
@@ -184,7 +184,7 @@ async fn drop_item(args: &[String], character: &Character) {
         let player_id = match player.get_player_id().await {
             Ok(player_id) => player_id,
             Err(e) => {
-                error!("Failed to get player id: {}", e);
+                tracing::error!("Failed to get player id: {}", e);
                 return;
             }
         };
@@ -235,7 +235,7 @@ async fn spawn_npc(args: &[String], character: &Character) {
         let player_id = match player.get_player_id().await {
             Ok(player_id) => player_id,
             Err(e) => {
-                error!("Failed to get player id: {}", e);
+                tracing::error!("Failed to get player id: {}", e);
                 return;
             }
         };
@@ -255,7 +255,7 @@ async fn hide(character: &Character) {
     let player_id = match player.get_player_id().await {
         Ok(player_id) => player_id,
         Err(e) => {
-            error!("Failed to get player id: {}", e);
+            tracing::error!("Failed to get player id: {}", e);
             return;
         }
     };

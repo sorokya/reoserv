@@ -11,7 +11,7 @@ impl Player {
             let accept = match PlayersAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing PlayersAcceptClientPacket {}", e);
+                    tracing::error!("Error deserializing PlayersAcceptClientPacket {}", e);
                     return;
                 }
             };
@@ -33,7 +33,7 @@ impl Player {
             PacketAction::Accept => self.players_accept(reader),
             PacketAction::List => self.players_list(),
             PacketAction::Request => self.players_request(),
-            _ => error!("Unhandled packet Players_{:?}", action),
+            _ => tracing::error!("Unhandled packet Players_{:?}", action),
         }
     }
 }

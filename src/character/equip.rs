@@ -65,7 +65,7 @@ impl Character {
                 ItemType::Armlet => &mut self.equipment.armlet[sub_loc as usize],
                 ItemType::Bracer => &mut self.equipment.bracer[sub_loc as usize],
                 _ => {
-                    warn!(
+                    tracing::warn!(
                         "{} tried to equip an invalid item type: {:?}",
                         self.name, item_record.r#type
                     );

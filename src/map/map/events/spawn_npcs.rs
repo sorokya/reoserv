@@ -22,7 +22,7 @@ impl Map {
                 let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
                     Some(npc) => npc,
                     None => {
-                        error!(
+                        tracing::error!(
                             "Failed to load NPC {} (Map: {}, Coords: {:?})",
                             spawn.id, self.id, spawn.coords,
                         );

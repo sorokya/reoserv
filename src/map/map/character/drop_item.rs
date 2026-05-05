@@ -87,7 +87,7 @@ impl Map {
         ) {
             Ok(index) => index,
             Err(e) => {
-                error!("Failed to add dropped item to map: {}", e);
+                tracing::error!("Failed to add dropped item to map: {}", e);
                 return;
             }
         };

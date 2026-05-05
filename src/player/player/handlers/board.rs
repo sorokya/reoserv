@@ -17,7 +17,7 @@ impl Player {
             let create = match BoardCreateClientPacket::deserialize(&reader) {
                 Ok(create) => create,
                 Err(e) => {
-                    error!("Error deserializing BoardCreateClientPacket {}", e);
+                    tracing::error!("Error deserializing BoardCreateClientPacket {}", e);
                     return;
                 }
             };
@@ -36,7 +36,7 @@ impl Player {
             let open = match BoardOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing BoardOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing BoardOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -49,7 +49,7 @@ impl Player {
             let remove = match BoardRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,
                 Err(e) => {
-                    error!("Error deserializing BoardOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing BoardOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -68,7 +68,7 @@ impl Player {
             let take = match BoardTakeClientPacket::deserialize(&reader) {
                 Ok(take) => take,
                 Err(e) => {
-                    error!("Error deserializing BoardTakeClientPacket {}", e);
+                    tracing::error!("Error deserializing BoardTakeClientPacket {}", e);
                     return;
                 }
             };
@@ -88,7 +88,7 @@ impl Player {
             PacketAction::Open => self.board_open(reader),
             PacketAction::Remove => self.board_remove(reader),
             PacketAction::Take => self.board_take(reader),
-            _ => error!("Unhandled packet Board_{:?}", action),
+            _ => tracing::error!("Unhandled packet Board_{:?}", action),
         }
     }
 }

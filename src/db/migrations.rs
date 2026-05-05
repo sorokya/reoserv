@@ -82,7 +82,7 @@ async fn run_startup_migrations_in_dir(
         }
 
         if !should_skip_migration(db, driver, &migration).await? {
-            info!(
+            tracing::info!(
                 "Applying migration {} from {}",
                 migration.logical_name,
                 migration.path.display()

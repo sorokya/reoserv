@@ -60,7 +60,7 @@ impl Map {
                 Ok(Some(amount)) => amount,
                 Ok(None) => return,
                 Err(e) => {
-                    error!("Error getting guild bank amount: {}", e);
+                    tracing::error!("Error getting guild bank amount: {}", e);
                     return;
                 }
             };
@@ -78,7 +78,7 @@ impl Map {
                 ))
                 .await
             {
-                error!("Error updating guild bank: {}", e);
+                tracing::error!("Error updating guild bank: {}", e);
             }
         });
     }

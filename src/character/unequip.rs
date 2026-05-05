@@ -90,7 +90,7 @@ impl Character {
                 self.equipment.bracer[sub_loc as usize] = 0;
             }
             _ => {
-                warn!(
+                tracing::warn!(
                     "{} tried to unequip an invalid item type: {:?}",
                     self.name, item_record.r#type
                 );

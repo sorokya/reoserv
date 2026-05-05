@@ -18,7 +18,7 @@ impl Map {
         let target = match self.characters.get(&target_player_id) {
             Some(character) => character.to_owned(),
             None => {
-                error!("Failed to get target");
+                tracing::error!("Failed to get target");
                 return;
             }
         };

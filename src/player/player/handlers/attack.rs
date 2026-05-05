@@ -13,7 +13,7 @@ impl Player {
             let packet = match AttackUseClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,
                 Err(e) => {
-                    error!("Error deserializing AttackUseClientPacket {}", e);
+                    tracing::error!("Error deserializing AttackUseClientPacket {}", e);
                     return;
                 }
             };
@@ -35,7 +35,7 @@ impl Player {
 
         match action {
             PacketAction::Use => self.attack_use(reader),
-            _ => error!("Unhandled packet Attack_{:?}", action),
+            _ => tracing::error!("Unhandled packet Attack_{:?}", action),
         }
     }
 }

@@ -16,7 +16,7 @@ impl Player {
             let buy = match ShopBuyClientPacket::deserialize(&reader) {
                 Ok(buy) => buy,
                 Err(e) => {
-                    error!("Error deserializing ShopBuyClientPacket {}", e);
+                    tracing::error!("Error deserializing ShopBuyClientPacket {}", e);
                     return;
                 }
             };
@@ -44,7 +44,7 @@ impl Player {
             let create = match ShopCreateClientPacket::deserialize(&reader) {
                 Ok(create) => create,
                 Err(e) => {
-                    error!("Error deserializing ShopCreateClientPacket {}", e);
+                    tracing::error!("Error deserializing ShopCreateClientPacket {}", e);
                     return;
                 }
             };
@@ -74,7 +74,7 @@ impl Player {
             let open = match ShopOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing ShopCreateClientPacket {}", e);
+                    tracing::error!("Error deserializing ShopCreateClientPacket {}", e);
                     return;
                 }
             };
@@ -88,7 +88,7 @@ impl Player {
             let sell = match ShopSellClientPacket::deserialize(&reader) {
                 Ok(sell) => sell,
                 Err(e) => {
-                    error!("Error deserializing ShopSellClientPacket {}", e);
+                    tracing::error!("Error deserializing ShopSellClientPacket {}", e);
                     return;
                 }
             };
@@ -122,7 +122,7 @@ impl Player {
             PacketAction::Create => self.shop_create(reader),
             PacketAction::Open => self.shop_open(reader),
             PacketAction::Sell => self.shop_sell(reader),
-            _ => error!("Unhandled packet Shop_{:?}", action),
+            _ => tracing::error!("Unhandled packet Shop_{:?}", action),
         }
     }
 }

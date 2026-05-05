@@ -21,7 +21,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize PartyRemoveServerPacket: {}", e);
+            tracing::error!("Failed to serialize PartyRemoveServerPacket: {}", e);
             return;
         }
 

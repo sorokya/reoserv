@@ -15,7 +15,7 @@ pub fn load_quests() -> HashMap<i32, Quest> {
                 None => continue,
             },
             Err(e) => {
-                error!("Failed to parse entry: {}", e);
+                tracing::error!("Failed to parse entry: {}", e);
                 continue;
             }
         }
@@ -30,7 +30,7 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
             Some(name) => match name.split('.').collect::<Vec<&str>>()[0].parse::<i32>() {
                 Ok(id) => id,
                 Err(e) => {
-                    error!("Failed to parse id: {}", e);
+                    tracing::error!("Failed to parse id: {}", e);
                     return None;
                 }
             },
@@ -42,7 +42,7 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
     let mut file = match File::open(path) {
         Ok(file) => file,
         Err(e) => {
-            error!("Failed to load file: {}", e);
+            tracing::error!("Failed to load file: {}", e);
             return None;
         }
     };
@@ -50,7 +50,7 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
     let length = match file.metadata() {
         Ok(metadata) => metadata.len() as usize,
         Err(e) => {
-            error!("Failed to get file metadata: {}", e);
+            tracing::error!("Failed to get file metadata: {}", e);
             return None;
         }
     };
@@ -58,7 +58,7 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
     let mut buf: Vec<u8> = Vec::with_capacity(length);
 
     if let Err(e) = file.read_to_end(&mut buf) {
-        error!("Failed to read file: {}", e);
+        tracing::error!("Failed to read file: {}", e);
         return None;
     }
 
@@ -74,7 +74,7 @@ fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
     match parse_quest(&input) {
         Ok(quest) => Some((id, quest)),
         Err(e) => {
-            error!("Failed to parse quest: {}", e);
+            tracing::error!("Failed to parse quest: {}", e);
             None
         }
     }

@@ -14,7 +14,7 @@ impl Player {
             let add = match BankAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing BankAddClientPacket {}", e);
+                    tracing::error!("Error deserializing BankAddClientPacket {}", e);
                     return;
                 }
             };
@@ -44,7 +44,7 @@ impl Player {
             let open = match BankOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing BankOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing BankOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -58,7 +58,7 @@ impl Player {
             let take = match BankTakeClientPacket::deserialize(&reader) {
                 Ok(take) => take,
                 Err(e) => {
-                    error!("Error deserializing BankTakeClientPacket {}", e);
+                    tracing::error!("Error deserializing BankTakeClientPacket {}", e);
                     return;
                 }
             };
@@ -91,7 +91,7 @@ impl Player {
             PacketAction::Add => self.bank_add(reader),
             PacketAction::Open => self.bank_open(reader),
             PacketAction::Take => self.bank_take(reader),
-            _ => error!("Unhandled packet Bank_{:?}", action),
+            _ => tracing::error!("Unhandled packet Bank_{:?}", action),
         }
     }
 }

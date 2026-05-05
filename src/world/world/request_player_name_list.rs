@@ -24,7 +24,7 @@ impl World {
                 let character = match online_player.get_character().await {
                     Ok(character) => character,
                     Err(e) => {
-                        error!("Error getting character: {}", e);
+                        tracing::error!("Error getting character: {}", e);
                         continue;
                     }
                 };

@@ -37,7 +37,7 @@ impl World {
                     ))
                     .await
                 {
-                    error!("Failed to free player: {}", e);
+                    tracing::error!("Failed to free player: {}", e);
                 }
             });
         }

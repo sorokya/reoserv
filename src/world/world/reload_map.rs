@@ -28,14 +28,14 @@ impl World {
         let path = Path::new(&raw_path);
 
         if !Path::exists(path) {
-            error!("Map file not found: {}", raw_path);
+            tracing::error!("Map file not found: {}", raw_path);
             return;
         }
 
         let mut raw_file = match File::open(path).await {
             Ok(file) => file.into_std().await,
             Err(e) => {
-                error!("Failed to open file: {}", e);
+                tracing::error!("Failed to open file: {}", e);
                 return;
             }
         };
@@ -43,19 +43,19 @@ impl World {
         let file_size = match raw_file.metadata() {
             Ok(meta) => meta.len(),
             Err(e) => {
-                error!("Failed to get file metadata: {}", e);
+                tracing::error!("Failed to get file metadata: {}", e);
                 return;
             }
         };
 
         let mut data_buf: Vec<u8> = Vec::new();
         if let Err(e) = raw_file.seek(SeekFrom::Start(0)) {
-            error!("Failed to seek to file start: {}", e);
+            tracing::error!("Failed to seek to file start: {}", e);
             return;
         }
 
         if let Err(e) = raw_file.read_to_end(&mut data_buf) {
-            error!("Failed to read file: {}", e);
+            tracing::error!("Failed to read file: {}", e);
             return;
         }
 
@@ -66,7 +66,7 @@ impl World {
         let file = match Emf::deserialize(&reader) {
             Ok(file) => file,
             Err(e) => {
-                error!("Failed to deserialize Emf: {}", e);
+                tracing::error!("Failed to deserialize Emf: {}", e);
                 return;
             }
         };

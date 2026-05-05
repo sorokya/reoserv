@@ -19,7 +19,7 @@ impl Player {
             let open = match PriestOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing PriestOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing PriestOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -33,7 +33,7 @@ impl Player {
             let request = match PriestRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing PriestRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing PriestRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -61,7 +61,7 @@ impl Player {
             let accept = match PriestAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing PriestAcceptClientPacket {}", e);
+                    tracing::error!("Error deserializing PriestAcceptClientPacket {}", e);
                     return;
                 }
             };
@@ -84,7 +84,7 @@ impl Player {
             let r#use = match PriestUseClientPacket::deserialize(&reader) {
                 Ok(r#use) => r#use,
                 Err(e) => {
-                    error!("Error deserializing PriestUseClientPacket {}", e);
+                    tracing::error!("Error deserializing PriestUseClientPacket {}", e);
                     return;
                 }
             };
@@ -108,7 +108,7 @@ impl Player {
             PacketAction::Request => self.priest_request(reader),
             PacketAction::Accept => self.priest_accept(reader),
             PacketAction::Use => self.priest_use(reader),
-            _ => error!("Unhandled packet Priest_{:?}", action),
+            _ => tracing::error!("Unhandled packet Priest_{:?}", action),
         }
     }
 }

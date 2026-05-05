@@ -11,7 +11,7 @@ impl World {
                 let results = futures::future::join_all(saves).await;
                 for result in results {
                     if let Err(e) = result {
-                        error!("Failed to save map: {}", e);
+                        tracing::error!("Failed to save map: {}", e);
                     }
                 }
             }

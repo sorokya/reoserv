@@ -35,13 +35,13 @@ impl Map {
             let map = match player.get_map().await {
                 Ok(map) => map,
                 Err(e) => {
-                    error!("Failed to get map: {}", e);
+                    tracing::error!("Failed to get map: {}", e);
                     return;
                 }
             };
 
             if let Err(e) = delete_post(&db, post_id).await {
-                error!("Failed to delete post: {}", e);
+                tracing::error!("Failed to delete post: {}", e);
             }
 
             map.open_board(player_id, board_id);

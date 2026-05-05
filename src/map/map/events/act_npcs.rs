@@ -582,7 +582,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
     } {
         Ok(context) => context,
         Err(e) => {
-            error!("Failed to generate formula context: {}", e);
+            tracing::error!("Failed to generate formula context: {}", e);
             return 0;
         }
     };
@@ -590,7 +590,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
     let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
         Ok(hit_rate) => hit_rate,
         Err(e) => {
-            error!("Failed to calculate hit rate: {}", e);
+            tracing::error!("Failed to calculate hit rate: {}", e);
             0.0
         }
     };
@@ -602,7 +602,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
     match eval_float_with_context(&FORMULAS.damage, &context) {
         Ok(amount) => cmp::min(amount.floor() as i32, character.hp),
         Err(e) => {
-            error!("Failed to calculate damage: {}", e);
+            tracing::error!("Failed to calculate damage: {}", e);
             0
         }
     }

@@ -38,7 +38,7 @@ impl Player {
         let create = match CharacterCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Error deserializing CharacterCreateClientPacket {}", e);
+                tracing::error!("Error deserializing CharacterCreateClientPacket {}", e);
                 return;
             }
         };
@@ -126,7 +126,7 @@ impl Player {
             return;
         }
 
-        info!("New character: {}", create.name);
+        tracing::info!("New character: {}", create.name);
 
         let characters = match get_character_list(&self.db, self.account_id).await {
             Ok(characters) => characters,
@@ -156,7 +156,7 @@ impl Player {
         let remove = match CharacterRemoveClientPacket::deserialize(&reader) {
             Ok(remove) => remove,
             Err(e) => {
-                error!("Error deserializing CharacterRemoveClientPacket {}", e);
+                tracing::error!("Error deserializing CharacterRemoveClientPacket {}", e);
                 return;
             }
         };
@@ -236,7 +236,7 @@ impl Player {
         let request = match CharacterRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing CharacterRemoveClientPacket {}", e);
+                tracing::error!("Error deserializing CharacterRemoveClientPacket {}", e);
                 return;
             }
         };
@@ -296,7 +296,7 @@ impl Player {
         let take = match CharacterTakeClientPacket::deserialize(&reader) {
             Ok(take) => take,
             Err(e) => {
-                error!("Error deserializing CharacterTakeClientPacket {}", e);
+                tracing::error!("Error deserializing CharacterTakeClientPacket {}", e);
                 return;
             }
         };
@@ -347,7 +347,7 @@ impl Player {
             PacketAction::Remove => self.character_remove(reader).await,
             PacketAction::Request => self.character_request(reader).await,
             PacketAction::Take => self.character_take(reader).await,
-            _ => error!("Unhandled packet Character_{:?}", action),
+            _ => tracing::error!("Unhandled packet Character_{:?}", action),
         }
     }
 }

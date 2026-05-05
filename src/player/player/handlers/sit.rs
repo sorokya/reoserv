@@ -14,7 +14,7 @@ impl Player {
             let request = match SitRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing SitRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing SitRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -30,7 +30,7 @@ impl Player {
     pub fn handle_sit(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.sit_request(reader),
-            _ => error!("Unhandled packet Sit_{:?}", action),
+            _ => tracing::error!("Unhandled packet Sit_{:?}", action),
         }
     }
 }

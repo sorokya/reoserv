@@ -35,7 +35,7 @@ impl World {
             {
                 Ok(Some(row)) => row,
                 Err(err) => {
-                    error!("Failed to get account from database: {}", err);
+                    tracing::error!("Failed to get account from database: {}", err);
                     return;
                 }
                 _ => return,
@@ -72,7 +72,7 @@ impl World {
             {
                 Ok(_) => {}
                 Err(err) => {
-                    error!("Failed to ban player: {}", err);
+                    tracing::error!("Failed to ban player: {}", err);
                 }
             }
         });

@@ -71,7 +71,7 @@ impl Map {
             {
                 Ok(posts) => posts,
                 Err(e) => {
-                    error!("Failed to get board posts: {}", e);
+                    tracing::error!("Failed to get board posts: {}", e);
                     return;
                 }
             };

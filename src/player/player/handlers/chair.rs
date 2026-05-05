@@ -14,7 +14,7 @@ impl Player {
             let request = match ChairRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing ChairRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing ChairRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -24,7 +24,7 @@ impl Player {
                     let coords = match request.sit_action_data {
                         Some(ChairRequestClientPacketSitActionData::Sit(sit)) => sit.coords,
                         _ => {
-                            error!("Sit action data is not sit");
+                            tracing::error!("Sit action data is not sit");
                             return;
                         }
                     };
@@ -39,7 +39,7 @@ impl Player {
     pub fn handle_chair(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.chair_request(reader),
-            _ => error!("Unhandled packet Chair_{:?}", action),
+            _ => tracing::error!("Unhandled packet Chair_{:?}", action),
         }
     }
 }

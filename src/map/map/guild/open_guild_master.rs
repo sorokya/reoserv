@@ -41,7 +41,7 @@ impl Map {
             let session_id = match player.generate_session_id().await {
                 Ok(session_id) => session_id,
                 Err(e) => {
-                    error!("Error generating session id: {}", e);
+                    tracing::error!("Error generating session id: {}", e);
                     return;
                 }
             };

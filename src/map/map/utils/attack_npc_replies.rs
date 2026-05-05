@@ -147,7 +147,7 @@ impl Map {
             let mut writer = EoWriter::new();
 
             if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize BossPingServerPacket: {}", e);
+                tracing::error!("Failed to serialize BossPingServerPacket: {}", e);
                 return;
             }
 
@@ -209,7 +209,7 @@ impl Map {
                 } {
                     Ok(context) => context,
                     Err(e) => {
-                        error!("Failed to generate formula context: {}", e);
+                        tracing::error!("Failed to generate formula context: {}", e);
                         return;
                     }
                 };
@@ -217,7 +217,7 @@ impl Map {
                 match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
                     Ok(experience) => experience as i32,
                     Err(e) => {
-                        error!("Failed to calculate party experience share: {}", e);
+                        tracing::error!("Failed to calculate party experience share: {}", e);
                         1
                     }
                 }
@@ -261,7 +261,7 @@ impl Map {
                 ) {
                     Ok(index) => (index, drop.id, drop.amount),
                     Err(e) => {
-                        error!("Failed to add NPC drop to map: {}", e);
+                        tracing::error!("Failed to add NPC drop to map: {}", e);
                         (0, 0, 0)
                     }
                 }
@@ -482,7 +482,7 @@ impl Map {
             let mut writer = EoWriter::new();
 
             if let Err(e) = packet.serialize(&mut writer) {
-                error!("Failed to serialize BossPingServerPacket: {}", e);
+                tracing::error!("Failed to serialize BossPingServerPacket: {}", e);
                 return;
             }
 

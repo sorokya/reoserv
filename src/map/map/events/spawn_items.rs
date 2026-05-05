@@ -44,7 +44,7 @@ impl Map {
                     let spawn = match possible_spawns.choose(&mut rand::rng()) {
                         Some(spawn) => spawn,
                         None => {
-                            error!("Failed to choose spawn");
+                            tracing::error!("Failed to choose spawn");
                             continue;
                         }
                     };
@@ -72,7 +72,7 @@ impl Map {
                     let mut writer = EoWriter::new();
 
                     if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize ChestAgreeServerPacket: {}", e);
+                        tracing::error!("Failed to serialize ChestAgreeServerPacket: {}", e);
                         return;
                     }
 

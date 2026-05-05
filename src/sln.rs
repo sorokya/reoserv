@@ -27,7 +27,7 @@ pub async fn ping_sln() {
     ) {
         Ok(url) => url,
         Err(e) => {
-            error!("Failed to parse SLN url: {}", e);
+            tracing::error!("Failed to parse SLN url: {}", e);
             return;
         }
     };
@@ -36,13 +36,13 @@ pub async fn ping_sln() {
     let response = match client.get(url).header("User-Agent", "EOSERV").send().await {
         Ok(response) => response,
         Err(e) => {
-            error!("Failed to ping SLN: {}", e);
+            tracing::error!("Failed to ping SLN: {}", e);
             return;
         }
     };
 
     if !response.status().is_success() {
-        error!(
+        tracing::error!(
             "Failed to ping SLN: {} {}",
             response.status(),
             response.text().await.unwrap()
@@ -59,7 +59,7 @@ pub async fn ping_sln() {
             };
 
             match code {
-                3..=5 => warn!("SLN Error: {}", line),
+                3..=5 => tracing::warn!("SLN Error: {}", line),
                 _ => continue,
             }
         }

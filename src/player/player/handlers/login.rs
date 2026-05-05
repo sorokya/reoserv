@@ -41,7 +41,7 @@ impl Player {
         let request = match LoginRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing LoginRequestClientPacket {}", e);
+                tracing::error!("Error deserializing LoginRequestClientPacket {}", e);
                 return;
             }
         };
@@ -296,7 +296,7 @@ impl Player {
 
     async fn login_take(&mut self, reader: EoReader) {
         if let Err(e) = LoginTakeClientPacket::deserialize(&reader) {
-            error!("Failed to deserialize LoginTakeClientPacket: {}", e);
+            tracing::error!("Failed to deserialize LoginTakeClientPacket: {}", e);
             return;
         }
 
@@ -320,7 +320,7 @@ impl Player {
         let create = match LoginCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Failed to deserialize LoginCreateClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginCreateClientPacket: {}", e);
                 return;
             }
         };
@@ -349,7 +349,7 @@ impl Player {
                 return;
             }
             Err(e) => {
-                error!("Failed to get account email: {}", e);
+                tracing::error!("Failed to get account email: {}", e);
                 return;
             }
         };
@@ -412,7 +412,7 @@ impl Player {
         let accept = match LoginAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Failed to deserialize LoginAcceptClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginAcceptClientPacket: {}", e);
                 return;
             }
         };
@@ -442,7 +442,7 @@ impl Player {
         let agree = match LoginAgreeClientPacket::deserialize(&reader) {
             Ok(agree) => agree,
             Err(e) => {
-                error!("Failed to deserialize LoginAgreeClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginAgreeClientPacket: {}", e);
                 self.send_login_agree_error().await;
                 return;
             }
@@ -463,7 +463,7 @@ impl Player {
             ))
             .await
         {
-            error!("Error updating password hash: {}", e);
+            tracing::error!("Error updating password hash: {}", e);
             self.send_login_agree_error().await;
             return;
         }
@@ -593,7 +593,7 @@ impl Player {
             PacketAction::Accept => self.login_accept(reader).await,
             PacketAction::Agree => self.login_agree(reader).await,
             PacketAction::Use => self.login_use(reader).await,
-            _ => error!("Unhandled packet Login_{:?}", action),
+            _ => tracing::error!("Unhandled packet Login_{:?}", action),
         }
     }
 }

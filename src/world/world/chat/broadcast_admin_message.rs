@@ -17,7 +17,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TalkAdminServerPacket: {}", e);
+            tracing::error!("Failed to serialize TalkAdminServerPacket: {}", e);
             return;
         }
 

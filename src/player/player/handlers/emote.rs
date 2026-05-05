@@ -11,7 +11,7 @@ impl Player {
             let report = match EmoteReportClientPacket::deserialize(&reader) {
                 Ok(report) => report,
                 Err(e) => {
-                    error!("Error deserializing EmoteReportClientPacket {}", e);
+                    tracing::error!("Error deserializing EmoteReportClientPacket {}", e);
                     return;
                 }
             };
@@ -23,7 +23,7 @@ impl Player {
     pub fn handle_emote(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Report => self.emote_report(reader),
-            _ => error!("Unhandled packet Emote_{:?}", action),
+            _ => tracing::error!("Unhandled packet Emote_{:?}", action),
         }
     }
 }

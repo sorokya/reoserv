@@ -13,7 +13,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize TalkServerServerPacket: {}", e);
+            tracing::error!("Failed to serialize TalkServerServerPacket: {}", e);
             return;
         }
 

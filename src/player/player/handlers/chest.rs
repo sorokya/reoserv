@@ -14,7 +14,7 @@ impl Player {
             let add = match ChestAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing ChestAddClientPacket {}", e);
+                    tracing::error!("Error deserializing ChestAddClientPacket {}", e);
                     return;
                 }
             };
@@ -44,7 +44,7 @@ impl Player {
             let open = match ChestOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing ChestOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing ChestOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -57,7 +57,7 @@ impl Player {
             let take = match ChestTakeClientPacket::deserialize(&reader) {
                 Ok(take) => take,
                 Err(e) => {
-                    error!("Error deserializing ChestTakeClientPacket {}", e);
+                    tracing::error!("Error deserializing ChestTakeClientPacket {}", e);
                     return;
                 }
             };
@@ -80,7 +80,7 @@ impl Player {
             PacketAction::Add => self.chest_add(reader),
             PacketAction::Open => self.chest_open(reader),
             PacketAction::Take => self.chest_take(reader),
-            _ => error!("Unhandled packet Chest_{:?}", action),
+            _ => tracing::error!("Unhandled packet Chest_{:?}", action),
         }
     }
 }

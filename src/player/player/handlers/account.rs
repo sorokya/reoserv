@@ -37,7 +37,7 @@ impl Player {
         let create = match AccountCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Error deserializing AccountCreateClientPacket {}", e);
+                tracing::error!("Error deserializing AccountCreateClientPacket {}", e);
                 return;
             }
         };
@@ -167,7 +167,7 @@ impl Player {
             .await
         {
             Ok(_) => {
-                info!("New account: {}", username);
+                tracing::info!("New account: {}", username);
 
                 self.account_id = match self.db.get_last_insert_id().await {
                     Some(account_id) => {
@@ -209,7 +209,7 @@ impl Player {
         let request = match AccountRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing AccountRequestClientPacket {}", e);
+                tracing::error!("Error deserializing AccountRequestClientPacket {}", e);
                 return;
             }
         };
@@ -298,7 +298,7 @@ impl Player {
         let agree = match AccountAgreeClientPacket::deserialize(&reader) {
             Ok(agree) => agree,
             Err(e) => {
-                error!("Error deserializing AccountAgreeClientPacket {}", e);
+                tracing::error!("Error deserializing AccountAgreeClientPacket {}", e);
                 return;
             }
         };
@@ -361,7 +361,7 @@ impl Player {
                 return;
             }
             Err(e) => {
-                error!("Error getting password hash: {}", e);
+                tracing::error!("Error getting password hash: {}", e);
 
                 let _ = self
                     .bus
@@ -456,7 +456,7 @@ impl Player {
         let accept = match AccountAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Faled to deserialize AccountAcceptClientPacket: {}", e);
+                tracing::error!("Faled to deserialize AccountAcceptClientPacket: {}", e);
                 return;
             }
         };
@@ -514,7 +514,7 @@ impl Player {
             PacketAction::Create => self.account_create(reader).await,
             PacketAction::Request => self.account_request(reader).await,
             PacketAction::Agree => self.account_agree(reader).await,
-            _ => error!("Unhandled packet Account_{:?}", action),
+            _ => tracing::error!("Unhandled packet Account_{:?}", action),
         }
     }
 }

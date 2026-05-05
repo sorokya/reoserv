@@ -120,7 +120,7 @@ async fn get_news() -> [String; 9] {
             news
         }
         Err(e) => {
-            error!("Failed to open data/news.txt: {}", e);
+            tracing::error!("Failed to open data/news.txt: {}", e);
             [
                 String::default(),
                 String::default(),

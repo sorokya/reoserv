@@ -98,7 +98,7 @@ impl Player {
             PacketFamily::Unrecognized(FAMILY_CAPTCHA) => self.handle_captcha(action, reader).await,
             PacketFamily::Welcome => self.handle_welcome(action, reader).await,
             _ => {
-                error!("Unhandled packet {:?}_{:?}", action, family);
+                tracing::error!("Unhandled packet {:?}_{:?}", action, family);
             }
         }
     }

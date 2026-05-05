@@ -69,9 +69,11 @@ static SETTINGS: Lazy<ArcSwap<Settings>> = Lazy::new(|| {
     ArcSwap::from_pointee(Settings::new().expect("Failed to load settings"))
 });
 
+static ARENAS: Lazy<ArcSwap<Arenas>> = Lazy::new(|| {
+    ArcSwap::from_pointee(Arenas::new().expect("Failed to load arenas"))
+});
+
 lazy_static! {
-    //static ref SETTINGS: Settings = Settings::new().expect("Failed to load settings!");
-    static ref ARENAS: Arenas = Arenas::new().expect("Failed to load arenas!");
     static ref PACKET_RATE_LIMITS: PacketRateLimits =
         PacketRateLimits::new().expect("Failed to load packet rate limits!");
     static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");

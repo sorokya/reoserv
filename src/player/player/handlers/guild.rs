@@ -114,7 +114,8 @@ impl Player {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -346,7 +347,8 @@ impl Player {
                 return;
             }
 
-            if let Err(e) = set_guild_bank(&db, tag, guild_bank - SETTINGS.load().guild.recruit_cost).await
+            if let Err(e) =
+                set_guild_bank(&db, tag, guild_bank - SETTINGS.load().guild.recruit_cost).await
             {
                 tracing::error!("Error setting guild bank: {}", e);
                 return;
@@ -493,7 +495,8 @@ impl Player {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -510,10 +513,6 @@ impl Player {
                 Some(character) => character,
                 None => return,
             };
-
-            if character.guild_tag.is_none() {
-                return;
-            }
 
             let player = match &character.player {
                 Some(player) => player,
@@ -655,7 +654,7 @@ impl Player {
                 None => return,
             };
 
-            match NPC_DB.npcs.get(npc_id as usize - 1) {
+            match NPC_DB.load().npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => {
                     if npc_data.r#type != NpcType::Guild {
                         return;
@@ -760,7 +759,7 @@ impl Player {
                 None => return,
             };
 
-            match NPC_DB.npcs.get(npc_id as usize - 1) {
+            match NPC_DB.load().npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => {
                     if npc_data.r#type != NpcType::Guild {
                         return;
@@ -894,7 +893,8 @@ impl Player {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -1025,7 +1025,8 @@ impl Player {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -1200,7 +1201,7 @@ impl Player {
                 None => return,
             };
 
-            match NPC_DB.npcs.get(npc_id as usize - 1) {
+            match NPC_DB.load().npcs.get(npc_id as usize - 1) {
                 Some(npc_data) => {
                     if npc_data.r#type != NpcType::Guild {
                         return;

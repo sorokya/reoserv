@@ -22,11 +22,20 @@ impl Map {
             return;
         }
 
-        if !SETTINGS.load().bard.instrument_items.contains(&instrument_id) {
+        if !SETTINGS
+            .load()
+            .bard
+            .instrument_items
+            .contains(&instrument_id)
+        {
             return;
         }
 
-        match ITEM_DB.items.get(character.equipment.weapon as usize - 1) {
+        match ITEM_DB
+            .load()
+            .items
+            .get(character.equipment.weapon as usize - 1)
+        {
             Some(item_data) => {
                 if item_data.spec1 != instrument_id {
                     return;
@@ -36,7 +45,8 @@ impl Map {
         };
 
         if !character.spells.iter().any(|s| {
-            let spell_data = match SPELL_DB.skills.get(s.id as usize - 1) {
+            let spell_db = SPELL_DB.load();
+            let spell_data = match spell_db.skills.get(s.id as usize - 1) {
                 Some(spell) => spell,
                 None => return false,
             };

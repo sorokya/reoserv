@@ -103,7 +103,8 @@ async fn get_item_id_and_amount(player: &PlayerHandle, args: &[String]) -> Optio
         Ok(id) => Some((id as i32, amount.unwrap_or(1))),
         Err(_) => {
             // find matches from item db where name starts with identifier
-            let matches = ITEM_DB
+            let item_db = ITEM_DB.load();
+            let matches = item_db
                 .items
                 .iter()
                 .filter(|item| item.name.to_lowercase() == identifier.to_lowercase())
@@ -118,6 +119,7 @@ async fn get_item_id_and_amount(player: &PlayerHandle, args: &[String]) -> Optio
                     None
                 }
                 1 => ITEM_DB
+                    .load()
                     .items
                     .iter()
                     .position(|item| item.name.to_lowercase() == identifier.to_lowercase())
@@ -125,7 +127,7 @@ async fn get_item_id_and_amount(player: &PlayerHandle, args: &[String]) -> Optio
                     .map(|id| (id, amount.unwrap_or(1))),
                 _ => {
                     let mut item_ids: Vec<i32> = Vec::new();
-                    for (index, item) in ITEM_DB.items.iter().enumerate() {
+                    for (index, item) in ITEM_DB.load().items.iter().enumerate() {
                         if item.name.to_lowercase() == identifier.to_lowercase() {
                             item_ids.push(index as i32 + 1);
                         }
@@ -215,6 +217,7 @@ async fn spawn_npc(args: &[String], character: &Character) {
         Err(_) => {
             // find matches from item db where name starts with identifier
             match NPC_DB
+                .load()
                 .npcs
                 .iter()
                 .position(|npc| npc.name.to_lowercase() == identifier.to_lowercase())
@@ -332,6 +335,7 @@ pub async fn handle_command(
     let mut args: Vec<String> = args[1..].iter().map(|s| s.to_string()).collect();
 
     match COMMANDS
+        .load()
         .commands
         .iter()
         .find(|c| c.name == command || c.alias == command)

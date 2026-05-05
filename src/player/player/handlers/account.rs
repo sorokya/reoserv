@@ -483,9 +483,12 @@ impl Player {
         if let Err(e) = send_email(
             &email,
             &accept.account_name,
-            &get_lang_string!(&EMAILS.validation.subject, name = accept.account_name),
             &get_lang_string!(
-                &EMAILS.validation.body,
+                &EMAILS.load().validation.subject,
+                name = accept.account_name
+            ),
+            &get_lang_string!(
+                &EMAILS.load().validation.body,
                 name = accept.account_name,
                 code = code
             ),

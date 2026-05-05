@@ -134,7 +134,8 @@ impl PacketBus {
 
                     let data_buf = Bytes::from(data_buf);
 
-                    if let Some(rate_limit) = PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                    let packet_rate_limits = PACKET_RATE_LIMITS.load();
+                    if let Some(rate_limit) = packet_rate_limits.packets.iter().find(|l| {
                         l.action == PacketAction::from(data_buf[0])
                             && l.family == PacketFamily::from(data_buf[1])
                     }) {
@@ -194,8 +195,9 @@ impl PacketBus {
 
                                     let data_buf = Bytes::from(data_buf);
 
+                                    let packet_rate_limits = PACKET_RATE_LIMITS.load();
                                     if let Some(rate_limit) =
-                                        PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                                        packet_rate_limits.packets.iter().find(|l| {
                                             l.action == PacketAction::from(data_buf[0])
                                                 && l.family == PacketFamily::from(data_buf[1])
                                         })

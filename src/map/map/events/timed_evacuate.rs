@@ -12,6 +12,7 @@ use super::super::Map;
 
 impl Map {
     pub fn timed_evacuate(&mut self) {
+        let lang = LANG.load();
         let seconds = match self.evacuate_ticks {
             Some(ref ticks) => ticks.to_owned(),
             None => return,
@@ -30,11 +31,11 @@ impl Map {
         }
 
         if steps.contains(&seconds) {
-            self.send_evac_warning(&LANG.evacuate_warning, seconds);
+            self.send_evac_warning(&lang.evacuate_warning, seconds);
         }
 
         if seconds == SETTINGS.load().evacuate.timer_step {
-            self.send_evac_warning(&LANG.evacuate_last_warning, seconds);
+            self.send_evac_warning(&lang.evacuate_last_warning, seconds);
         }
 
         if seconds == 0 {

@@ -14,7 +14,8 @@ impl Character {
             return EquipResult::Failed;
         }
 
-        let item_record = match ITEM_DB.items.get(item_id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let item_record = match item_db.items.get(item_id as usize - 1) {
             Some(item) => item,
             None => return EquipResult::Failed,
         };
@@ -67,7 +68,8 @@ impl Character {
                 _ => {
                     tracing::warn!(
                         "{} tried to equip an invalid item type: {:?}",
-                        self.name, item_record.r#type
+                        self.name,
+                        item_record.r#type
                     );
                     return EquipResult::Failed;
                 }
@@ -88,8 +90,9 @@ impl Character {
         let mut quests_progressed = Vec::new();
         if let EquipResult::Swapped(item_id) = result {
             self.add_item_no_quest_rules(item_id, 1);
+            let quest_db = QUEST_DB.load();
             for progress in self.quests.iter_mut() {
-                let quest = match QUEST_DB.get(&progress.id) {
+                let quest = match quest_db.get(&progress.id) {
                     Some(quest) => quest,
                     None => continue,
                 };
@@ -123,8 +126,9 @@ impl Character {
 
         self.remove_item_no_quest_rules(item_id, 1);
 
+        let quest_db = QUEST_DB.load();
         for progress in self.quests.iter_mut() {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => continue,
             };

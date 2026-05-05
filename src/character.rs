@@ -168,6 +168,7 @@ impl Character {
     }
 
     pub fn damage(&mut self, amount: i32, accuracy: i32, critical: bool) -> i32 {
+        let formulas = FORMULAS.load();
         let context: HashMapContext<DefaultNumericTypes> = match context_map! {
             "critical" => critical,
             "damage" => float amount,
@@ -183,7 +184,7 @@ impl Character {
             }
         };
 
-        let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+        let hit_rate = match eval_float_with_context(&formulas.hit_rate, &context) {
             Ok(hit_rate) => hit_rate,
             Err(e) => {
                 tracing::error!("Failed to calculate hit rate: {}", e);
@@ -197,7 +198,7 @@ impl Character {
         let damage = if hit_rate < rand {
             0
         } else {
-            match eval_float_with_context(&FORMULAS.damage, &context) {
+            match eval_float_with_context(&formulas.damage, &context) {
                 Ok(amount) => amount.floor() as i32,
                 Err(e) => {
                     tracing::error!("Failed to calculate damage: {}", e);
@@ -318,7 +319,7 @@ impl Character {
 
         // TODO: Make this more accurate like official server
         // http://archive.today/brypq
-        while self.experience > EXP_TABLE[self.level as usize + 1] {
+        while self.experience > EXP_TABLE.load()[self.level as usize + 1] {
             self.level += 1;
             self.stat_points += SETTINGS.load().world.stat_points_per_level;
             self.skill_points += SETTINGS.load().world.skill_points_per_level;
@@ -332,7 +333,8 @@ impl Character {
     pub fn talked_to_npc(&mut self, behavior_id: i32, quest_id: i32, action_id: Option<i32>) {
         let mut progressed = false;
         if let Some(progress) = self.quests.iter_mut().find(|q| q.id == quest_id) {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest_db = QUEST_DB.load();
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => return,
             };
@@ -393,8 +395,9 @@ impl Character {
 
     pub fn killed_npc(&mut self, npc_id: i32) {
         let mut quests_progressed = Vec::new();
+        let quest_db = QUEST_DB.load();
         for progress in self.quests.iter_mut() {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => continue,
             };
@@ -443,8 +446,9 @@ impl Character {
     pub fn entered_map(&mut self) {
         let mut quests_progressed = Vec::new();
         let map_id = self.map_id;
+        let quest_db = QUEST_DB.load();
         for progress in self.quests.iter_mut() {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => continue,
             };
@@ -484,8 +488,9 @@ impl Character {
         let mut quests_progressed = Vec::new();
         let map_id = self.map_id;
         let coords = self.coords;
+        let quest_db = QUEST_DB.load();
         for progress in self.quests.iter_mut() {
-            let quest = match QUEST_DB.get(&progress.id) {
+            let quest = match quest_db.get(&progress.id) {
                 Some(quest) => quest,
                 None => continue,
             };
@@ -529,7 +534,8 @@ impl Character {
             None => return,
         };
 
-        let quest = match QUEST_DB.get(&quest_id) {
+        let quest_db = QUEST_DB.load();
+        let quest = match quest_db.get(&quest_id) {
             Some(quest) => quest,
             None => return,
         };

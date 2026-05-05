@@ -35,7 +35,9 @@ impl World {
                 map.act_npcs();
             }
 
-            if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate && SETTINGS.load().auto_pickup.enabled {
+            if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate
+                && SETTINGS.load().auto_pickup.enabled
+            {
                 map.timed_auto_pickup();
             }
 
@@ -84,7 +86,9 @@ impl World {
             self.second_ticks = 0;
         }
 
-        if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate && SETTINGS.load().auto_pickup.enabled {
+        if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate
+            && SETTINGS.load().auto_pickup.enabled
+        {
             self.auto_pickup_ticks = 0;
         }
 

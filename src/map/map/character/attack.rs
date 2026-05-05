@@ -167,7 +167,8 @@ impl Map {
                 None => return,
             };
 
-            let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                 Some(npc_data) => npc_data,
                 None => return,
             };
@@ -428,7 +429,8 @@ fn can_attack(character: &Character) -> bool {
             return true;
         }
 
-        let shield_data = match ITEM_DB.items.get(shield as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let shield_data = match item_db.items.get(shield as usize - 1) {
             Some(data) => data,
             None => return false,
         };

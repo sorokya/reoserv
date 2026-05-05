@@ -74,15 +74,17 @@ impl Player {
             None => return,
         };
 
+        let drop_db = DROP_DB.load();
+        let npc_db = NPC_DB.load();
         let mut lines = Vec::new();
 
-        for npc in DROP_DB.npcs.iter() {
+        for npc in drop_db.npcs.iter() {
             if let Some(drop) = npc
                 .drops
                 .iter()
                 .find(|drop| drop.item_id == id && drop.min_amount > 0 && drop.max_amount > 0)
             {
-                let npc_name = match NPC_DB.npcs.get(npc.npc_id as usize - 1) {
+                let npc_name = match npc_db.npcs.get(npc.npc_id as usize - 1) {
                     Some(npc) => npc.name.to_owned(),
                     None => continue,
                 };
@@ -141,16 +143,18 @@ impl Player {
             None => return,
         };
 
+        let drop_db = DROP_DB.load();
+        let item_db = ITEM_DB.load();
         let mut lines = Vec::new();
 
-        let npc = match DROP_DB.npcs.iter().find(|npc| npc.npc_id == id) {
+        let npc = match drop_db.npcs.iter().find(|npc| npc.npc_id == id) {
             Some(npc) => npc,
             None => return,
         };
 
         for drop in npc.drops.iter() {
             if drop.min_amount > 0 && drop.max_amount > 0 {
-                let item_name = match ITEM_DB.items.get(drop.item_id as usize - 1) {
+                let item_name = match item_db.items.get(drop.item_id as usize - 1) {
                     Some(item) => item.name.to_owned(),
                     None => continue,
                 };

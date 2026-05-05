@@ -21,7 +21,7 @@ impl World {
                 PacketFamily::Talk,
                 &TalkMsgServerPacket {
                     player_name: "Server".to_string(),
-                    message: LANG.global_locked.to_owned(),
+                    message: LANG.load().global_locked.to_owned(),
                 },
             );
             return;

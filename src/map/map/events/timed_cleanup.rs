@@ -4,7 +4,9 @@ use super::super::Map;
 
 impl Map {
     pub fn timed_cleanup(&mut self) {
-        if SETTINGS.load().map.max_items <= 0 || self.items.len() <= SETTINGS.load().map.max_items as usize {
+        if SETTINGS.load().map.max_items <= 0
+            || self.items.len() <= SETTINGS.load().map.max_items as usize
+        {
             return;
         }
 

@@ -19,6 +19,7 @@ pub async fn get_character_list(
                 &[("account_id", &account_id)],
             ),
             |row| {
+                let item_db = ITEM_DB.load();
                 let boots = row.get_int(8).unwrap();
                 let armor = row.get_int(9).unwrap();
                 let hat = row.get_int(10).unwrap();
@@ -37,35 +38,35 @@ pub async fn get_character_list(
                     equipment: EquipmentCharacterSelect {
                         boots: match boots {
                             0 => 0,
-                            _ => match ITEM_DB.items.get(boots as usize - 1) {
+                            _ => match item_db.items.get(boots as usize - 1) {
                                 Some(item) => item.spec1,
                                 None => 0,
                             },
                         },
                         armor: match armor {
                             0 => 0,
-                            _ => match ITEM_DB.items.get(armor as usize - 1) {
+                            _ => match item_db.items.get(armor as usize - 1) {
                                 Some(item) => item.spec1,
                                 None => 0,
                             },
                         },
                         hat: match hat {
                             0 => 0,
-                            _ => match ITEM_DB.items.get(hat as usize - 1) {
+                            _ => match item_db.items.get(hat as usize - 1) {
                                 Some(item) => item.spec1,
                                 None => 0,
                             },
                         },
                         shield: match shield {
                             0 => 0,
-                            _ => match ITEM_DB.items.get(shield as usize - 1) {
+                            _ => match item_db.items.get(shield as usize - 1) {
                                 Some(item) => item.spec1,
                                 None => 0,
                             },
                         },
                         weapon: match weapon {
                             0 => 0,
-                            _ => match ITEM_DB.items.get(weapon as usize - 1) {
+                            _ => match item_db.items.get(weapon as usize - 1) {
                                 Some(item) => item.spec1,
                                 None => 0,
                             },

@@ -17,7 +17,6 @@ use eolib::protocol::r#pub::{
 };
 use eoplus::Quest;
 use once_cell::sync::Lazy;
-use lazy_static::lazy_static;
 
 #[macro_use]
 mod utils;
@@ -65,38 +64,67 @@ use crate::{
     },
 };
 
-static SETTINGS: Lazy<ArcSwap<Settings>> = Lazy::new(|| {
-    ArcSwap::from_pointee(Settings::new().expect("Failed to load settings"))
+static SETTINGS: Lazy<ArcSwap<Settings>> =
+    Lazy::new(|| ArcSwap::from_pointee(Settings::new().expect("Failed to load settings")));
+
+static ARENAS: Lazy<ArcSwap<Arenas>> =
+    Lazy::new(|| ArcSwap::from_pointee(Arenas::new().expect("Failed to load arenas")));
+
+static PACKET_RATE_LIMITS: Lazy<ArcSwap<PacketRateLimits>> = Lazy::new(|| {
+    ArcSwap::from_pointee(PacketRateLimits::new().expect("Failed to load packet rate limits!"))
 });
 
-static ARENAS: Lazy<ArcSwap<Arenas>> = Lazy::new(|| {
-    ArcSwap::from_pointee(Arenas::new().expect("Failed to load arenas"))
+static COMMANDS: Lazy<ArcSwap<Commands>> =
+    Lazy::new(|| ArcSwap::from_pointee(Commands::new().expect("Failed to load commands!")));
+
+static PLAYER_COMMANDS: Lazy<ArcSwap<PlayerCommands>> = Lazy::new(|| {
+    ArcSwap::from_pointee(PlayerCommands::new().expect("Failed to load player commands!"))
 });
 
-lazy_static! {
-    static ref PACKET_RATE_LIMITS: PacketRateLimits =
-        PacketRateLimits::new().expect("Failed to load packet rate limits!");
-    static ref COMMANDS: Commands = Commands::new().expect("Failed to load commands!");
-    static ref PLAYER_COMMANDS: PlayerCommands =
-        PlayerCommands::new().expect("Failed to load player commands!");
-    static ref FORMULAS: Formulas = Formulas::new().expect("Failed to load formulas!");
-    static ref LANG: Lang = Lang::new().expect("Failed to load lang!");
-    static ref EMAILS: Emails = Emails::new().expect("Failed to load emails!");
-    static ref GLOBAL_DROPS: GlobalDrops =
-        GlobalDrops::new().expect("Failed to load global drops!");
-    static ref CLASS_DB: Ecf = load_class_file().expect("Failed to load ECF file!");
-    static ref DROP_DB: DropFile = load_drop_file().expect("Failed to load Drop file!");
-    static ref INN_DB: InnFile = load_inn_file().expect("Failed to load Inn file!");
-    static ref ITEM_DB: Eif = load_item_file().expect("Failed to load EIF file!");
-    static ref NPC_DB: Enf = load_npc_file().expect("Failed to load ENF file!");
-    static ref SHOP_DB: ShopFile = load_shop_file().expect("Failed to load Shop file!");
-    static ref SKILL_MASTER_DB: SkillMasterFile =
-        load_skill_master_file().expect("Failed to load Skill Master file!");
-    static ref SPELL_DB: Esf = load_spell_file().expect("Failed to load ESF file!");
-    static ref TALK_DB: TalkFile = load_talk_file().expect("Failed to load Talk file!");
-    static ref QUEST_DB: HashMap<i32, Quest> = load_quests();
-    static ref EXP_TABLE: [i32; 254] = load_exp_table();
-}
+static FORMULAS: Lazy<ArcSwap<Formulas>> =
+    Lazy::new(|| ArcSwap::from_pointee(Formulas::new().expect("Failed to load formulas!")));
+
+static LANG: Lazy<ArcSwap<Lang>> =
+    Lazy::new(|| ArcSwap::from_pointee(Lang::new().expect("Failed to load lang!")));
+
+static EMAILS: Lazy<ArcSwap<Emails>> =
+    Lazy::new(|| ArcSwap::from_pointee(Emails::new().expect("Failed to load emails!")));
+
+static GLOBAL_DROPS: Lazy<ArcSwap<GlobalDrops>> =
+    Lazy::new(|| ArcSwap::from_pointee(GlobalDrops::new().expect("Failed to load global drops!")));
+
+static CLASS_DB: Lazy<ArcSwap<Ecf>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_class_file().expect("Failed to load ECF file!")));
+
+static DROP_DB: Lazy<ArcSwap<DropFile>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_drop_file().expect("Failed to load Drop file!")));
+
+static INN_DB: Lazy<ArcSwap<InnFile>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_inn_file().expect("Failed to load Inn file!")));
+
+static ITEM_DB: Lazy<ArcSwap<Eif>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_item_file().expect("Failed to load EIF file!")));
+
+static NPC_DB: Lazy<ArcSwap<Enf>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_npc_file().expect("Failed to load ENF file!")));
+
+static SHOP_DB: Lazy<ArcSwap<ShopFile>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_shop_file().expect("Failed to load Shop file!")));
+
+static SKILL_MASTER_DB: Lazy<ArcSwap<SkillMasterFile>> = Lazy::new(|| {
+    ArcSwap::from_pointee(load_skill_master_file().expect("Failed to load Skill Master file!"))
+});
+
+static SPELL_DB: Lazy<ArcSwap<Esf>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_spell_file().expect("Failed to load ESF file!")));
+
+static TALK_DB: Lazy<ArcSwap<TalkFile>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_talk_file().expect("Failed to load Talk file!")));
+
+static QUEST_DB: Lazy<ArcSwap<HashMap<i32, Quest>>> =
+    Lazy::new(|| ArcSwap::from_pointee(load_quests()));
+
+static EXP_TABLE: Lazy<ArcSwap<[i32; 254]>> = Lazy::new(|| ArcSwap::from_pointee(load_exp_table()));
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -163,11 +191,16 @@ async fn main() -> anyhow::Result<()> {
         tracing::info!("Guilds: {}", row.get_int(3).unwrap_or(0));
     }
 
-    tracing::info!("Classes: {}", CLASS_DB.classes.len());
-    tracing::info!("Items: {}", ITEM_DB.items.len());
-    tracing::info!("NPCs: {}", NPC_DB.npcs.len());
-    tracing::info!("Skills: {}", SPELL_DB.skills.len());
-    tracing::info!("Quests: {}", QUEST_DB.len());
+    let class_db = CLASS_DB.load();
+    let item_db = ITEM_DB.load();
+    let npc_db = NPC_DB.load();
+    let spell_db = SPELL_DB.load();
+    let quest_db = QUEST_DB.load();
+    tracing::info!("Classes: {}", class_db.classes.len());
+    tracing::info!("Items: {}", item_db.items.len());
+    tracing::info!("NPCs: {}", npc_db.npcs.len());
+    tracing::info!("Skills: {}", spell_db.skills.len());
+    tracing::info!("Quests: {}", quest_db.len());
 
     let world = WorldHandle::new(db.clone());
     {
@@ -178,7 +211,9 @@ async fn main() -> anyhow::Result<()> {
             .expect("Failed to load maps. Timeout");
     }
 
-    let mut tick_interval = time::interval(Duration::from_millis(SETTINGS.load().world.tick_rate as u64));
+    let mut tick_interval = time::interval(Duration::from_millis(
+        SETTINGS.load().world.tick_rate as u64,
+    ));
     let tick_world = world.clone();
     tokio::spawn(async move {
         loop {
@@ -188,8 +223,9 @@ async fn main() -> anyhow::Result<()> {
     });
 
     if SETTINGS.load().server.save_rate > 0 {
-        let mut save_interval =
-            time::interval(Duration::from_secs(SETTINGS.load().server.save_rate as u64 * 60));
+        let mut save_interval = time::interval(Duration::from_secs(
+            SETTINGS.load().server.save_rate as u64 * 60,
+        ));
         let save_world = world.clone();
         tokio::spawn(async move {
             loop {
@@ -200,7 +236,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     if SETTINGS.load().sln.enabled {
-        let mut sln_interval = time::interval(Duration::from_secs(SETTINGS.load().sln.rate as u64 * 60));
+        let mut sln_interval =
+            time::interval(Duration::from_secs(SETTINGS.load().sln.rate as u64 * 60));
         tokio::spawn(async move {
             loop {
                 sln_interval.tick().await;
@@ -209,13 +246,17 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    let tcp_listener =
-        TcpListener::bind(format!("{}:{}", SETTINGS.load().server.host, SETTINGS.load().server.port))
-            .await
-            .unwrap();
+    let tcp_listener = TcpListener::bind(format!(
+        "{}:{}",
+        SETTINGS.load().server.host,
+        SETTINGS.load().server.port
+    ))
+    .await
+    .unwrap();
     tracing::info!(
         "listening at {}:{}",
-        SETTINGS.load().server.host, SETTINGS.load().server.port
+        SETTINGS.load().server.host,
+        SETTINGS.load().server.port
     );
 
     let mut websocket_listener = None;
@@ -223,7 +264,8 @@ async fn main() -> anyhow::Result<()> {
         websocket_listener = Some(
             TcpListener::bind(format!(
                 "{}:{}",
-                SETTINGS.load().server.host, SETTINGS.load().server.websocket_port
+                SETTINGS.load().server.host,
+                SETTINGS.load().server.websocket_port
             ))
             .await
             .unwrap(),
@@ -231,7 +273,8 @@ async fn main() -> anyhow::Result<()> {
 
         tracing::info!(
             "listening for websockets at {}:{}",
-            SETTINGS.load().server.host, SETTINGS.load().server.websocket_port
+            SETTINGS.load().server.host,
+            SETTINGS.load().server.websocket_port
         );
     }
 
@@ -285,7 +328,9 @@ async fn main() -> anyhow::Result<()> {
             {
                 tracing::warn!(
                     "{} has been disconnected because there are already {} connections from {}",
-                    addr, num_of_connections, ip
+                    addr,
+                    num_of_connections,
+                    ip
                 );
                 continue;
             }
@@ -383,7 +428,9 @@ async fn main() -> anyhow::Result<()> {
                 {
                     tracing::warn!(
                         "{} has been disconnected because there are already {} connections from {}",
-                        addr, num_of_connections, ip
+                        addr,
+                        num_of_connections,
+                        ip
                     );
                     continue;
                 }

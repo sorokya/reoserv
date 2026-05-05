@@ -11,7 +11,11 @@ impl Character {
         let original_hp = self.hp;
         let original_max_hp = self.max_hp;
 
-        let class = &CLASS_DB.classes[(self.class - 1) as usize];
+        let class_db = CLASS_DB.load();
+        let formulas = FORMULAS.load();
+        let item_db = ITEM_DB.load();
+
+        let class = &class_db.classes[(self.class - 1) as usize];
 
         self.adj_strength = self.base_strength + class.str;
         self.adj_intelligence = self.base_intelligence + class.intl;
@@ -35,7 +39,7 @@ impl Character {
                 continue;
             }
 
-            let record = &ITEM_DB.items[(item.id - 1) as usize];
+            let record = &item_db.items[(item.id - 1) as usize];
             self.weight += record.weight * item.amount;
         }
 
@@ -62,7 +66,7 @@ impl Character {
                 continue;
             }
 
-            let item = &ITEM_DB.items[(item_id - 1) as usize];
+            let item = &item_db.items[(item_id - 1) as usize];
             self.weight += item.weight;
             self.max_hp += item.hp;
             self.max_tp += item.tp;
@@ -101,7 +105,7 @@ impl Character {
             }
         };
 
-        self.max_hp += match eval_float_with_context(&FORMULAS.hp, &context) {
+        self.max_hp += match eval_float_with_context(&formulas.hp, &context) {
             Ok(max_hp) => cmp::min(max_hp.floor() as i32, 64000),
             Err(e) => {
                 tracing::error!("Failed to calculate max_hp: {}", e);
@@ -109,7 +113,7 @@ impl Character {
             }
         };
 
-        self.max_tp += match eval_float_with_context(&FORMULAS.tp, &context) {
+        self.max_tp += match eval_float_with_context(&formulas.tp, &context) {
             Ok(max_tp) => cmp::min(max_tp.floor() as i32, 64000),
             Err(e) => {
                 tracing::error!("Failed to calculate max_tp: {}", e);
@@ -117,7 +121,7 @@ impl Character {
             }
         };
 
-        self.max_sp += match eval_float_with_context(&FORMULAS.sp, &context) {
+        self.max_sp += match eval_float_with_context(&formulas.sp, &context) {
             Ok(max_sp) => cmp::min(max_sp.floor() as i32, 64000),
             Err(e) => {
                 tracing::error!("Failed to calculate max_sp: {}", e);
@@ -125,7 +129,7 @@ impl Character {
             }
         };
 
-        self.max_weight = match eval_float_with_context(&FORMULAS.max_weight, &context) {
+        self.max_weight = match eval_float_with_context(&formulas.max_weight, &context) {
             Ok(max_weight) => cmp::min(max_weight.floor() as i32, 250),
             Err(e) => {
                 tracing::error!("Failed to calculate max_weight: {}", e);
@@ -133,7 +137,7 @@ impl Character {
             }
         };
 
-        let class_formulas = &FORMULAS.classes[class.stat_group as usize];
+        let class_formulas = &formulas.classes[class.stat_group as usize];
         let damage = match eval_float_with_context(&class_formulas.damage, &context) {
             Ok(damage) => damage.floor() as i32,
             Err(e) => {

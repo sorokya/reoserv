@@ -22,7 +22,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -52,9 +53,13 @@ impl Map {
         }
 
         if character.is_deep {
-            writer.add_short(SETTINGS.load().character.max_hair_style).unwrap();
+            writer
+                .add_short(SETTINGS.load().character.max_hair_style)
+                .unwrap();
             writer.add_short(SETTINGS.load().barber.base_cost).unwrap();
-            writer.add_short(SETTINGS.load().barber.cost_per_level).unwrap();
+            writer
+                .add_short(SETTINGS.load().barber.cost_per_level)
+                .unwrap();
         }
 
         player.send_buf(

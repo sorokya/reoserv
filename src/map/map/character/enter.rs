@@ -47,7 +47,8 @@ impl Map {
             && let Some(player) = &character.player
         {
             for npc in self.npcs.iter().filter(|npc| {
-                let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                let npc_db = NPC_DB.load();
+                let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                     Some(npc) => npc,
                     None => return false,
                 };

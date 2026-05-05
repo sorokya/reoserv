@@ -369,9 +369,9 @@ impl Player {
         if let Err(e) = send_email(
             &email,
             &create.account_name,
-            &get_lang_string!(&EMAILS.recovery.subject, name = create.account_name),
+            &get_lang_string!(&EMAILS.load().recovery.subject, name = create.account_name),
             &get_lang_string!(
-                &EMAILS.recovery.body,
+                &EMAILS.load().recovery.body,
                 name = create.account_name,
                 code = code
             ),

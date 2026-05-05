@@ -41,7 +41,8 @@ impl Map {
             return;
         }
 
-        let record = match ITEM_DB.items.get(item.id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let record = match item_db.items.get(item.id as usize - 1) {
             Some(record) => record,
             None => return,
         };

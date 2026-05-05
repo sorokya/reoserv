@@ -2457,7 +2457,6 @@ dependencies = [
  "futures",
  "glob",
  "hex",
- "lazy_static",
  "mail-send",
  "mimalloc",
  "mysql_async",

@@ -24,7 +24,8 @@ impl Map {
             None => return,
         };
 
-        let bank_size = SETTINGS.load().bank.base_size + character.bank_level * SETTINGS.load().bank.size_step;
+        let bank_size =
+            SETTINGS.load().bank.base_size + character.bank_level * SETTINGS.load().bank.size_step;
         if character.bank.len() as i32 >= bank_size {
             if let Some(player) = character.player.as_ref() {
                 player.send(

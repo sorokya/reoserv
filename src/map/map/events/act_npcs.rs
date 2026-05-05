@@ -26,7 +26,8 @@ use super::super::Map;
 
 impl Map {
     fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateChat> {
-        let talk_record = TALK_DB.npcs.iter().find(|record| record.npc_id == npc_id)?;
+        let talk_db = TALK_DB.load();
+        let talk_record = talk_db.npcs.iter().find(|record| record.npc_id == npc_id)?;
 
         let npc = self.npcs.iter_mut().find(|npc| npc.index == index)?;
 
@@ -158,7 +159,8 @@ impl Map {
 
     // TODO: Party stuff
     fn npc_get_chase_target_player_id(&self, index: i32, npc_id: i32) -> Option<i32> {
-        let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
+        let npc_db = NPC_DB.load();
+        let npc_data = npc_db.npcs.get(npc_id as usize - 1)?;
 
         let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
@@ -224,7 +226,8 @@ impl Map {
         if let Some(opponent) = adjacent_opponent {
             Some(opponent.player_id)
         } else {
-            let npc_data = NPC_DB.npcs.get(npc.id as usize - 1)?;
+            let npc_db = NPC_DB.load();
+            let npc_data = npc_db.npcs.get(npc.id as usize - 1)?;
 
             // TODO: also attack adjacent players if blocking path to opponent(s)
             // Choose a random player if npc is aggressive
@@ -254,7 +257,8 @@ impl Map {
             self.npcs
                 .iter_mut()
                 .find(|npc| npc.index == index)?
-                .walk_idle_for = Some(rng.random_range(1..=4) * 1000 / SETTINGS.load().world.tick_rate);
+                .walk_idle_for =
+                Some(rng.random_range(1..=4) * 1000 / SETTINGS.load().world.tick_rate);
             return None;
         }
 
@@ -303,7 +307,8 @@ impl Map {
 
         let idle_rate = act_rate + walk_idle_for;
 
-        let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
+        let npc_db = NPC_DB.load();
+        let npc_data = npc_db.npcs.get(npc_id as usize - 1)?;
 
         if npc_data.r#type == NpcType::Aggressive || has_opponent {
             self.act_npc_move_chase(index, npc_id, npc_data.r#type)
@@ -322,7 +327,8 @@ impl Map {
 
             let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
-            let npc_data = NPC_DB.npcs.get(npc_id as usize - 1)?;
+            let npc_db = NPC_DB.load();
+            let npc_data = npc_db.npcs.get(npc_id as usize - 1)?;
 
             let xdiff = npc.coords.x - character.coords.x;
             let ydiff = npc.coords.y - character.coords.y;
@@ -448,7 +454,9 @@ impl Map {
     }
 
     pub fn act_npcs(&mut self) {
-        if self.npcs.is_empty() || SETTINGS.load().npcs.freeze_on_empty_map && self.characters.is_empty() {
+        if self.npcs.is_empty()
+            || SETTINGS.load().npcs.freeze_on_empty_map && self.characters.is_empty()
+        {
             return;
         }
 
@@ -564,6 +572,7 @@ impl Map {
 }
 
 fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> i32 {
+    let formulas = FORMULAS.load();
     let mut rng = rand::rng();
     let rand = rng.random_range(0.0..=1.0);
 
@@ -587,7 +596,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
         }
     };
 
-    let hit_rate = match eval_float_with_context(&FORMULAS.hit_rate, &context) {
+    let hit_rate = match eval_float_with_context(&formulas.hit_rate, &context) {
         Ok(hit_rate) => hit_rate,
         Err(e) => {
             tracing::error!("Failed to calculate hit rate: {}", e);
@@ -599,7 +608,7 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
         return 0;
     }
 
-    match eval_float_with_context(&FORMULAS.damage, &context) {
+    match eval_float_with_context(&formulas.damage, &context) {
         Ok(amount) => cmp::min(amount.floor() as i32, character.hp),
         Err(e) => {
             tracing::error!("Failed to calculate damage: {}", e);

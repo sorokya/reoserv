@@ -19,12 +19,15 @@ impl Map {
             let mut npc_index: i32 = 0;
 
             for (spawn_index, spawn) in self.file.npcs.iter().enumerate() {
-                let data_record = match NPC_DB.npcs.get(spawn.id as usize - 1) {
+                let npc_db = NPC_DB.load();
+                let data_record = match npc_db.npcs.get(spawn.id as usize - 1) {
                     Some(npc) => npc,
                     None => {
                         tracing::error!(
                             "Failed to load NPC {} (Map: {}, Coords: {:?})",
-                            spawn.id, self.id, spawn.coords,
+                            spawn.id,
+                            self.id,
+                            spawn.coords,
                         );
                         continue;
                     }
@@ -72,7 +75,8 @@ impl Map {
                         npc.spawn_ticks = cmp::max(npc.spawn_ticks - 1, 0);
 
                         let spawn = &self.file.npcs[spawn_index];
-                        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+                        let npc_db = NPC_DB.load();
+                        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
                             Some(npc_data) => npc_data,
                             None => continue,
                         };

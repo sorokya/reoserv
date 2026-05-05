@@ -23,7 +23,7 @@ impl World {
         );
 
         self.broadcast_server_message(&get_lang_string!(
-            &LANG.announce_unfreeze,
+            &LANG.load().announce_unfreeze,
             victim = victim_name,
             name = admin_name
         ));

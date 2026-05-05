@@ -121,7 +121,13 @@ fn map_mysql_value(value: Option<&mysql_async::Value>) -> SqlValue {
             } else {
                 tracing::error!(
                     "Failed to parse date: {}-{}-{} {}:{}:{}.{}",
-                    year, month, day, hour, minutes, seconds, micro_seconds
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minutes,
+                    seconds,
+                    micro_seconds
                 );
                 SqlValue::Null
             }

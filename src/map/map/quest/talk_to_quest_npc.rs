@@ -34,7 +34,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -43,7 +44,8 @@ impl Map {
             return;
         }
 
-        let quests_for_npc = QUEST_DB
+        let quest_db = QUEST_DB.load();
+        let quests_for_npc = quest_db
             .iter()
             .filter(|(id, quest)| {
                 let progress = character.get_quest_progress(**id);

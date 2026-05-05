@@ -21,7 +21,9 @@ impl Map {
             match property.as_str() {
                 "title" => {
                     let title_length = value.chars().count();
-                    if title_length > 0 && title_length <= SETTINGS.load().character.max_title_length {
+                    if title_length > 0
+                        && title_length <= SETTINGS.load().character.max_title_length
+                    {
                         character.title = Some(value);
                     } else {
                         character.title = None;
@@ -106,6 +108,7 @@ impl Map {
                 "class" => {
                     if let Ok(class_id) = value.parse::<i32>()
                         && CLASS_DB
+                            .load()
                             .classes
                             .iter()
                             .enumerate()

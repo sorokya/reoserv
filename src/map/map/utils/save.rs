@@ -195,7 +195,9 @@ impl Map {
                 match Utc.from_local_datetime(&saved_chest_spawn.taken) {
                     chrono::offset::LocalResult::Single(dt) => spawn.last_taken = dt,
                     _ => {
-                        tracing::error!("Failed to convert saved chest spawn last_taken to DateTime<Utc>");
+                        tracing::error!(
+                            "Failed to convert saved chest spawn last_taken to DateTime<Utc>"
+                        );
                     }
                 }
             }

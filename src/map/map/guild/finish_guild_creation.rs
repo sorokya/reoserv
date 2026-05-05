@@ -76,7 +76,8 @@ impl Map {
 
             character.guild_tag = Some(guild_tag.clone());
             character.guild_name = Some(guild_name.clone());
-            character.guild_rank_string = Some(SETTINGS.load().guild.default_new_member_rank_name.clone());
+            character.guild_rank_string =
+                Some(SETTINGS.load().guild.default_new_member_rank_name.clone());
             character.guild_rank = Some(9);
             if let Some(player) = character.player.as_ref() {
                 player.update_guild_tag(&character.guild_tag);

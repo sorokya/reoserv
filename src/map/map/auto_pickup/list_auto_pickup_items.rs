@@ -9,11 +9,12 @@ impl Map {
             None => return,
         };
 
+        let item_db = ITEM_DB.load();
         let items = character
             .auto_pickup_items
             .iter()
             .filter_map(|item_id| {
-                ITEM_DB
+                item_db
                     .items
                     .get(*item_id as usize - 1)
                     .map(|item| item.name.as_str())

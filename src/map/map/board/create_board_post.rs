@@ -34,7 +34,8 @@ impl Map {
             return self.open_board(player_id, board_id);
         }
 
-        let subject = if subject.chars().count() > SETTINGS.load().board.max_subject_length as usize {
+        let subject = if subject.chars().count() > SETTINGS.load().board.max_subject_length as usize
+        {
             truncate_to_chars(&subject, SETTINGS.load().board.max_subject_length as usize)
         } else {
             subject

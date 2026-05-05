@@ -182,7 +182,8 @@ impl Map {
                 None => return,
             };
 
-        let npc_data = match NPC_DB.npcs.get(npc_id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc_id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -214,7 +215,7 @@ impl Map {
                     }
                 };
 
-                match eval_float_with_context(&FORMULAS.party_exp_share, &context) {
+                match eval_float_with_context(&FORMULAS.load().party_exp_share, &context) {
                     Ok(experience) => experience as i32,
                     Err(e) => {
                         tracing::error!("Failed to calculate party experience share: {}", e);
@@ -560,8 +561,10 @@ impl Map {
 }
 
 fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
-    let mut drops = GLOBAL_DROPS.drops.iter().collect::<Vec<_>>();
-    if let Some(drop_npc) = DROP_DB.npcs.iter().find(|d| d.npc_id == npc_id) {
+    let global_drops = GLOBAL_DROPS.load();
+    let drop_db = DROP_DB.load();
+    let mut drops = global_drops.drops.iter().collect::<Vec<_>>();
+    if let Some(drop_npc) = drop_db.npcs.iter().find(|d| d.npc_id == npc_id) {
         drops.extend(drop_npc.drops.iter());
     }
 

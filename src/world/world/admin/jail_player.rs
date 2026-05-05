@@ -23,7 +23,7 @@ impl World {
         }
 
         self.broadcast_server_message(&get_lang_string!(
-            &LANG.announce_remove,
+            &LANG.load().announce_remove,
             victim = victim_name,
             name = admin_name,
             method = "jailed"

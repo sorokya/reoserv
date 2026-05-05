@@ -48,7 +48,8 @@ impl Map {
             return;
         }
 
-        let item = match ITEM_DB.items.get(item_id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let item = match item_db.items.get(item_id as usize - 1) {
             Some(item) => item,
             None => {
                 return;
@@ -99,7 +100,12 @@ impl Map {
 
                 let (map_id, coords) = {
                     match item.spec1 {
-                        0 => match INN_DB.inns.iter().find(|inn| inn.name == character.home) {
+                        0 => match INN_DB
+                            .load()
+                            .inns
+                            .iter()
+                            .find(|inn| inn.name == character.home)
+                        {
                             Some(inn) => (
                                 inn.spawn_map,
                                 Coords {
@@ -209,7 +215,7 @@ impl Map {
                 }
             }
             ItemType::Reserved7 => {
-                if SPELL_DB.skills.len() < item.spec1 as usize {
+                if SPELL_DB.load().skills.len() < item.spec1 as usize {
                     return;
                 }
 
@@ -224,7 +230,8 @@ impl Map {
                         continue;
                     }
 
-                    let item = match ITEM_DB.items.get(*item_id as usize - 1) {
+                    let item_db = ITEM_DB.load();
+                    let item = match item_db.items.get(*item_id as usize - 1) {
                         Some(item) => item,
                         None => {
                             continue;

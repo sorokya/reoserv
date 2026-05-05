@@ -13,7 +13,7 @@ impl Map {
             None => return,
         };
 
-        if ITEM_DB.items.get(item_id as usize - 1).is_none() {
+        if ITEM_DB.load().items.get(item_id as usize - 1).is_none() {
             return;
         }
 

@@ -140,7 +140,8 @@ impl Player {
     }
 
     fn check_timestamp(&mut self, spell_id: i32, timestamp: i32) -> bool {
-        let spell = match SPELL_DB.skills.get(spell_id as usize - 1) {
+        let spell_db = SPELL_DB.load();
+        let spell = match spell_db.skills.get(spell_id as usize - 1) {
             Some(spell) => spell,
             None => return false,
         };

@@ -24,7 +24,16 @@ pub struct Command {
 
 #[derive(Debug, Deserialize)]
 pub struct PlayerCommands {
+    #[serde(default)]
     pub commands: Vec<Command>,
+}
+
+impl Default for PlayerCommands {
+    fn default() -> Self {
+        Self {
+            commands: vec![],
+        }
+    }
 }
 
 impl PlayerCommands {
@@ -35,5 +44,9 @@ impl PlayerCommands {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

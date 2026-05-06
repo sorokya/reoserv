@@ -10,7 +10,16 @@ pub struct PacketRateLimit {
 
 #[derive(Debug, Deserialize)]
 pub struct PacketRateLimits {
+    #[serde(default)]
     pub packets: Vec<PacketRateLimit>,
+}
+
+impl Default for PacketRateLimits {
+    fn default() -> Self {
+        Self {
+            packets: vec![],
+        }
+    }
 }
 
 impl PacketRateLimits {
@@ -21,5 +30,9 @@ impl PacketRateLimits {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

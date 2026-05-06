@@ -5,7 +5,16 @@ use eolib::{data::THREE_MAX, protocol::r#pub::server::DropRecord};
 
 #[derive(Debug, Deserialize)]
 pub struct GlobalDrops {
+    #[serde(default)]
     pub drops: Vec<DropRecord>,
+}
+
+impl Default for GlobalDrops {
+    fn default() -> Self {
+        Self {
+            drops: vec![],
+        }
+    }
 }
 
 impl GlobalDrops {
@@ -33,5 +42,9 @@ impl GlobalDrops {
         }
 
         Ok(s)
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

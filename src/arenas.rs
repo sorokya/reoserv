@@ -22,7 +22,16 @@ pub struct ArenaCoords {
 
 #[derive(Debug, Deserialize)]
 pub struct Arenas {
+    #[serde(default)]
     pub arenas: Vec<Arena>,
+}
+
+impl Default for Arenas {
+    fn default() -> Self {
+        Self {
+            arenas: vec![],
+        }
+    }
 }
 
 impl Arenas {
@@ -33,5 +42,9 @@ impl Arenas {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

@@ -23,16 +23,15 @@ pub fn spawn_dir_watcher<T: Send + Sync + 'static>(
 ) {
     let (tx, mut rx) = mpsc::unbounded_channel::<Event>();
 
-    let mut watcher: RecommendedWatcher =
-        RecommendedWatcher::new(
-            move |res: Result<Event, notify::Error>| {
-                if let Ok(event) = res {
-                    let _ = tx.send(event);
-                }
-            },
-            notify::Config::default(),
-        )
-        .expect("Failed to create config dir watcher");
+    let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
+        move |res: Result<Event, notify::Error>| {
+            if let Ok(event) = res {
+                let _ = tx.send(event);
+            }
+        },
+        notify::Config::default(),
+    )
+    .expect("Failed to create config dir watcher");
 
     if dir.exists() {
         watcher
@@ -82,21 +81,18 @@ pub fn spawn_dir_watcher<T: Send + Sync + 'static>(
     });
 }
 
-pub fn spawn_lang_watcher(
-    arc_swap: &'static Lazy<ArcSwap<crate::lang::Lang>>,
-) {
+pub fn spawn_lang_watcher(arc_swap: &'static Lazy<ArcSwap<crate::lang::Lang>>) {
     let (tx, mut rx) = mpsc::unbounded_channel::<Event>();
 
-    let mut watcher: RecommendedWatcher =
-        RecommendedWatcher::new(
-            move |res: Result<Event, notify::Error>| {
-                if let Ok(event) = res {
-                    let _ = tx.send(event);
-                }
-            },
-            notify::Config::default(),
-        )
-        .expect("Failed to create lang dir watcher");
+    let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
+        move |res: Result<Event, notify::Error>| {
+            if let Ok(event) = res {
+                let _ = tx.send(event);
+            }
+        },
+        notify::Config::default(),
+    )
+    .expect("Failed to create lang dir watcher");
 
     let lang_dir = PathBuf::from("config/lang");
     if lang_dir.exists() {
@@ -157,16 +153,15 @@ pub fn spawn_map_watcher(world: WorldHandle) {
     let (tx, mut rx) = mpsc::unbounded_channel::<Event>();
 
     let dir = PathBuf::from("data/maps");
-    let mut watcher: RecommendedWatcher =
-        RecommendedWatcher::new(
-            move |res: Result<Event, notify::Error>| {
-                if let Ok(event) = res {
-                    let _ = tx.send(event);
-                }
-            },
-            notify::Config::default(),
-        )
-        .expect("Failed to create map dir watcher");
+    let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
+        move |res: Result<Event, notify::Error>| {
+            if let Ok(event) = res {
+                let _ = tx.send(event);
+            }
+        },
+        notify::Config::default(),
+    )
+    .expect("Failed to create map dir watcher");
 
     if dir.exists() {
         watcher

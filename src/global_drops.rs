@@ -11,9 +11,7 @@ pub struct GlobalDrops {
 
 impl Default for GlobalDrops {
     fn default() -> Self {
-        Self {
-            drops: vec![],
-        }
+        Self { drops: vec![] }
     }
 }
 

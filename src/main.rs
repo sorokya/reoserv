@@ -472,48 +472,23 @@ async fn main() -> anyhow::Result<()> {
     }
 
     tracing::debug!("Config file watchers started");
-    config_watcher::spawn_dir_watcher(
-        "config".into(),
-        &SETTINGS,
-        Settings::reload,
-        "Settings",
-    );
-    config_watcher::spawn_dir_watcher(
-        "config".into(),
-        &ARENAS,
-        Arenas::reload,
-        "Arenas",
-    );
+    config_watcher::spawn_dir_watcher("config".into(), &SETTINGS, Settings::reload, "Settings");
+    config_watcher::spawn_dir_watcher("config".into(), &ARENAS, Arenas::reload, "Arenas");
     config_watcher::spawn_dir_watcher(
         "config".into(),
         &PACKET_RATE_LIMITS,
         PacketRateLimits::reload,
         "PacketRateLimits",
     );
-    config_watcher::spawn_dir_watcher(
-        "config".into(),
-        &COMMANDS,
-        Commands::reload,
-        "Commands",
-    );
+    config_watcher::spawn_dir_watcher("config".into(), &COMMANDS, Commands::reload, "Commands");
     config_watcher::spawn_dir_watcher(
         "config".into(),
         &PLAYER_COMMANDS,
         PlayerCommands::reload,
         "PlayerCommands",
     );
-    config_watcher::spawn_dir_watcher(
-        "config".into(),
-        &FORMULAS,
-        Formulas::reload,
-        "Formulas",
-    );
-    config_watcher::spawn_dir_watcher(
-        "config".into(),
-        &EMAILS,
-        Emails::reload,
-        "Emails",
-    );
+    config_watcher::spawn_dir_watcher("config".into(), &FORMULAS, Formulas::reload, "Formulas");
+    config_watcher::spawn_dir_watcher("config".into(), &EMAILS, Emails::reload, "Emails");
     config_watcher::spawn_dir_watcher(
         "config".into(),
         &GLOBAL_DROPS,

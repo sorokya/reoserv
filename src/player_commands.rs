@@ -30,9 +30,7 @@ pub struct PlayerCommands {
 
 impl Default for PlayerCommands {
     fn default() -> Self {
-        Self {
-            commands: vec![],
-        }
+        Self { commands: vec![] }
     }
 }
 

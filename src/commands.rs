@@ -32,9 +32,7 @@ pub struct Commands {
 
 impl Default for Commands {
     fn default() -> Self {
-        Self {
-            commands: vec![],
-        }
+        Self { commands: vec![] }
     }
 }
 

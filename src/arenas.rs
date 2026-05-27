@@ -28,9 +28,7 @@ pub struct Arenas {
 
 impl Default for Arenas {
     fn default() -> Self {
-        Self {
-            arenas: vec![],
-        }
+        Self { arenas: vec![] }
     }
 }
 

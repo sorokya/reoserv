@@ -16,9 +16,7 @@ pub struct PacketRateLimits {
 
 impl Default for PacketRateLimits {
     fn default() -> Self {
-        Self {
-            packets: vec![],
-        }
+        Self { packets: vec![] }
     }
 }
 

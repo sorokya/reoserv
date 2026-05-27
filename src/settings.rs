@@ -38,23 +38,57 @@ pub struct Server {
     pub auto_admin: bool,
 }
 
-fn default_server_host() -> String { "0.0.0.0".to_string() }
-fn default_server_port() -> String { "8078".to_string() }
-fn default_server_websocket_port() -> String { "".to_string() }
-fn default_server_max_connections() -> i32 { 300 }
-fn default_server_max_players() -> i32 { 200 }
-fn default_server_max_connections_per_ip() -> i32 { 3 }
-fn default_server_ip_reconnect_limit() -> i32 { 10 }
-fn default_server_hangup_delay() -> i32 { 10 }
-fn default_server_max_login_attempts() -> i32 { 3 }
-fn default_server_ping_rate() -> i32 { 60 }
-fn default_server_enforce_sequence() -> bool { true }
-fn default_server_min_version() -> String { "0.0.28".to_string() }
-fn default_server_max_version() -> String { "0.3.29".to_string() }
-fn default_server_save_rate() -> i32 { 5 }
-fn default_server_generate_pub() -> bool { false }
-fn default_server_lang() -> String { "en".to_string() }
-fn default_server_auto_admin() -> bool { true }
+fn default_server_host() -> String {
+    "0.0.0.0".to_string()
+}
+fn default_server_port() -> String {
+    "8078".to_string()
+}
+fn default_server_websocket_port() -> String {
+    "".to_string()
+}
+fn default_server_max_connections() -> i32 {
+    300
+}
+fn default_server_max_players() -> i32 {
+    200
+}
+fn default_server_max_connections_per_ip() -> i32 {
+    3
+}
+fn default_server_ip_reconnect_limit() -> i32 {
+    10
+}
+fn default_server_hangup_delay() -> i32 {
+    10
+}
+fn default_server_max_login_attempts() -> i32 {
+    3
+}
+fn default_server_ping_rate() -> i32 {
+    60
+}
+fn default_server_enforce_sequence() -> bool {
+    true
+}
+fn default_server_min_version() -> String {
+    "0.0.28".to_string()
+}
+fn default_server_max_version() -> String {
+    "0.3.29".to_string()
+}
+fn default_server_save_rate() -> i32 {
+    5
+}
+fn default_server_generate_pub() -> bool {
+    false
+}
+fn default_server_lang() -> String {
+    "en".to_string()
+}
+fn default_server_auto_admin() -> bool {
+    true
+}
 
 impl Default for Server {
     fn default() -> Self {
@@ -96,12 +130,24 @@ pub struct Database {
     pub password: String,
 }
 
-fn default_database_driver() -> String { "sqlite".to_string() }
-fn default_database_host() -> String { "127.0.0.1".to_string() }
-fn default_database_port() -> String { "3306".to_string() }
-fn default_database_name() -> String { "reoserv".to_string() }
-fn default_database_username() -> String { "reoserv".to_string() }
-fn default_database_password() -> String { "reoserv".to_string() }
+fn default_database_driver() -> String {
+    "sqlite".to_string()
+}
+fn default_database_host() -> String {
+    "127.0.0.1".to_string()
+}
+fn default_database_port() -> String {
+    "3306".to_string()
+}
+fn default_database_name() -> String {
+    "reoserv".to_string()
+}
+fn default_database_username() -> String {
+    "reoserv".to_string()
+}
+fn default_database_password() -> String {
+    "reoserv".to_string()
+}
 
 impl Default for Database {
     fn default() -> Self {
@@ -130,11 +176,21 @@ pub struct NewCharacter {
     pub home: String,
 }
 
-fn default_new_character_spawn_map() -> i32 { 192 }
-fn default_new_character_spawn_x() -> i32 { 6 }
-fn default_new_character_spawn_y() -> i32 { 6 }
-fn default_new_character_spawn_direction() -> i32 { 0 }
-fn default_new_character_home() -> String { "Wanderer".to_string() }
+fn default_new_character_spawn_map() -> i32 {
+    192
+}
+fn default_new_character_spawn_x() -> i32 {
+    6
+}
+fn default_new_character_spawn_y() -> i32 {
+    6
+}
+fn default_new_character_spawn_direction() -> i32 {
+    0
+}
+fn default_new_character_home() -> String {
+    "Wanderer".to_string()
+}
 
 impl Default for NewCharacter {
     fn default() -> Self {
@@ -164,12 +220,24 @@ pub struct Character {
     pub max_hair_style: i32,
 }
 
-fn default_character_min_name_length() -> usize { 3 }
-fn default_character_max_name_length() -> usize { 12 }
-fn default_character_max_title_length() -> usize { 32 }
-fn default_character_max_skin() -> i32 { 11 }
-fn default_character_max_hair_color() -> i32 { 9 }
-fn default_character_max_hair_style() -> i32 { 20 }
+fn default_character_min_name_length() -> usize {
+    3
+}
+fn default_character_max_name_length() -> usize {
+    12
+}
+fn default_character_max_title_length() -> usize {
+    32
+}
+fn default_character_max_skin() -> i32 {
+    11
+}
+fn default_character_max_hair_color() -> i32 {
+    9
+}
+fn default_character_max_hair_style() -> i32 {
+    20
+}
 
 impl Default for Character {
     fn default() -> Self {
@@ -200,12 +268,24 @@ pub struct Jail {
     pub free_y: i32,
 }
 
-fn default_jail_map() -> i32 { 76 }
-fn default_jail_x() -> i32 { 6 }
-fn default_jail_y() -> i32 { 7 }
-fn default_jail_free_map() -> i32 { 76 }
-fn default_jail_free_x() -> i32 { 9 }
-fn default_jail_free_y() -> i32 { 11 }
+fn default_jail_map() -> i32 {
+    76
+}
+fn default_jail_x() -> i32 {
+    6
+}
+fn default_jail_y() -> i32 {
+    7
+}
+fn default_jail_free_map() -> i32 {
+    76
+}
+fn default_jail_free_x() -> i32 {
+    9
+}
+fn default_jail_free_y() -> i32 {
+    11
+}
 
 impl Default for Jail {
     fn default() -> Self {
@@ -230,9 +310,15 @@ pub struct Rescue {
     pub y: i32,
 }
 
-fn default_rescue_map() -> i32 { 4 }
-fn default_rescue_x() -> i32 { 24 }
-fn default_rescue_y() -> i32 { 24 }
+fn default_rescue_map() -> i32 {
+    4
+}
+fn default_rescue_x() -> i32 {
+    24
+}
+fn default_rescue_y() -> i32 {
+    24
+}
 
 impl Default for Rescue {
     fn default() -> Self {
@@ -288,26 +374,66 @@ pub struct World {
     pub usage_rate: i32,
 }
 
-fn default_world_drop_distance() -> i32 { 2 }
-fn default_world_drop_protect_player() -> i32 { 5 }
-fn default_world_drop_protect_npc() -> i32 { 30 }
-fn default_world_recover_rate() -> i32 { 720 }
-fn default_world_npc_recover_rate() -> i32 { 840 }
-fn default_world_chest_spawn_rate() -> i32 { 480 }
-fn default_world_exp_multiplier() -> i32 { 1 }
-fn default_world_stat_points_per_level() -> i32 { 3 }
-fn default_world_skill_points_per_level() -> i32 { 4 }
-fn default_world_tick_rate() -> i32 { 125 }
-fn default_world_quake_rate() -> i32 { 25 }
-fn default_world_spike_rate() -> i32 { 12 }
-fn default_world_spike_damage() -> f32 { 0.2 }
-fn default_world_drain_rate() -> i32 { 125 }
-fn default_world_drain_hp_damage() -> f32 { 0.1 }
-fn default_world_drain_tp_damage() -> f32 { 0.1 }
-fn default_world_warp_suck_rate() -> i32 { 15 }
-fn default_world_ghost_rate() -> i32 { 5 }
-fn default_world_info_reveals_drops() -> bool { true }
-fn default_world_usage_rate() -> i32 { 60 }
+fn default_world_drop_distance() -> i32 {
+    2
+}
+fn default_world_drop_protect_player() -> i32 {
+    5
+}
+fn default_world_drop_protect_npc() -> i32 {
+    30
+}
+fn default_world_recover_rate() -> i32 {
+    720
+}
+fn default_world_npc_recover_rate() -> i32 {
+    840
+}
+fn default_world_chest_spawn_rate() -> i32 {
+    480
+}
+fn default_world_exp_multiplier() -> i32 {
+    1
+}
+fn default_world_stat_points_per_level() -> i32 {
+    3
+}
+fn default_world_skill_points_per_level() -> i32 {
+    4
+}
+fn default_world_tick_rate() -> i32 {
+    125
+}
+fn default_world_quake_rate() -> i32 {
+    25
+}
+fn default_world_spike_rate() -> i32 {
+    12
+}
+fn default_world_spike_damage() -> f32 {
+    0.2
+}
+fn default_world_drain_rate() -> i32 {
+    125
+}
+fn default_world_drain_hp_damage() -> f32 {
+    0.1
+}
+fn default_world_drain_tp_damage() -> f32 {
+    0.1
+}
+fn default_world_warp_suck_rate() -> i32 {
+    15
+}
+fn default_world_ghost_rate() -> i32 {
+    5
+}
+fn default_world_info_reveals_drops() -> bool {
+    true
+}
+fn default_world_usage_rate() -> i32 {
+    60
+}
 
 impl Default for World {
     fn default() -> Self {
@@ -344,8 +470,12 @@ pub struct Bard {
     pub max_note_id: i32,
 }
 
-fn default_bard_instrument_items() -> Vec<i32> { vec![49, 50] }
-fn default_bard_max_note_id() -> i32 { 36 }
+fn default_bard_instrument_items() -> Vec<i32> {
+    vec![49, 50]
+}
+fn default_bard_max_note_id() -> i32 {
+    36
+}
 
 impl Default for Bard {
     fn default() -> Self {
@@ -386,19 +516,45 @@ pub struct NPCs {
     pub talk_rate: i32,
 }
 
-fn default_npcs_instant_spawn() -> bool { false }
-fn default_npcs_freeze_on_empty_map() -> bool { true }
-fn default_npcs_chase_distance() -> i32 { 10 }
-fn default_npcs_bored_timer() -> i32 { 240 }
-fn default_npcs_act_rate() -> i32 { 5 }
-fn default_npcs_speed_0() -> i32 { 5 }
-fn default_npcs_speed_1() -> i32 { 5 }
-fn default_npcs_speed_2() -> i32 { 10 }
-fn default_npcs_speed_3() -> i32 { 15 }
-fn default_npcs_speed_4() -> i32 { 30 }
-fn default_npcs_speed_5() -> i32 { 60 }
-fn default_npcs_speed_6() -> i32 { 120 }
-fn default_npcs_talk_rate() -> i32 { 300 }
+fn default_npcs_instant_spawn() -> bool {
+    false
+}
+fn default_npcs_freeze_on_empty_map() -> bool {
+    true
+}
+fn default_npcs_chase_distance() -> i32 {
+    10
+}
+fn default_npcs_bored_timer() -> i32 {
+    240
+}
+fn default_npcs_act_rate() -> i32 {
+    5
+}
+fn default_npcs_speed_0() -> i32 {
+    5
+}
+fn default_npcs_speed_1() -> i32 {
+    5
+}
+fn default_npcs_speed_2() -> i32 {
+    10
+}
+fn default_npcs_speed_3() -> i32 {
+    15
+}
+fn default_npcs_speed_4() -> i32 {
+    30
+}
+fn default_npcs_speed_5() -> i32 {
+    60
+}
+fn default_npcs_speed_6() -> i32 {
+    120
+}
+fn default_npcs_talk_rate() -> i32 {
+    300
+}
 
 impl Default for NPCs {
     fn default() -> Self {
@@ -438,10 +594,18 @@ pub struct Sln {
     pub zone: String,
 }
 
-fn default_sln_enabled() -> bool { false }
-fn default_sln_url() -> String { "http://www.apollo-games.com/SLN/sln.php/".to_string() }
-fn default_sln_server_name() -> String { "Untitled Server".to_string() }
-fn default_sln_rate() -> i32 { 5 }
+fn default_sln_enabled() -> bool {
+    false
+}
+fn default_sln_url() -> String {
+    "http://www.apollo-games.com/SLN/sln.php/".to_string()
+}
+fn default_sln_server_name() -> String {
+    "Untitled Server".to_string()
+}
+fn default_sln_rate() -> i32 {
+    5
+}
 
 impl Default for Sln {
     fn default() -> Self {
@@ -473,12 +637,24 @@ pub struct Bank {
     pub upgrade_cost_step: i32,
 }
 
-fn default_bank_max_item_amount() -> i32 { 200 }
-fn default_bank_base_size() -> i32 { 25 }
-fn default_bank_size_step() -> i32 { 5 }
-fn default_bank_max_upgrades() -> i32 { 7 }
-fn default_bank_upgrade_base_cost() -> i32 { 1000 }
-fn default_bank_upgrade_cost_step() -> i32 { 1000 }
+fn default_bank_max_item_amount() -> i32 {
+    200
+}
+fn default_bank_base_size() -> i32 {
+    25
+}
+fn default_bank_size_step() -> i32 {
+    5
+}
+fn default_bank_max_upgrades() -> i32 {
+    7
+}
+fn default_bank_upgrade_base_cost() -> i32 {
+    1000
+}
+fn default_bank_upgrade_cost_step() -> i32 {
+    1000
+}
 
 impl Default for Bank {
     fn default() -> Self {
@@ -507,11 +683,21 @@ pub struct Limits {
     pub max_party_size: i32,
 }
 
-fn default_limits_max_bank_gold() -> i32 { 2_000_000_000 }
-fn default_limits_max_item() -> i32 { 2_000_000_000 }
-fn default_limits_max_trade() -> i32 { 2_000_000_000 }
-fn default_limits_max_chest() -> i32 { 10_000_000 }
-fn default_limits_max_party_size() -> i32 { 9 }
+fn default_limits_max_bank_gold() -> i32 {
+    2_000_000_000
+}
+fn default_limits_max_item() -> i32 {
+    2_000_000_000
+}
+fn default_limits_max_trade() -> i32 {
+    2_000_000_000
+}
+fn default_limits_max_chest() -> i32 {
+    10_000_000
+}
+fn default_limits_max_party_size() -> i32 {
+    9
+}
 
 impl Default for Limits {
     fn default() -> Self {
@@ -533,13 +719,31 @@ pub struct Combat {
     pub enforce_weight: bool,
 }
 
-fn default_combat_enforce_weight() -> bool { true }
+fn default_combat_enforce_weight() -> bool {
+    true
+}
 fn default_combat_weapon_ranges() -> Vec<WeaponRange> {
     vec![
-        WeaponRange { weapon: 297, range: 5, arrows: true },
-        WeaponRange { weapon: 316, range: 5, arrows: true },
-        WeaponRange { weapon: 457, range: 5, arrows: true },
-        WeaponRange { weapon: 365, range: 10, arrows: false },
+        WeaponRange {
+            weapon: 297,
+            range: 5,
+            arrows: true,
+        },
+        WeaponRange {
+            weapon: 316,
+            range: 5,
+            arrows: true,
+        },
+        WeaponRange {
+            weapon: 457,
+            range: 5,
+            arrows: true,
+        },
+        WeaponRange {
+            weapon: 365,
+            range: 10,
+            arrows: false,
+        },
     ]
 }
 
@@ -582,15 +786,33 @@ pub struct Board {
     pub admin_max_posts: i32,
 }
 
-fn default_board_max_posts() -> i32 { 20 }
-fn default_board_max_user_posts() -> i32 { 6 }
-fn default_board_max_recent_posts() -> i32 { 2 }
-fn default_board_recent_post_time() -> i32 { 30 }
-fn default_board_max_subject_length() -> i32 { 32 }
-fn default_board_max_post_length() -> i32 { 2048 }
-fn default_board_date_posts() -> bool { true }
-fn default_board_admin_board() -> i32 { 5 }
-fn default_board_admin_max_posts() -> i32 { 100 }
+fn default_board_max_posts() -> i32 {
+    20
+}
+fn default_board_max_user_posts() -> i32 {
+    6
+}
+fn default_board_max_recent_posts() -> i32 {
+    2
+}
+fn default_board_recent_post_time() -> i32 {
+    30
+}
+fn default_board_max_subject_length() -> i32 {
+    32
+}
+fn default_board_max_post_length() -> i32 {
+    2048
+}
+fn default_board_date_posts() -> bool {
+    true
+}
+fn default_board_admin_board() -> i32 {
+    5
+}
+fn default_board_admin_max_posts() -> i32 {
+    100
+}
 
 impl Default for Board {
     fn default() -> Self {
@@ -614,7 +836,9 @@ pub struct Chest {
     pub slots: i32,
 }
 
-fn default_chest_slots() -> i32 { 5 }
+fn default_chest_slots() -> i32 {
+    5
+}
 
 impl Default for Chest {
     fn default() -> Self {
@@ -655,14 +879,38 @@ pub struct Map {
 
 fn default_map_quakes() -> Vec<Quake> {
     vec![
-        Quake { min_ticks: 3, max_ticks: 29, min_strength: 0, max_strength: 2 },
-        Quake { min_ticks: 3, max_ticks: 22, min_strength: 0, max_strength: 2 },
-        Quake { min_ticks: 3, max_ticks: 15, min_strength: 4, max_strength: 6 },
-        Quake { min_ticks: 2, max_ticks: 8, min_strength: 6, max_strength: 8 },
+        Quake {
+            min_ticks: 3,
+            max_ticks: 29,
+            min_strength: 0,
+            max_strength: 2,
+        },
+        Quake {
+            min_ticks: 3,
+            max_ticks: 22,
+            min_strength: 0,
+            max_strength: 2,
+        },
+        Quake {
+            min_ticks: 3,
+            max_ticks: 15,
+            min_strength: 4,
+            max_strength: 6,
+        },
+        Quake {
+            min_ticks: 2,
+            max_ticks: 8,
+            min_strength: 6,
+            max_strength: 8,
+        },
     ]
 }
-fn default_map_door_close_rate() -> i32 { 3 }
-fn default_map_max_items() -> i32 { 250 }
+fn default_map_door_close_rate() -> i32 {
+    3
+}
+fn default_map_max_items() -> i32 {
+    250
+}
 
 impl Default for Map {
     fn default() -> Self {
@@ -684,9 +932,15 @@ pub struct Jukebox {
     pub track_timer: i32,
 }
 
-fn default_jukebox_cost() -> i32 { 25 }
-fn default_jukebox_max_track_id() -> i32 { 20 }
-fn default_jukebox_track_timer() -> i32 { 90 }
+fn default_jukebox_cost() -> i32 {
+    25
+}
+fn default_jukebox_max_track_id() -> i32 {
+    20
+}
+fn default_jukebox_track_timer() -> i32 {
+    90
+}
 
 impl Default for Jukebox {
     fn default() -> Self {
@@ -706,8 +960,12 @@ pub struct Barber {
     pub cost_per_level: i32,
 }
 
-fn default_barber_base_cost() -> i32 { 0 }
-fn default_barber_cost_per_level() -> i32 { 200 }
+fn default_barber_base_cost() -> i32 {
+    0
+}
+fn default_barber_cost_per_level() -> i32 {
+    200
+}
 
 impl Default for Barber {
     fn default() -> Self {
@@ -734,12 +992,24 @@ pub struct Account {
     pub max_characters: usize,
 }
 
-fn default_account_delay_time() -> i32 { 10 }
-fn default_account_email_validation() -> bool { true }
-fn default_account_recovery() -> bool { true }
-fn default_account_recovery_show_email() -> bool { true }
-fn default_account_recovery_mask_email() -> bool { true }
-fn default_account_max_characters() -> usize { 3 }
+fn default_account_delay_time() -> i32 {
+    10
+}
+fn default_account_email_validation() -> bool {
+    true
+}
+fn default_account_recovery() -> bool {
+    true
+}
+fn default_account_recovery_show_email() -> bool {
+    true
+}
+fn default_account_recovery_mask_email() -> bool {
+    true
+}
+fn default_account_max_characters() -> usize {
+    3
+}
 
 impl Default for Account {
     fn default() -> Self {
@@ -784,19 +1054,45 @@ pub struct Guild {
     pub bank_max_gold: i32,
 }
 
-fn default_guild_min_players() -> usize { 10 }
-fn default_guild_create_cost() -> i32 { 50_000 }
-fn default_guild_recruit_cost() -> i32 { 1000 }
-fn default_guild_min_tag_length() -> usize { 2 }
-fn default_guild_max_tag_length() -> usize { 3 }
-fn default_guild_max_name_length() -> usize { 24 }
-fn default_guild_max_description_length() -> usize { 240 }
-fn default_guild_max_rank_length() -> usize { 16 }
-fn default_guild_default_leader_rank_name() -> String { "Leader".to_string() }
-fn default_guild_default_recruiter_rank_name() -> String { "Recruiter".to_string() }
-fn default_guild_default_new_member_rank_name() -> String { "New Member".to_string() }
-fn default_guild_min_deposit() -> i32 { 1000 }
-fn default_guild_bank_max_gold() -> i32 { 2_000_000_000 }
+fn default_guild_min_players() -> usize {
+    10
+}
+fn default_guild_create_cost() -> i32 {
+    50_000
+}
+fn default_guild_recruit_cost() -> i32 {
+    1000
+}
+fn default_guild_min_tag_length() -> usize {
+    2
+}
+fn default_guild_max_tag_length() -> usize {
+    3
+}
+fn default_guild_max_name_length() -> usize {
+    24
+}
+fn default_guild_max_description_length() -> usize {
+    240
+}
+fn default_guild_max_rank_length() -> usize {
+    16
+}
+fn default_guild_default_leader_rank_name() -> String {
+    "Leader".to_string()
+}
+fn default_guild_default_recruiter_rank_name() -> String {
+    "Recruiter".to_string()
+}
+fn default_guild_default_new_member_rank_name() -> String {
+    "New Member".to_string()
+}
+fn default_guild_min_deposit() -> i32 {
+    1000
+}
+fn default_guild_bank_max_gold() -> i32 {
+    2_000_000_000
+}
 
 impl Default for Guild {
     fn default() -> Self {
@@ -840,15 +1136,33 @@ pub struct Marriage {
     pub celebration_effect_id: i32,
 }
 
-fn default_marriage_approval_cost() -> i32 { 500 }
-fn default_marriage_divorce_cost() -> i32 { 10000 }
-fn default_marriage_female_armor_id() -> i32 { 163 }
-fn default_marriage_male_armor_id() -> i32 { 133 }
-fn default_marriage_min_level() -> i32 { 5 }
-fn default_marriage_mfx_id() -> i32 { 40 }
-fn default_marriage_ring_item_id() -> i32 { 374 }
-fn default_marriage_ceremony_start_delay_seconds() -> i32 { 20 }
-fn default_marriage_celebration_effect_id() -> i32 { 1 }
+fn default_marriage_approval_cost() -> i32 {
+    500
+}
+fn default_marriage_divorce_cost() -> i32 {
+    10000
+}
+fn default_marriage_female_armor_id() -> i32 {
+    163
+}
+fn default_marriage_male_armor_id() -> i32 {
+    133
+}
+fn default_marriage_min_level() -> i32 {
+    5
+}
+fn default_marriage_mfx_id() -> i32 {
+    40
+}
+fn default_marriage_ring_item_id() -> i32 {
+    374
+}
+fn default_marriage_ceremony_start_delay_seconds() -> i32 {
+    20
+}
+fn default_marriage_celebration_effect_id() -> i32 {
+    1
+}
 
 impl Default for Marriage {
     fn default() -> Self {
@@ -876,9 +1190,15 @@ pub struct Evacuate {
     pub timer_step: i32,
 }
 
-fn default_evacuate_sfx_id() -> i32 { 51 }
-fn default_evacuate_timer_seconds() -> i32 { 60 }
-fn default_evacuate_timer_step() -> i32 { 15 }
+fn default_evacuate_sfx_id() -> i32 {
+    51
+}
+fn default_evacuate_timer_seconds() -> i32 {
+    60
+}
+fn default_evacuate_timer_step() -> i32 {
+    15
+}
 
 impl Default for Evacuate {
     fn default() -> Self {
@@ -923,7 +1243,9 @@ pub struct Smtp {
     pub password: String,
 }
 
-fn default_smtp_port() -> u16 { 587 }
+fn default_smtp_port() -> u16 {
+    587
+}
 
 impl Default for Smtp {
     fn default() -> Self {
@@ -946,8 +1268,12 @@ pub struct AutoPickup {
     pub rate: i32,
 }
 
-fn default_auto_pickup_enabled() -> bool { false }
-fn default_auto_pickup_rate() -> i32 { 8 }
+fn default_auto_pickup_enabled() -> bool {
+    false
+}
+fn default_auto_pickup_rate() -> i32 {
+    8
+}
 
 impl Default for AutoPickup {
     fn default() -> Self {

@@ -472,55 +472,56 @@ async fn main() -> anyhow::Result<()> {
     }
 
     tracing::debug!("Config file watchers started");
-    config_watcher::spawn_file_watcher(
-        vec!["config/Config.toml".into(), "config/Config.local.toml".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &SETTINGS,
         Settings::reload,
         "Settings",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/Arenas.ron".into(), "config/Arenas.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &ARENAS,
         Arenas::reload,
         "Arenas",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/PacketRateLimits.ron".into(), "config/PacketRateLimits.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &PACKET_RATE_LIMITS,
         PacketRateLimits::reload,
         "PacketRateLimits",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/Commands.ron".into(), "config/Commands.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &COMMANDS,
         Commands::reload,
         "Commands",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/PlayerCommands.ron".into(), "config/PlayerCommands.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &PLAYER_COMMANDS,
         PlayerCommands::reload,
         "PlayerCommands",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/Formulas.ron".into(), "config/Formulas.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &FORMULAS,
         Formulas::reload,
         "Formulas",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/Emails.ron".into(), "config/Emails.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &EMAILS,
         Emails::reload,
         "Emails",
     );
-    config_watcher::spawn_file_watcher(
-        vec!["config/GlobalDrops.ron".into(), "config/GlobalDrops.local.ron".into()],
+    config_watcher::spawn_dir_watcher(
+        "config".into(),
         &GLOBAL_DROPS,
         GlobalDrops::reload,
         "GlobalDrops",
     );
     config_watcher::spawn_lang_watcher(&LANG);
+    config_watcher::spawn_map_watcher(world.clone());
 
     tokio::select! {
         ctrl_c = signal::ctrl_c() => if let Err(err) = ctrl_c {

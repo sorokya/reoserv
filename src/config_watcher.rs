@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     path::PathBuf,
     sync::Arc,
     time::{Duration, Instant},
@@ -10,12 +11,12 @@ use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use once_cell::sync::Lazy;
 use tokio::sync::mpsc;
 
-use crate::SETTINGS;
+use crate::{SETTINGS, world::WorldHandle};
 
 const DEBOUNCE_DURATION: Duration = Duration::from_millis(500);
 
-pub fn spawn_file_watcher<T: Send + Sync + 'static>(
-    paths: Vec<PathBuf>,
+pub fn spawn_dir_watcher<T: Send + Sync + 'static>(
+    dir: PathBuf,
     arc_swap: &'static Lazy<ArcSwap<T>>,
     reload_fn: fn() -> Result<T, ConfigError>,
     name: &'static str,
@@ -31,23 +32,19 @@ pub fn spawn_file_watcher<T: Send + Sync + 'static>(
             },
             notify::Config::default(),
         )
-        .expect("Failed to create config file watcher");
+        .expect("Failed to create config dir watcher");
 
-    let mut watched_count = 0;
-    for path in &paths {
-        if path.exists() {
-            watcher
-                .watch(path, RecursiveMode::NonRecursive)
-                .unwrap_or_else(|_| panic!("Failed to watch config file: {:?}", path));
-            watched_count += 1;
-        }
-    }
-
-    if watched_count > 0 {
-        tracing::debug!("Watching {} file(s) for config: {}", watched_count, name);
+    if dir.exists() {
+        watcher
+            .watch(&dir, RecursiveMode::NonRecursive)
+            .unwrap_or_else(|_| panic!("Failed to watch config dir: {:?}", dir));
+        tracing::debug!("Watching config dir: {:?}", dir);
+    } else {
+        tracing::warn!("Config dir not found: {:?}", dir);
     }
 
     tokio::spawn(async move {
+        let _watcher = watcher;
         let mut last_event: Option<Instant> = None;
         let mut debounce_timer = tokio::time::interval(DEBOUNCE_DURATION);
         debounce_timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -56,8 +53,11 @@ pub fn spawn_file_watcher<T: Send + Sync + 'static>(
         loop {
             tokio::select! {
                 Some(event) = rx.recv() => {
+                    let relevant = event.paths.iter().any(|p| {
+                        p.extension().is_some_and(|e| e == "toml" || e == "ron")
+                    });
                     let has_modify = event.kind.is_modify() || event.kind.is_create();
-                    if has_modify {
+                    if relevant && has_modify {
                         last_event = Some(Instant::now());
                     }
                 }
@@ -96,20 +96,20 @@ pub fn spawn_lang_watcher(
             },
             notify::Config::default(),
         )
-        .expect("Failed to create lang file watcher");
+        .expect("Failed to create lang dir watcher");
 
-    let mut current_lang = SETTINGS.load().server.lang.clone();
-    let mut current_path = PathBuf::from(format!("config/lang/{}.ron", current_lang));
-
-    if current_path.exists() {
+    let lang_dir = PathBuf::from("config/lang");
+    if lang_dir.exists() {
         watcher
-            .watch(&current_path, RecursiveMode::NonRecursive)
-            .unwrap_or_else(|_| panic!("Failed to watch lang file: {:?}", current_path));
+            .watch(&lang_dir, RecursiveMode::NonRecursive)
+            .unwrap_or_else(|_| panic!("Failed to watch lang dir: {:?}", lang_dir));
+        tracing::debug!("Watching lang dir: {:?}", lang_dir);
     }
 
-    tracing::debug!("Watching lang file: {:?}", current_path);
+    let mut current_lang = SETTINGS.load().server.lang.clone();
 
     tokio::spawn(async move {
+        let _watcher = watcher;
         let mut last_event: Option<Instant> = None;
         let mut debounce_timer = tokio::time::interval(DEBOUNCE_DURATION);
         debounce_timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -118,23 +118,19 @@ pub fn spawn_lang_watcher(
         loop {
             tokio::select! {
                 Some(event) = rx.recv() => {
+                    let relevant = event.paths.iter().any(|p| {
+                        p.extension().is_some_and(|e| e == "ron")
+                    });
                     let has_modify = event.kind.is_modify() || event.kind.is_create();
-                    if has_modify {
+                    if relevant && has_modify {
                         last_event = Some(Instant::now());
                     }
                 }
                 _ = debounce_timer.tick() => {
                     let lang = &SETTINGS.load().server.lang;
                     if *lang != current_lang {
-                        let _ = watcher.unwatch(&current_path);
                         current_lang = lang.clone();
-                        current_path = PathBuf::from(format!("config/lang/{}.ron", current_lang));
-                        if current_path.exists() {
-                            watcher
-                                .watch(&current_path, RecursiveMode::NonRecursive)
-                                .unwrap_or_else(|_| panic!("Failed to watch lang file: {:?}", current_path));
-                            tracing::debug!("Switched lang watch to: {:?}", current_path);
-                        }
+                        tracing::debug!("Lang switched to: {}", current_lang);
                     }
 
                     if let Some(last) = last_event {
@@ -155,4 +151,73 @@ pub fn spawn_lang_watcher(
             }
         }
     });
+}
+
+pub fn spawn_map_watcher(world: WorldHandle) {
+    let (tx, mut rx) = mpsc::unbounded_channel::<Event>();
+
+    let dir = PathBuf::from("data/maps");
+    let mut watcher: RecommendedWatcher =
+        RecommendedWatcher::new(
+            move |res: Result<Event, notify::Error>| {
+                if let Ok(event) = res {
+                    let _ = tx.send(event);
+                }
+            },
+            notify::Config::default(),
+        )
+        .expect("Failed to create map dir watcher");
+
+    if dir.exists() {
+        watcher
+            .watch(&dir, RecursiveMode::NonRecursive)
+            .unwrap_or_else(|_| panic!("Failed to watch maps dir: {:?}", dir));
+    } else {
+        tracing::warn!("Maps dir not found: {:?}", dir);
+    }
+
+    tokio::spawn(async move {
+        let _watcher = watcher;
+        let mut pending_maps: HashSet<i32> = HashSet::new();
+        let mut last_event: Option<Instant> = None;
+        let mut debounce_timer = tokio::time::interval(DEBOUNCE_DURATION);
+        debounce_timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        debounce_timer.tick().await;
+
+        loop {
+            tokio::select! {
+                Some(event) = rx.recv() => {
+                    for path in &event.paths {
+                        if path.extension().is_some_and(|e| e == "emf") {
+                            if let Some(map_id) = extract_map_id(path) {
+                                pending_maps.insert(map_id);
+                            }
+                        }
+                    }
+                    last_event = Some(Instant::now());
+                }
+                _ = debounce_timer.tick() => {
+                    if let Some(last) = last_event {
+                        if last.elapsed() >= DEBOUNCE_DURATION {
+                            last_event = None;
+                            let maps_to_reload = std::mem::take(&mut pending_maps);
+                            for map_id in maps_to_reload {
+                                world.reload_map(map_id);
+                                tracing::info!("Reloaded map: {}", map_id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+fn extract_map_id(path: &PathBuf) -> Option<i32> {
+    let stem = path.file_stem()?.to_str()?;
+    let numeric: String = stem.chars().take_while(|c| c.is_ascii_digit()).collect();
+    if numeric.is_empty() {
+        return None;
+    }
+    numeric.parse::<i32>().ok()
 }

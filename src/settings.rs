@@ -848,23 +848,12 @@ impl Default for Chest {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Quake {
     pub min_ticks: i32,
     pub max_ticks: i32,
     pub min_strength: i32,
     pub max_strength: i32,
-}
-
-impl Default for Quake {
-    fn default() -> Self {
-        Self {
-            min_ticks: 0,
-            max_ticks: 0,
-            min_strength: 0,
-            max_strength: 0,
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -1210,21 +1199,12 @@ impl Default for Evacuate {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Items {
     #[serde(default)]
     pub infinite_use_items: Vec<i32>,
     #[serde(default)]
     pub protected_items: Vec<i32>,
-}
-
-impl Default for Items {
-    fn default() -> Self {
-        Self {
-            infinite_use_items: vec![],
-            protected_items: vec![],
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]

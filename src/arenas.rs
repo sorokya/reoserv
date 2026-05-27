@@ -20,16 +20,10 @@ pub struct ArenaCoords {
     pub y: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Arenas {
     #[serde(default)]
     pub arenas: Vec<Arena>,
-}
-
-impl Default for Arenas {
-    fn default() -> Self {
-        Self { arenas: vec![] }
-    }
 }
 
 impl Arenas {

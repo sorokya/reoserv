@@ -24,16 +24,10 @@ pub struct Command {
     pub admin_level: AdminLevel,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Commands {
     #[serde(default)]
     pub commands: Vec<Command>,
-}
-
-impl Default for Commands {
-    fn default() -> Self {
-        Self { commands: vec![] }
-    }
 }
 
 impl Commands {

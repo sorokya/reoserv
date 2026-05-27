@@ -8,16 +8,10 @@ pub struct PacketRateLimit {
     pub limit: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct PacketRateLimits {
     #[serde(default)]
     pub packets: Vec<PacketRateLimit>,
-}
-
-impl Default for PacketRateLimits {
-    fn default() -> Self {
-        Self { packets: vec![] }
-    }
 }
 
 impl PacketRateLimits {

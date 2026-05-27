@@ -1,6 +1,6 @@
 use config::{Config, ConfigError, File};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct EmailTemplate {
     #[serde(default)]
     pub subject: String,
@@ -8,30 +8,12 @@ pub struct EmailTemplate {
     pub body: String,
 }
 
-impl Default for EmailTemplate {
-    fn default() -> Self {
-        Self {
-            subject: Default::default(),
-            body: Default::default(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Emails {
     #[serde(default)]
     pub validation: EmailTemplate,
     #[serde(default)]
     pub recovery: EmailTemplate,
-}
-
-impl Default for Emails {
-    fn default() -> Self {
-        Self {
-            validation: Default::default(),
-            recovery: Default::default(),
-        }
-    }
 }
 
 impl Emails {

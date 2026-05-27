@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -61,8 +61,8 @@ pub fn spawn_dir_watcher<T: Send + Sync + 'static>(
                     }
                 }
                 _ = debounce_timer.tick() => {
-                    if let Some(last) = last_event {
-                        if last.elapsed() >= DEBOUNCE_DURATION {
+                    if let Some(last) = last_event
+                        && last.elapsed() >= DEBOUNCE_DURATION {
                             last_event = None;
                             match reload_fn() {
                                 Ok(new_val) => {
@@ -74,7 +74,6 @@ pub fn spawn_dir_watcher<T: Send + Sync + 'static>(
                                 }
                             }
                         }
-                    }
                 }
             }
         }
@@ -129,8 +128,8 @@ pub fn spawn_lang_watcher(arc_swap: &'static Lazy<ArcSwap<crate::lang::Lang>>) {
                         tracing::debug!("Lang switched to: {}", current_lang);
                     }
 
-                    if let Some(last) = last_event {
-                        if last.elapsed() >= DEBOUNCE_DURATION {
+                    if let Some(last) = last_event
+                        && last.elapsed() >= DEBOUNCE_DURATION {
                             last_event = None;
                             match crate::lang::Lang::reload() {
                                 Ok(new_val) => {
@@ -142,7 +141,6 @@ pub fn spawn_lang_watcher(arc_swap: &'static Lazy<ArcSwap<crate::lang::Lang>>) {
                                 }
                             }
                         }
-                    }
                 }
             }
         }
@@ -183,17 +181,16 @@ pub fn spawn_map_watcher(world: WorldHandle) {
             tokio::select! {
                 Some(event) = rx.recv() => {
                     for path in &event.paths {
-                        if path.extension().is_some_and(|e| e == "emf") {
-                            if let Some(map_id) = extract_map_id(path) {
+                        if path.extension().is_some_and(|e| e == "emf")
+                            && let Some(map_id) = extract_map_id(path) {
                                 pending_maps.insert(map_id);
                             }
-                        }
                     }
                     last_event = Some(Instant::now());
                 }
                 _ = debounce_timer.tick() => {
-                    if let Some(last) = last_event {
-                        if last.elapsed() >= DEBOUNCE_DURATION {
+                    if let Some(last) = last_event
+                        && last.elapsed() >= DEBOUNCE_DURATION {
                             last_event = None;
                             let maps_to_reload = std::mem::take(&mut pending_maps);
                             for map_id in maps_to_reload {
@@ -201,14 +198,13 @@ pub fn spawn_map_watcher(world: WorldHandle) {
                                 tracing::info!("Reloaded map: {}", map_id);
                             }
                         }
-                    }
                 }
             }
         }
     });
 }
 
-fn extract_map_id(path: &PathBuf) -> Option<i32> {
+fn extract_map_id(path: &Path) -> Option<i32> {
     let stem = path.file_stem()?.to_str()?;
     let numeric: String = stem.chars().take_while(|c| c.is_ascii_digit()).collect();
     if numeric.is_empty() {

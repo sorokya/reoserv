@@ -22,16 +22,10 @@ pub struct Command {
     pub args: Vec<Arg>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct PlayerCommands {
     #[serde(default)]
     pub commands: Vec<Command>,
-}
-
-impl Default for PlayerCommands {
-    fn default() -> Self {
-        Self { commands: vec![] }
-    }
 }
 
 impl PlayerCommands {

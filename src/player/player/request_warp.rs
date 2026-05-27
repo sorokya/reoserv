@@ -75,7 +75,7 @@ impl Player {
                             }
                         }
                         Err(err) => {
-                            warn!("{:?}", err);
+                            tracing::warn!("{:?}", err);
                             return;
                         }
                     }

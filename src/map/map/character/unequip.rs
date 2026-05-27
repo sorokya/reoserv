@@ -18,7 +18,7 @@ impl Map {
         let character = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => {
-                error!("Failed to get character");
+                tracing::error!("Failed to get character");
                 return;
             }
         };
@@ -56,7 +56,12 @@ impl Map {
         }
 
         let is_visible_change = matches!(
-            ITEM_DB.items.get(item_id as usize - 1).unwrap().r#type,
+            ITEM_DB
+                .load()
+                .items
+                .get(item_id as usize - 1)
+                .unwrap()
+                .r#type,
             ItemType::Armor | ItemType::Weapon | ItemType::Shield | ItemType::Hat | ItemType::Boots
         );
 

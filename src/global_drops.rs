@@ -3,8 +3,9 @@ use std::cmp;
 use config::{Config, ConfigError, File};
 use eolib::{data::THREE_MAX, protocol::r#pub::server::DropRecord};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct GlobalDrops {
+    #[serde(default)]
     pub drops: Vec<DropRecord>,
 }
 
@@ -33,5 +34,9 @@ impl GlobalDrops {
         }
 
         Ok(s)
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

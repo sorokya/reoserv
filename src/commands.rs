@@ -24,8 +24,9 @@ pub struct Command {
     pub admin_level: AdminLevel,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Commands {
+    #[serde(default)]
     pub commands: Vec<Command>,
 }
 
@@ -37,5 +38,9 @@ impl Commands {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

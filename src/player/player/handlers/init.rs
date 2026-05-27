@@ -71,9 +71,10 @@ impl Player {
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),
-            &SETTINGS.server.max_version,
+            &SETTINGS.load().server.max_version,
         ) {
             let versions = SETTINGS
+                .load()
                 .server
                 .max_version
                 .split('.')
@@ -110,9 +111,10 @@ impl Player {
                 "{}.{}.{}",
                 request.version.major, request.version.minor, request.version.patch
             ),
-            &SETTINGS.server.min_version,
+            &SETTINGS.load().server.min_version,
         ) {
             let versions = SETTINGS
+                .load()
                 .server
                 .min_version
                 .split('.')
@@ -181,7 +183,7 @@ impl Player {
     pub async fn handle_init(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Init => self.init_request(reader).await,
-            _ => error!("Unhandled packet Init_{:?}", action),
+            _ => tracing::error!("Unhandled packet Init_{:?}", action),
         }
     }
 }

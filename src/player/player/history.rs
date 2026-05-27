@@ -25,7 +25,7 @@ impl Player {
                         ("details", &details),
                     ],
                 )).await {
-                    error!("Failed to record history action: {}", e);
+                    tracing::error!("Failed to record history action: {}", e);
                 }
         });
     }

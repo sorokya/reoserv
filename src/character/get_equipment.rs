@@ -6,38 +6,39 @@ use super::Character;
 
 impl Character {
     pub fn get_equipment_change(&self) -> EquipmentChange {
+        let item_db = ITEM_DB.load();
         EquipmentChange {
             boots: match self.equipment.boots {
                 0 => 0,
-                _ => match ITEM_DB.items.get(self.equipment.boots as usize - 1) {
+                _ => match item_db.items.get(self.equipment.boots as usize - 1) {
                     Some(item) => item.spec1,
                     None => 0,
                 },
             },
             armor: match self.equipment.armor {
                 0 => 0,
-                _ => match ITEM_DB.items.get(self.equipment.armor as usize - 1) {
+                _ => match item_db.items.get(self.equipment.armor as usize - 1) {
                     Some(item) => item.spec1,
                     None => 0,
                 },
             },
             hat: match self.equipment.hat {
                 0 => 0,
-                _ => match ITEM_DB.items.get(self.equipment.hat as usize - 1) {
+                _ => match item_db.items.get(self.equipment.hat as usize - 1) {
                     Some(item) => item.spec1,
                     None => 0,
                 },
             },
             weapon: match self.equipment.weapon {
                 0 => 0,
-                _ => match ITEM_DB.items.get(self.equipment.weapon as usize - 1) {
+                _ => match item_db.items.get(self.equipment.weapon as usize - 1) {
                     Some(item) => item.spec1,
                     None => 0,
                 },
             },
             shield: match self.equipment.shield {
                 0 => 0,
-                _ => match ITEM_DB.items.get(self.equipment.shield as usize - 1) {
+                _ => match item_db.items.get(self.equipment.shield as usize - 1) {
                     Some(item) => item.spec1,
                     None => 0,
                 },

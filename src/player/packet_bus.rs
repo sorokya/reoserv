@@ -71,7 +71,7 @@ impl PacketBus {
         let length_bytes = match encode_number(packet_size as i32) {
             Ok(bytes) => bytes,
             Err(e) => {
-                error!("Packet send aborted! Error encoding packet size: {}", e);
+                tracing::error!("Packet send aborted! Error encoding packet size: {}", e);
                 return Ok(());
             }
         };
@@ -82,7 +82,7 @@ impl PacketBus {
         buf.put_u8(u8::from(family));
         buf.put(data);
 
-        trace!("Send: {:?}", &buf[..]);
+        tracing::trace!("Send: {:?}", &buf[..]);
 
         let mut data_buf = buf.split_off(2);
         if self.server_enryption_multiple != 0 {
@@ -134,7 +134,8 @@ impl PacketBus {
 
                     let data_buf = Bytes::from(data_buf);
 
-                    if let Some(rate_limit) = PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                    let packet_rate_limits = PACKET_RATE_LIMITS.load();
+                    if let Some(rate_limit) = packet_rate_limits.packets.iter().find(|l| {
                         l.action == PacketAction::from(data_buf[0])
                             && l.family == PacketFamily::from(data_buf[1])
                     }) {
@@ -194,8 +195,9 @@ impl PacketBus {
 
                                     let data_buf = Bytes::from(data_buf);
 
+                                    let packet_rate_limits = PACKET_RATE_LIMITS.load();
                                     if let Some(rate_limit) =
-                                        PACKET_RATE_LIMITS.packets.iter().find(|l| {
+                                        packet_rate_limits.packets.iter().find(|l| {
                                             l.action == PacketAction::from(data_buf[0])
                                                 && l.family == PacketFamily::from(data_buf[1])
                                         })

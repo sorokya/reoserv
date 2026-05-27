@@ -34,14 +34,15 @@ impl Map {
             return self.open_board(player_id, board_id);
         }
 
-        let subject = if subject.chars().count() > SETTINGS.board.max_subject_length as usize {
-            truncate_to_chars(&subject, SETTINGS.board.max_subject_length as usize)
+        let subject = if subject.chars().count() > SETTINGS.load().board.max_subject_length as usize
+        {
+            truncate_to_chars(&subject, SETTINGS.load().board.max_subject_length as usize)
         } else {
             subject
         };
 
-        let body = if body.chars().count() > SETTINGS.board.max_post_length as usize {
-            truncate_to_chars(&body, SETTINGS.board.max_post_length as usize)
+        let body = if body.chars().count() > SETTINGS.load().board.max_post_length as usize {
+            truncate_to_chars(&body, SETTINGS.load().board.max_post_length as usize)
         } else {
             body
         };
@@ -54,7 +55,7 @@ impl Map {
                 match get_board_post_counts(&db, board_id, character_id).await {
                     Ok((recent_posts, total_posts)) => (recent_posts, total_posts),
                     Err(e) => {
-                        error!("Failed to get board post counts: {}", e);
+                        tracing::error!("Failed to get board post counts: {}", e);
                         return;
                     }
                 };
@@ -62,19 +63,19 @@ impl Map {
             let map = match player.get_map().await {
                 Ok(map) => map,
                 Err(e) => {
-                    error!("Failed to get map: {}", e);
+                    tracing::error!("Failed to get map: {}", e);
                     return;
                 }
             };
 
-            if recent_posts >= SETTINGS.board.max_recent_posts
-                || total_posts >= SETTINGS.board.max_user_posts
+            if recent_posts >= SETTINGS.load().board.max_recent_posts
+                || total_posts >= SETTINGS.load().board.max_user_posts
             {
                 return map.open_board(player_id, board_id);
             }
 
             if let Err(e) = insert_post(&db, board_id, character_id, subject, body).await {
-                error!("Failed to insert post: {}", e);
+                tracing::error!("Failed to insert post: {}", e);
             }
 
             map.open_board(player_id, board_id);
@@ -87,14 +88,14 @@ async fn get_board_post_counts(
     board_id: i32,
     character_id: i32,
 ) -> anyhow::Result<(i32, i32)> {
-    let limit = if board_id == SETTINGS.board.admin_board {
-        SETTINGS.board.admin_max_posts
+    let limit = if board_id == SETTINGS.load().board.admin_board {
+        SETTINGS.load().board.admin_max_posts
     } else {
-        SETTINGS.board.max_posts
+        SETTINGS.load().board.max_posts
     };
 
     let cutoff_time =
-        Utc::now().naive_utc() - Duration::minutes(SETTINGS.board.recent_post_time as i64);
+        Utc::now().naive_utc() - Duration::minutes(SETTINGS.load().board.recent_post_time as i64);
 
     let recent_posts = db
         .query_int(&insert_params(

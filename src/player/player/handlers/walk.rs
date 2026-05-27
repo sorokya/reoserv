@@ -17,7 +17,7 @@ impl Player {
             let packet = match WalkPlayerClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,
                 Err(e) => {
-                    error!("Error deserializing WalkPlayerClientPacket {}", e);
+                    tracing::error!("Error deserializing WalkPlayerClientPacket {}", e);
                     return;
                 }
             };

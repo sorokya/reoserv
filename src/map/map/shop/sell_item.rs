@@ -14,7 +14,7 @@ use super::super::Map;
 
 impl Map {
     pub fn sell_item(&mut self, player_id: i32, npc_index: i32, item: Item) {
-        if item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
+        if item.amount <= 0 || item.amount > SETTINGS.load().limits.max_item {
             return;
         }
 
@@ -28,7 +28,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -37,7 +38,8 @@ impl Map {
             return;
         }
 
-        let shop = match SHOP_DB
+        let shop_db = SHOP_DB.load();
+        let shop = match shop_db
             .shops
             .iter()
             .find(|shop| shop.behavior_id == npc_data.behavior_id)
@@ -63,7 +65,7 @@ impl Map {
 
         let amount = cmp::min(amount, trade.max_amount);
 
-        let price = cmp::min(trade.sell_price * amount, SETTINGS.limits.max_item);
+        let price = cmp::min(trade.sell_price * amount, SETTINGS.load().limits.max_item);
 
         character.remove_item(item.id, amount);
         character.add_item(1, price);

@@ -24,7 +24,7 @@ impl Map {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize packet: {}", e);
+            tracing::error!("Failed to serialize packet: {}", e);
             return;
         }
 

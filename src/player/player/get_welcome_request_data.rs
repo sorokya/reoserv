@@ -24,16 +24,21 @@ impl Player {
             map.get_rid_and_size().await?
         };
 
-        let (eif_rid, eif_length) = { (ITEM_DB.rid, ITEM_DB.items.len() as i32) };
+        let item_db = ITEM_DB.load();
+        let class_db = CLASS_DB.load();
+        let npc_db = NPC_DB.load();
+        let spell_db = SPELL_DB.load();
 
-        let (ecf_rid, ecf_length) = { (CLASS_DB.rid, CLASS_DB.classes.len() as i32) };
+        let (eif_rid, eif_length) = { (item_db.rid, item_db.items.len() as i32) };
 
-        let (enf_rid, enf_length) = { (NPC_DB.rid, NPC_DB.npcs.len() as i32) };
+        let (ecf_rid, ecf_length) = { (class_db.rid, class_db.classes.len() as i32) };
 
-        let (esf_rid, esf_length) = { (SPELL_DB.rid, SPELL_DB.skills.len() as i32) };
+        let (enf_rid, enf_length) = { (npc_db.rid, npc_db.npcs.len() as i32) };
+
+        let (esf_rid, esf_length) = { (spell_db.rid, spell_db.skills.len() as i32) };
 
         let settings = ServerSettings {
-            jail_map: SETTINGS.jail.map,
+            jail_map: SETTINGS.load().jail.map,
             rescue_map: 4,
             rescue_coords: Coords { x: 24, y: 24 },
             spy_and_light_guide_flood_rate: 10,

@@ -1,14 +1,18 @@
 use config::{Config, ConfigError, File};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct EmailTemplate {
+    #[serde(default)]
     pub subject: String,
+    #[serde(default)]
     pub body: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct Emails {
+    #[serde(default)]
     pub validation: EmailTemplate,
+    #[serde(default)]
     pub recovery: EmailTemplate,
 }
 
@@ -20,5 +24,9 @@ impl Emails {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

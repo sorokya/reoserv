@@ -8,8 +8,9 @@ pub struct PacketRateLimit {
     pub limit: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct PacketRateLimits {
+    #[serde(default)]
     pub packets: Vec<PacketRateLimit>,
 }
 
@@ -21,5 +22,9 @@ impl PacketRateLimits {
             .build()?;
 
         s.try_deserialize()
+    }
+
+    pub fn reload() -> Result<Self, ConfigError> {
+        Self::new()
     }
 }

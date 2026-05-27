@@ -120,8 +120,9 @@ impl Player {
                 reply
             }
             FileType::Eif => {
+                let item_db = ITEM_DB.load();
                 let mut writer = EoWriter::new();
-                ITEM_DB.serialize(&mut writer).unwrap();
+                item_db.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEif,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEif(
@@ -135,8 +136,9 @@ impl Player {
                 }
             }
             FileType::Enf => {
+                let npc_db = NPC_DB.load();
                 let mut writer = EoWriter::new();
-                NPC_DB.serialize(&mut writer).unwrap();
+                npc_db.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEnf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEnf(
@@ -150,8 +152,9 @@ impl Player {
                 }
             }
             FileType::Esf => {
+                let spell_db = SPELL_DB.load();
                 let mut writer = EoWriter::new();
-                SPELL_DB.serialize(&mut writer).unwrap();
+                spell_db.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEsf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEsf(
@@ -165,8 +168,9 @@ impl Player {
                 }
             }
             FileType::Ecf => {
+                let class_db = CLASS_DB.load();
                 let mut writer = EoWriter::new();
-                CLASS_DB.serialize(&mut writer).unwrap();
+                class_db.serialize(&mut writer).unwrap();
                 InitInitServerPacket {
                     reply_code: InitReply::FileEcf,
                     reply_code_data: Some(InitInitServerPacketReplyCodeData::FileEcf(

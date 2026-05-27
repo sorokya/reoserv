@@ -25,7 +25,7 @@ impl Map {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Error serializing EffectPlayerServerPacket: {}", e);
+            tracing::error!("Error serializing EffectPlayerServerPacket: {}", e);
             return;
         }
 

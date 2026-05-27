@@ -12,7 +12,8 @@ use super::super::Map;
 
 impl Map {
     pub fn timed_arena(&mut self) {
-        let config = match ARENAS.arenas.iter().find(|a| a.map == self.id) {
+        let config = ARENAS.load();
+        let config = match config.arenas.iter().find(|a| a.map == self.id) {
             Some(config) => config,
             None => return,
         };

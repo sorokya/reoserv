@@ -12,7 +12,7 @@ impl Character {
         &mut self,
         db: &DbHandle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let admin_level = if SETTINGS.server.auto_admin {
+        let admin_level = if SETTINGS.load().server.auto_admin {
             match db.query_int("SELECT COUNT(1) FROM characters").await? {
                 Some(0) => AdminLevel::HighGameMaster,
                 _ => AdminLevel::Player,
@@ -26,15 +26,15 @@ impl Character {
             &[
                 ("account_id", &self.account_id),
                 ("name", &self.name),
-                ("home", &SETTINGS.new_character.home),
+                ("home", &SETTINGS.load().new_character.home),
                 ("gender", &(i32::from(self.gender))),
                 ("race", &self.skin),
                 ("hair_style", &(self.hair_style as u32)),
                 ("hair_color", &(self.hair_color as u32)),
-                ("map", &SETTINGS.new_character.spawn_map),
-                ("x", &SETTINGS.new_character.spawn_x),
-                ("y", &SETTINGS.new_character.spawn_y),
-                ("direction", &SETTINGS.new_character.spawn_direction),
+                ("map", &SETTINGS.load().new_character.spawn_map),
+                ("x", &SETTINGS.load().new_character.spawn_x),
+                ("y", &SETTINGS.load().new_character.spawn_y),
+                ("direction", &SETTINGS.load().new_character.spawn_direction),
                 ("admin_level", &i32::from(admin_level)),
             ],
         ))

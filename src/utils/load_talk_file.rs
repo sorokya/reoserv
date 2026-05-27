@@ -13,7 +13,7 @@ use crate::SETTINGS;
 use super::save_pub_file;
 
 pub fn load_talk_file() -> Result<TalkFile, Box<dyn std::error::Error>> {
-    if SETTINGS.server.generate_pub {
+    if SETTINGS.load().server.generate_pub {
         load_json()
     } else {
         load_pub()

@@ -24,7 +24,7 @@ impl Player {
         let admin = match TalkAdminClientPacket::deserialize(&reader) {
             Ok(admin) => admin,
             Err(e) => {
-                error!("Error deserializing TalkAdminClientPacket {}", e);
+                tracing::error!("Error deserializing TalkAdminClientPacket {}", e);
                 return;
             }
         };
@@ -51,7 +51,7 @@ impl Player {
         let announce = match TalkAnnounceClientPacket::deserialize(&reader) {
             Ok(announce) => announce,
             Err(e) => {
-                error!("Error deserializing TalkAnnounceClientPacket {}", e);
+                tracing::error!("Error deserializing TalkAnnounceClientPacket {}", e);
                 return;
             }
         };
@@ -78,7 +78,7 @@ impl Player {
         let msg = match TalkMsgClientPacket::deserialize(&reader) {
             Ok(msg) => msg,
             Err(e) => {
-                error!("Error deserializing TalkMsgClientPacket {}", e);
+                tracing::error!("Error deserializing TalkMsgClientPacket {}", e);
                 return;
             }
         };
@@ -107,7 +107,7 @@ impl Player {
         let report = match TalkReportClientPacket::deserialize(&reader) {
             Ok(report) => report,
             Err(e) => {
-                error!("Error deserializing TalkReportClientPacket {}", e);
+                tracing::error!("Error deserializing TalkReportClientPacket {}", e);
                 return;
             }
         };
@@ -178,7 +178,7 @@ impl Player {
         let tell = match TalkTellClientPacket::deserialize(&reader) {
             Ok(tell) => tell,
             Err(e) => {
-                error!("Error deserializing TalkTellClientPacket {}", e);
+                tracing::error!("Error deserializing TalkTellClientPacket {}", e);
                 return;
             }
         };
@@ -191,7 +191,7 @@ impl Player {
         let open = match TalkOpenClientPacket::deserialize(&reader) {
             Ok(open) => open,
             Err(e) => {
-                error!("Error deserializing TalkOpenClientPacket {}", e);
+                tracing::error!("Error deserializing TalkOpenClientPacket {}", e);
                 return;
             }
         };
@@ -203,7 +203,7 @@ impl Player {
         let request = match TalkRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing TalkRequestClientPacket {}", e);
+                tracing::error!("Error deserializing TalkRequestClientPacket {}", e);
                 return;
             }
         };
@@ -250,7 +250,7 @@ impl Player {
             PacketAction::Tell => self.talk_tell(reader),
             PacketAction::Open => self.talk_open(reader),
             PacketAction::Request => self.talk_request(reader),
-            _ => error!("Unhandled packet Talk_{:?}", action),
+            _ => tracing::error!("Unhandled packet Talk_{:?}", action),
         }
     }
 }

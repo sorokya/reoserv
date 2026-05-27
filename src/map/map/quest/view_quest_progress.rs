@@ -31,7 +31,8 @@ impl Map {
                     return None;
                 }
 
-                let quest = match QUEST_DB.get(&q.id) {
+                let quest_db = QUEST_DB.load();
+                let quest = match quest_db.get(&q.id) {
                     Some(quest) => quest,
                     None => return None,
                 };

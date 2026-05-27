@@ -17,7 +17,7 @@ impl Player {
             let request = match TradeRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing TradeRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing TradeRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -31,7 +31,7 @@ impl Player {
             let accept = match TradeAcceptClientPacket::deserialize(&reader) {
                 Ok(accept) => accept,
                 Err(e) => {
-                    error!("Error deserializing TradeAcceptClientPacket {}", e);
+                    tracing::error!("Error deserializing TradeAcceptClientPacket {}", e);
                     return;
                 }
             };
@@ -53,7 +53,7 @@ impl Player {
             let add = match TradeAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing TradeAddClientPacket {}", e);
+                    tracing::error!("Error deserializing TradeAddClientPacket {}", e);
                     return;
                 }
             };
@@ -72,7 +72,7 @@ impl Player {
             let remove = match TradeRemoveClientPacket::deserialize(&reader) {
                 Ok(remove) => remove,
                 Err(e) => {
-                    error!("Error deserializing TradeRemoveClientPacket {}", e);
+                    tracing::error!("Error deserializing TradeRemoveClientPacket {}", e);
                     return;
                 }
             };
@@ -91,7 +91,7 @@ impl Player {
             let agree = match TradeAgreeClientPacket::deserialize(&reader) {
                 Ok(agree) => agree,
                 Err(e) => {
-                    error!("Error deserializing TradeAgreeClientPacket {}", e);
+                    tracing::error!("Error deserializing TradeAgreeClientPacket {}", e);
                     return;
                 }
             };
@@ -117,7 +117,7 @@ impl Player {
             PacketAction::Add => self.trade_add(reader),
             PacketAction::Remove => self.trade_remove(reader),
             PacketAction::Agree => self.trade_agree(reader),
-            _ => error!("Unhandled packet Trade_{:?}", action),
+            _ => tracing::error!("Unhandled packet Trade_{:?}", action),
         }
     }
 }

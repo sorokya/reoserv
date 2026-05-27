@@ -11,7 +11,7 @@ impl Player {
             let open = match DoorOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing DoorOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing DoorOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -23,7 +23,7 @@ impl Player {
     pub fn handle_door(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Open => self.door_open(reader),
-            _ => error!("Unhandled packet Door_{:?}", action),
+            _ => tracing::error!("Unhandled packet Door_{:?}", action),
         }
     }
 }

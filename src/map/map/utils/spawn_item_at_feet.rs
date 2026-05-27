@@ -13,16 +13,16 @@ impl Map {
             None => return,
         };
 
-        if ITEM_DB.items.get(item_id as usize - 1).is_none() {
+        if ITEM_DB.load().items.get(item_id as usize - 1).is_none() {
             return;
         }
 
-        let amount = cmp::min(SETTINGS.limits.max_item, amount);
+        let amount = cmp::min(SETTINGS.load().limits.max_item, amount);
 
         let item_index = match self.add_item(item_id, amount, coords, 0, 0) {
             Ok(index) => index,
             Err(e) => {
-                error!("Failed to add item to map: {}", e);
+                tracing::error!("Failed to add item to map: {}", e);
                 return;
             }
         };

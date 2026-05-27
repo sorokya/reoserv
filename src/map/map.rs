@@ -633,7 +633,7 @@ impl Map {
                 if self.evacuate_ticks.is_some() {
                     self.evacuate_ticks = None;
                 } else {
-                    self.evacuate_ticks = Some(SETTINGS.evacuate.timer_seconds);
+                    self.evacuate_ticks = Some(SETTINGS.load().evacuate.timer_seconds);
                 }
             }
 

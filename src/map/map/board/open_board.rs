@@ -35,7 +35,7 @@ impl Map {
             return;
         }
 
-        if board_id == SETTINGS.board.admin_board && i32::from(character.admin_level) < 1 {
+        if board_id == SETTINGS.load().board.admin_board && i32::from(character.admin_level) < 1 {
             return;
         }
 
@@ -48,10 +48,10 @@ impl Map {
 
         let db = self.db.clone();
         tokio::spawn(async move {
-            let limit = if board_id == SETTINGS.board.admin_board {
-                SETTINGS.board.admin_max_posts
+            let limit = if board_id == SETTINGS.load().board.admin_board {
+                SETTINGS.load().board.admin_max_posts
             } else {
-                SETTINGS.board.max_posts
+                SETTINGS.load().board.max_posts
             };
 
             let posts = match db
@@ -71,7 +71,7 @@ impl Map {
             {
                 Ok(posts) => posts,
                 Err(e) => {
-                    error!("Failed to get board posts: {}", e);
+                    tracing::error!("Failed to get board posts: {}", e);
                     return;
                 }
             };
@@ -86,7 +86,7 @@ impl Map {
                         .map(|post| BoardPostListing {
                             post_id: post.id,
                             author: post.author.to_owned(),
-                            subject: if SETTINGS.board.date_posts {
+                            subject: if SETTINGS.load().board.date_posts {
                                 format!("{} ({})", post.subject, format_duration(&post.created_at))
                             } else {
                                 post.subject.to_owned()

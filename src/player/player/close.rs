@@ -10,7 +10,7 @@ impl Player {
                     self.character = Some(character);
                 }
                 Err(e) => {
-                    error!("Failed to leave map: {}", e);
+                    tracing::error!("Failed to leave map: {}", e);
                 }
             }
         }
@@ -18,7 +18,7 @@ impl Player {
         if let Some(character) = self.character.as_mut()
             && let Err(e) = character.save(&self.db).await
         {
-            error!("Failed to save character: {}", e);
+            tracing::error!("Failed to save character: {}", e);
         }
 
         self.world.remove_party_member(self.id, self.id);
@@ -34,11 +34,11 @@ impl Player {
             )
             .await
         {
-            error!("Failed to drop player: {}", e);
+            tracing::error!("Failed to drop player: {}", e);
         }
 
         self.closed = true;
 
-        info!("player {} connection closed: {:?}", self.id, reason);
+        tracing::info!("player {} connection closed: {:?}", self.id, reason);
     }
 }

@@ -11,7 +11,7 @@ impl Map {
     pub async fn save(&mut self) {
         for character in self.characters.values_mut() {
             if let Err(e) = character.save(&self.db).await {
-                error!("Failed to update character: {}", e);
+                tracing::error!("Failed to update character: {}", e);
                 continue;
             }
         }
@@ -26,12 +26,12 @@ impl Map {
             Ok(true) => {}
             Ok(false) => {
                 if let Err(e) = tokio::fs::create_dir_all(save_dir).await {
-                    error!("Failed to create map_saves directory: {}", e);
+                    tracing::error!("Failed to create map_saves directory: {}", e);
                     return;
                 }
             }
             Err(e) => {
-                error!("Failed to check if map_saves directory exists: {}", e);
+                tracing::error!("Failed to check if map_saves directory exists: {}", e);
                 return;
             }
         }
@@ -107,7 +107,7 @@ impl Map {
         )
         .await
         {
-            error!("Failed to write map save file: {}", e);
+            tracing::error!("Failed to write map save file: {}", e);
         }
     }
 
@@ -121,7 +121,7 @@ impl Map {
         let save_data: MapSaveData = match serde_json::from_str(&data) {
             Ok(data) => data,
             Err(e) => {
-                error!("Failed to deserialize map save data: {}", e);
+                tracing::error!("Failed to deserialize map save data: {}", e);
                 return;
             }
         };
@@ -195,7 +195,9 @@ impl Map {
                 match Utc.from_local_datetime(&saved_chest_spawn.taken) {
                     chrono::offset::LocalResult::Single(dt) => spawn.last_taken = dt,
                     _ => {
-                        error!("Failed to convert saved chest spawn last_taken to DateTime<Utc>");
+                        tracing::error!(
+                            "Failed to convert saved chest spawn last_taken to DateTime<Utc>"
+                        );
                     }
                 }
             }

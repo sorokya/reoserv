@@ -47,7 +47,7 @@ impl Player {
         match action {
             PacketAction::Accept => self.connection_accept(reader).await,
             PacketAction::Ping => self.bus.need_pong = false,
-            _ => error!("Unhandled packet Connection_{:?}", action),
+            _ => tracing::error!("Unhandled packet Connection_{:?}", action),
         }
     }
 }

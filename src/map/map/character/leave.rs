@@ -25,7 +25,7 @@ impl Map {
             None => return,
         };
 
-        if let Some(config) = ARENAS.arenas.iter().find(|a| a.map == self.id)
+        if let Some(config) = ARENAS.load().arenas.iter().find(|a| a.map == self.id)
             && self.arena_players.iter().any(|p| p.player_id == player_id)
             && !config
                 .spawns

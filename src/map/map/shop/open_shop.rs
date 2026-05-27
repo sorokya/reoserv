@@ -17,7 +17,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -26,7 +27,8 @@ impl Map {
             return;
         }
 
-        let shop = match SHOP_DB
+        let shop_db = SHOP_DB.load();
+        let shop = match shop_db
             .shops
             .iter()
             .find(|shop| shop.behavior_id == npc_data.behavior_id)

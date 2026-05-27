@@ -14,7 +14,7 @@ impl Player {
             let add = match LockerAddClientPacket::deserialize(&reader) {
                 Ok(add) => add,
                 Err(e) => {
-                    error!("Error deserializing LockerAddClientPacket {}", e);
+                    tracing::error!("Error deserializing LockerAddClientPacket {}", e);
                     return;
                 }
             };
@@ -55,7 +55,7 @@ impl Player {
             let take = match LockerTakeClientPacket::deserialize(&reader) {
                 Ok(take) => take,
                 Err(e) => {
-                    error!("Error deserializing LockerTakeClientPacket {}", e);
+                    tracing::error!("Error deserializing LockerTakeClientPacket {}", e);
                     return;
                 }
             };
@@ -75,7 +75,7 @@ impl Player {
             PacketAction::Buy => self.locker_buy(),
             PacketAction::Open => self.locker_open(),
             PacketAction::Take => self.locker_take(reader),
-            _ => error!("Unhandled packet Locker_{:?}", action),
+            _ => tracing::error!("Unhandled packet Locker_{:?}", action),
         }
     }
 }

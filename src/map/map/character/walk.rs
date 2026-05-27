@@ -45,8 +45,8 @@ impl Map {
                 character.coords = coords;
                 character.direction = direction;
                 character.entered_coord();
-                character.warp_suck_ticks = SETTINGS.world.warp_suck_rate;
-                character.ghost_ticks = SETTINGS.world.ghost_rate;
+                character.warp_suck_ticks = SETTINGS.load().world.warp_suck_rate;
+                character.ghost_ticks = SETTINGS.load().world.ghost_rate;
             }
 
             if let Some(warp) = self.get_warp(&coords) {

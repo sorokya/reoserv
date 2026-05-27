@@ -18,7 +18,7 @@ impl Player {
             let drop = match ItemDropClientPacket::deserialize(&reader) {
                 Ok(drop) => drop,
                 Err(e) => {
-                    error!("Error deserializing ItemDropClientPacket {}", e);
+                    tracing::error!("Error deserializing ItemDropClientPacket {}", e);
                     return;
                 }
             };
@@ -36,7 +36,7 @@ impl Player {
             let get = match ItemGetClientPacket::deserialize(&reader) {
                 Ok(get) => get,
                 Err(e) => {
-                    error!("Error deserializing ItemGetClientPacket {}", e);
+                    tracing::error!("Error deserializing ItemGetClientPacket {}", e);
                     return;
                 }
             };
@@ -50,7 +50,7 @@ impl Player {
             let junk = match ItemJunkClientPacket::deserialize(&reader) {
                 Ok(junk) => junk,
                 Err(e) => {
-                    error!("Error deserializing ItemJunkClientPacket {}", e);
+                    tracing::error!("Error deserializing ItemJunkClientPacket {}", e);
                     return;
                 }
             };
@@ -68,7 +68,7 @@ impl Player {
             let packet = match ItemUseClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,
                 Err(e) => {
-                    error!("Error deserializing ItemUseClientPacket {}", e);
+                    tracing::error!("Error deserializing ItemUseClientPacket {}", e);
                     return;
                 }
             };
@@ -82,12 +82,12 @@ impl Player {
             let packet = match ItemReportClientPacket::deserialize(&reader) {
                 Ok(packet) => packet,
                 Err(e) => {
-                    error!("Error deserializing ItemReportClientPacket: {}", e);
+                    tracing::error!("Error deserializing ItemReportClientPacket: {}", e);
                     return;
                 }
             };
 
-            if packet.title.chars().count() > SETTINGS.character.max_title_length {
+            if packet.title.chars().count() > SETTINGS.load().character.max_title_length {
                 return;
             }
 
@@ -107,7 +107,7 @@ impl Player {
             PacketAction::Junk => self.item_junk(reader),
             PacketAction::Use => self.item_use(reader),
             PacketAction::Report => self.item_report(reader),
-            _ => error!("Unhandled packet Item_{:?}", action),
+            _ => tracing::error!("Unhandled packet Item_{:?}", action),
         }
     }
 }

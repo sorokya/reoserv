@@ -11,7 +11,7 @@ impl Player {
             let request = match PlayerRangeRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing PlayerRangeRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing PlayerRangeRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -23,7 +23,7 @@ impl Player {
     pub fn handle_player_range(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.player_range_request(reader),
-            _ => error!("Unhandled packet PlayerRange_{:?}", action),
+            _ => tracing::error!("Unhandled packet PlayerRange_{:?}", action),
         }
     }
 }

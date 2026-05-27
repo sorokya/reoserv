@@ -45,7 +45,7 @@ impl Map {
 
         for item in &trade_items {
             let amount = cmp::min(
-                SETTINGS.limits.max_item - character.get_item_amount(item.id),
+                SETTINGS.load().limits.max_item - character.get_item_amount(item.id),
                 item.amount,
             );
             character.add_item(item.id, amount);
@@ -68,7 +68,7 @@ impl Map {
 
         for item in &partner_trade_items {
             let amount = cmp::min(
-                SETTINGS.limits.max_item - character.get_item_amount(item.id),
+                SETTINGS.load().limits.max_item - character.get_item_amount(item.id),
                 item.amount,
             );
             character.add_item(item.id, amount);

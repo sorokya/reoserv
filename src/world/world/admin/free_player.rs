@@ -12,10 +12,10 @@ impl World {
         {
             player_online = true;
             player.request_warp(
-                SETTINGS.jail.free_map,
+                SETTINGS.load().jail.free_map,
                 Coords {
-                    x: SETTINGS.jail.free_x,
-                    y: SETTINGS.jail.free_y,
+                    x: SETTINGS.load().jail.free_x,
+                    y: SETTINGS.load().jail.free_y,
                 },
                 false,
                 Some(WarpEffect::Admin),
@@ -29,15 +29,15 @@ impl World {
                     .execute(&insert_params(
                         include_str!("../../../sql/offline_jail.sql"),
                         &[
-                            ("map", &SETTINGS.jail.free_map),
-                            ("x", &SETTINGS.jail.free_x),
-                            ("y", &SETTINGS.jail.free_y),
+                            ("map", &SETTINGS.load().jail.free_map),
+                            ("x", &SETTINGS.load().jail.free_x),
+                            ("y", &SETTINGS.load().jail.free_y),
                             ("name", &victim_name),
                         ],
                     ))
                     .await
                 {
-                    error!("Failed to free player: {}", e);
+                    tracing::error!("Failed to free player: {}", e);
                 }
             });
         }

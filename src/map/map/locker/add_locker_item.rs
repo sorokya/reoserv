@@ -15,7 +15,7 @@ use super::super::Map;
 
 impl Map {
     pub fn add_locker_item(&mut self, player_id: i32, item: Item) {
-        if item.id <= 1 || item.amount <= 0 || item.amount > SETTINGS.limits.max_item {
+        if item.id <= 1 || item.amount <= 0 || item.amount > SETTINGS.load().limits.max_item {
             return;
         }
 
@@ -24,7 +24,8 @@ impl Map {
             None => return,
         };
 
-        let bank_size = SETTINGS.bank.base_size + character.bank_level * SETTINGS.bank.size_step;
+        let bank_size =
+            SETTINGS.load().bank.base_size + character.bank_level * SETTINGS.load().bank.size_step;
         if character.bank.len() as i32 >= bank_size {
             if let Some(player) = character.player.as_ref() {
                 player.send(

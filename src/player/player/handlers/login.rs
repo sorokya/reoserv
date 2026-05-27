@@ -41,7 +41,7 @@ impl Player {
         let request = match LoginRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing LoginRequestClientPacket {}", e);
+                tracing::error!("Error deserializing LoginRequestClientPacket {}", e);
                 return;
             }
         };
@@ -63,7 +63,7 @@ impl Player {
             .get_player_count()
             .await
             .expect("Failed to get player count. Timeout");
-        if player_count >= SETTINGS.server.max_players {
+        if player_count >= SETTINGS.load().server.max_players {
             let _ = self
                 .bus
                 .send(
@@ -95,7 +95,7 @@ impl Player {
         self.login_attempts += 1;
 
         if !exists {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -173,7 +173,7 @@ impl Player {
 
         if !validate_password(&username, &request.password, &password_hash) {
             self.world.remove_pending_login(account_id);
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -198,7 +198,7 @@ impl Player {
 
         if logged_in {
             self.world.remove_pending_login(account_id);
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many login attempts".to_string()).await;
                 return;
             }
@@ -257,9 +257,9 @@ impl Player {
                     PacketAction::Unrecognized(ACTION_CONFIG),
                     PacketFamily::Login,
                     LoginConfigServerPacket {
-                        max_skins: SETTINGS.character.max_skin + 1,
-                        max_hair_modals: SETTINGS.character.max_hair_style,
-                        max_character_name: SETTINGS.character.max_name_length as i32,
+                        max_skins: SETTINGS.load().character.max_skin + 1,
+                        max_hair_modals: SETTINGS.load().character.max_hair_style,
+                        max_character_name: SETTINGS.load().character.max_name_length as i32,
                     },
                 )
                 .await;
@@ -296,7 +296,7 @@ impl Player {
 
     async fn login_take(&mut self, reader: EoReader) {
         if let Err(e) = LoginTakeClientPacket::deserialize(&reader) {
-            error!("Failed to deserialize LoginTakeClientPacket: {}", e);
+            tracing::error!("Failed to deserialize LoginTakeClientPacket: {}", e);
             return;
         }
 
@@ -306,7 +306,7 @@ impl Player {
                 PacketAction::Take,
                 PacketFamily::Login,
                 LoginTakeServerPacket {
-                    reply_code: if SETTINGS.account.recovery {
+                    reply_code: if SETTINGS.load().account.recovery {
                         AccountRecoverReply::RequestAccepted
                     } else {
                         AccountRecoverReply::RecoveryDisabled
@@ -320,7 +320,7 @@ impl Player {
         let create = match LoginCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Failed to deserialize LoginCreateClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginCreateClientPacket: {}", e);
                 return;
             }
         };
@@ -349,7 +349,7 @@ impl Player {
                 return;
             }
             Err(e) => {
-                error!("Failed to get account email: {}", e);
+                tracing::error!("Failed to get account email: {}", e);
                 return;
             }
         };
@@ -369,9 +369,9 @@ impl Player {
         if let Err(e) = send_email(
             &email,
             &create.account_name,
-            &get_lang_string!(&EMAILS.recovery.subject, name = create.account_name),
+            &get_lang_string!(&EMAILS.load().recovery.subject, name = create.account_name),
             &get_lang_string!(
-                &EMAILS.recovery.body,
+                &EMAILS.load().recovery.body,
                 name = create.account_name,
                 code = code
             ),
@@ -389,13 +389,13 @@ impl Player {
                 PacketAction::Create,
                 PacketFamily::Login,
                 LoginCreateServerPacket {
-                    reply_code: if SETTINGS.account.recovery_show_email {
+                    reply_code: if SETTINGS.load().account.recovery_show_email {
                         AccountRecoverReply::RequestAcceptedShowEmail
                     } else {
                         AccountRecoverReply::RequestAccepted
                     },
-                    email_address: if SETTINGS.account.recovery_show_email {
-                        Some(if SETTINGS.account.recovery_mask_email {
+                    email_address: if SETTINGS.load().account.recovery_show_email {
+                        Some(if SETTINGS.load().account.recovery_mask_email {
                             mask_email(&email)
                         } else {
                             email
@@ -412,7 +412,7 @@ impl Player {
         let accept = match LoginAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Failed to deserialize LoginAcceptClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginAcceptClientPacket: {}", e);
                 return;
             }
         };
@@ -442,7 +442,7 @@ impl Player {
         let agree = match LoginAgreeClientPacket::deserialize(&reader) {
             Ok(agree) => agree,
             Err(e) => {
-                error!("Failed to deserialize LoginAgreeClientPacket: {}", e);
+                tracing::error!("Failed to deserialize LoginAgreeClientPacket: {}", e);
                 self.send_login_agree_error().await;
                 return;
             }
@@ -463,7 +463,7 @@ impl Player {
             ))
             .await
         {
-            error!("Error updating password hash: {}", e);
+            tracing::error!("Error updating password hash: {}", e);
             self.send_login_agree_error().await;
             return;
         }
@@ -593,7 +593,7 @@ impl Player {
             PacketAction::Accept => self.login_accept(reader).await,
             PacketAction::Agree => self.login_agree(reader).await,
             PacketAction::Use => self.login_use(reader).await,
-            _ => error!("Unhandled packet Login_{:?}", action),
+            _ => tracing::error!("Unhandled packet Login_{:?}", action),
         }
     }
 }

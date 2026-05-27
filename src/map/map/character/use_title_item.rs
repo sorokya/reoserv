@@ -20,7 +20,8 @@ impl Map {
             return;
         }
 
-        let item = match ITEM_DB.items.get(item_id as usize - 1) {
+        let item_db = ITEM_DB.load();
+        let item = match item_db.items.get(item_id as usize - 1) {
             Some(item) => item,
             None => {
                 return;
@@ -33,7 +34,7 @@ impl Map {
 
         character.title = Some(title);
 
-        if !SETTINGS.items.infinite_use_items.contains(&item_id) {
+        if !SETTINGS.load().items.infinite_use_items.contains(&item_id) {
             character.remove_item(item_id, 1);
         }
 

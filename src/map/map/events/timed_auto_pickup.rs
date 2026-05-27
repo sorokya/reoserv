@@ -14,7 +14,7 @@ impl Map {
                     let distance = get_distance(&item.coords, &character.coords);
                     !character.captcha_open
                         && character.auto_pickup_items.contains(&item.id)
-                        && distance <= SETTINGS.world.drop_distance
+                        && distance <= SETTINGS.load().world.drop_distance
                 })
                 .min_by(|(_, a), (_, b)| {
                     let distance_a = get_distance(&item.coords, &a.coords);

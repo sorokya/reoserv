@@ -24,9 +24,9 @@ impl Map {
         hair_color: i32,
     ) {
         if hair_style < 0
-            || hair_style > SETTINGS.character.max_hair_style
+            || hair_style > SETTINGS.load().character.max_hair_style
             || hair_color < 0
-            || hair_color > SETTINGS.character.max_hair_color
+            || hair_color > SETTINGS.load().character.max_hair_color
         {
             return;
         }
@@ -41,7 +41,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -50,8 +51,8 @@ impl Map {
             return;
         }
 
-        let cost = SETTINGS.barber.base_cost
-            + cmp::max(1, character.level) * SETTINGS.barber.cost_per_level;
+        let cost = SETTINGS.load().barber.base_cost
+            + cmp::max(1, character.level) * SETTINGS.load().barber.cost_per_level;
 
         if character.get_item_amount(1) < cost {
             return;

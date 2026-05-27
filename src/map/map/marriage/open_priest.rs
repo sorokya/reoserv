@@ -48,7 +48,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };
@@ -61,7 +62,7 @@ impl Map {
             return;
         }
 
-        if character.level < SETTINGS.marriage.min_level {
+        if character.level < SETTINGS.load().marriage.min_level {
             player.send(
                 PacketAction::Reply,
                 PacketFamily::Priest,

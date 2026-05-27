@@ -21,7 +21,10 @@ impl Map {
             return;
         }
 
-        let amount = cmp::min(SETTINGS.limits.max_bank_gold - character.gold_bank, amount);
+        let amount = cmp::min(
+            SETTINGS.load().limits.max_bank_gold - character.gold_bank,
+            amount,
+        );
         if amount <= 0 {
             return;
         }
@@ -31,7 +34,8 @@ impl Map {
             None => return,
         };
 
-        let npc_data = match NPC_DB.npcs.get(npc.id as usize - 1) {
+        let npc_db = NPC_DB.load();
+        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
             Some(npc_data) => npc_data,
             None => return,
         };

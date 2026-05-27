@@ -29,7 +29,7 @@ impl Map {
         let wait_for = match state {
             WeddingState::Accepted | WeddingState::PlayerAgrees | WeddingState::PartnerAgrees => 0,
             WeddingState::PriestDialog5AndConfetti => 2,
-            WeddingState::PriestDialog1 => SETTINGS.marriage.ceremony_start_delay_seconds,
+            WeddingState::PriestDialog1 => SETTINGS.load().marriage.ceremony_start_delay_seconds,
             WeddingState::AskPlayer | WeddingState::AskPartner | WeddingState::PriestDialog3 => 3,
             WeddingState::WaitingForPlayer | WeddingState::WaitingForPartner => 20,
             _ => 9,
@@ -38,10 +38,11 @@ impl Map {
         self.wedding_ticks += 1;
 
         if self.wedding_ticks >= wait_for {
+            let lang = LANG.load();
             let character = match self.characters.get(&player_id) {
                 Some(character) => character,
                 None => {
-                    self.npc_chat(npc_index, &LANG.wedding_error);
+                    self.npc_chat(npc_index, &lang.wedding_error);
                     self.wedding = None;
                     self.wedding_ticks = 0;
                     return;
@@ -51,7 +52,7 @@ impl Map {
             let partner = match self.characters.get(&partner_id) {
                 Some(character) => character,
                 None => {
-                    self.npc_chat(npc_index, &LANG.wedding_error);
+                    self.npc_chat(npc_index, &lang.wedding_error);
                     self.wedding = None;
                     self.wedding_ticks = 0;
                     return;
@@ -63,19 +64,19 @@ impl Map {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_start,
-                            delay = SETTINGS.marriage.ceremony_start_delay_seconds
+                            &lang.wedding_start,
+                            delay = SETTINGS.load().marriage.ceremony_start_delay_seconds
                         ),
                     );
 
                     let packet = JukeboxPlayerServerPacket {
-                        mfx_id: SETTINGS.marriage.mfx_id,
+                        mfx_id: SETTINGS.load().marriage.mfx_id,
                     };
 
                     let mut writer = EoWriter::new();
 
                     if let Err(e) = packet.serialize(&mut writer) {
-                        error!("Failed to serialize JukeboxPlayerServerPacket: {}", e);
+                        tracing::error!("Failed to serialize JukeboxPlayerServerPacket: {}", e);
                         return;
                     }
 
@@ -96,7 +97,7 @@ impl Map {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_one,
+                            &lang.wedding_one,
                             partner = partner.name,
                             name = character.name
                         ),
@@ -107,7 +108,7 @@ impl Map {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_two,
+                            &lang.wedding_two,
                             partner = partner.name,
                             name = character.name
                         ),
@@ -118,7 +119,7 @@ impl Map {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_do_you,
+                            &lang.wedding_do_you,
                             partner = partner.name,
                             name = character.name
                         ),
@@ -141,20 +142,20 @@ impl Map {
                     WeddingState::WaitingForPartner
                 }
                 WeddingState::WaitingForPartner | WeddingState::WaitingForPlayer => {
-                    self.npc_chat(npc_index, &LANG.wedding_error);
+                    self.npc_chat(npc_index, &lang.wedding_error);
                     self.wedding = None;
                     self.wedding_ticks = 0;
                     return;
                 }
                 WeddingState::PartnerAgrees => {
-                    self.player_chat(partner_id, &LANG.wedding_i_do);
+                    self.player_chat(partner_id, &lang.wedding_i_do);
                     WeddingState::PriestDoYouPlayer
                 }
                 WeddingState::PriestDoYouPlayer => {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_do_you,
+                            &lang.wedding_do_you,
                             name = partner.name,
                             partner = character.name
                         ),
@@ -177,28 +178,28 @@ impl Map {
                     WeddingState::WaitingForPlayer
                 }
                 WeddingState::PlayerAgrees => {
-                    self.player_chat(player_id, &LANG.wedding_i_do);
+                    self.player_chat(player_id, &lang.wedding_i_do);
                     WeddingState::PriestDialog3
                 }
                 WeddingState::PriestDialog3 => {
-                    self.npc_chat(npc_index, &LANG.wedding_three);
+                    self.npc_chat(npc_index, &lang.wedding_three);
                     let partner_name = partner.name.to_owned();
                     let character_name = character.name.to_owned();
 
-                    self.give_item(player_id, SETTINGS.marriage.ring_item_id, 1);
-                    self.give_item(partner_id, SETTINGS.marriage.ring_item_id, 1);
+                    self.give_item(player_id, SETTINGS.load().marriage.ring_item_id, 1);
+                    self.give_item(partner_id, SETTINGS.load().marriage.ring_item_id, 1);
                     self.set_partner(player_id, partner_name);
                     self.set_partner(partner_id, character_name);
                     WeddingState::PriestDialog4
                 }
                 WeddingState::PriestDialog4 => {
-                    self.npc_chat(npc_index, &LANG.wedding_four);
+                    self.npc_chat(npc_index, &lang.wedding_four);
                     WeddingState::Hearts
                 }
                 WeddingState::Hearts => {
                     self.effect_on_players(
                         &[player_id, partner_id],
-                        SETTINGS.marriage.celebration_effect_id,
+                        SETTINGS.load().marriage.celebration_effect_id,
                     );
                     WeddingState::PriestDialog5AndConfetti
                 }
@@ -206,7 +207,7 @@ impl Map {
                     self.npc_chat(
                         npc_index,
                         &get_lang_string!(
-                            &LANG.wedding_five,
+                            &lang.wedding_five,
                             partner = partner.name,
                             name = character.name
                         ),
@@ -217,7 +218,7 @@ impl Map {
                     WeddingState::Done
                 }
                 WeddingState::Done => {
-                    self.npc_chat(npc_index, &LANG.wedding_end);
+                    self.npc_chat(npc_index, &lang.wedding_end);
                     self.wedding = None;
                     self.wedding_ticks = 0;
                     return;

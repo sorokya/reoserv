@@ -46,7 +46,7 @@ impl Map {
                 let map = match partner.get_map().await {
                     Ok(map) => map,
                     Err(e) => {
-                        error!("Failed to get map: {}", e);
+                        tracing::error!("Failed to get map: {}", e);
                         return;
                     }
                 };

@@ -37,7 +37,7 @@ impl Player {
         let create = match AccountCreateClientPacket::deserialize(&reader) {
             Ok(create) => create,
             Err(e) => {
-                error!("Error deserializing AccountCreateClientPacket {}", e);
+                tracing::error!("Error deserializing AccountCreateClientPacket {}", e);
                 return;
             }
         };
@@ -167,7 +167,7 @@ impl Player {
             .await
         {
             Ok(_) => {
-                info!("New account: {}", username);
+                tracing::info!("New account: {}", username);
 
                 self.account_id = match self.db.get_last_insert_id().await {
                     Some(account_id) => {
@@ -209,7 +209,7 @@ impl Player {
         let request = match AccountRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
-                error!("Error deserializing AccountRequestClientPacket {}", e);
+                tracing::error!("Error deserializing AccountRequestClientPacket {}", e);
                 return;
             }
         };
@@ -269,8 +269,8 @@ impl Player {
                     PacketAction::Unrecognized(ACTION_CONFIG),
                     PacketFamily::Account,
                     AccountConfigServerPacket {
-                        delay_time: SETTINGS.account.delay_time,
-                        email_validation: SETTINGS.account.email_validation,
+                        delay_time: SETTINGS.load().account.delay_time,
+                        email_validation: SETTINGS.load().account.email_validation,
                     },
                 )
                 .await;
@@ -298,7 +298,7 @@ impl Player {
         let agree = match AccountAgreeClientPacket::deserialize(&reader) {
             Ok(agree) => agree,
             Err(e) => {
-                error!("Error deserializing AccountAgreeClientPacket {}", e);
+                tracing::error!("Error deserializing AccountAgreeClientPacket {}", e);
                 return;
             }
         };
@@ -325,7 +325,7 @@ impl Player {
         self.login_attempts += 1;
 
         if !exists {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many password change attempts".to_string())
                     .await;
                 return;
@@ -361,7 +361,7 @@ impl Player {
                 return;
             }
             Err(e) => {
-                error!("Error getting password hash: {}", e);
+                tracing::error!("Error getting password hash: {}", e);
 
                 let _ = self
                     .bus
@@ -385,7 +385,7 @@ impl Player {
         let username: String = row.get_string(1).unwrap();
         let password_hash: String = row.get_string(2).unwrap();
         if !validate_password(&username, &agree.old_password, &password_hash) {
-            if self.login_attempts >= SETTINGS.server.max_login_attempts {
+            if self.login_attempts >= SETTINGS.load().server.max_login_attempts {
                 self.close("Too many password change attempts".to_string())
                     .await;
                 return;
@@ -456,7 +456,7 @@ impl Player {
         let accept = match AccountAcceptClientPacket::deserialize(&reader) {
             Ok(accept) => accept,
             Err(e) => {
-                error!("Faled to deserialize AccountAcceptClientPacket: {}", e);
+                tracing::error!("Faled to deserialize AccountAcceptClientPacket: {}", e);
                 return;
             }
         };
@@ -483,9 +483,12 @@ impl Player {
         if let Err(e) = send_email(
             &email,
             &accept.account_name,
-            &get_lang_string!(&EMAILS.validation.subject, name = accept.account_name),
             &get_lang_string!(
-                &EMAILS.validation.body,
+                &EMAILS.load().validation.subject,
+                name = accept.account_name
+            ),
+            &get_lang_string!(
+                &EMAILS.load().validation.body,
                 name = accept.account_name,
                 code = code
             ),
@@ -514,7 +517,7 @@ impl Player {
             PacketAction::Create => self.account_create(reader).await,
             PacketAction::Request => self.account_request(reader).await,
             PacketAction::Agree => self.account_agree(reader).await,
-            _ => error!("Unhandled packet Account_{:?}", action),
+            _ => tracing::error!("Unhandled packet Account_{:?}", action),
         }
     }
 }

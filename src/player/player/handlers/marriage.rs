@@ -18,7 +18,7 @@ impl Player {
             let open = match MarriageOpenClientPacket::deserialize(&reader) {
                 Ok(open) => open,
                 Err(e) => {
-                    error!("Error deserializing MarriageOpenClientPacket {}", e);
+                    tracing::error!("Error deserializing MarriageOpenClientPacket {}", e);
                     return;
                 }
             };
@@ -36,7 +36,7 @@ impl Player {
             let request = match MarriageRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing MarriageRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing MarriageRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -74,7 +74,7 @@ impl Player {
         match action {
             PacketAction::Open => self.marriage_open(reader),
             PacketAction::Request => self.marriage_request(reader),
-            _ => error!("Unhandled packet Marriage_{:?}", action),
+            _ => tracing::error!("Unhandled packet Marriage_{:?}", action),
         }
     }
 }

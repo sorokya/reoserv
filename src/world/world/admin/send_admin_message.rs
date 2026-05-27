@@ -23,7 +23,7 @@ impl World {
         let character = match player.get_character().await {
             Ok(character) => character,
             Err(e) => {
-                error!("Failed to get character: {}", e);
+                tracing::error!("Failed to get character: {}", e);
                 return;
             }
         };
@@ -48,7 +48,7 @@ impl World {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize AdminInteractReplyServerPacket: {}", e);
+            tracing::error!("Failed to serialize AdminInteractReplyServerPacket: {}", e);
             return;
         }
 
@@ -75,7 +75,7 @@ impl World {
                 .execute(&insert_params(
                     include_str!("../../../sql/create_board_post.sql"),
                     &[
-                        ("board_id", &SETTINGS.board.admin_board),
+                        ("board_id", &SETTINGS.load().board.admin_board),
                         ("character_id", &character_id),
                         (
                             "subject",
@@ -86,7 +86,7 @@ impl World {
                 ))
                 .await
             {
-                error!("Failed to add message to admin board: {}", e);
+                tracing::error!("Failed to add message to admin board: {}", e);
             }
         });
     }

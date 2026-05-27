@@ -211,7 +211,7 @@ impl PlayerHandle {
         let mut writer = EoWriter::new();
 
         if let Err(e) = packet.serialize(&mut writer) {
-            error!("Failed to serialize packet: {}", e);
+            tracing::error!("Failed to serialize packet: {}", e);
             return;
         }
 
@@ -278,7 +278,7 @@ async fn run_player(mut player: Player) {
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    trace!("Recv: {:?}", &packet[4..]);
+                    tracing::trace!("Recv: {:?}", &packet[4..]);
                     player.queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {

@@ -11,7 +11,7 @@ impl Player {
             let request = match NpcRangeRequestClientPacket::deserialize(&reader) {
                 Ok(request) => request,
                 Err(e) => {
-                    error!("Error deserializing NpcRangeRequestClientPacket {}", e);
+                    tracing::error!("Error deserializing NpcRangeRequestClientPacket {}", e);
                     return;
                 }
             };
@@ -23,7 +23,7 @@ impl Player {
     pub fn handle_npc_range(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Request => self.npc_range_request(reader),
-            _ => error!("Unhandled packet NPCRange_{:?}", action),
+            _ => tracing::error!("Unhandled packet NPCRange_{:?}", action),
         }
     }
 }

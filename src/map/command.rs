@@ -541,7 +541,10 @@ pub enum Command {
         speed: i32,
     },
     SpawnNpcs,
-    ActNpcs,
+    NpcAct {
+        index: i32,
+        generation: u64,
+    },
     Quake {
         magnitude: i32,
     },
@@ -562,4 +565,6 @@ pub enum Command {
     Load {
         respond_to: oneshot::Sender<()>,
     },
+    Shutdown,
+    FlushNpcUpdates,
 }

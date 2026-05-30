@@ -16,7 +16,6 @@ impl World {
         }
 
         self.second_ticks += 1;
-        self.npc_act_ticks += 1;
         self.item_spawn_ticks += 1;
         self.player_recover_ticks += 1;
         self.npc_recover_ticks += 1;
@@ -31,10 +30,6 @@ impl World {
         }
 
         for map in maps {
-            if self.npc_act_ticks >= SETTINGS.load().npcs.act_rate {
-                map.act_npcs();
-            }
-
             if self.auto_pickup_ticks >= SETTINGS.load().auto_pickup.rate
                 && SETTINGS.load().auto_pickup.enabled
             {
@@ -90,10 +85,6 @@ impl World {
             && SETTINGS.load().auto_pickup.enabled
         {
             self.auto_pickup_ticks = 0;
-        }
-
-        if self.npc_act_ticks >= SETTINGS.load().npcs.act_rate {
-            self.npc_act_ticks = 0;
         }
 
         if self.item_spawn_ticks >= SETTINGS.load().world.chest_spawn_rate {

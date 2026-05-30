@@ -3,15 +3,30 @@ use std::collections::HashMap;
 use eolib::protocol::{
     Coords,
     map::{Emf, MapTileSpec},
+    net::server::{NpcUpdateAttack, NpcUpdateChat, NpcUpdatePosition},
 };
 use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{SETTINGS, character::Character, world::WorldHandle};
 
-use super::{Chest, Command, Door, Item, Npc, Wedding};
+use super::{Chest, Command, Door, Item, MapHandle, Npc, Wedding};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
+    // None after a Shutdown command — once dropped, scheduler tasks finish
+    // their current send and the channel closes naturally so run_map exits.
+    pub(super) self_handle: Option<MapHandle>,
+    // NPC act updates buffered between flushes — sent as one batched
+    // NpcPlayerServerPacket per in-range player every flush window. Each
+    // update is paired with the NPC's coords AT ENQUEUE TIME so a quickly
+    // departing NPC doesn't get filtered out of players who were in range
+    // when the event happened.
+    pub(super) pending_position_updates: Vec<(Coords, NpcUpdatePosition)>,
+    pub(super) pending_attack_updates: Vec<(Coords, NpcUpdateAttack)>,
+    pub(super) pending_chat_updates: Vec<(Coords, NpcUpdateChat)>,
+    // True between an enqueue and the matching FlushNpcUpdates handler so we
+    // don't spin a 20Hz idle reschedule loop on quiet maps.
+    pub(super) flush_scheduled: bool,
     world: WorldHandle,
     id: i32,
     file: Emf,
@@ -21,7 +36,6 @@ pub struct Map {
     items: Vec<Item>,
     item_index_counter: i32,
     npcs: Vec<Npc>,
-    npcs_initialized: bool,
     characters: HashMap<i32, Character>,
     db: crate::db::DbHandle,
     quake_ticks: i32,
@@ -72,6 +86,7 @@ impl Map {
         db: crate::db::DbHandle,
         world: WorldHandle,
         rx: UnboundedReceiver<Command>,
+        self_handle: MapHandle,
     ) -> Self {
         let has_timed_spikes = file.tile_spec_rows.iter().any(|row| {
             row.tiles
@@ -105,6 +120,11 @@ impl Map {
         Self {
             id,
             world,
+            self_handle: Some(self_handle),
+            pending_position_updates: Vec::new(),
+            pending_attack_updates: Vec::new(),
+            pending_chat_updates: Vec::new(),
+            flush_scheduled: false,
             file_size,
             file,
             rx,
@@ -113,7 +133,6 @@ impl Map {
             items: Vec::new(),
             item_index_counter: 0,
             npcs: Vec::new(),
-            npcs_initialized: false,
             characters: HashMap::new(),
             db,
             arena_ticks: 0,
@@ -695,7 +714,7 @@ impl Map {
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
-            Command::ActNpcs => self.act_npcs(),
+            Command::NpcAct { index, generation } => self.npc_act(index, generation),
 
             Command::Unequip {
                 player_id,
@@ -771,6 +790,13 @@ impl Map {
                 self.load().await;
                 let _ = respond_to.send(());
             }
+            Command::Shutdown => {
+                // Drop our own sender so once the world's MapHandle and any
+                // in-flight scheduler tasks drop their clones, the channel
+                // closes and run_map exits.
+                self.self_handle = None;
+            }
+            Command::FlushNpcUpdates => self.flush_npc_updates(),
         }
     }
 }

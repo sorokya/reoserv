@@ -25,6 +25,11 @@ pub struct Npc {
     pub opponents: Vec<NpcOpponent>,
     pub boss: bool,
     pub child: bool,
+    // Bumped on every bootstrap. Scheduled wakes capture the generation at
+    // schedule time and short-circuit if the NPC has been rebooted (reload,
+    // respawn) in the meantime — prevents orphan tokio tasks from forking
+    // duplicate scheduler chains.
+    pub act_gen: u64,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -235,6 +240,7 @@ impl NPCBuilder {
             opponents: Vec::new(),
             boss: self.boss,
             child: self.child,
+            act_gen: 0,
         }
     }
 }

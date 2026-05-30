@@ -8,10 +8,11 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::{SETTINGS, character::Character, world::WorldHandle};
 
-use super::{Chest, Command, Door, Item, Npc, Wedding};
+use super::{Chest, Command, Door, Item, MapHandle, Npc, Wedding};
 
 pub struct Map {
     pub rx: UnboundedReceiver<Command>,
+    pub(super) self_handle: MapHandle,
     world: WorldHandle,
     id: i32,
     file: Emf,
@@ -21,7 +22,6 @@ pub struct Map {
     items: Vec<Item>,
     item_index_counter: i32,
     npcs: Vec<Npc>,
-    npcs_initialized: bool,
     characters: HashMap<i32, Character>,
     db: crate::db::DbHandle,
     quake_ticks: i32,
@@ -72,6 +72,7 @@ impl Map {
         db: crate::db::DbHandle,
         world: WorldHandle,
         rx: UnboundedReceiver<Command>,
+        self_handle: MapHandle,
     ) -> Self {
         let has_timed_spikes = file.tile_spec_rows.iter().any(|row| {
             row.tiles
@@ -105,6 +106,7 @@ impl Map {
         Self {
             id,
             world,
+            self_handle,
             file_size,
             file,
             rx,
@@ -113,7 +115,6 @@ impl Map {
             items: Vec::new(),
             item_index_counter: 0,
             npcs: Vec::new(),
-            npcs_initialized: false,
             characters: HashMap::new(),
             db,
             arena_ticks: 0,
@@ -695,7 +696,7 @@ impl Map {
 
             Command::ToggleHidden { player_id } => self.toggle_hidden(player_id),
 
-            Command::ActNpcs => self.act_npcs(),
+            Command::NpcAct { index } => self.npc_act(index),
 
             Command::Unequip {
                 player_id,

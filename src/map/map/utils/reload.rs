@@ -19,7 +19,6 @@ use super::{super::Map, create_chests};
 
 impl Map {
     pub fn reload(&mut self, file: Box<Emf>, file_size: i32) {
-        self.npcs_initialized = false;
         self.npcs.clear();
 
         self.has_timed_spikes = file.tile_spec_rows.iter().any(|row| {

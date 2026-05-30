@@ -37,7 +37,8 @@ impl MapHandle {
         world: WorldHandle,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let map = Map::new(id, file_size, file, db, world, rx);
+        let self_handle = Self { tx: tx.clone() };
+        let map = Map::new(id, file_size, file, db, world, rx, self_handle);
         tokio::spawn(run_map(map));
 
         Self { tx }
@@ -912,8 +913,8 @@ impl MapHandle {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }
 
-    pub fn act_npcs(&self) {
-        let _ = self.tx.send(Command::ActNpcs);
+    pub fn npc_act(&self, index: i32) {
+        let _ = self.tx.send(Command::NpcAct { index });
     }
 
     pub fn unequip(&self, player_id: i32, item_id: i32, sub_loc: i32) {

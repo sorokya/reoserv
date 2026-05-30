@@ -173,6 +173,11 @@ impl Map {
                     _ => unreachable!(),
                 }
             };
+            npc.act_ticks = 0;
+            npc.talk_ticks = 0;
+            npc.walk_idle_for = None;
+
+            self.bootstrap_npc_act(index);
         }
     }
 }

@@ -541,7 +541,9 @@ pub enum Command {
         speed: i32,
     },
     SpawnNpcs,
-    ActNpcs,
+    NpcAct {
+        index: i32,
+    },
     Quake {
         magnitude: i32,
     },

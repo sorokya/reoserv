@@ -146,12 +146,14 @@ impl Map {
             });
         }
 
+        let mut newly_alive: Vec<i32> = Vec::new();
         for saved_npc in save_data.npcs {
             if let Some(npc) = self
                 .npcs
                 .iter_mut()
                 .find(|npc| npc.index == saved_npc.index)
             {
+                let was_alive = npc.alive;
                 npc.coords = Coords {
                     x: saved_npc.x,
                     y: saved_npc.y,
@@ -169,7 +171,15 @@ impl Map {
                         bored_ticks: opp.ticks,
                     })
                     .collect();
+
+                if !was_alive && npc.alive {
+                    newly_alive.push(saved_npc.index);
+                }
             }
+        }
+
+        for index in newly_alive {
+            self.bootstrap_npc_act(index);
         }
 
         for saved_chest_item in save_data.chest_items {

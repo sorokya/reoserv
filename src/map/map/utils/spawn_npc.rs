@@ -18,6 +18,7 @@ impl Map {
         };
 
         let max_index = self.npcs.len() as i32;
+        let mut spawned_indexes = Vec::with_capacity(amount as usize);
         for i in 0..amount {
             if max_index + i >= CHAR_MAX {
                 if let Some(player) = character.player.as_ref() {
@@ -25,8 +26,9 @@ impl Map {
                 }
                 break;
             }
+            let index = max_index + i;
             self.npcs.push(Npc {
-                index: max_index + i,
+                index,
                 id: npc_id,
                 coords: character.coords,
                 direction: Direction::Down,
@@ -39,6 +41,11 @@ impl Map {
                 child: npc_data.child,
                 ..Default::default()
             });
+            spawned_indexes.push(index);
+        }
+
+        for index in spawned_indexes {
+            self.bootstrap_npc_act(index);
         }
     }
 }

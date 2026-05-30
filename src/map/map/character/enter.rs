@@ -5,7 +5,7 @@ use eolib::protocol::net::{
 use tokio::sync::oneshot;
 
 use crate::{
-    NPC_DB,
+    NPC_DB, SETTINGS,
     character::Character,
     deep::{BossPingServerPacket, FAMILY_BOSS},
     utils::in_client_range,
@@ -20,6 +20,8 @@ impl Map {
         warp_animation: Option<WarpEffect>,
         respond_to: oneshot::Sender<()>,
     ) {
+        let was_empty = self.characters.is_empty();
+
         if !new_character.hidden {
             let mut character_map_info = new_character.to_map_info();
             character_map_info.warp_effect = warp_animation;
@@ -71,6 +73,20 @@ impl Map {
 
         self.characters
             .insert(character.player_id.unwrap(), character);
+
+        // If freeze_on_empty_map dropped every NPC's scheduler chain while the
+        // map was idle, restart them now that someone's back.
+        if was_empty && SETTINGS.load().npcs.freeze_on_empty_map {
+            let alive_indexes: Vec<i32> = self
+                .npcs
+                .iter()
+                .filter(|n| n.alive)
+                .map(|n| n.index)
+                .collect();
+            for index in alive_indexes {
+                self.bootstrap_npc_act(index);
+            }
+        }
 
         let _ = respond_to.send(());
     }

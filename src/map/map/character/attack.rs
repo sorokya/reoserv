@@ -189,7 +189,9 @@ impl Map {
             } else {
                 let amount = {
                     let mut rng = rand::rng();
-                    rng.random_range(attacker.min_damage..=attacker.max_damage)
+                    let min = attacker.min_damage;
+                    let max = attacker.max_damage.max(min);
+                    rng.random_range(min..=max)
                 };
 
                 let attacking_back_or_side =
@@ -361,7 +363,9 @@ impl Map {
 
         let amount = {
             let mut rng = rand::rng();
-            rng.random_range(min_damage..=max_damage)
+            let min = min_damage;
+            let max = max_damage.max(min);
+            rng.random_range(min..=max)
         };
 
         let attacking_back_or_side =

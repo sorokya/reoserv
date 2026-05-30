@@ -25,6 +25,7 @@ use crate::{
 use super::super::Map;
 
 const STATIONARY_SPAWN_TYPE: i32 = 7;
+const FLUSH_INTERVAL_MS: u64 = 50;
 
 impl Map {
     fn act_npc_talk(&mut self, index: i32, npc_id: i32) -> Option<NpcUpdateChat> {
@@ -431,47 +432,167 @@ impl Map {
             .retain(|o| o.bored_ticks < SETTINGS.load().npcs.bored_timer);
     }
 
-    pub fn npc_act(&mut self, index: i32) {
-        let alive = match self.npcs.iter().find(|npc| npc.index == index) {
-            Some(npc) => npc.alive,
-            None => return,
+    pub fn npc_act(&mut self, index: i32, generation: u64) {
+        let current_gen = match self.npcs.iter().find(|npc| npc.index == index) {
+            Some(npc) if npc.alive => npc.act_gen,
+            _ => return,
         };
-        if !alive {
+        // Stale wake from a chain that's been superseded by reload/respawn.
+        if current_gen != generation {
             return;
         }
 
+        // When the map is frozen we let the chain die rather than spinning
+        // a no-op tokio task per NPC per cadence. enter() re-bootstraps the
+        // alive NPCs when the first character returns.
         let frozen =
             SETTINGS.load().npcs.freeze_on_empty_map && self.characters.is_empty();
-
         if frozen {
-            self.schedule_next_npc_act(index);
             return;
         }
 
         let (pos_update, chat_update, attack_update) = self.act_npc(index);
-        self.broadcast_npc_act_updates(index, pos_update, chat_update, attack_update);
+        // Snapshot post-act coords so a fast NPC that walks out of a player's
+        // range during the 50ms flush window doesn't get its event silently
+        // dropped from that player's batch.
+        let npc_coords = match self.npcs.iter().find(|npc| npc.index == index) {
+            Some(npc) => npc.coords,
+            None => return,
+        };
+        self.enqueue_npc_act_updates(npc_coords, pos_update, chat_update, attack_update);
         self.schedule_next_npc_act(index);
     }
 
-    pub fn bootstrap_npc_act(&self, index: i32) {
-        let alive = match self.npcs.iter().find(|npc| npc.index == index) {
-            Some(npc) => npc.alive,
+    fn enqueue_npc_act_updates(
+        &mut self,
+        coords: Coords,
+        pos_update: Option<NpcUpdatePosition>,
+        chat_update: Option<NpcUpdateChat>,
+        attack_update: Option<NpcUpdateAttack>,
+    ) {
+        let had_any = pos_update.is_some() || chat_update.is_some() || attack_update.is_some();
+        if let Some(p) = pos_update {
+            self.pending_position_updates.push((coords, p));
+        }
+        if let Some(c) = chat_update {
+            self.pending_chat_updates.push((coords, c));
+        }
+        if let Some(a) = attack_update {
+            self.pending_attack_updates.push((coords, a));
+        }
+        if had_any && !self.flush_scheduled {
+            self.flush_scheduled = true;
+            self.schedule_next_flush();
+        }
+    }
+
+    pub fn flush_npc_updates(&mut self) {
+        self.flush_scheduled = false;
+
+        if self.pending_position_updates.is_empty()
+            && self.pending_attack_updates.is_empty()
+            && self.pending_chat_updates.is_empty()
+        {
+            return;
+        }
+
+        let positions = std::mem::take(&mut self.pending_position_updates);
+        let attacks = std::mem::take(&mut self.pending_attack_updates);
+        let chats = std::mem::take(&mut self.pending_chat_updates);
+
+        let player_ids = self.characters.keys().copied().collect::<Vec<_>>();
+        for player_id in player_ids {
+            let coords = match self.characters.get(&player_id) {
+                Some(c) => c.coords,
+                None => continue,
+            };
+
+            let positions_in_range: Vec<NpcUpdatePosition> = positions
+                .iter()
+                .filter(|(npc_coords, _)| in_range(&coords, npc_coords))
+                .map(|(_, u)| u.clone())
+                .collect();
+            let attacks_in_range: Vec<NpcUpdateAttack> = attacks
+                .iter()
+                .filter(|(npc_coords, _)| in_range(&coords, npc_coords))
+                .map(|(_, u)| u.clone())
+                .collect();
+            let chats_in_range: Vec<NpcUpdateChat> = chats
+                .iter()
+                .filter(|(npc_coords, _)| in_range(&coords, npc_coords))
+                .map(|(_, u)| u.clone())
+                .collect();
+
+            if positions_in_range.is_empty()
+                && attacks_in_range.is_empty()
+                && chats_in_range.is_empty()
+            {
+                continue;
+            }
+
+            let packet = NpcPlayerServerPacket {
+                positions: positions_in_range,
+                attacks: attacks_in_range,
+                chats: chats_in_range,
+                hp: None,
+                tp: None,
+            };
+
+            let player = match self.characters.get(&player_id) {
+                Some(c) => match c.player.as_ref() {
+                    Some(p) => p,
+                    None => continue,
+                },
+                None => continue,
+            };
+
+            player.send(PacketAction::Player, PacketFamily::Npc, &packet);
+
+            let died = packet.attacks.iter().any(|u| {
+                u.player_id == player_id && u.killed == PlayerKilledState::Killed
+            });
+            if died {
+                player.die();
+            }
+        }
+    }
+
+    pub fn schedule_next_flush(&self) {
+        let handle = match self.self_handle.as_ref() {
+            Some(h) => h.clone(),
             None => return,
         };
-        if !alive {
-            return;
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(FLUSH_INTERVAL_MS)).await;
+            handle.flush_npc_updates();
+        });
+    }
+
+    pub fn bootstrap_npc_act(&mut self, index: i32) {
+        match self.npcs.iter_mut().find(|npc| npc.index == index) {
+            Some(npc) if npc.alive => {
+                // Invalidate any orphan task from a previous chain.
+                npc.act_gen = npc.act_gen.wrapping_add(1);
+            }
+            _ => return,
         }
         self.schedule_next_npc_act_with(index, true);
     }
 
-    fn schedule_next_npc_act(&self, index: i32) {
+    fn schedule_next_npc_act(&mut self, index: i32) {
         self.schedule_next_npc_act_with(index, false);
     }
 
-    fn schedule_next_npc_act_with(&self, index: i32, initial: bool) {
-        let (spawn_type, walk_idle_for_ticks) =
-            match self.npcs.iter().find(|npc| npc.index == index) {
-                Some(npc) if npc.alive => (npc.spawn_type, npc.walk_idle_for.unwrap_or(0)),
+    fn schedule_next_npc_act_with(&mut self, index: i32, initial: bool) {
+        // Take walk_idle_for so the extra delay is consumed exactly once;
+        // it's only set when act_npc_move_idle picks "stand still" and should
+        // not keep adding to subsequent chase/attack reschedules.
+        let (spawn_type, walk_idle_for_ticks, generation) =
+            match self.npcs.iter_mut().find(|npc| npc.index == index) {
+                Some(npc) if npc.alive => {
+                    let extra = npc.walk_idle_for.take().unwrap_or(0);
+                    (npc.spawn_type, extra, npc.act_gen)
+                }
                 _ => return,
             };
 
@@ -489,72 +610,28 @@ impl Map {
 
         let mut rng = rand::rng();
         let delay = if initial {
-            // First wake after spawn: pick anywhere in [0, base + extra]
-            // so a freshly spawned mob group desyncs immediately.
-            let span = base_ms.saturating_add(extra_ms).max(1);
-            rng.random_range(0..span)
+            // First wake after spawn: at least base/4 ms so a fresh mob can't
+            // hit on frame 0, but spread up to base+extra so a spawn group
+            // desyncs immediately.
+            let span = base_ms.saturating_add(extra_ms).max(4);
+            let floor = (base_ms / 4).max(1);
+            rng.random_range(floor..span.max(floor + 1))
         } else {
             let jitter_range = (base_ms / 4).max(1);
             let jitter = rng.random_range(0..jitter_range);
             base_ms.saturating_add(extra_ms).saturating_add(jitter)
         };
 
-        let handle = self.self_handle.clone();
+        let handle = match self.self_handle.as_ref() {
+            Some(h) => h.clone(),
+            None => return, // map is shutting down
+        };
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(delay)).await;
-            handle.npc_act(index);
+            handle.npc_act(index, generation);
         });
     }
 
-    fn broadcast_npc_act_updates(
-        &self,
-        index: i32,
-        pos_update: Option<NpcUpdatePosition>,
-        chat_update: Option<NpcUpdateChat>,
-        attack_update: Option<NpcUpdateAttack>,
-    ) {
-        if pos_update.is_none() && chat_update.is_none() && attack_update.is_none() {
-            return;
-        }
-
-        let npc_coords = match self.npcs.iter().find(|npc| npc.index == index) {
-            Some(npc) => npc.coords,
-            None => return,
-        };
-
-        let positions: Vec<NpcUpdatePosition> = pos_update.iter().cloned().collect();
-        let attacks: Vec<NpcUpdateAttack> = attack_update.iter().cloned().collect();
-        let chats: Vec<NpcUpdateChat> = chat_update.iter().cloned().collect();
-
-        for (player_id, character) in self.characters.iter() {
-            if !in_range(&character.coords, &npc_coords) {
-                continue;
-            }
-
-            let player = match character.player.as_ref() {
-                Some(player) => player,
-                None => continue,
-            };
-
-            let packet = NpcPlayerServerPacket {
-                positions: positions.clone(),
-                attacks: attacks.clone(),
-                chats: chats.clone(),
-                hp: None,
-                tp: None,
-            };
-
-            player.send(PacketAction::Player, PacketFamily::Npc, &packet);
-
-            let died = packet.attacks.iter().any(|update| {
-                update.player_id == *player_id && update.killed == PlayerKilledState::Killed
-            });
-
-            if died {
-                player.die();
-            }
-        }
-    }
 }
 
 fn act_rate_for_spawn_type(spawn_type: i32) -> i32 {
@@ -576,7 +653,10 @@ fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> 
     let mut rng = rand::rng();
     let rand = rng.random_range(0.0..=1.0);
 
-    let amount = rng.random_range(npc_data.min_damage..=npc_data.max_damage);
+    // Some pub files have min_damage > max_damage; clamp instead of panicking.
+    let min_damage = npc_data.min_damage;
+    let max_damage = npc_data.max_damage.max(min_damage);
+    let amount = rng.random_range(min_damage..=max_damage);
 
     let npc_facing_player_back_or_side =
         (i32::from(character.direction) - i32::from(npc.direction)).abs() != 2;

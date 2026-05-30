@@ -913,8 +913,16 @@ impl MapHandle {
         let _ = self.tx.send(Command::ToggleHidden { player_id });
     }
 
-    pub fn npc_act(&self, index: i32) {
-        let _ = self.tx.send(Command::NpcAct { index });
+    pub fn npc_act(&self, index: i32, generation: u64) {
+        let _ = self.tx.send(Command::NpcAct { index, generation });
+    }
+
+    pub fn shutdown(&self) {
+        let _ = self.tx.send(Command::Shutdown);
+    }
+
+    pub fn flush_npc_updates(&self) {
+        let _ = self.tx.send(Command::FlushNpcUpdates);
     }
 
     pub fn unequip(&self, player_id: i32, item_id: i32, sub_loc: i32) {
@@ -1026,9 +1034,7 @@ impl MapHandle {
 }
 
 async fn run_map(mut map: Map) {
-    loop {
-        if let Some(command) = map.rx.recv().await {
-            map.handle_command(command).await;
-        }
+    while let Some(command) = map.rx.recv().await {
+        map.handle_command(command).await;
     }
 }

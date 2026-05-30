@@ -18,7 +18,7 @@ impl Map {
         };
 
         let max_index = self.npcs.len() as i32;
-        let mut spawned_indexes = Vec::with_capacity(amount as usize);
+        let mut spawned_indexes = Vec::with_capacity(amount.max(0) as usize);
         for i in 0..amount {
             if max_index + i >= CHAR_MAX {
                 if let Some(player) = character.player.as_ref() {

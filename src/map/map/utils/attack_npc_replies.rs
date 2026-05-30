@@ -575,7 +575,9 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
         for drop in drops {
             let roll = rng.random_range(0..=64000);
             if roll <= drop.rate {
-                let amount = rng.random_range(drop.min_amount..=drop.max_amount);
+                let min = drop.min_amount;
+                let max = drop.max_amount.max(min);
+                let amount = rng.random_range(min..=max);
                 if amount > 0 {
                     return Some(Item {
                         index: -1,

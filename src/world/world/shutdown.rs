@@ -29,6 +29,13 @@ impl World {
 
         self.save_async().await;
 
+        if let Some(maps) = self.maps.take() {
+            for map in maps.values() {
+                map.shutdown();
+            }
+            drop(maps);
+        }
+
         let _ = respond_to.send(());
     }
 }

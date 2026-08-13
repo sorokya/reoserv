@@ -28,27 +28,27 @@ impl Player {
             return;
         }
 
-        if self.state != ClientState::Uninitialized {
-            if family != PacketFamily::Init {
-                if family == PacketFamily::Connection && action == PacketAction::Ping {
-                    self.bus
-                        .sequencer
-                        .set_start(self.bus.upcoming_sequence_start);
-                }
+        if family == PacketFamily::Init {
+            // Init packets carry no sequence byte, but still advance the counter —
+            // the client increments on every send including the Init handshake.
+            self.bus.sequencer.next_sequence();
+        } else if self.state != ClientState::Uninitialized {
+            if family == PacketFamily::Connection && action == PacketAction::Ping {
+                self.bus
+                    .sequencer
+                    .set_start(self.bus.upcoming_sequence_start);
+            }
 
-                let server_sequence = self.bus.sequencer.next_sequence();
-                let client_sequence = reader.get_char();
+            let server_sequence = self.bus.sequencer.next_sequence();
+            let client_sequence = reader.get_char();
 
-                if SETTINGS.load().server.enforce_sequence && server_sequence != client_sequence {
-                    self.close(format!(
-                        "sending invalid sequence: Got {}, expected {}.",
-                        client_sequence, server_sequence
-                    ))
-                    .await;
-                    return;
-                }
-            } else {
-                self.bus.sequencer.next_sequence();
+            if SETTINGS.load().server.enforce_sequence && server_sequence != client_sequence {
+                self.close(format!(
+                    "sending invalid sequence: Got {}, expected {}.",
+                    client_sequence, server_sequence
+                ))
+                .await;
+                return;
             }
         }
 

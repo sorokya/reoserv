@@ -40,8 +40,10 @@ use eolib::{
             },
             server::{
                 AccountReply, AccountReplyServerPacket, CharacterReply, CharacterReplyServerPacket,
-                InitInitServerPacket, InitInitServerPacketReplyCodeData, InitReply, LoginReply,
-                WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+                CharacterReplyServerPacketReplyCodeData, InitInitServerPacket,
+                InitInitServerPacketReplyCodeData, InitReply, LoginReply, LoginReplyServerPacket,
+                LoginReplyServerPacketReplyCodeData, WelcomeReplyServerPacket,
+                WelcomeReplyServerPacketWelcomeCodeData,
             },
         },
     },
@@ -89,8 +91,12 @@ impl Bot {
         let mut payload = BytesMut::new();
         payload.put_u8(u8::from(action));
         payload.put_u8(u8::from(family));
+
+        // The sequencer advances on every send — including the Init handshake —
+        // matching the reference client. The sequence byte itself is only written
+        // for non-Init packets (Init carries no sequence byte).
+        let seq = self.sequencer.next_sequence();
         if family != PacketFamily::Init {
-            let seq = self.sequencer.next_sequence();
             // The sequence is an EO-encoded "char": value + 1 (the server reads
             // it via get_char() which decodes the number). Values 0..=252 encode
             // to a single byte.
@@ -166,7 +172,9 @@ impl Bot {
             start,
             "init handshake complete"
         );
-        self.sequencer = Sequencer::new(start);
+        // The sequencer already advanced once for the Init send; only reset the
+        // start value (not the counter), matching the reference client.
+        self.sequencer.set_start(start);
         self.client_encryption_multiple = ok.client_encryption_multiple;
         self.server_encryption_multiple = ok.server_encryption_multiple;
         self.player_id = ok.player_id;
@@ -237,14 +245,19 @@ impl Bot {
         .await?;
 
         let (_, _, data) = self.recv().await?;
-        let reader = EoReader::new(data);
-        let reply_code = LoginReply::from(reader.get_short());
-        if reply_code != LoginReply::OK {
-            return Err(anyhow!("login failed: {reply_code:?}"));
+        let reply = LoginReplyServerPacket::deserialize(&EoReader::new(data))?;
+        match reply.reply_code {
+            LoginReply::OK => {}
+            other => return Err(anyhow!("login failed: {other:?}")),
         }
-        let chars = parse_character_list(&reader)?;
-        tracing::debug!(?chars, "login ok");
-        Ok(chars.into_iter().map(|(_, id)| id).collect())
+        let Some(LoginReplyServerPacketReplyCodeData::OK(ok)) = reply.reply_code_data else {
+            return Err(anyhow!("login reply missing OK data"));
+        };
+        tracing::debug!(
+            chars = ?ok.characters.iter().map(|c| (&c.name, c.id)).collect::<Vec<_>>(),
+            "login ok"
+        );
+        Ok(ok.characters.iter().map(|c| c.id).collect())
     }
 
     async fn create_character(&mut self, name: &str) -> Result<i32> {
@@ -279,17 +292,18 @@ impl Bot {
         .await?;
 
         let (_, _, data) = self.recv().await?;
-        let reader = EoReader::new(data);
-        let reply_code = CharacterReply::from(reader.get_short());
-        if reply_code != CharacterReply::OK {
-            return Err(anyhow!("character create failed: {reply_code:?}"));
+        let reply = CharacterReplyServerPacket::deserialize(&EoReader::new(data))?;
+        if reply.reply_code != CharacterReply::OK {
+            return Err(anyhow!("character create failed: {:?}", reply.reply_code));
         }
-        let chars = parse_character_list(&reader)?;
-        chars
+        let Some(CharacterReplyServerPacketReplyCodeData::OK(ok)) = reply.reply_code_data else {
+            return Err(anyhow!("character create reply missing OK data"));
+        };
+        ok.characters
             .iter()
-            .find(|(n, _)| n == name)
-            .map(|(_, id)| *id)
-            .ok_or_else(|| anyhow!("created character {name} not in list (got {chars:?})"))
+            .find(|c| c.name == name)
+            .map(|c| c.id)
+            .ok_or_else(|| anyhow!("created character {name} not in list"))
     }
 
     async fn enter_game(&mut self, character_id: i32) -> Result<()> {
@@ -388,30 +402,6 @@ fn index_to_letters(mut n: usize) -> String {
         }
     }
     out.iter().rev().collect()
-}
-
-/// Manually parse a character list from a login/character reply body.
-///
-/// eolib's generated `deserialize` for these replies has a bug — it doesn't
-/// consume the `0xff` chunk separator written after the character count — so
-/// parsing via `CharacterSelectionListEntry` deserialization reads garbage.
-/// This reads the list by hand instead. Returns `(name, id)` pairs.
-fn parse_character_list(reader: &EoReader) -> Result<Vec<(String, i32)>> {
-    let count = reader.get_char() as usize;
-    reader.get_char(); // trailing 0
-    reader.set_chunked_reading_mode(true);
-    reader.next_chunk()?; // skip the 0xff separator (bug workaround)
-
-    let mut out = Vec::with_capacity(count);
-    for _ in 0..count {
-        let name = reader.get_string();
-        reader.next_chunk()?; // skip 0xff after name
-        let id = reader.get_int();
-        out.push((name, id));
-        // Skip the rest of the entry (level..equipment) up to the next separator.
-        reader.next_chunk()?;
-    }
-    Ok(out)
 }
 
 #[tokio::main]

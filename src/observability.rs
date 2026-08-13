@@ -76,10 +76,18 @@ where
 {
     fn on_new_span(
         &self,
-        _attrs: &span::Attributes<'_>,
+        attrs: &span::Attributes<'_>,
         id: &span::Id,
         _ctx: tracing_subscriber::layer::Context<'_, S>,
     ) {
+        // Ignore tokio's internal runtime spans (enabled by `tokio_unstable` +
+        // the `tracing` feature) — they fire constantly and drown out
+        // application-level slow spans.
+        let target = attrs.metadata().target();
+        if target == "runtime" || target.starts_with("runtime.") || target.starts_with("tokio") {
+            return;
+        }
+
         self.start_times
             .lock()
             .unwrap()
@@ -196,6 +204,23 @@ mod tests {
         assert!(
             !output.contains("slow span"),
             "unexpected slow-span warning: {output}"
+        );
+    }
+
+    #[test]
+    fn ignores_tokio_runtime_spans() {
+        let (buf, subscriber) = capture_with(Duration::from_millis(0));
+
+        tracing::subscriber::with_default(subscriber, || {
+            let span = tracing::info_span!(target: "runtime", "resource.async_op");
+            let _enter = span.enter();
+            std::thread::sleep(Duration::from_millis(5));
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert!(
+            !output.contains("slow span"),
+            "tokio runtime spans should be ignored, got: {output}"
         );
     }
 }

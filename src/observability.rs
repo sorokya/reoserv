@@ -122,3 +122,80 @@ where
         tracing::warn!(target: "reoserv::slow_span", "{}", message);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        io,
+        sync::{Arc, Mutex},
+    };
+
+    #[derive(Clone)]
+    struct TestWriter(Arc<Mutex<Vec<u8>>>);
+
+    impl io::Write for TestWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    fn capture_with(
+        threshold: Duration,
+    ) -> (
+        Arc<Mutex<Vec<u8>>>,
+        impl tracing::Subscriber + Send + Sync + 'static,
+    ) {
+        let buf = Arc::new(Mutex::new(Vec::new()));
+        let writer = TestWriter(buf.clone());
+
+        let subscriber = tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_writer(move || writer.clone())
+                    .with_target(false)
+                    .with_ansi(false),
+            )
+            .with(SlowSpanLayer::new(threshold));
+
+        (buf, subscriber)
+    }
+
+    #[test]
+    fn slow_span_emits_warning_when_over_threshold() {
+        let (buf, subscriber) = capture_with(Duration::from_millis(0));
+
+        tracing::subscriber::with_default(subscriber, || {
+            let span = tracing::info_span!("test_span");
+            let _enter = span.enter();
+            std::thread::sleep(Duration::from_millis(5));
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert!(
+            output.contains("slow span"),
+            "expected slow-span warning, got: {output}"
+        );
+    }
+
+    #[test]
+    fn slow_span_silent_when_under_threshold() {
+        let (buf, subscriber) = capture_with(Duration::from_secs(3600));
+
+        tracing::subscriber::with_default(subscriber, || {
+            let span = tracing::info_span!("test_span");
+            let _enter = span.enter();
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert!(
+            !output.contains("slow span"),
+            "unexpected slow-span warning: {output}"
+        );
+    }
+}

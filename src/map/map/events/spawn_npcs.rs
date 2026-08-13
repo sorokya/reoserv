@@ -7,6 +7,7 @@ use crate::{NPC_DB, SETTINGS, map::NPCBuilder};
 use super::super::Map;
 
 impl Map {
+    #[tracing::instrument(name = "spawn_npcs", skip_all, level = "debug")]
     pub fn spawn_npcs(&mut self) {
         self.npcs.retain(|n| n.spawn_index.is_some() || n.alive);
 

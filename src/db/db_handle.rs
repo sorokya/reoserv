@@ -114,6 +114,7 @@ impl DbHandle {
     }
 }
 
+#[tracing::instrument(name = "db", skip_all)]
 async fn run_db(mut db: Db) {
     loop {
         if let Some(command) = db.rx.recv().await {

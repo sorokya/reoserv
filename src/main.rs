@@ -38,6 +38,7 @@ mod emails;
 mod errors;
 mod lang;
 mod map;
+mod observability;
 mod player;
 mod settings;
 use settings::Settings;
@@ -51,7 +52,6 @@ mod world;
 
 use tokio::{net::TcpListener, signal, time};
 use tokio_tungstenite::accept_async;
-use tracing_subscriber::{EnvFilter, fmt::time::ChronoLocal};
 use world::WorldHandle;
 
 use crate::{
@@ -129,19 +129,7 @@ static EXP_TABLE: Lazy<ArcSwap<[i32; 254]>> = Lazy::new(|| ArcSwap::from_pointee
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    #[cfg(feature = "console")]
-    console_subscriber::init();
-
-    if std::env::var("RUST_LOG").is_err() {
-        unsafe {
-            std::env::set_var("RUST_LOG", "info");
-        }
-    }
-
-    tracing_subscriber::fmt()
-        .with_timer(ChronoLocal::new(String::from("%Y-%m-%d %I:%M:%S%.3f %p")))
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    crate::observability::init_tracing();
 
     println!(
         " ▖▄  ▄▖  ▄▖  ▄▖  ▄▖  ▖▄ ▗ ▗

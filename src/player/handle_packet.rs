@@ -52,6 +52,9 @@ impl Player {
             }
         }
 
+        let span = tracing::info_span!("packet", family = ?family, action = ?action);
+        let _enter = span.enter();
+
         match family {
             PacketFamily::Account => self.handle_account(action, reader).await,
             PacketFamily::AdminInteract => self.handle_admin_interact(action, reader),

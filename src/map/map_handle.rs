@@ -1024,6 +1024,7 @@ impl MapHandle {
     }
 }
 
+#[tracing::instrument(name = "map", skip_all)]
 async fn run_map(mut map: Map) {
     loop {
         if let Some(command) = map.rx.recv().await {

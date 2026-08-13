@@ -274,6 +274,9 @@ impl PlayerHandle {
 }
 
 async fn run_player(mut player: Player) {
+    let span = player.span.clone();
+    let _enter = span.enter();
+
     loop {
         tokio::select! {
             result = player.bus.recv() => match result {

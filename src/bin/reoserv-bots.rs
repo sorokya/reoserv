@@ -47,8 +47,8 @@ use eolib::{
             },
         },
     },
+    rng::Rng,
 };
-use rand::RngExt;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
@@ -144,7 +144,9 @@ impl Bot {
     }
 
     async fn init_handshake(&mut self) -> Result<()> {
-        let challenge = rand::rng().random_range(0..=1_000_000);
+        let mut seed_bytes = [0u8; 4];
+        getrandom::fill(&mut seed_bytes)?;
+        let challenge = Rng::new(u32::from_ne_bytes(seed_bytes)).rand_range(0..1_000_000) as i32;
         let init = InitInitClientPacket {
             challenge,
             version: VERSION,

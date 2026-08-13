@@ -283,15 +283,21 @@ instead of re-creating.
    so the client must send `sequence + 1`. Sending the raw value makes every
    packet arrive with `sequence - 1`, which the server rejects as
    "sending invalid sequence".
-2. **eolib's generated `deserialize` for the character list is buggy.** The
-   `LoginReplyServerPacketReplyCodeDataOk` / `CharacterReplyServerPacketReplyCodeDataOk`
-   serializer writes `[count][0][0xff][entries...]`, but the generated
-   deserializer never consumes the `0xff` separator after the `0`, so
-   `CharacterSelectionListEntry` fields come back garbage (empty name, junk id).
-   reoserv never hits this because it only *serializes* these packets; a Rust
-   *client* is the first thing to deserialize them. The bot works around it
-   with a hand-rolled `parse_character_list` that explicitly skips the `0xff`.
-   (Fix upstream in eolib-rs if we ever need this in-tree.)
+2. **The client increments its sequencer on *every* send, including the Init
+   handshake.** `eolib`'s `Sequencer` returned `start + counter` after
+   incrementing, which diverged from the reference client and only worked for
+   the server (which skips sequence processing on Init). Fixed upstream in
+   [eolib-rs #22](https://github.com/sorokya/eolib-rs/pull/22) together with a
+   generated-deserialize bug where the `0xff` chunk separator after the
+   character count was never consumed (producing empty names / junk ids for
+   `CharacterSelectionListEntry`).
+
+This branch's server (`handle_packet`) and the bot binary are written against
+the fixed semantics: the sequencer advances on every send, `set_start` is used
+after init instead of re-creating the sequencer, and the character list is
+parsed via the generated `deserialize` (no manual parser). **They depend on
+eolib-rs #22 being merged and published** — against the current crates.io
+`eolib 3.0.0` the sequence handshake and character-list parsing are broken.
 
 **Rate limits:** running several bots from one IP trips the server's
 `max_connections_per_ip` (default 3) and `ip_reconnect_limit` (default 10 s).

@@ -89,7 +89,14 @@ impl Player {
         world: WorldHandle,
         db: crate::db::DbHandle,
     ) -> Self {
-        let span = tracing::info_span!("player_session", player_id = id, ip = %ip);
+        let span = tracing::info_span!(
+            "player_session",
+            player_id = id,
+            ip = %ip,
+            character_id = tracing::field::Empty,
+            character_name = tracing::field::Empty,
+            admin_level = tracing::field::Empty,
+        );
         Self {
             id,
             span,

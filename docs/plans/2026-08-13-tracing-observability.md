@@ -253,6 +253,57 @@ map event loops (`act_npcs`, `spawn_npcs`, `timed_spikes`), `tick`, and the
 
 ---
 
+## Bot test harness (`src/bin/reoserv-bots.rs`)
+
+A separate binary (kept out of the server codebase) that drives automated
+in-game tests. Each bot opens a TCP connection and walks the full EO client
+flow end-to-end:
+
+```
+init handshake → connection accept → account create → login →
+character create → character select → enter game → idle loop
+```
+
+Run against a live server:
+
+```
+cargo run --bin reoserv-bots -- --bots 5 --host 127.0.0.1:8078 --account-prefix bot
+```
+
+Flags: `--bots N`, `--host addr:port`, `--account-prefix prefix`.
+Bots create one account + one character each (`prefix0`/`bota`, `prefix1`/`botb`, …);
+the character name is letter-mapped because EO character names must be
+lowercase a–z only (no digits). Passing a prefix that already exists logs in
+instead of re-creating.
+
+**Two protocol gotchas discovered while building it (worth knowing):**
+
+1. **The client sequence is an EO-encoded `char`, not a raw byte.** The server
+   reads it with `EoReader::get_char()` → `decode_number`, which subtracts 1,
+   so the client must send `sequence + 1`. Sending the raw value makes every
+   packet arrive with `sequence - 1`, which the server rejects as
+   "sending invalid sequence".
+2. **eolib's generated `deserialize` for the character list is buggy.** The
+   `LoginReplyServerPacketReplyCodeDataOk` / `CharacterReplyServerPacketReplyCodeDataOk`
+   serializer writes `[count][0][0xff][entries...]`, but the generated
+   deserializer never consumes the `0xff` separator after the `0`, so
+   `CharacterSelectionListEntry` fields come back garbage (empty name, junk id).
+   reoserv never hits this because it only *serializes* these packets; a Rust
+   *client* is the first thing to deserialize them. The bot works around it
+   with a hand-rolled `parse_character_list` that explicitly skips the `0xff`.
+   (Fix upstream in eolib-rs if we ever need this in-tree.)
+
+**Rate limits:** running several bots from one IP trips the server's
+`max_connections_per_ip` (default 3) and `ip_reconnect_limit` (default 10 s).
+For load tests, set both to `0` in `config/Config.toml`.
+
+The bot binary doubles as the end-to-end verification for the tracing work:
+its login/character-select/enter-game traffic shows up as `player_session{…}`
+spans carrying `character_id`/`character_name`/`admin_level` once the character
+is selected.
+
+---
+
 ## Testing strategy
 
 - **Span structure** — dev-dependency `tracing-test = "0.2"`:

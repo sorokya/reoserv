@@ -103,7 +103,11 @@ struct PlainFieldVisitor {
 
 impl PlainFieldVisitor {
     fn set(&mut self, field: &Field, value: String) {
-        match self.fields.iter_mut().find(|(name, _)| name == field.name()) {
+        match self
+            .fields
+            .iter_mut()
+            .find(|(name, _)| name == field.name())
+        {
             Some(existing) => existing.1 = value,
             None => self.fields.push((field.name().to_owned(), value)),
         }
@@ -164,7 +168,10 @@ where
 
         let mut visitor = PlainFieldVisitor::default();
         attrs.record(&mut visitor);
-        self.fields.lock().unwrap().insert(id.clone(), visitor.fields);
+        self.fields
+            .lock()
+            .unwrap()
+            .insert(id.clone(), visitor.fields);
 
         self.start_times
             .lock()

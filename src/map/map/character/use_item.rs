@@ -22,7 +22,7 @@ use eolib::{
 };
 
 use crate::{
-    INN_DB, ITEM_DB, SETTINGS, SPELL_DB, character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN,
+    ITEM_DB, SETTINGS, SPELL_DB, character::EquipmentSlot, deep::AVATAR_CHANGE_TYPE_SKIN,
     utils::in_client_range,
 };
 
@@ -100,27 +100,7 @@ impl Map {
 
                 let (map_id, coords) = {
                     match item.spec1 {
-                        0 => match INN_DB
-                            .load()
-                            .inns
-                            .iter()
-                            .find(|inn| inn.name == character.home)
-                        {
-                            Some(inn) => (
-                                inn.spawn_map,
-                                Coords {
-                                    x: inn.spawn_x,
-                                    y: inn.spawn_y,
-                                },
-                            ),
-                            None => (
-                                SETTINGS.load().rescue.map,
-                                Coords {
-                                    x: SETTINGS.load().rescue.x,
-                                    y: SETTINGS.load().rescue.y,
-                                },
-                            ),
-                        },
+                        0 => (character.get_spawn_map(), character.get_spawn_coords()),
                         _ => (
                             item.spec1,
                             Coords {

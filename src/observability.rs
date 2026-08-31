@@ -86,7 +86,7 @@ impl SlowSpanLayer {
 /// slow-span detection — they're expected to run for hours or days — so they're
 /// excluded rather than reported as one giant slow span whenever the actor
 /// finally shuts down.
-const LONG_LIVED_SPAN_NAMES: &[&str] = &["world", "map", "db"];
+const LONG_LIVED_SPAN_NAMES: &[&str] = &["world", "map", "db", "player_session"];
 
 /// Records span fields as plain `name=value` pairs.
 ///
@@ -374,7 +374,7 @@ mod tests {
         let (buf, subscriber) = capture_with(Duration::from_millis(0));
 
         tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("player_session", character_name = tracing::field::Empty);
+            let span = tracing::info_span!("test_span", character_name = tracing::field::Empty);
             let _enter = span.enter();
             span.record("character_name", "Bob");
             std::thread::sleep(Duration::from_millis(5));

@@ -456,6 +456,7 @@ impl Map {
             .retain(|o| o.bored_ticks < SETTINGS.load().npcs.bored_timer);
     }
 
+    #[tracing::instrument(name = "act_npcs", skip_all, level = "debug")]
     pub fn act_npcs(&mut self) {
         if self.npcs.is_empty()
             || SETTINGS.load().npcs.freeze_on_empty_map && self.characters.is_empty()

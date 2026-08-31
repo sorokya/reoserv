@@ -17,6 +17,7 @@ use super::{
 
 pub struct Player {
     pub id: i32,
+    pub span: tracing::Span,
     pub rx: UnboundedReceiver<Command>,
     pub queue: RefCell<VecDeque<Bytes>>,
     pub bus: PacketBus,
@@ -88,8 +89,17 @@ impl Player {
         world: WorldHandle,
         db: crate::db::DbHandle,
     ) -> Self {
+        let span = tracing::info_span!(
+            "player_session",
+            player_id = id,
+            ip = %ip,
+            character_id = tracing::field::Empty,
+            character_name = tracing::field::Empty,
+            admin_level = tracing::field::Empty,
+        );
         Self {
             id,
+            span,
             bus: PacketBus::new(socket),
             connected_at,
             rx,
@@ -125,6 +135,13 @@ impl Player {
             spell_id: None,
             rng: new_seeded_rng(),
         }
+    }
+
+    pub fn record_character(&self, character: &Character) {
+        self.span.record("character_id", character.id);
+        self.span.record("character_name", character.name.as_str());
+        self.span
+            .record("admin_level", i32::from(character.admin_level));
     }
 
     pub async fn handle_command(&mut self, command: Command) {

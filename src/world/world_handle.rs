@@ -493,6 +493,7 @@ impl WorldHandle {
     }
 }
 
+#[tracing::instrument(name = "world", skip_all)]
 async fn run_world(mut world: World) {
     loop {
         if let Some(command) = world.rx.recv().await {

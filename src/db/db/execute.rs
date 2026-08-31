@@ -2,11 +2,13 @@ use super::super::{Db, PreparedQuery};
 use crate::db::{db::is_mysql_connection_closed, params::sqlite_named_params};
 
 impl Db {
+    #[tracing::instrument(name = "db_execute", skip_all, fields(sql = %query), level = "debug")]
     pub async fn execute(&mut self, query: &str) -> anyhow::Result<()> {
         let result = self.execute_inner(query).await;
         self.with_transaction_rollback(result).await
     }
 
+    #[tracing::instrument(name = "db_execute_prepared", skip_all, level = "debug")]
     pub async fn execute_prepared(&mut self, query: &PreparedQuery) -> anyhow::Result<()> {
         let result = self.execute_prepared_inner(query).await;
         self.with_transaction_rollback(result).await

@@ -274,11 +274,13 @@ impl PlayerHandle {
 }
 
 async fn run_player(mut player: Player) {
+    let span = player.span.clone();
+    let _enter = span.enter();
+
     loop {
         tokio::select! {
             result = player.bus.recv() => match result {
                 Some(Ok(packet)) => {
-                    tracing::trace!("Recv: {:?}", &packet[4..]);
                     player.queue.get_mut().push_back(packet);
                 },
                 Some(Err(e)) => {

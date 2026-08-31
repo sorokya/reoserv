@@ -9,6 +9,7 @@ use eolib::{
 use super::super::Map;
 
 impl Map {
+    #[tracing::instrument(name = "timed_spikes", skip_all, level = "debug")]
     pub fn timed_spikes(&mut self) {
         if !self.has_timed_spikes || self.characters.is_empty() {
             return;

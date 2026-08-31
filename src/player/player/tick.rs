@@ -5,6 +5,7 @@ use crate::{SETTINGS, player::ClientState};
 use super::Player;
 
 impl Player {
+    #[tracing::instrument(name = "player_tick", skip_all, level = "debug")]
     pub async fn tick(&mut self) {
         self.ping_ticks += 1;
 

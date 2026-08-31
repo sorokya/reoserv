@@ -138,10 +138,10 @@ impl Player {
     }
 
     pub fn record_character(&self, character: &Character) {
-        self.span.record("character_id", &character.id);
+        self.span.record("character_id", character.id);
         self.span.record("character_name", character.name.as_str());
         self.span
-            .record("admin_level", &i32::from(character.admin_level));
+            .record("admin_level", i32::from(character.admin_level));
     }
 
     pub async fn handle_command(&mut self, command: Command) {

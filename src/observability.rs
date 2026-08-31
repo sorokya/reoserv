@@ -47,6 +47,10 @@ pub fn init_tracing() {
 ///
 /// Override the default (100 ms) at runtime with the `SLOW_SPAN_MS`
 /// environment variable.
+///
+/// Tokio's internal runtime spans and the per-actor task-root spans
+/// ([`LONG_LIVED_SPAN_NAMES`]) are excluded, since both are expected to live
+/// far longer than any reasonable threshold.
 pub struct SlowSpanLayer {
     threshold: Duration,
     start_times: Mutex<HashMap<span::Id, Instant>>,
@@ -70,6 +74,14 @@ impl SlowSpanLayer {
     }
 }
 
+/// Names of the per-actor task-root spans (`#[tracing::instrument(name = "...")]`
+/// on `run_world`/`run_map`/`run_db`) that wrap an actor's entire `rx.recv()`
+/// loop for the lifetime of the process. Their "duration" is meaningless for
+/// slow-span detection — they're expected to run for hours or days — so they're
+/// excluded rather than reported as one giant slow span whenever the actor
+/// finally shuts down.
+const LONG_LIVED_SPAN_NAMES: &[&str] = &["world", "map", "db"];
+
 impl<S> Layer<S> for SlowSpanLayer
 where
     S: Subscriber + for<'lookup> LookupSpan<'lookup>,
@@ -85,6 +97,10 @@ where
         // application-level slow spans.
         let target = attrs.metadata().target();
         if target == "runtime" || target.starts_with("runtime.") || target.starts_with("tokio") {
+            return;
+        }
+
+        if LONG_LIVED_SPAN_NAMES.contains(&attrs.metadata().name()) {
             return;
         }
 
@@ -221,6 +237,28 @@ mod tests {
         assert!(
             !output.contains("slow span"),
             "tokio runtime spans should be ignored, got: {output}"
+        );
+    }
+
+    #[test]
+    fn ignores_actor_task_root_spans() {
+        let (buf, subscriber) = capture_with(Duration::from_millis(0));
+
+        tracing::subscriber::with_default(subscriber, || {
+            for span in [
+                tracing::info_span!("world"),
+                tracing::info_span!("map"),
+                tracing::info_span!("db"),
+            ] {
+                let _enter = span.enter();
+                std::thread::sleep(Duration::from_millis(5));
+            }
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert!(
+            !output.contains("slow span"),
+            "actor task-root spans should be ignored, got: {output}"
         );
     }
 }

@@ -4,9 +4,10 @@ use eolib::protocol::{
     Coords,
     map::{Emf, MapTileSpec},
 };
+use eolib::rng::Rng;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{SETTINGS, character::Character, world::WorldHandle};
+use crate::{SETTINGS, character::Character, utils::new_seeded_rng, world::WorldHandle};
 
 use super::{Chest, Command, Door, Item, Npc, Wedding};
 
@@ -36,6 +37,7 @@ pub struct Map {
     wedding: Option<Wedding>,
     wedding_ticks: i32,
     evacuate_ticks: Option<i32>,
+    rng: Rng,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -128,6 +130,7 @@ impl Map {
             wedding: None,
             wedding_ticks: 0,
             evacuate_ticks: None,
+            rng: new_seeded_rng(),
         }
     }
 

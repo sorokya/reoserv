@@ -1,5 +1,6 @@
 use std::cmp;
 
+use eolib::protocol::net::client::SpellTargetType;
 use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
 use eolib::protocol::{
     net::{
@@ -11,7 +12,6 @@ use eolib::protocol::{
     },
     r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
 };
-use rand::RngExt;
 
 use crate::utils::in_client_range;
 use crate::{NPC_DB, SPELL_DB, character::SpellTarget};
@@ -271,7 +271,7 @@ impl Map {
         let mut packet = SpellTargetOtherServerPacket {
             victim_id: target_player_id,
             caster_id: player_id,
-            caster_direction: character.direction,
+            target_type: SpellTargetType::Player,
             spell_id,
             spell_heal_hp: spell.hp_heal,
             hp_percentage: target.get_hp_percentage(),
@@ -334,79 +334,112 @@ impl Map {
         spell_id: i32,
         spell_data: &EsfRecord,
     ) {
-        let character = match self.characters.get_mut(&player_id) {
+        let attacker = match self.characters.get_mut(&player_id) {
             Some(character) => character,
             None => return,
         };
 
-        if character.tp < spell_data.tp_cost {
+        if attacker.tp < spell_data.tp_cost {
             return;
         }
 
-        let direction = character.direction;
+        let direction = attacker.direction;
 
-        let npc = match self.npcs.iter_mut().find(|npc| npc.index == npc_index) {
-            Some(npc) => npc,
-            None => return,
-        };
+        let (is_boss, is_alive, damage_dealt, opponents, protected) = {
+            let npc = match self.npcs.iter_mut().find(|npc| npc.index == npc_index) {
+                Some(npc) => npc,
+                None => return,
+            };
 
-        let npc_db = NPC_DB.load();
-        let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
-            Some(npc_data) => npc_data,
-            None => return,
-        };
+            let npc_db = NPC_DB.load();
+            let npc_data = match npc_db.npcs.get(npc.id as usize - 1) {
+                Some(npc_data) => npc_data,
+                None => return,
+            };
 
-        if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
-            return;
-        }
+            if !matches!(npc_data.r#type, NpcType::Passive | NpcType::Aggressive) {
+                return;
+            }
 
-        character.tp -= spell_data.tp_cost;
+            attacker.tp -= spell_data.tp_cost;
 
-        let party_player_ids = match self
-            .world
-            .get_player_party(player_id)
-            .await
-            .expect("Failed to get player party. Timeout")
-        {
-            Some(party) => party.members,
-            None => Vec::new(),
-        };
+            let party_player_ids = match self
+                .world
+                .get_player_party(player_id)
+                .await
+                .expect("Failed to get player party. Timeout")
+            {
+                Some(party) => party.members,
+                None => Vec::new(),
+            };
 
-        let protected = npc_data.behavior_id == 0
-            && !npc.opponents.is_empty()
-            && !npc
-                .opponents
-                .iter()
-                .any(|o| o.player_id == player_id || party_player_ids.contains(&o.player_id));
+            let protected = npc_data.behavior_id == 0
+                && !npc.opponents.is_empty()
+                && !npc
+                    .opponents
+                    .iter()
+                    .any(|o| o.player_id == player_id || party_player_ids.contains(&o.player_id));
 
-        let damage_dealt = if protected {
-            0
-        } else {
-            let amount = {
-                let mut rng = rand::rng();
-                rng.random_range(
-                    character.min_damage + spell_data.min_damage
-                        ..=character.max_damage + spell_data.max_damage,
+            let damage_dealt = if protected {
+                0
+            } else {
+                let amount = self.rng.rand_range(
+                    (attacker.min_damage + spell_data.min_damage) as u32
+                        ..(attacker.max_damage + spell_data.max_damage) as u32,
+                ) as i32;
+
+                let critical = npc.hp == npc.max_hp;
+
+                npc.damage(
+                    &mut self.rng,
+                    player_id,
+                    amount,
+                    attacker.accuracy,
+                    critical,
                 )
             };
 
-            let critical = npc.hp == npc.max_hp;
-
-            npc.damage(player_id, amount, character.accuracy, critical)
+            (
+                npc.boss,
+                npc.alive,
+                damage_dealt,
+                npc.opponents.clone(),
+                protected,
+            )
         };
 
-        if let Some(player) = character.player.as_ref() {
+        // TODO: Why are we sending this here..?
+        if let Some(player) = attacker.player.as_ref() {
             player.send(
                 PacketAction::Player,
                 PacketFamily::Recover,
                 &RecoverPlayerServerPacket {
-                    hp: character.hp,
-                    tp: character.tp,
+                    hp: attacker.hp,
+                    tp: attacker.tp,
                 },
             );
         }
 
-        if npc.alive {
+        if !protected && is_boss {
+            self.npcs.iter_mut().filter(|n| n.child).for_each(|child| {
+                opponents.iter().for_each(|opponent| {
+                    if let Some(child_opponent) = child
+                        .opponents
+                        .iter_mut()
+                        .find(|o| o.player_id == opponent.player_id)
+                    {
+                        child_opponent.bored_ticks = 0;
+                        if child_opponent.player_id == player_id {
+                            child_opponent.damage_dealt += damage_dealt;
+                        }
+                    } else {
+                        child.opponents.push(opponent.clone());
+                    }
+                });
+            });
+        }
+
+        if is_alive {
             self.attack_npc_reply(
                 player_id,
                 npc_index,
@@ -428,14 +461,14 @@ impl Map {
         spell_id: i32,
         spell_data: &EsfRecord,
     ) {
-        let (tp, direction, min_damage, max_damage, accuracy) =
+        let (tp, direction, accuracy, min_damage, max_damage) =
             match self.characters.get(&player_id) {
                 Some(character) => (
                     character.tp,
                     character.direction,
+                    character.accuracy,
                     character.min_damage,
                     character.max_damage,
-                    character.accuracy,
                 ),
                 None => return,
             };
@@ -444,12 +477,10 @@ impl Map {
             return;
         }
 
-        let amount = {
-            let mut rng = rand::rng();
-            rng.random_range(
-                min_damage + spell_data.min_damage..=max_damage + spell_data.max_damage,
-            )
-        };
+        let amount = self.rng.rand_range(
+            (min_damage + spell_data.min_damage) as u32
+                ..(max_damage + spell_data.max_damage) as u32,
+        ) as i32;
 
         let damage_dealt = {
             let target_character = match self.characters.get_mut(&target_player_id) {
@@ -463,7 +494,7 @@ impl Map {
 
             let critical = target_character.hp == target_character.max_hp;
 
-            target_character.damage(amount, accuracy, critical)
+            target_character.damage(&mut self.rng, amount, accuracy, critical)
         };
 
         {

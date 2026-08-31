@@ -1,7 +1,6 @@
 use std::cmp;
 
 use eolib::protocol::{Coords, Direction, r#pub::NpcType};
-use rand::RngExt;
 
 use crate::{NPC_DB, SETTINGS, map::NPCBuilder};
 
@@ -60,7 +59,6 @@ impl Map {
             }
         }
 
-        let mut rng = rand::rng();
         let indexes = self.npcs.iter().map(|npc| npc.index).collect::<Vec<i32>>();
 
         for index in indexes {
@@ -114,13 +112,19 @@ impl Map {
             } else {
                 Coords {
                     x: cmp::max(
-                        cmp::min(spawn_coords.x + rng.random_range(-2..=2), self.file.width),
+                        cmp::min(
+                            spawn_coords.x + (self.rng.rand_range(0..4) as i32 - 2),
+                            self.file.width,
+                        ),
                         0,
-                    ) as i32,
+                    ),
                     y: cmp::max(
-                        cmp::min(spawn_coords.y + rng.random_range(-2..=2), self.file.height),
+                        cmp::min(
+                            spawn_coords.y + (self.rng.rand_range(0..4) as i32 - 2),
+                            self.file.height,
+                        ),
                         0,
-                    ) as i32,
+                    ),
                 }
             };
 
@@ -130,14 +134,14 @@ impl Map {
             {
                 let x = cmp::max(
                     cmp::min(
-                        file_spawn_coords.x + rng.random_range(-2..=2),
+                        file_spawn_coords.x + (self.rng.rand_range(0..4) as i32 - 2),
                         self.file.width,
                     ),
                     0,
                 );
                 let y = cmp::max(
                     cmp::min(
-                        file_spawn_coords.y + rng.random_range(-2..=2),
+                        file_spawn_coords.y + (self.rng.rand_range(0..4) as i32 - 2),
                         self.file.height,
                     ),
                     0,
@@ -165,7 +169,7 @@ impl Map {
             npc.direction = if spawn_type == 7 {
                 Direction::from(spawn_time & 0x03)
             } else {
-                match rand::random::<u8>() % 4 {
+                match self.rng.rand_range(0..3) {
                     0 => Direction::Down,
                     1 => Direction::Left,
                     2 => Direction::Up,

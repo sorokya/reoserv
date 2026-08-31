@@ -7,12 +7,15 @@ use eolib::protocol::{
         server::{CharacterIcon, EquipmentPaperdoll, SitState},
     },
 };
+use eolib::rng::Rng;
 use eoplus::Arg;
 use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
-use rand::RngExt;
 use std::cmp;
 
-use crate::{EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS, db::DbHandle, player::PlayerHandle};
+use crate::{
+    EXP_TABLE, FORMULAS, QUEST_DB, SETTINGS, db::DbHandle, player::PlayerHandle,
+    utils::rand_unit_float,
+};
 
 mod add_bank_item;
 mod add_item;
@@ -167,7 +170,7 @@ impl Character {
         amount
     }
 
-    pub fn damage(&mut self, amount: i32, accuracy: i32, critical: bool) -> i32 {
+    pub fn damage(&mut self, rng: &mut Rng, amount: i32, accuracy: i32, critical: bool) -> i32 {
         let formulas = FORMULAS.load();
         let context: HashMapContext<DefaultNumericTypes> = match context_map! {
             "critical" => critical,
@@ -192,8 +195,7 @@ impl Character {
             }
         };
 
-        let mut rng = rand::rng();
-        let rand = rng.random_range(0.0..1.0);
+        let rand = rand_unit_float(rng);
 
         let damage = if hit_rate < rand {
             0

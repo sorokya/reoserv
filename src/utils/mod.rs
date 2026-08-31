@@ -54,3 +54,7 @@ mod normalize_email;
 pub use normalize_email::normalize_email;
 mod validate_account_name;
 pub use validate_account_name::validate_account_name;
+mod rand_unit_float;
+pub use rand_unit_float::rand_unit_float;
+mod new_seeded_rng;
+pub use new_seeded_rng::new_seeded_rng;

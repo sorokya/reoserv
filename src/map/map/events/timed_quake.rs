@@ -8,7 +8,6 @@ use eolib::protocol::{
         },
     },
 };
-use rand::RngExt;
 
 use crate::SETTINGS;
 
@@ -34,12 +33,13 @@ impl Map {
             _ => return,
         };
 
-        let mut rng = rand::rng();
-
         let rate = match self.quake_rate {
             Some(rate) => rate,
             None => {
-                let rate = rng.random_range(config.min_ticks..=config.max_ticks);
+                let rate = self
+                    .rng
+                    .rand_range(config.min_ticks as u32..config.max_ticks as u32)
+                    as i32;
                 self.quake_rate = Some(rate);
                 rate
             }
@@ -48,7 +48,10 @@ impl Map {
         let quake_strength = match self.quake_strength {
             Some(strength) => strength,
             None => {
-                let strength = rng.random_range(config.min_strength..=config.max_strength);
+                let strength = self
+                    .rng
+                    .rand_range(config.min_strength as u32..config.max_strength as u32)
+                    as i32;
                 self.quake_strength = Some(strength);
                 strength
             }

@@ -25,18 +25,16 @@ pub fn load_quests() -> HashMap<i32, Quest> {
 }
 
 fn load_quest(path: PathBuf) -> Option<(i32, Quest)> {
-    let id = match path.file_name() {
-        Some(name) => match name.to_str().to_owned() {
-            Some(name) => match name.split('.').collect::<Vec<&str>>()[0].parse::<i32>() {
-                Ok(id) => id,
-                Err(e) => {
-                    tracing::error!("Failed to parse id: {}", e);
-                    return None;
-                }
-            },
-            None => return None,
-        },
-        None => return None,
+    let id = {
+        let name = path.file_name()?;
+        let name = name.to_str().to_owned()?;
+        match name.split('.').collect::<Vec<&str>>()[0].parse::<i32>() {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("Failed to parse id: {}", e);
+                return None;
+            }
+        }
     };
 
     let mut file = match File::open(path) {

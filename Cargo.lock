@@ -281,9 +281,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "bytes"
-version = "1.11.1"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
+checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "cc"
@@ -738,16 +738,15 @@ dependencies = [
 
 [[package]]
 name = "eolib"
-version = "3.0.0"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a596585f412ad1459f5099cf3b3fc8e9430e8605fffc3fd9476674318e3a97eb"
+checksum = "50a7eb18f3e9b289b5d2aad38b6d494b90ae081b05d2a0e78c791eddbc896c84"
 dependencies = [
  "bytes",
  "convert_case 0.11.0",
  "encoding_rs",
  "glob",
- "quick-xml",
- "rand 0.10.1",
+ "quick-xml 0.40.1",
  "serde",
  "thiserror",
 ]
@@ -1738,7 +1737,7 @@ dependencies = [
  "hickory-resolver",
  "mail-builder",
  "mail-parser",
- "quick-xml",
+ "quick-xml 0.39.4",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -2332,6 +2331,15 @@ name = "quick-xml"
 version = "0.39.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdcc8dd4e2f670d309a5f0e83fe36dfdc05af317008fea29144da1a2ac858e5e"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.40.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2474bd2e5029e7ccb6abb2ba48cf2383a333851dedf495901544281590c7da7f"
 dependencies = [
  "memchr",
  "serde",

@@ -1,5 +1,6 @@
 use std::cmp;
 
+use eolib::protocol::net::client::SpellTargetType;
 use eolib::protocol::net::server::{GroupHealTargetPlayer, SpellTargetGroupServerPacket};
 use eolib::protocol::{
     net::{
@@ -271,7 +272,7 @@ impl Map {
         let mut packet = SpellTargetOtherServerPacket {
             victim_id: target_player_id,
             caster_id: player_id,
-            caster_direction: character.direction,
+            target_type: SpellTargetType::Player,
             spell_id,
             spell_heal_hp: spell.hp_heal,
             hp_percentage: target.get_hp_percentage(),

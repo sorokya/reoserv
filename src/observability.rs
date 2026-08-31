@@ -4,7 +4,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use tracing::{Subscriber, span};
+use tracing::{
+    Subscriber,
+    field::{Field, Visit},
+    span,
+};
 use tracing_subscriber::{
     EnvFilter,
     fmt::{self, time::ChronoLocal},
@@ -54,6 +58,7 @@ pub fn init_tracing() {
 pub struct SlowSpanLayer {
     threshold: Duration,
     start_times: Mutex<HashMap<span::Id, Instant>>,
+    fields: Mutex<HashMap<span::Id, Vec<(String, String)>>>,
 }
 
 impl SlowSpanLayer {
@@ -61,6 +66,7 @@ impl SlowSpanLayer {
         Self {
             threshold,
             start_times: Mutex::new(HashMap::new()),
+            fields: Mutex::new(HashMap::new()),
         }
     }
 
@@ -81,6 +87,58 @@ impl SlowSpanLayer {
 /// excluded rather than reported as one giant slow span whenever the actor
 /// finally shuts down.
 const LONG_LIVED_SPAN_NAMES: &[&str] = &["world", "map", "db"];
+
+/// Records span fields as plain `name=value` pairs.
+///
+/// The `fmt` layer's own `FormattedFields` extension bakes in ANSI color
+/// codes (dim/italic styling for field names) whenever ANSI is enabled, which
+/// then shows up as literal escape sequences in the slow-span warning
+/// whenever that warning's output isn't a real terminal (a log file, `docker
+/// logs`, journald, etc.). Collecting fields ourselves, independent of the
+/// `fmt` layer's rendering, avoids that.
+#[derive(Default)]
+struct PlainFieldVisitor {
+    fields: Vec<(String, String)>,
+}
+
+impl PlainFieldVisitor {
+    fn set(&mut self, field: &Field, value: String) {
+        match self.fields.iter_mut().find(|(name, _)| name == field.name()) {
+            Some(existing) => existing.1 = value,
+            None => self.fields.push((field.name().to_owned(), value)),
+        }
+    }
+
+    fn into_string(self) -> String {
+        self.fields
+            .into_iter()
+            .map(|(name, value)| format!("{name}={value}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+}
+
+impl Visit for PlainFieldVisitor {
+    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+        self.set(field, format!("{value:?}"));
+    }
+
+    fn record_str(&mut self, field: &Field, value: &str) {
+        self.set(field, value.to_owned());
+    }
+
+    fn record_i64(&mut self, field: &Field, value: i64) {
+        self.set(field, value.to_string());
+    }
+
+    fn record_u64(&mut self, field: &Field, value: u64) {
+        self.set(field, value.to_string());
+    }
+
+    fn record_bool(&mut self, field: &Field, value: bool) {
+        self.set(field, value.to_string());
+    }
+}
 
 impl<S> Layer<S> for SlowSpanLayer
 where
@@ -104,13 +162,36 @@ where
             return;
         }
 
+        let mut visitor = PlainFieldVisitor::default();
+        attrs.record(&mut visitor);
+        self.fields.lock().unwrap().insert(id.clone(), visitor.fields);
+
         self.start_times
             .lock()
             .unwrap()
             .insert(id.clone(), Instant::now());
     }
 
+    fn on_record(
+        &self,
+        id: &span::Id,
+        values: &span::Record<'_>,
+        _ctx: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        // Only spans we're actually tracking (i.e. not one of the ignored
+        // ones above) have an entry here.
+        if let Some(existing) = self.fields.lock().unwrap().get_mut(id) {
+            let mut visitor = PlainFieldVisitor {
+                fields: std::mem::take(existing),
+            };
+            values.record(&mut visitor);
+            *existing = visitor.fields;
+        }
+    }
+
     fn on_close(&self, id: span::Id, ctx: tracing_subscriber::layer::Context<'_, S>) {
+        let fields = self.fields.lock().unwrap().remove(&id);
+
         let Some(started) = self.start_times.lock().unwrap().remove(&id) else {
             return;
         };
@@ -120,17 +201,13 @@ where
             return;
         }
 
-        let (name, fields) = match ctx.span(&id) {
-            Some(span) => {
-                let fields = span
-                    .extensions()
-                    .get::<fmt::FormattedFields<fmt::format::DefaultFields>>()
-                    .map(|formatted| formatted.fields.clone())
-                    .unwrap_or_default();
-                (span.metadata().name().to_owned(), fields)
-            }
-            None => (String::from("unknown"), String::new()),
-        };
+        let name = ctx
+            .span(&id)
+            .map(|span| span.metadata().name().to_owned())
+            .unwrap_or_else(|| String::from("unknown"));
+        let fields = fields
+            .map(|fields| PlainFieldVisitor { fields }.into_string())
+            .unwrap_or_default();
 
         let message = format!(
             "slow span '{}' took {:?}{}",
@@ -175,6 +252,16 @@ mod tests {
         Arc<Mutex<Vec<u8>>>,
         impl tracing::Subscriber + Send + Sync + 'static,
     ) {
+        capture_with_ansi(threshold, false)
+    }
+
+    fn capture_with_ansi(
+        threshold: Duration,
+        ansi: bool,
+    ) -> (
+        Arc<Mutex<Vec<u8>>>,
+        impl tracing::Subscriber + Send + Sync + 'static,
+    ) {
         let buf = Arc::new(Mutex::new(Vec::new()));
         let writer = TestWriter(buf.clone());
 
@@ -183,7 +270,7 @@ mod tests {
                 tracing_subscriber::fmt::layer()
                     .with_writer(move || writer.clone())
                     .with_target(false)
-                    .with_ansi(false),
+                    .with_ansi(ansi),
             )
             .with(SlowSpanLayer::new(threshold));
 
@@ -259,6 +346,44 @@ mod tests {
         assert!(
             !output.contains("slow span"),
             "actor task-root spans should be ignored, got: {output}"
+        );
+    }
+
+    #[test]
+    fn slow_span_fields_are_plain_text_even_with_ansi_enabled() {
+        let (buf, subscriber) = capture_with_ansi(Duration::from_millis(0), true);
+
+        tracing::subscriber::with_default(subscriber, || {
+            let span = tracing::info_span!("packet", family = "Login", action = "Request");
+            let _enter = span.enter();
+            std::thread::sleep(Duration::from_millis(5));
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        // The fmt layer still colors its own timestamp/level, but the
+        // `(field=value ...)` segment we build ourselves must be plain text —
+        // that's the part that used to leak literal escape codes.
+        assert!(
+            output.contains("(family=Login action=Request)"),
+            "expected plain-text fields with no ANSI escapes, got: {output:?}"
+        );
+    }
+
+    #[test]
+    fn slow_span_fields_reflect_late_record_calls() {
+        let (buf, subscriber) = capture_with(Duration::from_millis(0));
+
+        tracing::subscriber::with_default(subscriber, || {
+            let span = tracing::info_span!("player_session", character_name = tracing::field::Empty);
+            let _enter = span.enter();
+            span.record("character_name", "Bob");
+            std::thread::sleep(Duration::from_millis(5));
+        });
+
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert!(
+            output.contains("character_name=Bob"),
+            "expected recorded field to appear in slow-span message, got: {output}"
         );
     }
 }

@@ -11,15 +11,15 @@ use eolib::protocol::{
     },
     r#pub::{EnfRecord, NpcType},
 };
+use eolib::rng::Rng;
 
 use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
-use rand::{RngExt, seq::IndexedRandom};
 
 use crate::{
     FORMULAS, NPC_DB, SETTINGS, TALK_DB,
     character::Character,
     map::Npc,
-    utils::{get_distance, get_next_coords, in_range},
+    utils::{get_distance, get_next_coords, in_range, rand_unit_float},
 };
 
 use super::super::Map;
@@ -37,10 +37,11 @@ impl Map {
 
         npc.talk_ticks = 0;
 
-        let mut rng = rand::rng();
-        let roll = rng.random_range(0..=100);
+        let roll = self.rng.rand_range(0..100) as i32;
         if roll <= talk_record.rate {
-            let message_index = rng.random_range(0..talk_record.messages.len());
+            let message_index =
+                self.rng
+                    .rand_range(0..talk_record.messages.len() as u32 - 1) as usize;
             Some(NpcUpdateChat {
                 npc_index: index,
                 message: talk_record.messages[message_index].message.to_owned(),
@@ -124,8 +125,7 @@ impl Map {
                     direction: npc.direction,
                 })
             } else {
-                let mut rng = rand::rng();
-                direction = Direction::from(rng.random_range(0..=3));
+                direction = Direction::from(self.rng.rand_range(0..3) as i32);
 
                 let new_coords =
                     get_next_coords(&npc_coords, direction, self.file.width, self.file.height);
@@ -201,7 +201,7 @@ impl Map {
         }
     }
 
-    fn npc_get_attack_target_player_id(&self, index: i32) -> Option<i32> {
+    fn npc_get_attack_target_player_id(&mut self, index: i32) -> Option<i32> {
         let npc = self.npcs.iter().find(|npc| npc.index == index)?;
 
         let adjacent_tiles = self.get_adjacent_tiles(&npc.coords);
@@ -231,9 +231,9 @@ impl Map {
 
             // TODO: also attack adjacent players if blocking path to opponent(s)
             // Choose a random player if npc is aggressive
-            if npc_data.r#type == NpcType::Aggressive {
-                let mut rng = rand::rng();
-                adjacent_player_ids.choose(&mut rng).copied()
+            if npc_data.r#type == NpcType::Aggressive && !adjacent_player_ids.is_empty() {
+                let choice_index = self.rng.rand_range(0..adjacent_player_ids.len() as u32 - 1);
+                Some(adjacent_player_ids[choice_index as usize])
             } else {
                 None
             }
@@ -250,20 +250,20 @@ impl Map {
         })?;
 
         // Logic ripped from EOServ..
-        let mut rng = rand::rng();
-        let action = rng.random_range(1..=10);
+        let action = self.rng.rand_range(1..10) as i32;
 
         if action == 10 {
+            let idle_for =
+                self.rng.rand_range(1..4) as i32 * 1000 / SETTINGS.load().world.tick_rate;
             self.npcs
                 .iter_mut()
                 .find(|npc| npc.index == index)?
-                .walk_idle_for =
-                Some(rng.random_range(1..=4) * 1000 / SETTINGS.load().world.tick_rate);
+                .walk_idle_for = Some(idle_for);
             return None;
         }
 
         let new_direction = if (7..=9).contains(&action) {
-            Direction::from(rng.random_range(0..=3))
+            Direction::from(self.rng.rand_range(0..3) as i32)
         } else {
             direction
         };
@@ -299,9 +299,9 @@ impl Map {
         act_ticks: i32,
     ) -> Option<NpcUpdatePosition> {
         let (walk_idle_for, has_opponent) = {
-            match self.npcs.iter().find(|npc| npc.index == index) {
-                Some(npc) => (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty()),
-                None => return None,
+            {
+                let npc = self.npcs.iter().find(|npc| npc.index == index)?;
+                (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty())
             }
         };
 
@@ -342,7 +342,10 @@ impl Map {
                 _ => return None,
             };
 
-            (get_damage_amount(npc, npc_data, character), direction)
+            (
+                get_damage_amount(&mut self.rng, npc, npc_data, character),
+                direction,
+            )
         };
 
         let (killed_state, hp_percentage) = {
@@ -571,12 +574,11 @@ impl Map {
     }
 }
 
-fn get_damage_amount(npc: &Npc, npc_data: &EnfRecord, character: &Character) -> i32 {
+fn get_damage_amount(rng: &mut Rng, npc: &Npc, npc_data: &EnfRecord, character: &Character) -> i32 {
     let formulas = FORMULAS.load();
-    let mut rng = rand::rng();
-    let rand = rng.random_range(0.0..=1.0);
+    let rand = rand_unit_float(rng);
 
-    let amount = rng.random_range(npc_data.min_damage..=npc_data.max_damage);
+    let amount = rng.rand_range(npc_data.min_damage as u32..npc_data.max_damage as u32) as i32;
 
     let npc_facing_player_back_or_side =
         (i32::from(character.direction) - i32::from(npc.direction)).abs() != 2;

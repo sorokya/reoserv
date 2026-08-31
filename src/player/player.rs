@@ -3,9 +3,13 @@ use std::{cell::RefCell, collections::VecDeque};
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use eolib::protocol::net::{PacketAction, PacketFamily, Version, server::GuildReplyServerPacket};
+use eolib::rng::Rng;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use crate::{character::Character, errors::InvalidStateError, map::MapHandle, world::WorldHandle};
+use crate::{
+    character::Character, errors::InvalidStateError, map::MapHandle, utils::new_seeded_rng,
+    world::WorldHandle,
+};
 
 use super::{
     Captcha, ClientState, Command, PartyRequest, Socket, WarpSession, packet_bus::PacketBus,
@@ -46,6 +50,7 @@ pub struct Player {
     captcha: Option<Captcha>,
     timestamp: i32,
     spell_id: Option<i32>,
+    rng: Rng,
 }
 
 mod account;
@@ -118,6 +123,7 @@ impl Player {
             captcha: None,
             timestamp: 0,
             spell_id: None,
+            rng: new_seeded_rng(),
         }
     }
 

@@ -12,7 +12,6 @@ use eolib::protocol::{
     },
     r#pub::{EsfRecord, NpcType, SkillTargetRestrict, SkillTargetType, SkillType},
 };
-use rand::RngExt;
 
 use crate::utils::in_client_range;
 use crate::{NPC_DB, SPELL_DB, character::SpellTarget};
@@ -384,17 +383,20 @@ impl Map {
             let damage_dealt = if protected {
                 0
             } else {
-                let amount = {
-                    let mut rng = rand::rng();
-                    rng.random_range(
-                        attacker.min_damage + spell_data.min_damage
-                            ..=attacker.max_damage + spell_data.max_damage,
-                    )
-                };
+                let amount = self.rng.rand_range(
+                    (attacker.min_damage + spell_data.min_damage) as u32
+                        ..(attacker.max_damage + spell_data.max_damage) as u32,
+                ) as i32;
 
                 let critical = npc.hp == npc.max_hp;
 
-                npc.damage(player_id, amount, attacker.accuracy, critical)
+                npc.damage(
+                    &mut self.rng,
+                    player_id,
+                    amount,
+                    attacker.accuracy,
+                    critical,
+                )
             };
 
             (
@@ -459,14 +461,14 @@ impl Map {
         spell_id: i32,
         spell_data: &EsfRecord,
     ) {
-        let (tp, direction, min_damage, max_damage, accuracy) =
+        let (tp, direction, accuracy, min_damage, max_damage) =
             match self.characters.get(&player_id) {
                 Some(character) => (
                     character.tp,
                     character.direction,
+                    character.accuracy,
                     character.min_damage,
                     character.max_damage,
-                    character.accuracy,
                 ),
                 None => return,
             };
@@ -475,12 +477,10 @@ impl Map {
             return;
         }
 
-        let amount = {
-            let mut rng = rand::rng();
-            rng.random_range(
-                min_damage + spell_data.min_damage..=max_damage + spell_data.max_damage,
-            )
-        };
+        let amount = self.rng.rand_range(
+            (min_damage + spell_data.min_damage) as u32
+                ..(max_damage + spell_data.max_damage) as u32,
+        ) as i32;
 
         let damage_dealt = {
             let target_character = match self.characters.get_mut(&target_player_id) {
@@ -494,7 +494,7 @@ impl Map {
 
             let critical = target_character.hp == target_character.max_hp;
 
-            target_character.damage(amount, accuracy, critical)
+            target_character.damage(&mut self.rng, amount, accuracy, critical)
         };
 
         {

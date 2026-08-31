@@ -1,3 +1,4 @@
+use eolib::rng::Rng;
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::{
@@ -15,7 +16,6 @@ use eolib::{
     },
 };
 use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
-use rand::RngExt;
 
 use crate::{
     DROP_DB, FORMULAS, GLOBAL_DROPS, NPC_DB, SETTINGS,
@@ -249,7 +249,7 @@ impl Map {
             });
         }
 
-        let drop = get_drop(killer_player_id, npc_id, &npc_coords);
+        let drop = get_drop(&mut self.rng, killer_player_id, npc_id, &npc_coords);
 
         let (drop_index, drop_item_id, drop_amount) = match drop {
             Some(drop) => {
@@ -560,7 +560,12 @@ impl Map {
     }
 }
 
-fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
+fn get_drop(
+    rng: &mut Rng,
+    target_player_id: i32,
+    npc_id: i32,
+    npc_coords: &Coords,
+) -> Option<Item> {
     let global_drops = GLOBAL_DROPS.load();
     let drop_db = DROP_DB.load();
     let mut drops = global_drops.drops.iter().collect::<Vec<_>>();
@@ -569,13 +574,12 @@ fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<I
     }
 
     if !drops.is_empty() {
-        let mut rng = rand::rng();
         drops.sort_by_key(|a| a.rate);
 
         for drop in drops {
-            let roll = rng.random_range(0..=64000);
-            if roll <= drop.rate {
-                let amount = rng.random_range(drop.min_amount..=drop.max_amount);
+            let roll = rng.rand_range(0..64000);
+            if roll <= drop.rate as u32 {
+                let amount = rng.rand_range(drop.min_amount as u32..drop.max_amount as u32) as i32;
                 if amount > 0 {
                     return Some(Item {
                         index: -1,

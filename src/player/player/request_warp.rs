@@ -11,7 +11,6 @@ use eolib::{
         },
     },
 };
-use rand::RngExt;
 
 use crate::player::WarpSession;
 
@@ -26,8 +25,7 @@ impl Player {
         animation: Option<WarpEffect>,
     ) {
         let session_id = {
-            let mut rng = rand::rng();
-            let session_id = rng.random_range(10..SHORT_MAX) as i32;
+            let session_id = self.rng.rand_range(10..SHORT_MAX as u32 - 1) as i32;
             self.session_id = Some(session_id);
             session_id
         };

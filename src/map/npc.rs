@@ -1,10 +1,10 @@
 use std::cmp;
 
 use eolib::protocol::{Coords, Direction, net::server::NpcMapInfo};
+use eolib::rng::Rng;
 use evalexpr::{DefaultNumericTypes, HashMapContext, context_map, eval_float_with_context};
-use rand::RngExt;
 
-use crate::{FORMULAS, NPC_DB};
+use crate::{FORMULAS, NPC_DB, utils::rand_unit_float};
 
 #[derive(Clone, Debug, Default)]
 pub struct Npc {
@@ -49,7 +49,14 @@ impl Npc {
         }
     }
 
-    pub fn damage(&mut self, player_id: i32, amount: i32, accuracy: i32, critical: bool) -> i32 {
+    pub fn damage(
+        &mut self,
+        rng: &mut Rng,
+        player_id: i32,
+        amount: i32,
+        accuracy: i32,
+        critical: bool,
+    ) -> i32 {
         let npc_db = NPC_DB.load();
         let formulas = FORMULAS.load();
         let npc_data = match npc_db.npcs.get(self.id as usize - 1) {
@@ -82,8 +89,7 @@ impl Npc {
             }
         };
 
-        let mut rng = rand::rng();
-        let rand = rng.random_range(0.0..1.0);
+        let rand = rand_unit_float(rng);
 
         let damage = if hit_rate < rand {
             0

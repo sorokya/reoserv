@@ -1,11 +1,9 @@
+use crate::{map::chest::ChestItem, utils::get_distance};
 use chrono::{Duration, Utc};
 use eolib::{
     data::{EoSerialize, EoWriter},
     protocol::net::{ThreeItem, server::ChestAgreeServerPacket},
 };
-use rand::seq::IndexedRandom;
-
-use crate::{map::chest::ChestItem, utils::get_distance};
 
 use super::super::Map;
 
@@ -41,13 +39,8 @@ impl Map {
                         continue;
                     }
 
-                    let spawn = match possible_spawns.choose(&mut rand::rng()) {
-                        Some(spawn) => spawn,
-                        None => {
-                            tracing::error!("Failed to choose spawn");
-                            continue;
-                        }
-                    };
+                    let spawn_index = self.rng.rand_range(0..possible_spawns.len() as u32 - 1);
+                    let spawn = possible_spawns[spawn_index as usize];
 
                     chest.items.push(ChestItem {
                         slot,

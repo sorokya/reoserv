@@ -10,7 +10,6 @@ use eolib::protocol::{
     },
     r#pub::{ItemSubtype, NpcType},
 };
-use rand::RngExt;
 
 use crate::{
     ITEM_DB, NPC_DB, SETTINGS,
@@ -187,17 +186,23 @@ impl Map {
             let damage_dealt = if protected {
                 0
             } else {
-                let amount = {
-                    let mut rng = rand::rng();
-                    rng.random_range(attacker.min_damage..=attacker.max_damage)
-                };
+                let amount = self
+                    .rng
+                    .rand_range(attacker.min_damage as u32..attacker.max_damage as u32)
+                    as i32;
 
                 let attacking_back_or_side =
                     (i32::from(npc.direction) - i32::from(attacker.direction)).abs() != 2;
 
                 let critical = npc.hp == npc.max_hp || attacking_back_or_side;
 
-                npc.damage(player_id, amount, attacker.accuracy, critical)
+                npc.damage(
+                    &mut self.rng,
+                    player_id,
+                    amount,
+                    attacker.accuracy,
+                    critical,
+                )
             };
 
             (
@@ -340,15 +345,17 @@ impl Map {
     }
 
     fn attack_player_pk(&mut self, player_id: i32, target_player_id: i32, direction: Direction) {
-        let (coords, min_damage, max_damage, accuracy) = match self.characters.get(&player_id) {
+        let (coords, accuracy, min_damage, max_damage) = match self.characters.get(&player_id) {
             Some(character) => (
                 character.coords,
+                character.accuracy,
                 character.min_damage,
                 character.max_damage,
-                character.accuracy,
             ),
             None => return,
         };
+
+        let amount = self.rng.rand_range(min_damage as u32..max_damage as u32) as i32;
 
         let target_character = match self.characters.get_mut(&target_player_id) {
             Some(character) => character,
@@ -359,17 +366,12 @@ impl Map {
             return;
         }
 
-        let amount = {
-            let mut rng = rand::rng();
-            rng.random_range(min_damage..=max_damage)
-        };
-
         let attacking_back_or_side =
             (i32::from(target_character.direction) - i32::from(direction)).abs() != 2;
 
         let critical = target_character.hp == target_character.max_hp || attacking_back_or_side;
 
-        let damage_dealt = target_character.damage(amount, accuracy, critical);
+        let damage_dealt = target_character.damage(&mut self.rng, amount, accuracy, critical);
 
         let target_character = match self.characters.get(&target_player_id) {
             Some(character) => character,
